@@ -34,14 +34,14 @@ describe('moveImageToFolder relative-directory persistence', () => {
   const docPath = '/tmp/notes/a.md'
   const assetsDir = '/tmp/notes/assets'
 
-  it('returns a relative path for a binary File when isRelative is set', async () => {
+  it('returns a relative path for a binary File when isRelative is set', async() => {
     const file = new File([new Uint8Array([1, 2, 3])], 'pic.png', { type: 'image/png' })
     const result = await moveImageToFolder(docPath, file, assetsDir, true, docPath)
     expect(result.startsWith('assets/')).toBe(true)
     expect(path.isAbsolute(result)).toBe(false)
   })
 
-  it('returns a relative path for a local path string when isRelative is set', async () => {
+  it('returns a relative path for a local path string when isRelative is set', async() => {
     const source = '/Users/someone/pictures/pic.png'
     const result = await moveImageToFolder(docPath, source, assetsDir, true, docPath)
     // The image must be copied into the assets dir...
@@ -52,7 +52,7 @@ describe('moveImageToFolder relative-directory persistence', () => {
     expect(result.startsWith('assets/')).toBe(true)
   })
 
-  it('returns the absolute hashed path for a local path string when isRelative is false', async () => {
+  it('returns the absolute hashed path for a local path string when isRelative is false', async() => {
     const source = '/Users/someone/pictures/pic.png'
     const result = await moveImageToFolder(docPath, source, assetsDir, false, docPath)
     // copy still lands inside the assets dir...
@@ -65,7 +65,7 @@ describe('moveImageToFolder relative-directory persistence', () => {
     expect(result.startsWith(`${assetsDir}${path.sep}`)).toBe(true)
   })
 
-  it('short-circuits without copying when the image already lives in outputDir', async () => {
+  it('short-circuits without copying when the image already lives in outputDir', async() => {
     // The resolved imagePath equals path.join(outputDir, basename) so
     // noHashPath === imagePath and the copy step is skipped.
     const inPlace = path.join(assetsDir, 'already.png')
@@ -75,7 +75,7 @@ describe('moveImageToFolder relative-directory persistence', () => {
     expect(result).toBe(inPlace)
   })
 
-  it('short-circuits to a relative reference when isRelative is set and the image is in outputDir', async () => {
+  it('short-circuits to a relative reference when isRelative is set and the image is in outputDir', async() => {
     const inPlace = path.join(assetsDir, 'already.png')
     const result = await moveImageToFolder(docPath, inPlace, assetsDir, true, docPath)
     expect(copy).not.toHaveBeenCalled()
@@ -90,7 +90,7 @@ describe('moveImageToFolder relative-directory persistence', () => {
   // preferRelative routes a File through moveImageToFolder(null, file, relDir,
   // true, currentPathname). pathname is null there because a File needs no
   // source dir — assert that path stays portable and never dereferences null.
-  it('routes a binary File through the relative branch with a null pathname (path-action fallback)', async () => {
+  it('routes a binary File through the relative branch with a null pathname (path-action fallback)', async() => {
     const file = new File([new Uint8Array([4, 5, 6])], 'pasted.png', { type: 'image/png' })
     const result = await moveImageToFolder(
       null as unknown as string,
@@ -114,7 +114,7 @@ describe('moveImageToFolder relative-directory persistence', () => {
     expect(result.endsWith('e809c5d1cea47b45e34701d23f608a9a58034dc9.png')).toBe(true)
   })
 
-  it('a string local path already inside outputDir is returned verbatim when isRelative is false (path-action string passthrough analog)', async () => {
+  it('a string local path already inside outputDir is returned verbatim when isRelative is false (path-action string passthrough analog)', async() => {
     // Mirrors the editor.vue 'path' string branch intent: an absolute local
     // path that already lives in the output dir is neither copied nor uploaded;
     // the absolute reference is preserved unchanged.

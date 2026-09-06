@@ -13,7 +13,10 @@
         :is-saved="isSaved"
       />
 
-      <div v-if="!init" class="editor-placeholder" />
+      <div
+        v-if="!init"
+        class="editor-placeholder"
+      />
       <recent v-if="!hasCurrentFile && init" />
       <editor-with-tabs
         v-if="hasCurrentFile && init"

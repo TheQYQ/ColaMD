@@ -27,7 +27,7 @@ export interface PdfCssOptions {
   [key: string]: unknown
 }
 
-export const getCssForOptions = async (options: PdfCssOptions): Promise<string> => {
+export const getCssForOptions = async(options: PdfCssOptions): Promise<string> => {
   const {
     type,
     pageMarginTop,

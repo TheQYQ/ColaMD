@@ -34,7 +34,7 @@ export const configSettingMenu = (keybindings: Keybindings): MenuItemConstructor
  * @param preferences The preference instance.
  * @param recentlyUsedFiles The recently used files.
  */
-export default function (
+export default function(
   keybindings: Keybindings,
   preferences: Preference,
   recentlyUsedFiles: string[] = []

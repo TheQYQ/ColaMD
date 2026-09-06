@@ -19,7 +19,7 @@ vi.hoisted(() => {
   w.window ??= {}
   w.window.path ??= { sep: '/', join: (...parts: string[]) => parts.join('/') }
   w.window.colamd ??= { paths: { userDataPath: '/userData' } }
-  w.window.fileUtils ??= { isFile: async () => false, readFile: async () => '' }
+  w.window.fileUtils ??= { isFile: async() => false, readFile: async() => '' }
 })
 
 // NOTE: `academic.theme.css?inline` / `liber.theme.css?inline` resolve to an
@@ -30,7 +30,7 @@ vi.hoisted(() => {
 // rather than asserting a theme-specific selector token, which is unavailable
 // here.
 
-const loadPdf = async () => {
+const loadPdf = async() => {
   return import('@/util/pdf')
 }
 
@@ -47,13 +47,13 @@ describe('getCssForOptions', () => {
       }
     }
     w.window.colamd = { paths: { userDataPath: '/userData' } }
-    w.window.fileUtils = { isFile: async () => false, readFile: async () => '' }
+    w.window.fileUtils = { isFile: async() => false, readFile: async() => '' }
   })
 
   // 30s timeout: this is the first test to dynamically import @/util/pdf, whose
   // `@muyajs/core` dep resolves to raw TS source — the initial vite-node
   // transform of the whole engine tree can exceed the 5s default on Windows.
-  it('academic/liber take the inline-theme branch (no disk access required)', async () => {
+  it('academic/liber take the inline-theme branch (no disk access required)', async() => {
     const { getCssForOptions } = await loadPdf()
     // Remove the disk surfaces entirely: if academic/liber tried a disk read
     // these would throw. They must not.
@@ -65,7 +65,7 @@ describe('getCssForOptions', () => {
     await expect(getCssForOptions({ theme: 'liber' })).resolves.toBeTypeOf('string')
   }, 30_000)
 
-  it('appends no theme CSS for theme:"default" (disk lookup misses) or {}', async () => {
+  it('appends no theme CSS for theme:"default" (disk lookup misses) or {}', async() => {
     const { getCssForOptions } = await loadPdf()
     // 'default' is NOT special-cased: it falls into the disk branch, which
     // reads window.colamd.paths + window.fileUtils.isFile (→ false here).
@@ -78,9 +78,9 @@ describe('getCssForOptions', () => {
     expect(def).toContain('.markdown-body{')
   })
 
-  it('reads a custom theme name from disk via window.fileUtils', async () => {
-    const isFile = vi.fn(async () => true)
-    const readFile = vi.fn(async () => '.custom{}')
+  it('reads a custom theme name from disk via window.fileUtils', async() => {
+    const isFile = vi.fn(async() => true)
+    const readFile = vi.fn(async() => '.custom{}')
     const w = globalThis as unknown as {
       window: { fileUtils: { isFile: typeof isFile; readFile: typeof readFile } }
     }
@@ -93,11 +93,11 @@ describe('getCssForOptions', () => {
     expect(isFile).toHaveBeenCalledWith('/userData/themes/export/mytheme')
   })
 
-  it('omits the disk theme CSS when the theme file is absent', async () => {
+  it('omits the disk theme CSS when the theme file is absent', async() => {
     const w = globalThis as unknown as {
       window: { fileUtils: { isFile: () => Promise<boolean>; readFile: () => Promise<unknown> } }
     }
-    w.window.fileUtils = { isFile: async () => false, readFile: async () => '.custom{}' }
+    w.window.fileUtils = { isFile: async() => false, readFile: async() => '.custom{}' }
 
     const { getCssForOptions } = await loadPdf()
     const css = await getCssForOptions({ theme: 'mytheme' })
@@ -105,13 +105,13 @@ describe('getCssForOptions', () => {
     expect(css).not.toContain('.custom{}')
   })
 
-  it('round-trips a disk theme containing CSS child-combinator (>) selectors', async () => {
+  it('round-trips a disk theme containing CSS child-combinator (>) selectors', async() => {
     // The whole stylesheet is escapeHTML → sanitize → unescapeHTML'd, so a `>`
     // in a theme selector must survive the round-trip unmangled.
     const w = globalThis as unknown as {
       window: { fileUtils: { isFile: () => Promise<boolean>; readFile: () => Promise<string> } }
     }
-    w.window.fileUtils = { isFile: async () => true, readFile: async () => '.a > .b{color:red}' }
+    w.window.fileUtils = { isFile: async() => true, readFile: async() => '.a > .b{color:red}' }
 
     const { getCssForOptions } = await loadPdf()
     const css = await getCssForOptions({ theme: 'mytheme' })
@@ -119,7 +119,7 @@ describe('getCssForOptions', () => {
     expect(css).toContain('.a > .b{color:red}')
   })
 
-  it('emits font-family/size/line-height rules into .markdown-body', async () => {
+  it('emits font-family/size/line-height rules into .markdown-body', async() => {
     const { getCssForOptions } = await loadPdf()
     const css = await getCssForOptions({ fontFamily: 'Foo', fontSize: 14, lineHeight: 1.6 })
 
@@ -130,7 +130,7 @@ describe('getCssForOptions', () => {
     expect(css).toContain('.hf-container{font-family:"Foo"')
   })
 
-  it('emits the font override AFTER theme CSS so "overwrite theme font" wins', async () => {
+  it('emits the font override AFTER theme CSS so "overwrite theme font" wins', async() => {
     // A selected export theme sets its own `.markdown-body { font-size/line-height/
     // font-family }`. The whole point of the "Overwrite theme font" toggle is that
     // the user's font wins over the theme — so the override rule must be emitted
@@ -140,8 +140,8 @@ describe('getCssForOptions', () => {
       window: { fileUtils: { isFile: () => Promise<boolean>; readFile: () => Promise<string> } }
     }
     w.window.fileUtils = {
-      isFile: async () => true,
-      readFile: async () => '.markdown-body{font-size:99px;line-height:9;font-family:"Theme";}'
+      isFile: async() => true,
+      readFile: async() => '.markdown-body{font-size:99px;line-height:9;font-family:"Theme";}'
     }
 
     const { getCssForOptions } = await loadPdf()
@@ -160,7 +160,7 @@ describe('getCssForOptions', () => {
     expect(overrideAt).toBeGreaterThan(themeAt)
   })
 
-  it('adds heading auto-numbering CSS when autoNumberingHeadings is set', async () => {
+  it('adds heading auto-numbering CSS when autoNumberingHeadings is set', async() => {
     const { getCssForOptions } = await loadPdf()
     const css = await getCssForOptions({ autoNumberingHeadings: true })
 
@@ -168,7 +168,7 @@ describe('getCssForOptions', () => {
     expect(css).toContain('h2:before')
   })
 
-  it('hides front matter when showFrontMatter is false, not when true', async () => {
+  it('hides front matter when showFrontMatter is false, not when true', async() => {
     const { getCssForOptions } = await loadPdf()
     const hidden = await getCssForOptions({ showFrontMatter: false })
     const shown = await getCssForOptions({ showFrontMatter: true })
@@ -177,7 +177,7 @@ describe('getCssForOptions', () => {
     expect(shown).not.toContain('pre.front-matter{display:none')
   })
 
-  it('emits header/footer font-size rules when headerFooterFontSize is set', async () => {
+  it('emits header/footer font-size rules when headerFooterFontSize is set', async() => {
     const { getCssForOptions } = await loadPdf()
     const css = await getCssForOptions({ headerFooterFontSize: 9 })
 
@@ -185,7 +185,7 @@ describe('getCssForOptions', () => {
     expect(css).toContain('.page-header .hf-container')
   })
 
-  it('wraps printable CSS in an @media print @page block by default', async () => {
+  it('wraps printable CSS in an @media print @page block by default', async() => {
     const { getCssForOptions } = await loadPdf()
     const printable = await getCssForOptions({})
     const styledHtml = await getCssForOptions({ type: 'styledHtml' })
@@ -197,7 +197,7 @@ describe('getCssForOptions', () => {
 })
 
 describe('getHtmlToc', () => {
-  it('renders a "Table of Contents" title and excludes the top H1 by default', async () => {
+  it('renders a "Table of Contents" title and excludes the top H1 by default', async() => {
     const { getHtmlToc } = await loadPdf()
     const toc = [
       { lvl: 1, content: 'Top' },
@@ -212,7 +212,7 @@ describe('getHtmlToc', () => {
     expect(html).toContain('href="#sub"')
   })
 
-  it('includes the top heading and honors a custom tocTitle', async () => {
+  it('includes the top heading and honors a custom tocTitle', async() => {
     const { getHtmlToc } = await loadPdf()
     const toc = [
       { lvl: 1, content: 'Top' },
@@ -225,7 +225,7 @@ describe('getHtmlToc', () => {
     expect(html).toContain('href="#sub"')
   })
 
-  it('clones its input — repeated calls are stable (the helper shifts internally)', async () => {
+  it('clones its input — repeated calls are stable (the helper shifts internally)', async() => {
     const { getHtmlToc } = await loadPdf()
     const toc = [
       { lvl: 1, content: 'Top' },
@@ -240,7 +240,7 @@ describe('getHtmlToc', () => {
     expect(toc[0]).toEqual({ lvl: 1, content: 'Top' })
   })
 
-  it('dedups identical heading slugs in document order with -N suffixes', async () => {
+  it('dedups identical heading slugs in document order with -N suffixes', async() => {
     const { getHtmlToc } = await loadPdf()
     const toc = [
       { lvl: 2, content: 'Installation' },
@@ -252,7 +252,7 @@ describe('getHtmlToc', () => {
     expect(html).toContain('href="#installation-1"')
   })
 
-  it('returns an empty string when the TOC has no qualifying entries', async () => {
+  it('returns an empty string when the TOC has no qualifying entries', async() => {
     const { getHtmlToc } = await loadPdf()
     // A lone top-level H1 is shifted away by the default (exclude-top) path,
     // leaving nothing to render.

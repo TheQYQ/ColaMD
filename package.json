@@ -40,12 +40,12 @@
   },
   "lint-staged": {
     "packages/desktop/src/**/*.{ts,vue}": [
-      "eslint --fix",
-      "prettier --write"
+      "prettier --write",
+      "eslint --fix"
     ],
     "packages/desktop/test/**/*.ts": [
-      "eslint --fix",
-      "prettier --write"
+      "prettier --write",
+      "eslint --fix"
     ],
     "*.{json,md,yaml}": [
       "prettier --write"

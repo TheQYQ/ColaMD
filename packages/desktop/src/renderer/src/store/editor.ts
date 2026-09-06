@@ -215,8 +215,8 @@ export const useEditorStore = defineStore('editor', {
         const tab = restoredTabId
           ? this.tabs.find((t) => t.id === restoredTabId)
           : this.tabs.find((t) =>
-              window.fileUtils.isSamePathSync(t.pathname, warning.pathname ?? '')
-            )
+            window.fileUtils.isSamePathSync(t.pathname, warning.pathname ?? '')
+          )
 
         if (!tab) continue
 
@@ -2075,11 +2075,11 @@ interface BufferedEditorState {
 const createBufferedEditorState = (state: unknown): BufferedEditorState | null => {
   const s = state as
     | {
-        tabs?: unknown
-        currentFileId?: string
-        currentFile?: { id?: string } | null
-        restoreWarnings?: unknown
-      }
+      tabs?: unknown
+      currentFileId?: string
+      currentFile?: { id?: string } | null
+      restoreWarnings?: unknown
+    }
     | null
     | undefined
   if (!s || !Array.isArray(s.tabs)) {
@@ -2091,8 +2091,8 @@ const createBufferedEditorState = (state: unknown): BufferedEditorState | null =
     tabs: (s.tabs as Array<Partial<IFileState> & { id: string }>).map(createBufferedTabState),
     restoreWarnings: Array.isArray(s.restoreWarnings)
       ? (s.restoreWarnings as RestoreWarning[])
-          .map(createBufferedRestoreWarning)
-          .filter((w): w is BufferedRestoreWarning => w !== null)
+        .map(createBufferedRestoreWarning)
+        .filter((w): w is BufferedRestoreWarning => w !== null)
       : []
   }
 }

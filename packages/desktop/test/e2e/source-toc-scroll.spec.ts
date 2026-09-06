@@ -12,8 +12,9 @@ const buildLongDoc = (): string => {
   const parts: string[] = []
   for (let i = 1; i <= HEADING_COUNT; i++) {
     parts.push(`# Heading Number ${i}`)
-    for (let p = 0; p < 6; p++)
+    for (let p = 0; p < 6; p++) {
       parts.push(`Filler paragraph ${p} under heading ${i}. Lorem ipsum dolor.`)
+    }
   }
   return parts.join('\n\n') + '\n'
 }
@@ -41,7 +42,7 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async () => {
+  test.beforeAll(async() => {
     const launched = await launchWithMarkdown(buildLongDoc())
     app = launched.app
     page = launched.page
@@ -61,11 +62,11 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
     )
   })
 
-  test.afterAll(async () => {
+  test.afterAll(async() => {
     if (app) await app.close()
   })
 
-  test('clicking a deep heading scrolls down and lands it near the top', async () => {
+  test('clicking a deep heading scrolls down and lands it near the top', async() => {
     await page.evaluate(() => {
       const el = document.querySelector('.source-code') as HTMLElement | null
       if (el) el.scrollTop = 0
@@ -83,7 +84,7 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
     expect(await headingLineTopInViewport(page, 'Heading Number 18')).toBeGreaterThan(-5)
   })
 
-  test('clicking an earlier heading scrolls back up to it at the top', async () => {
+  test('clicking an earlier heading scrolls back up to it at the top', async() => {
     const fromTop = await srcScrollTop(page)
     expect(fromTop).toBeGreaterThan(0)
     await page.locator('.side-bar-toc').getByText('Heading Number 3', { exact: true }).click()

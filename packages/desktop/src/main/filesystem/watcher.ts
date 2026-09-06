@@ -41,7 +41,7 @@ interface WatcherEntry {
   close: () => void
 }
 
-const add = async (
+const add = async(
   win: BrowserWindow,
   pathname: string,
   type: WatchType,
@@ -109,7 +109,7 @@ const unlink = (win: BrowserWindow, pathname: string, type: WatchType): void => 
   })
 }
 
-const change = async (
+const change = async(
   win: BrowserWindow,
   pathname: string,
   type: WatchType,
@@ -245,11 +245,11 @@ class Watcher {
       // ~1s late (GH#3955).
       ...(type === 'file'
         ? {
-            awaitWriteFinish: {
-              stabilityThreshold: WATCHER_STABILITY_THRESHOLD,
-              pollInterval: WATCHER_STABILITY_POLL_INTERVAL
-            }
+          awaitWriteFinish: {
+            stabilityThreshold: WATCHER_STABILITY_THRESHOLD,
+            pollInterval: WATCHER_STABILITY_POLL_INTERVAL
           }
+        }
         : {}),
 
       usePolling
@@ -262,7 +262,7 @@ class Watcher {
     let renameTimer: NodeJS.Timeout | null = null
 
     watcher
-      .on('add', async (pathname: string) => {
+      .on('add', async(pathname: string) => {
         if (!(await this._shouldIgnoreEvent(win.id, pathname, type, usePolling))) {
           const { _preferences } = this
           const eol = _preferences.getPreferredEol() as LineEnding
@@ -282,7 +282,7 @@ class Watcher {
           )
         }
       })
-      .on('change', async (pathname: string) => {
+      .on('change', async(pathname: string) => {
         if (!(await this._shouldIgnoreEvent(win.id, pathname, type, usePolling))) {
           const { _preferences } = this
           const eol = _preferences.getPreferredEol() as LineEnding
@@ -315,7 +315,7 @@ class Watcher {
           if (renameTimer) {
             clearTimeout(renameTimer)
           }
-          renameTimer = setTimeout(async () => {
+          renameTimer = setTimeout(async() => {
             renameTimer = null
             if (disposed) {
               return

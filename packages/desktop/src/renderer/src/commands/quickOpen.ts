@@ -50,7 +50,7 @@ class QuickOpenCommand {
     this._cancelFn = null
   }
 
-  search = async (query: string): Promise<QuickOpenSubcommand[]> => {
+  search = async(query: string): Promise<QuickOpenSubcommand[]> => {
     // Show opened files when no query given.
     if (!query) {
       return this.subcommands
@@ -72,7 +72,7 @@ class QuickOpenCommand {
     return this._doSearch(query)
   }
 
-  run = async (): Promise<void> => {
+  run = async(): Promise<void> => {
     const { _editorState, _folderState } = this
     if (!_folderState.projectTree && _editorState.tabs.length === 0) {
       throw new Error(null as unknown as string)
@@ -89,13 +89,13 @@ class QuickOpenCommand {
       })
   }
 
-  execute = async (): Promise<void> => {
+  execute = async(): Promise<void> => {
     // Timeout to hide the command palette and then show again to prevent issues.
     await delay(100)
     bus.emit('show-command-palette', this)
   }
 
-  executeSubcommand = async (id: string): Promise<void> => {
+  executeSubcommand = async(id: string): Promise<void> => {
     const { windowId } = window.colamd!.env!
     window.electron.ipcRenderer.send('mt::open-file-by-window-id', windowId, id)
   }
