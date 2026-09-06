@@ -73,7 +73,7 @@ export function transformFootnotes(html: string): string {
 
     // 5. Build the footnotes section in numeric order. Orphan definitions
     //    (defined but never referenced inline) are dropped — same as the
-    //    parser-extension behaviour marktext shipped.
+    //    parser-extension behaviour colamd shipped.
     const orderedRefs = Array.from(refNumber.entries()).sort(
         (a, b) => a[1] - b[1],
     );

@@ -334,7 +334,7 @@ export const MUYA_DEFAULT_OPTIONS = {
     autoCheck: false,
     // Whether we should set spellcheck attribute on our container to highlight misspelled words.
     // NOTE: The browser is not able to correct misspelled words words without a custom
-    // implementation like in MarkText.
+    // implementation like in ColaMD.
     spellcheckEnabled: false,
     // Hide the native spelling squiggle via CSS while keeping `spellcheckEnabled`
     // (and thus the native checker + right-click suggestions) active. Independent

@@ -28,14 +28,13 @@ export default defineConfig({
       }
     },
     define: {
-      MARKTEXT_VERSION: JSON.stringify(packageJson.version),
-      MARKTEXT_VERSION_STRING: JSON.stringify(`v${packageJson.version}`)
+      COLAMD_VERSION: JSON.stringify(packageJson.version),
+      COLAMD_VERSION_STRING: JSON.stringify(`v${packageJson.version}`)
     },
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src/renderer/src'),
         common: resolve(__dirname, 'src/common'),
-        muya: resolve(__dirname, '../muyajs'),
         '@shared': resolve(__dirname, 'src/shared')
       },
       extensions: ['.mjs', '.ts', '.js', '.json']
@@ -55,7 +54,6 @@ export default defineConfig({
       alias: {
         '@': resolve(__dirname, 'src/renderer/src'),
         common: resolve(__dirname, 'src/common'),
-        muya: resolve(__dirname, '../muyajs'),
         '@shared': resolve(__dirname, 'src/shared')
       },
       extensions: ['.mjs', '.ts', '.js', '.json']
@@ -81,7 +79,6 @@ export default defineConfig({
       alias: {
         '@': resolve(__dirname, 'src/renderer/src'),
         common: resolve(__dirname, 'src/common'),
-        muya: resolve(__dirname, '../muyajs'),
         '@shared': resolve(__dirname, 'src/shared'),
         path: 'pathe'
       },

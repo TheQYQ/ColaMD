@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 
 // `@/util/pdf` (imported transitively for `getHtmlToc`) and the export wrapper
-// reach `window.path` / `window.fileUtils` / `window.marktext` via the preload
+// reach `window.path` / `window.fileUtils` / `window.colamd` via the preload
 // bridge. Stub the surfaces the modules touch before the hoisted imports run.
 vi.hoisted(() => {
   const w = globalThis as unknown as {
@@ -12,7 +12,7 @@ vi.hoisted(() => {
         resolve?: (...parts: string[]) => string
       }
       fileUtils?: unknown
-      marktext?: unknown
+      colamd?: unknown
       DIRNAME?: string
     }
   }
@@ -20,10 +20,16 @@ vi.hoisted(() => {
   w.window.path ??= {
     sep: '/',
     join: (...parts: string[]) =>
-      parts.join('/').replace(/\/\.\//g, '/').replace(/\/{3,}/g, '//'),
+      parts
+        .join('/')
+        .replace(/\/\.\//g, '/')
+        .replace(/\/{3,}/g, '//'),
     // Some transitive helpers still expect a minimal POSIX-ish `resolve`.
     resolve: (...parts: string[]) =>
-      parts.join('/').replace(/\/\.\//g, '/').replace(/\/{2,}/g, '/')
+      parts
+        .join('/')
+        .replace(/\/\.\//g, '/')
+        .replace(/\/{2,}/g, '/')
   }
   // The document directory the export wrapper resolves relative <img> src
   // against (see resolveLocalImageSrc / window.DIRNAME).
@@ -42,7 +48,7 @@ import { getHtmlToc, type TocEntry } from '@/util/pdf'
 const NO_MUYA = null as unknown as Parameters<typeof exportStyledHTML>[0]
 
 describe('exportStyledHTML — wrapper parity', () => {
-  it('emits a self-contained document: inline <style> blocks, no CDN <link>', async() => {
+  it('emits a self-contained document: inline <style> blocks, no CDN <link>', async () => {
     const out = await exportStyledHTML(NO_MUYA, '# Hi\n\ntext', {})
 
     // The engine inlines github-markdown-css / katex / prism as <style> blocks
@@ -53,7 +59,7 @@ describe('exportStyledHTML — wrapper parity', () => {
     expect(out).not.toMatch(/href="https:\/\/cdnjs\.cloudflare\.com/)
   })
 
-  it('wraps the rendered body in exactly one <article class="markdown-body"> with the rendered <h1>', async() => {
+  it('wraps the rendered body in exactly one <article class="markdown-body"> with the rendered <h1>', async () => {
     const out = await exportStyledHTML(NO_MUYA, '# Hi\n\ntext', {})
 
     expect((out.match(/<article class="markdown-body">/g) || []).length).toBe(1)
@@ -62,7 +68,7 @@ describe('exportStyledHTML — wrapper parity', () => {
     expect(out).toContain('<p>text</p>')
   })
 
-  it('cleanly replaces <body> exactly once (no duplicate <body>)', async() => {
+  it('cleanly replaces <body> exactly once (no duplicate <body>)', async () => {
     const out = await exportStyledHTML(NO_MUYA, '# Hi\n\ntext', {})
 
     expect((out.match(/<body>/g) || []).length).toBe(1)
@@ -104,7 +110,7 @@ describe('exportStyledHTML — [TOC] expansion and slug matching', () => {
     { lvl: 2, content: 'Use bold and a link' }
   ]
 
-  it('replaces the rendered <p>[TOC]</p> with the toc list', async() => {
+  it('replaces the rendered <p>[TOC]</p> with the toc list', async () => {
     const toc = getHtmlToc(TOC, {})
     const out = await exportStyledHTML(NO_MUYA, MD, { toc })
 
@@ -114,7 +120,7 @@ describe('exportStyledHTML — [TOC] expansion and slug matching', () => {
     expect(out).not.toMatch(/<p>\s*\[TOC\]\s*<\/p>/i)
   })
 
-  it('dedups repeated headings: two "Installation" → installation / installation-1, with matching anchors', async() => {
+  it('dedups repeated headings: two "Installation" → installation / installation-1, with matching anchors', async () => {
     const toc = getHtmlToc(TOC, {})
     const out = await exportStyledHTML(NO_MUYA, MD, { toc })
 
@@ -134,7 +140,7 @@ describe('exportStyledHTML — [TOC] expansion and slug matching', () => {
     expect(ids).toContain('installation-1')
   })
 
-  it('a heading with inline markup produces a TOC anchor that matches the heading id (#4811)', async() => {
+  it('a heading with inline markup produces a TOC anchor that matches the heading id (#4811)', async () => {
     const toc = getHtmlToc(TOC, {})
     const out = await exportStyledHTML(NO_MUYA, MD, { toc })
 
@@ -151,7 +157,7 @@ describe('exportStyledHTML — [TOC] expansion and slug matching', () => {
     expect(hrefs).not.toContain('use-bold-and-a-linkhttpx')
   })
 
-  it('does not inject the toc when the document has no [TOC] marker', async() => {
+  it('does not inject the toc when the document has no [TOC] marker', async () => {
     const toc = getHtmlToc(TOC, {})
     const out = await exportStyledHTML(NO_MUYA, '# Getting Started\n\n## Installation\n', {
       toc
@@ -162,7 +168,7 @@ describe('exportStyledHTML — [TOC] expansion and slug matching', () => {
 })
 
 describe('exportStyledHTML — header/footer assembly', () => {
-  it('type:2 + headerFooterStyled:true → styled page table with all parts', async() => {
+  it('type:2 + headerFooterStyled:true → styled page table with all parts', async () => {
     const out = await exportStyledHTML(NO_MUYA, '# Hi', {
       header: { type: 2, left: 'L', center: 'C', right: 'R' },
       footer: { type: 2, center: 'FC' },
@@ -181,7 +187,7 @@ describe('exportStyledHTML — header/footer assembly', () => {
     expect(out).toMatch(/<div class="footer-content">FC<\/div>/)
   })
 
-  it('type:1 + headerFooterStyled:false → single + simple', async() => {
+  it('type:1 + headerFooterStyled:false → single + simple', async () => {
     const out = await exportStyledHTML(NO_MUYA, '# Hi', {
       header: { type: 1, center: 'C' },
       headerFooterStyled: false
@@ -193,7 +199,7 @@ describe('exportStyledHTML — header/footer assembly', () => {
     expect(out).toMatch(/page-header[^"]*simple/)
   })
 
-  it('no header/footer → no page-container table', async() => {
+  it('no header/footer → no page-container table', async () => {
     const out = await exportStyledHTML(NO_MUYA, '# Hi', {})
 
     expect(out).not.toContain('page-container')
@@ -203,7 +209,7 @@ describe('exportStyledHTML — header/footer assembly', () => {
     expect(body.trim()).toMatch(/^<article class="markdown-body">/)
   })
 
-  it('a footer alone still builds the page table (real footer + fake footer row)', async() => {
+  it('a footer alone still builds the page table (real footer + fake footer row)', async () => {
     const out = await exportStyledHTML(NO_MUYA, '# Hi', {
       footer: { type: 2, center: 'only-footer' }
     })
@@ -218,19 +224,19 @@ describe('exportStyledHTML — header/footer assembly', () => {
 })
 
 describe('exportStyledHTML — text direction (issue #4553)', () => {
-  it('sets dir="rtl" on the exported <html> when dir is "rtl"', async() => {
+  it('sets dir="rtl" on the exported <html> when dir is "rtl"', async () => {
     const out = await exportStyledHTML(NO_MUYA, '# سلام\n\nمتن', { dir: 'rtl' })
 
     expect(out).toMatch(/<html lang="en" dir="rtl">/)
   })
 
-  it('forwards dir="auto" to the exported <html>', async() => {
+  it('forwards dir="auto" to the exported <html>', async () => {
     const out = await exportStyledHTML(NO_MUYA, '# Hi', { dir: 'auto' })
 
     expect(out).toMatch(/<html lang="en" dir="auto">/)
   })
 
-  it('leaves the default LTR export without a dir attribute', async() => {
+  it('leaves the default LTR export without a dir attribute', async () => {
     const ltr = await exportStyledHTML(NO_MUYA, '# Hi', { dir: 'ltr' })
     const none = await exportStyledHTML(NO_MUYA, '# Hi', {})
 
@@ -241,7 +247,7 @@ describe('exportStyledHTML — text direction (issue #4553)', () => {
 })
 
 describe('exportStyledHTML — relative image paths', () => {
-  it('rewrites a relative img src to an absolute file:// URL (issue 230)', async() => {
+  it('rewrites a relative img src to an absolute file:// URL (issue 230)', async () => {
     // window.DIRNAME is stubbed to '/docs', so `./a.png` resolves against it.
     const out = await exportStyledHTML(NO_MUYA, '![alt](./a.png)', {})
 
@@ -250,7 +256,7 @@ describe('exportStyledHTML — relative image paths', () => {
     expect(out).toContain('alt="alt"')
   })
 
-  it('leaves a remote http(s) img src untouched', async() => {
+  it('leaves a remote http(s) img src untouched', async () => {
     const out = await exportStyledHTML(NO_MUYA, '![alt](https://example.com/a.png)', {})
 
     expect(out).toMatch(/<img[^>]+src="https:\/\/example\.com\/a\.png"/)
@@ -259,7 +265,7 @@ describe('exportStyledHTML — relative image paths', () => {
 })
 
 describe('exportStyledHTML — relative link paths (#1688)', () => {
-  it('rewrites a relative <a href> to an absolute file:// URL', async() => {
+  it('rewrites a relative <a href> to an absolute file:// URL', async () => {
     // window.DIRNAME is stubbed to '/docs', so `./my_file.pdf` resolves against it.
     const out = await exportStyledHTML(NO_MUYA, '[doc](./my_file.pdf)', {})
 
@@ -267,14 +273,14 @@ describe('exportStyledHTML — relative link paths (#1688)', () => {
     expect(out).not.toContain('href="./my_file.pdf"')
   })
 
-  it('leaves a remote http(s) link untouched', async() => {
+  it('leaves a remote http(s) link untouched', async () => {
     const out = await exportStyledHTML(NO_MUYA, '[site](https://example.com/p)', {})
 
     expect(out).toMatch(/<a[^>]+href="https:\/\/example\.com\/p"/)
     expect(out).not.toContain('file://')
   })
 
-  it('leaves an in-page fragment anchor untouched', async() => {
+  it('leaves an in-page fragment anchor untouched', async () => {
     const out = await exportStyledHTML(NO_MUYA, '# Heading\n\n[jump](#heading)', {})
 
     expect(out).toContain('href="#heading"')

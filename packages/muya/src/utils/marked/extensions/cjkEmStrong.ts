@@ -20,7 +20,7 @@ import type { MarkedExtension, TokenizerObject, Tokens } from 'marked';
 // CommonMark refused, never the reverse, so spec-conformant Latin inputs
 // parse identically (verified by the CommonMark / GFM conformance suites).
 //
-// Tracking: marktext/marktext#4307.
+// Tracking: TheQYQ/ColaMD#4307.
 
 // CJK ranges treated as punctuation for flanking:
 //   U+3040–U+30FF  Hiragana + Katakana

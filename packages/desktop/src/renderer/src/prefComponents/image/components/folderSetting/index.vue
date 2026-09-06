@@ -11,16 +11,10 @@
       :on-change="(value) => modifyImageFolderPath(value)"
     />
     <div>
-      <el-button
-        size="mini"
-        @click="modifyImageFolderPath(undefined)"
-      >
+      <el-button size="mini" @click="modifyImageFolderPath(undefined)">
         {{ t('preferences.image.folderSetting.open') }}
       </el-button>
-      <el-button
-        size="mini"
-        @click="openImageFolder"
-      >
+      <el-button size="mini" @click="openImageFolder">
         {{ t('preferences.image.folderSetting.showInFolder') }}
       </el-button>
     </div>
@@ -28,7 +22,7 @@
       <template #head>
         <bool
           :description="t('preferences.image.folderSetting.preferRelative')"
-          more="https://marktext.me/docs/images"
+          more="https://github.com/TheQYQ/ColaMD/docs/images"
           :bool="imagePreferRelativeDirectory"
           :on-change="(value) => onSelectChange('imagePreferRelativeDirectory', value)"
         />

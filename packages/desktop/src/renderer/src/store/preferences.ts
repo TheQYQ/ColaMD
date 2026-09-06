@@ -327,7 +327,7 @@ export const usePreferencesStore = defineStore('preferences', {
     },
 
     DISPATCH_EDITOR_VIEW_STATE(viewState: Record<string, unknown>): void {
-      const { windowId } = window.marktext?.env ?? { windowId: -1 }
+      const { windowId } = window.colamd?.env ?? { windowId: -1 }
       window.electron.ipcRenderer.send('mt::view-layout-changed', windowId, viewState)
     }
   }

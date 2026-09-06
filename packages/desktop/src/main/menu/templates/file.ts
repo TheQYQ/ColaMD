@@ -1,12 +1,12 @@
 import { app, type BrowserWindow, type MenuItemConstructorOptions } from 'electron'
 import * as actions from '../actions/file'
-import { userSetting } from '../actions/marktext'
+import { userSetting } from '../actions/colamd'
 import { isOsx } from '../../config'
 import { t } from '../../i18n'
 import type Keybindings from '../../keyboard/shortcutHandler'
 import type Preference from '../../preferences'
 
-export default function(
+export default function (
   keybindings: Keybindings,
   userPreference: Preference,
   recentlyUsedFiles: string[]

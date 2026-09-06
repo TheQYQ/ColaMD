@@ -80,6 +80,7 @@
       "minimize": "Minimaliseren",
       "zoomIn": "Inzoomen",
       "zoomOut": "Uitzoomen",
+      "resetZoom": "Zoom herstellen",
       "fullScreen": "Volledig scherm",
       "bringAllToFront": "Alles naar voren",
       "alwaysOnTop": "Altijd bovenaan"
@@ -92,21 +93,21 @@
       "reportBug": "Bug melden",
       "viewSource": "Broncode bekijken",
       "followUs": "Volg ons",
-      "support": "Steun MarkText",
+      "support": "Steun ColaMD",
       "license": "Licentie",
       "about": "Over",
       "checkUpdates": "Controleer op updates"
     },
-    "marktext": {
-      "title": "MarkText",
-      "about": "Over MarkText",
+    "colamd": {
+      "title": "ColaMD",
+      "about": "Over ColaMD",
       "checkUpdates": "Controleer op updates...",
       "preferences": "Voorkeuren",
       "services": "Diensten",
-      "hide": "Verberg MarkText",
+      "hide": "Verberg ColaMD",
       "hideOthers": "Verberg overige",
       "showAll": "Toon alles",
-      "quit": "MarkText afsluiten"
+      "quit": "ColaMD afsluiten"
     },
     "view": {
       "view": "Weergave",
@@ -345,7 +346,7 @@
   },
   "import": {
     "title": "Importeren of openen",
-    "description": "Sleep hier om je bestanden in MarkText te openen"
+    "description": "Sleep hier om je bestanden in ColaMD te openen"
   },
   "preferences": {
     "title": "Voorkeuren",
@@ -373,10 +374,10 @@
         "hideScrollbar": "Schuifbalken verbergen",
         "wordWrapInToc": "Tekstterugloop in inhoudsopgave",
         "fileSortBy": "Bestanden sorteren op aanmaaktijd, wijzigingstijd of titel",
-        "startUpAction": "De actie na het opstarten van MarkText",
+        "startUpAction": "De actie na het opstarten van ColaMD",
         "restoreLayoutState": "Vorige editorstatus herstellen bij opstarten",
         "defaultDirectoryToOpen": "De standaardmap die geopend wordt bij opstarten",
-        "language": "De taal die MarkText gebruikt",
+        "language": "De taal die ColaMD gebruikt",
         "editorFontFamily": "Lettertype van de editor",
         "fontSize": "Lettergrootte in pixels",
         "lineHeight": "Regelhoogte",
@@ -410,7 +411,7 @@
         "isGitlabCompatibilityEnabled": "GitLab-compatibiliteitsmodus inschakelen",
         "sequenceTheme": "Sequentiediagram thema",
         "plantumlServer": "PlantUML server-URL",
-        "theme": "Selecteer het thema voor MarkText",
+        "theme": "Selecteer het thema voor ColaMD",
         "followSystemTheme": "Systeemthema volgen",
         "lightModeTheme": "Thema voor lichte modus",
         "darkModeTheme": "Thema voor donkere modus",
@@ -619,7 +620,7 @@
         "pleaseInstall": "Installeer a.u.b.",
         "scriptPath": "Scriptpad"
       },
-      "defaultBehavior": "Het standaardgedrag na plakken of slepen van een afbeelding naar MarkText"
+      "defaultBehavior": "Het standaardgedrag na plakken of slepen van een afbeelding naar ColaMD"
     },
     "markdown": {
       "title": "Markdown",
@@ -736,7 +737,7 @@
   },
   "commands": {
     "mt": {
-      "hide": "MarkText verbergen",
+      "hide": "ColaMD verbergen",
       "hideOthers": "Overige verbergen"
     },
     "file": {
@@ -902,7 +903,7 @@
     "configSchemaViolation": "Configuratieschemaovertreding",
     "copyError": "Kopieerfout",
     "initializationFailed": "Initialisatie mislukt {hint}",
-    "otherInstanceDetected": "Er draait al een andere instantie van MarkText",
+    "otherInstanceDetected": "Er draait al een andere instantie van ColaMD",
     "report": "Melden",
     "startupError": "Opstartfout",
     "terminatedDueToError": "Beëindigd door fout",

@@ -18,7 +18,7 @@ class Footnote extends Parent {
         // Render an identifier label inside the figure as a plain DOM span
         // (not a tracked Parent). The CSS `[^` / `]:` pseudo-elements wrap
         // the identifier so users see `[^id]:` against the block background
-        // — matching marktext's visual treatment without making the label
+        // — matching colamd's visual treatment without making the label
         // part of `IFootnoteBlockState.children`.
         const label = document.createElement('span');
         label.className = CLASS_NAMES.MU_FOOTNOTE_INPUT;

@@ -1,11 +1,7 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
 import * as fs from 'node:fs'
-import {
-  launchWithMarkdown,
-  waitForMenuReady,
-  sendIpcToRenderer
-} from './helpers'
+import { launchWithMarkdown, waitForMenuReady, sendIpcToRenderer } from './helpers'
 
 // Item 231 — PDF export to a real file via the Electron menu (smoke).
 //
@@ -32,8 +28,8 @@ const PDF_DOC =
 // Install a main-process stub for `dialog.showSaveDialog` that returns the
 // supplied path (no native picker). Returns nothing; the renderer success
 // listener and on-disk polling confirm the rest.
-const stubSaveDialog = async(app: ElectronApplication, targetPath: string): Promise<void> => {
-  await app.evaluate(async({ dialog }, savePath) => {
+const stubSaveDialog = async (app: ElectronApplication, targetPath: string): Promise<void> => {
+  await app.evaluate(async ({ dialog }, savePath) => {
     const g = global as unknown as {
       __mt_orig_showSaveDialog__?: typeof dialog.showSaveDialog
     }
@@ -42,14 +38,14 @@ const stubSaveDialog = async(app: ElectronApplication, targetPath: string): Prom
     }
     // Override with a resolved temp path so handleResponseForExport proceeds
     // straight to printToPDF + writeFile.
-    ;(dialog as unknown as { showSaveDialog: unknown }).showSaveDialog = async() => ({
+    ;(dialog as unknown as { showSaveDialog: unknown }).showSaveDialog = async () => ({
       canceled: false,
       filePath: savePath
     })
   }, targetPath)
 }
 
-const restoreSaveDialog = async(app: ElectronApplication): Promise<void> => {
+const restoreSaveDialog = async (app: ElectronApplication): Promise<void> => {
   await app.evaluate(({ dialog }) => {
     const g = global as unknown as {
       __mt_orig_showSaveDialog__?: typeof dialog.showSaveDialog
@@ -64,7 +60,7 @@ const restoreSaveDialog = async(app: ElectronApplication): Promise<void> => {
 // Attach a renderer-side listener on `mt::export-success` recording the payload
 // into a window global the spec can read back. Mirrors the app's own
 // LISTEN_FOR_EXPORT_SUCCESS handler but is observable from the test.
-const installExportSuccessProbe = async(page: Page): Promise<void> => {
+const installExportSuccessProbe = async (page: Page): Promise<void> => {
   await page.evaluate(() => {
     const w = window as unknown as {
       __mt_export_success__?: Array<{ type?: string; filePath?: string }>
@@ -80,16 +76,18 @@ const installExportSuccessProbe = async(page: Page): Promise<void> => {
   })
 }
 
-const getExportSuccesses = async(
+const getExportSuccesses = async (
   page: Page
 ): Promise<Array<{ type?: string; filePath?: string }>> => {
   return await page.evaluate(() => {
-    const w = window as unknown as { __mt_export_success__?: Array<{ type?: string; filePath?: string }> }
+    const w = window as unknown as {
+      __mt_export_success__?: Array<{ type?: string; filePath?: string }>
+    }
     return (w.__mt_export_success__ ?? []).slice()
   })
 }
 
-const clearExportSuccesses = async(page: Page): Promise<void> => {
+const clearExportSuccesses = async (page: Page): Promise<void> => {
   await page.evaluate(() => {
     const w = window as unknown as { __mt_export_success__?: Array<unknown> }
     if (w.__mt_export_success__) w.__mt_export_success__.length = 0
@@ -100,14 +98,14 @@ const clearExportSuccesses = async(page: Page): Promise<void> => {
 // (`mt::show-export-dialog`), wait for the export-settings dialog to render,
 // then click its primary "Export" button. That runs the renderer pipeline that
 // renders the print webview and emits `mt::response-export` to main.
-const triggerPdfExportViaDialog = async(app: ElectronApplication, page: Page): Promise<void> => {
+const triggerPdfExportViaDialog = async (app: ElectronApplication, page: Page): Promise<void> => {
   await sendIpcToRenderer(app, 'mt::show-export-dialog', 'pdf')
   const confirm = page.locator('.print-settings-dialog .button-primary')
   await confirm.waitFor({ state: 'visible', timeout: 10000 })
   await confirm.click()
 }
 
-const pollForPdfFile = async(filePath: string, timeoutMs = 20000): Promise<Buffer> => {
+const pollForPdfFile = async (filePath: string, timeoutMs = 20000): Promise<Buffer> => {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
     if (fs.existsSync(filePath)) {
@@ -123,7 +121,7 @@ test.describe('PDF export to a real file (item 231)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(PDF_DOC)
     app = launched.app
     page = launched.page
@@ -131,15 +129,15 @@ test.describe('PDF export to a real file (item 231)', () => {
     await installExportSuccessProbe(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) {
       await restoreSaveDialog(app)
       await app.close()
     }
   })
 
-  test('writes a non-empty file beginning with the %PDF- magic bytes', async() => {
-    const out = '/tmp/marktext-e2e-export-' + Date.now() + '-a.pdf'
+  test('writes a non-empty file beginning with the %PDF- magic bytes', async () => {
+    const out = '/tmp/colamd-e2e-export-' + Date.now() + '-a.pdf'
     if (fs.existsSync(out)) fs.rmSync(out)
     await clearExportSuccesses(page)
     await stubSaveDialog(app, out)
@@ -153,8 +151,8 @@ test.describe('PDF export to a real file (item 231)', () => {
     fs.rmSync(out, { force: true })
   })
 
-  test('fires mt::export-success with type "pdf" and the written file path', async() => {
-    const out = '/tmp/marktext-e2e-export-' + Date.now() + '-b.pdf'
+  test('fires mt::export-success with type "pdf" and the written file path', async () => {
+    const out = '/tmp/colamd-e2e-export-' + Date.now() + '-b.pdf'
     if (fs.existsSync(out)) fs.rmSync(out)
     await clearExportSuccesses(page)
     await stubSaveDialog(app, out)
@@ -164,7 +162,7 @@ test.describe('PDF export to a real file (item 231)', () => {
     await pollForPdfFile(out)
 
     await expect
-      .poll(async() => (await getExportSuccesses(page)).length, { timeout: 10000 })
+      .poll(async () => (await getExportSuccesses(page)).length, { timeout: 10000 })
       .toBeGreaterThan(0)
 
     const successes = await getExportSuccesses(page)
@@ -175,13 +173,13 @@ test.describe('PDF export to a real file (item 231)', () => {
     fs.rmSync(out, { force: true })
   })
 
-  test('canceling the save dialog writes no file and fires no export-success', async() => {
-    const out = '/tmp/marktext-e2e-export-' + Date.now() + '-c.pdf'
+  test('canceling the save dialog writes no file and fires no export-success', async () => {
+    const out = '/tmp/colamd-e2e-export-' + Date.now() + '-c.pdf'
     if (fs.existsSync(out)) fs.rmSync(out)
     await clearExportSuccesses(page)
     // Stub the save dialog to report cancellation — main must skip printToPDF.
     await app.evaluate(({ dialog }) => {
-      ;(dialog as unknown as { showSaveDialog: unknown }).showSaveDialog = async() => ({
+      ;(dialog as unknown as { showSaveDialog: unknown }).showSaveDialog = async () => ({
         canceled: true,
         filePath: undefined
       })
@@ -197,10 +195,10 @@ test.describe('PDF export to a real file (item 231)', () => {
     expect(successes.find((s) => s.filePath === out)).toBeFalsy()
   })
 
-  test('the renderer EXPORT path round-trips a second export to a fresh path', async() => {
+  test('the renderer EXPORT path round-trips a second export to a fresh path', async () => {
     // Re-export to a different path to prove the print service is re-armed and
     // the wiring is not single-shot.
-    const out = '/tmp/marktext-e2e-export-' + Date.now() + '-d.pdf'
+    const out = '/tmp/colamd-e2e-export-' + Date.now() + '-d.pdf'
     if (fs.existsSync(out)) fs.rmSync(out)
     await clearExportSuccesses(page)
     await stubSaveDialog(app, out)
@@ -211,7 +209,7 @@ test.describe('PDF export to a real file (item 231)', () => {
     expect(data.subarray(0, 5).toString('latin1')).toBe('%PDF-')
 
     await expect
-      .poll(async() => (await getExportSuccesses(page)).some((s) => s.filePath === out), {
+      .poll(async () => (await getExportSuccesses(page)).some((s) => s.filePath === out), {
         timeout: 10000
       })
       .toBe(true)

@@ -5,23 +5,23 @@
 !macro customInstall
   ; Ask the user if they want to register file associations
   MessageBox MB_YESNO|MB_ICONQUESTION \
-  "Do you want to associate Markdown files (.md, .markdown, .mmd, .mdown, .mdtext, .mdx) with MarkText?" /SD IDNO IDNO SkipAssoc
+  "Do you want to associate Markdown files (.md, .markdown, .mmd, .mdown, .mdtext, .mdx) with ColaMD?" /SD IDNO IDNO SkipAssoc
 
   ;— User clicked YES, perform the registry writes —
-  WriteRegStr HKCU "Software\Classes\.md"       "" "MarkText.Document"
-  WriteRegStr HKCU "Software\Classes\.markdown" "" "MarkText.Document"
-  WriteRegStr HKCU "Software\Classes\.mmd"      "" "MarkText.Document"
-  WriteRegStr HKCU "Software\Classes\.mdown"    "" "MarkText.Document"
-  WriteRegStr HKCU "Software\Classes\.mdtxt"    "" "MarkText.Document"
-  WriteRegStr HKCU "Software\Classes\.mdtext"   "" "MarkText.Document"
-  WriteRegStr HKCU "Software\Classes\.mdx"      "" "MarkText.Document"
+  WriteRegStr HKCU "Software\Classes\.md"       "" "ColaMD.Document"
+  WriteRegStr HKCU "Software\Classes\.markdown" "" "ColaMD.Document"
+  WriteRegStr HKCU "Software\Classes\.mmd"      "" "ColaMD.Document"
+  WriteRegStr HKCU "Software\Classes\.mdown"    "" "ColaMD.Document"
+  WriteRegStr HKCU "Software\Classes\.mdtxt"    "" "ColaMD.Document"
+  WriteRegStr HKCU "Software\Classes\.mdtext"   "" "ColaMD.Document"
+  WriteRegStr HKCU "Software\Classes\.mdx"      "" "ColaMD.Document"
 
-  WriteRegStr HKCU "Software\Classes\MarkText.Document" \
-    "" "MarkText Markdown Document"
-  WriteRegExpandStr HKCU "Software\Classes\MarkText.Document\DefaultIcon" \
+  WriteRegStr HKCU "Software\Classes\ColaMD.Document" \
+    "" "ColaMD Markdown Document"
+  WriteRegExpandStr HKCU "Software\Classes\ColaMD.Document\DefaultIcon" \
     "" "$INSTDIR\resources\icons\md.ico,0"
-  WriteRegExpandStr HKCU "Software\Classes\MarkText.Document\shell\open\command" \
-    "" '"$INSTDIR\marktext.exe" "%1"'
+  WriteRegExpandStr HKCU "Software\Classes\ColaMD.Document\shell\open\command" \
+    "" '"$INSTDIR\colamd.exe" "%1"'
 
 SkipAssoc:
 !macroend
@@ -30,13 +30,13 @@ SkipAssoc:
 ; customUnInstall macro cleans up on uninstall
 !macro customUnInstall
   ; Delete the open command subtree
-  DeleteRegKey HKCU "Software\Classes\MarkText.Document\shell\open\command"
-  DeleteRegKey HKCU "Software\Classes\MarkText.Document\shell\open"
-  DeleteRegKey HKCU "Software\Classes\MarkText.Document\shell"
+  DeleteRegKey HKCU "Software\Classes\ColaMD.Document\shell\open\command"
+  DeleteRegKey HKCU "Software\Classes\ColaMD.Document\shell\open"
+  DeleteRegKey HKCU "Software\Classes\ColaMD.Document\shell"
 
   ; Delete the DefaultIcon and ProgID
-  DeleteRegKey HKCU "Software\Classes\MarkText.Document\DefaultIcon"
-  DeleteRegKey HKCU "Software\Classes\MarkText.Document"
+  DeleteRegKey HKCU "Software\Classes\ColaMD.Document\DefaultIcon"
+  DeleteRegKey HKCU "Software\Classes\ColaMD.Document"
 
   ; Delete each extension mapping
   DeleteRegKey HKCU "Software\Classes\.md"
@@ -49,6 +49,6 @@ SkipAssoc:
 
   MessageBox MB_YESNO "Do you want to delete user settings?" /SD IDNO IDNO SkipRemoval
     SetShellVarContext current
-    RMDir /r "$APPDATA\marktext"
+    RMDir /r "$APPDATA\colamd"
   SkipRemoval:
 !macroend

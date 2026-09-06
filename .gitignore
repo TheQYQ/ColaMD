@@ -21,3 +21,4 @@ playwright-report/
 .claude/
 .agents/
 .agent/
+.zcode/

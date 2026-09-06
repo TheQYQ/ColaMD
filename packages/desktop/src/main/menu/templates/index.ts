@@ -3,7 +3,7 @@ import edit from './edit'
 import prefEdit from './prefEdit'
 import file from './file'
 import help from './help'
-import marktext from './marktext'
+import colamd from './colamd'
 import view from './view'
 import window from './window'
 import paragraph from './paragraph'
@@ -21,7 +21,7 @@ export { default as dockMenu } from './dock'
  */
 export const configSettingMenu = (keybindings: Keybindings): MenuItemConstructorOptions[] => {
   return [
-    ...(process.platform === 'darwin' ? [marktext(keybindings)] : []),
+    ...(process.platform === 'darwin' ? [colamd(keybindings)] : []),
     prefEdit(keybindings),
     help()
   ]
@@ -34,13 +34,13 @@ export const configSettingMenu = (keybindings: Keybindings): MenuItemConstructor
  * @param preferences The preference instance.
  * @param recentlyUsedFiles The recently used files.
  */
-export default function(
+export default function (
   keybindings: Keybindings,
   preferences: Preference,
   recentlyUsedFiles: string[] = []
 ): MenuItemConstructorOptions[] {
   return [
-    ...(process.platform === 'darwin' ? [marktext(keybindings)] : []),
+    ...(process.platform === 'darwin' ? [colamd(keybindings)] : []),
     file(keybindings, preferences, recentlyUsedFiles),
     edit(keybindings),
     paragraph(keybindings),

@@ -455,7 +455,7 @@ ol.mu-order-list ol.mu-order-list ul.mu-bullet-list {
     list-style-type: square;
 }
 
-/* Focus mode (mirrors marktext muyajs `.ag-focus-mode`): when the editor
+/* Focus mode (mirrors colamd muyajs `.ag-focus-mode`): when the editor
    container carries `mu-focus-mode`, dim every top-level block and restore full
    opacity on the active one. `mu-active` is applied to the whole ancestor chain
    of the focused content block, so the top-level block containing the cursor
@@ -643,7 +643,7 @@ li.mu-task-list-item > span.mu-checkbox-checked::before {
     margin-bottom: 0;
 }
 
-/* Cross-cell drag selection (port of marktext's `.ag-cell-selected`): the
+/* Cross-cell drag selection (port of colamd's `.ag-cell-selected`): the
    rectangle of cells the user dragged across is tinted via the per-cell
    `::before` overlay so it reads as one contiguous selection. Every cell
    (header included) renders as a `td`, and the overlay already paints the cell
@@ -788,7 +788,7 @@ figure.mu-math-block div.mu-math-preview > svg {
     width: 100%;
 }
 
-/* Diagram SVG recoloring — port of marktext's legacy theme block
+/* Diagram SVG recoloring — port of colamd's legacy theme block
    (packages/muyajs/themes/default.css `figure[data-role] svg …`, ~lines
    689-720) adapted to muya's DOM and kebab-cased vars. Mermaid and
    vega-lite render an inline <svg> inside `.mu-diagram-preview`; these
@@ -978,7 +978,7 @@ pre.mu-active.mu-fenced-code::after {
     min-width: 2em;
 }
 
-/* Footnote definition block — port of marktext's `figure[data-role='FOOTNOTE']`
+/* Footnote definition block — port of colamd's `figure[data-role='FOOTNOTE']`
    styling (src/muya/lib/assets/styles/index.css:194-246) with class prefix
    `ag-` → `mu-` and CSS-var names rebound to the new repo's kebab-case set.
    Layout: tinted figure with the `[^id]:` label absolutely positioned at the
@@ -1040,7 +1040,7 @@ pre.mu-active.mu-fenced-code::after {
 }
 
 /* The lowercase "footnote" badge in the top-right corner, only when the
-   block is active (focus inside its body) — same hint marktext shows via
+   block is active (focus inside its body) — same hint colamd shows via
    `figure[data-role='FOOTNOTE'].ag-active::before`. */
 .mu-container figure.mu-footnote.mu-active::before {
     position: absolute;

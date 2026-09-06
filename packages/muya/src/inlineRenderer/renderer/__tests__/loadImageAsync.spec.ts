@@ -31,7 +31,7 @@ function makeRenderer(): IFakeRenderer {
     };
 }
 
-// Regression for marktext commit bca2ed62 (#3001 / #3010):
+// Regression for colamd commit bca2ed62 (#3001 / #3010):
 // "Internal image cache isn't reset if failed to load".
 // The previous cache-key check `!this.loadImageMap.has(src)` would skip
 // re-loading even after a transient failure, poisoning the entry forever.

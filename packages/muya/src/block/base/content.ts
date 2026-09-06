@@ -310,7 +310,7 @@ function lineBreakAutoPair(
     ) {
         text = blockText + event.data;
         // I don't know why firefox don't need to offset++
-        // For more info: https://github.com/marktext/muya/issues/130
+        // For more info: https://github.com/colamd/muya/issues/130
         if (!isFirefox) {
             start.offset++;
             end.offset++;

@@ -47,10 +47,10 @@ const electronRebuildBin = path.join(desktopRoot, 'node_modules', '.bin', `elect
 const nativeKeymapDir = path.join(desktopRoot, 'node_modules', 'native-keymap')
 if (!fs.existsSync(nativeKeymapDir)) {
   console.log('Installing native-keymap source (skipping compilation)...')
-  // native-keymap is already in marktext's optionalDependencies; the add
+  // native-keymap is already in colamd's optionalDependencies; the add
   // re-installs without changing the version range.
   if (isPnpm) {
-    run('pnpm --filter marktext add native-keymap --ignore-scripts')
+    run('pnpm --filter colamd add native-keymap --ignore-scripts')
   } else {
     run('npm install native-keymap --ignore-scripts --no-save', { cwd: desktopRoot })
   }

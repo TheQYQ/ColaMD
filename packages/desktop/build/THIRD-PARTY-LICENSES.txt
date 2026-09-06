@@ -1,7 +1,7 @@
 # Third Party Notices
 -------------------------------------------------
 
-This file contains all third-party packages that are bundled and shipped with MarkText.
+This file contains all third-party packages that are bundled and shipped with ColaMD.
 
 -------------------------------------------------
 # Summary
@@ -45,7 +45,7 @@ This file contains all third-party packages that are bundled and shipped with Ma
 36. keytar (MIT)
 37. languine (MIT)
 38. lodash (MIT)
-39. marktext (MIT*)
+39. colamd (MIT*)
 40. mermaid (MIT)
 41. mitt (MIT)
 42. native-keymap (MIT)
@@ -295,7 +295,7 @@ undefined
 
 
 
-# marktext (MIT*)
+# colamd (MIT*)
 -------------------------------------------------
 undefined
 

@@ -34,7 +34,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
     const { dataCenterPath, userDataPath } = paths
     this.dataCenterPath = dataCenterPath
     this.userDataPath = userDataPath
-    this.serviceName = 'marktext'
+    this.serviceName = 'colamd'
     this.encryptKeys = []
     this.hasDataCenterFile = fs.existsSync(
       path.join(this.dataCenterPath, `./${DATA_CENTER_NAME}.json`)
@@ -164,14 +164,14 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
       this.setItem('imageFolderPath', newPath)
     })
 
-    ipcMain.on('mt::ask-for-user-data', async(e) => {
+    ipcMain.on('mt::ask-for-user-data', async (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const userData = await this.getAll()
       win.webContents.send('mt::user-preference', userData)
     })
 
-    ipcMain.on('mt::ask-for-modify-image-folder-path', async(e, imagePath?: string) => {
+    ipcMain.on('mt::ask-for-modify-image-folder-path', async (e, imagePath?: string) => {
       if (!imagePath) {
         const win = BrowserWindow.fromWebContents(e.sender)
         if (!win) return
@@ -191,7 +191,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
       this.setItems(userData)
     })
 
-    ipcMain.handle('mt::ask-for-image-path', async(e) => {
+    ipcMain.handle('mt::ask-for-image-path', async (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return ''
       const { filePaths } = await dialog.showOpenDialog(win, {

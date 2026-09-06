@@ -1488,7 +1488,7 @@ export class Muya {
             : text;
     }
 
-    /** Cycle the heading level (marktext upgrade/degrade semantics). */
+    /** Cycle the heading level (colamd upgrade/degrade semantics). */
     private _changeHeadingLevel(block: Parent, type: 'upgrade heading' | 'degrade heading') {
         const state = block.getState();
         const level = isAtxHeadingState(state) ? state.meta.level : 0;

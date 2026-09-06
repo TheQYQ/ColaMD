@@ -2,49 +2,49 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-# MarkText
+# ColaMD
 
 ## Project Overview
 
-MarkText is a WYSIWYG markdown editor built on Electron + Vue 3. It supports CommonMark, GitHub Flavored Markdown, math (KaTeX), Mermaid diagrams, PlantUML, and multiple editing modes (focus, typewriter, source-code).
+ColaMD is a WYSIWYG markdown editor built on Electron + Vue 3. It supports CommonMark, GitHub Flavored Markdown, math (KaTeX), Mermaid diagrams, PlantUML, and multiple editing modes (focus, typewriter, source-code).
 
 - **Version**: see `package.json`
 - **License**: MIT
-- **Repository**: https://github.com/marktext/marktext
+- **Repository**: https://github.com/TheQYQ/ColaMD
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Language | TypeScript 5.9 (strict mode) — `packages/muyajs/` retained as JS via ambient shim |
-| Desktop shell | Electron 42 |
-| Build system | electron-vite 5 |
-| Packaging | electron-builder 26 |
-| Frontend framework | Vue 3 |
-| State management | Pinia 3 |
-| Routing | Vue Router 4 |
-| UI library | Element Plus |
-| Unit tests | Vitest 4 |
-| E2E tests | Playwright |
-| Package manager | pnpm >=10 workspace (`packageManager: pnpm@10.33.4`) |
-| Repo layout | pnpm monorepo — see Directory Structure |
-| Node.js minimum | >=20.19.0 (PR CI: Node 22.21.1 · release CI: Node 24.14.1) |
+| Layer              | Technology                                                 |
+| ------------------ | ---------------------------------------------------------- |
+| Language           | TypeScript 5.9 (strict mode)                               |
+| Desktop shell      | Electron 42                                                |
+| Build system       | electron-vite 5                                            |
+| Packaging          | electron-builder 26                                        |
+| Frontend framework | Vue 3                                                      |
+| State management   | Pinia 3                                                    |
+| Routing            | Vue Router 4                                               |
+| UI library         | Element Plus                                               |
+| Unit tests         | Vitest 4                                                   |
+| E2E tests          | Playwright                                                 |
+| Package manager    | pnpm >=10 workspace (`packageManager: pnpm@10.33.4`)       |
+| Repo layout        | pnpm monorepo — see Directory Structure                    |
+| Node.js minimum    | >=20.19.0 (PR CI: Node 22.21.1 · release CI: Node 24.14.1) |
 
 ## Directory Structure
 
-This is a pnpm workspace. Three packages live under `packages/`, and the
+This is a pnpm workspace. Two packages live under `packages/`, and the
 root holds only shared tooling and CI-facing scripts.
 
 ```
 <repo-root>/
   package.json              Workspace orchestrator — every CI-facing script
                             proxies to packages/desktop via `pnpm --filter
-                            marktext ...`. CI invocations are unchanged.
+                            colamd ...`. CI invocations are unchanged.
   pnpm-workspace.yaml       `packages: ['packages/*']` plus allowBuilds.
   pnpm-lock.yaml            Single lockfile, shared across all packages.
-  eslint.config.js          Root ESLint v9 flat config (covers desktop +
-                            muyajs; website has its own ESLint v8 config
-                            and is ignored here).
+  eslint.config.js          Root ESLint v9 flat config (covers desktop;
+                            packages/muya self-lints via its own antfu
+                            config and is ignored here).
   scripts/                  Workspace-level scripts. postinstall.ts,
                             minify-locales.ts, generateThirdPartyLicense.ts,
                             validateLicenses.ts, thirdPartyChecker.ts all
@@ -55,10 +55,10 @@ root holds only shared tooling and CI-facing scripts.
                             `directories.output: ../../dist` so CI artifact
                             globs `dist/*` still apply).
   packages/
-    desktop/                The Electron app (name: "marktext").
+    desktop/                The Electron app (name: "colamd").
       package.json          Holds all Electron / Vue / build-time deps and
                             the dev/build/test/typecheck scripts. Depends on
-                            @marktext/muyajs via workspace:*.
+                            @muyajs/core via workspace:*.
       electron.vite.config.ts
       electron-builder.yml  directories.output points at ../../dist.
       tsconfig.json / tsconfig.base.json
@@ -94,32 +94,13 @@ root holds only shared tooling and CI-facing scripts.
         shared/             Cross-process types (`shared/types/`) and the
                             IPC contract (`shared/types/ipc.ts`).
         types/              Ambient .d.ts declarations.
-    muyajs/                 Legacy markdown editor engine
-                            (name: "@marktext/muyajs"). Primarily JS + DOM,
-                            avoids Electron APIs. Exception:
-                            packages/muyajs/lib/parser/render/plantuml.js
-                            imports Node's `zlib`. Being retired: the
-                            desktop renderer now consumes @muyajs/core
-                            (packages/muya) as its editor engine; only a
-                            handful of legacy `muya/` alias call sites
-                            remain (see #4244 era sandbox work for the
-                            boundary tightening).
-      lib/
-        contentState/       Block structure and document transformations.
-        parser/             Markdown parser.
-        renderers/          WYSIWYG renderer.
-        ui/                 Inline toolbar, emoji picker, etc.
-        utils/              Internal utilities.
-      themes/               Editor themes (Prism + fonts).
-    muya/                   TypeScript rewrite of muya
-                            (name: "@muyajs/core"; upstream:
-                            https://github.com/marktext/muya). Built on
+    muya/                   The editor engine
+                            (name: "@muyajs/core"). Built on
                             ot-json1 + ot-text-unicode + snabbdom + marked@16
                             + rxjs. Self-contained: own eslint config
                             (antfu), own stylelint, own madge, own vitest
-                            spec suites (CommonMark + GFM). Now the editor
-                            engine the desktop renderer consumes; legacy
-                            packages/muyajs is being retired. See
+                            spec suites (CommonMark + GFM). Consumed by the
+                            desktop renderer as its editor engine. See
                             packages/muya/CLAUDE.md for layout and commands.
       src/                  TS source. Public entrypoint src/index.ts.
       test/spec/            CommonMark 0.31 + GFM 0.29-gfm conformance.
@@ -130,11 +111,6 @@ root holds only shared tooling and CI-facing scripts.
                             wired in playwright.config.ts but deferred
                             until BACKLOG Phase 3 lands engine-independent
                             specs.
-    website/                marktext-website (Vite + React 18). Standalone
-                            toolchain; depends on @muyajs/core from npm,
-                            not on the local muyajs package. Not part of
-                            desktop CI today.
-      src/ / public/ / build/ / vite.config.ts / tsconfig.json
 ```
 
 The root has no `src/`, `test/`, `static/`, or `build/` of its own anymore — they all live in `packages/desktop/`.
@@ -142,7 +118,7 @@ The root has no `src/`, `test/`, `static/`, or `build/` of its own anymore — t
 ## Development Workflow
 
 All commands run from the repo root. The root `package.json` proxies every
-desktop-specific script to `packages/desktop` via `pnpm --filter marktext`,
+desktop-specific script to `packages/desktop` via `pnpm --filter colamd`,
 so the names and behavior are unchanged from the pre-monorepo layout.
 
 ```bash
@@ -171,10 +147,6 @@ pnpm run minify-locales
 # Performance debugging — exposes a Node inspector on :5858 against the previewed build
 pnpm run perf:inspect       # attach when ready
 pnpm run perf:inspect-brk   # break on first line
-
-# Website (not yet wired into CI)
-pnpm --filter marktext-website dev      # Vite dev server
-pnpm --filter marktext-website build    # static build → packages/website/build/
 ```
 
 If you need to invoke a script directly inside a package, use
@@ -216,7 +188,7 @@ Enforced by ESLint + Prettier. Run `pnpm run lint` and `pnpm run typecheck` befo
 - 2-space indentation
 - No semicolons
 - Single quotes
-- TypeScript with `strict: true`; see `packages/website/content/docs/dev/TYPESCRIPT.md`
+- TypeScript with `strict: true`; see `packages/desktop/tsconfig.base.json`
 - Cross-process types live in `packages/desktop/src/shared/types/`; ambient declarations in `packages/desktop/src/types/`
 - IPC channels are typed via the contract in `packages/desktop/src/shared/types/ipc.ts`
 - The renderer is fully sandboxed — every IPC and Node access goes through `window.electron.*` / `window.fileUtils.*` etc. (typed in `packages/desktop/src/types/global.d.ts`)
@@ -228,8 +200,8 @@ Follow `.github/COMMENTING-GUIDELINES.md` for every comment you write. The core 
 ## Architecture: Three-Process Electron Model
 
 All Electron processes live in `packages/desktop/`. Muya is a separate
-workspace package that the renderer (and tests) consume via the `muya`
-alias / `@marktext/muyajs` workspace dep.
+workspace package (`@muyajs/core`) that the renderer and tests consume
+via the workspace dependency.
 
 ```
 main process  (packages/desktop/src/main/)
@@ -250,33 +222,20 @@ renderer  (packages/desktop/src/renderer/)
   ├── Hosts both Muya (WYSIWYG) and CodeMirror (source-code mode)
   └── Compiled to ES Modules only
 
-Muya  (packages/muyajs/)            ← workspace package @marktext/muyajs
+Muya  (packages/muya/)              ← workspace package @muyajs/core
   ├── Self-contained editor backend
-  ├── Primarily avoids Electron APIs; uses Node's zlib for PlantUML encoding
-  ├── Handles markdown parsing, block data structure, document export, rendering
-  └── packages/muya/ (@muyajs/core, the TS rewrite from
-      https://github.com/marktext/muya) has landed and is now the engine
-      the desktop renderer consumes; muyajs is being retired.
+  ├── Avoids Electron APIs
+  └── Handles markdown parsing, block data structure, document export, rendering
 ```
 
 ## IPC Conventions
 
 Most IPC channels between main and renderer use the `mt::` prefix (e.g. `mt::open-new-tab`, `mt::file-saved`). Some internal channels do not follow this convention (e.g. `language-changed`).
 
-See `packages/website/content/docs/dev/IPC.md` for conventions and examples.
-
 ## Further Reading
 
-`packages/website/content/docs/dev/` contains the deeper developer documentation referenced by this guide. Same files are published as the developer docs section on https://marktext.me/docs/dev/overview:
-
-- `ARCHITECTURE.md` — process/module layering beyond the summary above
-- `BUILD.md` — full platform build prerequisites (including the Arch Linux deps added recently)
-- `DEBUGGING.md` — attaching debuggers to main/renderer processes
-- `INTERFACE.md` — Muya and renderer public interfaces
-- `IPC.md` — full IPC channel catalog and `mt::` conventions
-- `LINUX_DEV.md` — Linux-specific dev environment setup
-- `PERFORMANCE.md` — perf measurement workflow (pairs with `pnpm run perf:inspect`)
-- `RELEASE.md` / `RELEASE_HOTFIX.md` — release process
+- `packages/muya/CLAUDE.md` — muya engine layout, conventions, and commands
+- `docs/` — long-form developer docs
 
 ## Important Build Notes
 
@@ -289,8 +248,7 @@ See `packages/website/content/docs/dev/IPC.md` for conventions and examples.
   - `@` → `packages/desktop/src/renderer/src`
   - `common` → `packages/desktop/src/common`
   - `@shared` → `packages/desktop/src/shared`
-  - `muya` → `../muyajs` (i.e. `packages/muyajs`). Renderer-side imports therefore look like `muya/lib/...` (the alias) — the workspace dep `@marktext/muyajs` is declared in `packages/desktop/package.json` so module resolution stays inside the workspace.
-- **Workspace deps**: muya's own npm runtime deps (`github-markdown-css`, `katex`, `dompurify`, `snabbdom`, …) are declared in `packages/muyajs/package.json` so Node module resolution from `packages/muyajs/lib/*.js` finds them inside the workspace rather than walking out to a parent directory.
+- **Workspace deps**: muya's own npm runtime deps (`github-markdown-css`, `katex`, `dompurify`, `snabbdom`, …) are declared in `packages/muya/package.json` so module resolution stays inside the workspace rather than walking out to a parent directory.
 - **Patches**: `patch-package` patches live at `packages/desktop/patches/`. The root `postinstall` calls patch-package with `cwd=packages/desktop` so the path resolves correctly.
 
 ## Contribution

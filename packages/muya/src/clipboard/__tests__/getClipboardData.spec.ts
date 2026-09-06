@@ -14,7 +14,7 @@ vi.mock('../../utils/prism/index', () => ({
 
 const Clipboard = (await import('../index')).default;
 
-// Regression for marktext commits 393139e5 (#2197 — "unnecessary character
+// Regression for colamd commits 393139e5 (#2197 — "unnecessary character
 // sanitation on clipboard output") and dc54c7b6-adjacent code-content path:
 // the text copied to the clipboard from a single-block selection MUST NOT be
 // HTML-escaped. The user copied `<`, they should get `<` on the clipboard,
@@ -76,8 +76,8 @@ describe('clipboard.getClipboardData — single-block selection is not HTML-esca
     });
 });
 
-// Regression for marktext commit 0028a4bc (#2375 — "Fix issue with not being
-// able to copy table cell"). marktext's old `paragraphCtrl.selectTableCells`
+// Regression for colamd commit 0028a4bc (#2375 — "Fix issue with not being
+// able to copy table cell"). colamd's old `paragraphCtrl.selectTableCells`
 // built a virtual {key, top, right, bottom, left, ...} cell descriptor for
 // single-cell copy, but forgot the `text` field; the descriptor went to the
 // clipboard with an empty body, so copying a cell produced "".
@@ -88,7 +88,7 @@ describe('clipboard.getClipboardData — single-block selection is not HTML-esca
 // reads `anchorBlock.text.substring(begin, end)`. So the text always survives
 // — provided the call site still feeds the cell's text into that substring.
 // This defensive test pins that contract.
-describe('clipboard.getClipboardData — single table-cell copy keeps the cell text (marktext 0028a4bc)', () => {
+describe('clipboard.getClipboardData — single table-cell copy keeps the cell text (colamd 0028a4bc)', () => {
     it('copies the full cell text when the user selects everything in the cell', () => {
         const cellText = 'cell <body> & "value"';
         const clipboard = makeClipboard(
@@ -116,7 +116,7 @@ describe('clipboard.getClipboardData — single table-cell copy keeps the cell t
     });
 
     it('returns the cell text even when it is the only content', () => {
-        // The original marktext bug: descriptor had no `text` → output "".
+        // The original colamd bug: descriptor had no `text` → output "".
         // Here we assert the path that fills it.
         const clipboard = makeClipboard('only-cell', 0, 9, 'table.cell.content');
 

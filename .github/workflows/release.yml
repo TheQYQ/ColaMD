@@ -1,4 +1,4 @@
-name: Release MarkText
+name: Release ColaMD
 
 on:
   push:
@@ -134,7 +134,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: marktext-${{ matrix.name }}
+          name: colamd-${{ matrix.name }}
           retention-days: 7
           if-no-files-found: error
           path: |
@@ -191,9 +191,9 @@ jobs:
               echo ""
             fi
             echo "## ⚠️ Note for macOS users"
-            echo "Builds are unsigned (no Apple Developer ID). After dragging MarkText into Applications, clear the quarantine flag once:"
+            echo "Builds are unsigned (no Apple Developer ID). After dragging ColaMD into Applications, clear the quarantine flag once:"
             echo '```'
-            echo 'xattr -cr /Applications/marktext.app'
+            echo 'xattr -cr /Applications/ColaMD.app'
             echo '```'
             echo ""
             echo "## Verifying downloads"

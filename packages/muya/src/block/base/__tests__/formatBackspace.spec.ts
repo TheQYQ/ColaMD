@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Muya } from '../../../muya';
 
 // Coverage for `Format.backspaceHandler` — the Firefox-compatibility fix for
-// muya#113 (https://github.com/marktext/muya/issues/113). When the collapsed
+// muya#113 (https://github.com/colamd/muya/issues/113). When the collapsed
 // caret rests on an inline-syntax marker boundary, a raw contenteditable
 // Backspace would delete one marker character and leave the rendered run with
 // an unbalanced / duplicated marker. `backspaceHandler` intercepts that case:

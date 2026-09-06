@@ -131,8 +131,8 @@ class RipgrepDirectorySearcher {
   rgPath: string
 
   constructor() {
-    const marktext = window.marktext
-    this.rgPath = marktext?.paths?.ripgrepBinaryPath || window.rgPath || ''
+    const colamd = window.colamd
+    this.rgPath = colamd?.paths?.ripgrepBinaryPath || window.rgPath || ''
   }
 
   search(directories: string[], pattern: string, options: RipgrepSearchOptions): CancellableSearch {

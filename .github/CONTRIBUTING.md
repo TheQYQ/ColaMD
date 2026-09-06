@@ -1,8 +1,7 @@
-# MarkText Contributing Guide
+# ColaMD Contributing Guide
 
-We are really excited that you are interested in contributing to MarkText :tada:. Before submitting your contribution, please make sure to take a moment and read through the following guidelines.
+We are really excited that you are interested in contributing to ColaMD :tada:. Before submitting your contribution, please make sure to take a moment and read through the following guidelines.
 
-- [Code of Conduct](../packages/website/content/docs/dev/CODE_OF_CONDUCT.md)
 - [Philosophy](#philosophy)
 - [Issue reporting guidelines](#issue-reporting-guidelines)
 - [Pull request guidelines](#pull-request-guidelines)
@@ -15,16 +14,16 @@ We are really excited that you are interested in contributing to MarkText :tada:
 
 ## Philosophy
 
-🔑 Our philosophy is to keep things clean, simple and minimal. 
-MarkText is constantly changing and we want these improvements to align with our philosophy. For example, look at the side bar and tabs; these two panels provide awesome functionality *and* aren't distracting to the user. We'll continue adding more features (like plugins) that can be activated via 'settings' to improve MarkText. This will allow everyone to customize MarkText for their needs and provide a minimal default interface.
+🔑 Our philosophy is to keep things clean, simple and minimal.
+ColaMD is constantly changing and we want these improvements to align with our philosophy. For example, look at the side bar and tabs; these two panels provide awesome functionality _and_ aren't distracting to the user. We'll continue adding more features (like plugins) that can be activated via 'settings' to improve ColaMD. This will allow everyone to customize ColaMD for their needs and provide a minimal default interface.
 
 ## Issue Reporting Guidelines
 
-Please search for similar issues before opening an issue and always follow the [issue template](.github/ISSUE_TEMPLATE/). Please review the following Pull Request guidelines before making your own PR. 
+Please search for similar issues before opening an issue and always follow the [issue template](.github/ISSUE_TEMPLATE/). Please review the following Pull Request guidelines before making your own PR.
 
 ## Pull Request Guidelines
 
-**In *all* Pull Requests:** provide a detailed description of the problem, as well as a demonstration with screen recordings and/or screenshots.
+**In _all_ Pull Requests:** provide a detailed description of the problem, as well as a demonstration with screen recordings and/or screenshots.
 
 Please make sure the following is done before submitting a PR:
 
@@ -44,11 +43,11 @@ If you add new feature:
 If you fix a bug:
 
 - If you are resolving a special issue, please add `fix: #<issue number> <short message>` in your PR title (e.g.`fix: #3899 update entities encoding/decoding`).
-- Provide a detailed description of the bug in your PR and/or link to the issue. 
+- Provide a detailed description of the bug in your PR and/or link to the issue.
 
 ### Where should I start?
 
-A good way to start is to find an [issue](https://github.com/marktext/marktext/issues) labeled as `bug`, `help wanted` or `feature request`. The `good first issue` issues are good for newcomers. Please discuss the solution for larger issues first and after the final solution is approved by the MarkText members, you can submit/work on the PR. For small changes you can directly open a PR.
+A good way to start is to find an [issue](https://github.com/TheQYQ/ColaMD/issues) labeled as `bug`, `help wanted` or `feature request`. The `good first issue` issues are good for newcomers. Please discuss the solution for larger issues first and after the final solution is approved by the ColaMD members, you can submit/work on the PR. For small changes you can directly open a PR.
 
 Other ways to help:
 
@@ -56,13 +55,13 @@ Other ways to help:
 - Translation (currently unavailable)
 - Design icons and logos
 - Improve the UI
-- Write tests for MarkText
-- Share your thoughts! We want to hear about features you think are missing, any bugs you find, and why you :heart: MarkText.
+- Write tests for ColaMD
+- Share your thoughts! We want to hear about features you think are missing, any bugs you find, and why you :heart: ColaMD.
 
 ## Quick start
 
 1. Fork the repository.
-2. Clone your fork: `git clone git@github.com:<username>/marktext.git`
+2. Clone your fork: `git clone git@github.com:<username>/colamd.git`
 3. Create a feature branch: `git checkout -b feature`
 4. Make your changes and push your branch.
 5. Create a PR against `develop` and describe your changes.
@@ -77,7 +76,7 @@ If there are conflicts or you want to update your local branch, please do the fo
 
 ### Build Instructions
 
-🔗 [Build Instructions](https://marktext.me/docs/dev/build)
+🔗 [Build Instructions](https://github.com/TheQYQ/ColaMD/docs/dev/build)
 
 ### Style Guide
 
@@ -86,7 +85,7 @@ You can run ESLint (`pnpm run lint`) to help you to follow the style guide.
 - ES6 and "best practices"
 - 2 space indent
 - no semicolons
-- documentation: [JSDoc](https://github.com/jsdoc/jsdoc) 
+- documentation: [JSDoc](https://github.com/jsdoc/jsdoc)
 
 ### Commenting Guidelines
 
@@ -94,4 +93,4 @@ When writing comments, please follow our [Commenting Guidelines](./COMMENTING-GU
 
 ## Developer Documentation
 
-Please [click here](https://marktext.me/docs/dev/overview) for more details.
+Please [click here](https://github.com/TheQYQ/ColaMD/docs/dev/overview) for more details.

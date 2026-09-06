@@ -117,7 +117,12 @@ interface AffiliationEntry {
 }
 
 interface SelectionChange {
-  start: { key: string; offset: number; block?: { text?: string; functionType?: string }; type?: string }
+  start: {
+    key: string
+    offset: number
+    block?: { text?: string; functionType?: string }
+    type?: string
+  }
   end: { key: string; offset: number; block?: { functionType?: string }; type?: string }
   affiliation?: AffiliationEntry[]
   hasFrontMatter?: boolean
@@ -210,8 +215,8 @@ export const useEditorStore = defineStore('editor', {
         const tab = restoredTabId
           ? this.tabs.find((t) => t.id === restoredTabId)
           : this.tabs.find((t) =>
-            window.fileUtils.isSamePathSync(t.pathname, warning.pathname ?? '')
-          )
+              window.fileUtils.isSamePathSync(t.pathname, warning.pathname ?? '')
+            )
 
         if (!tab) continue
 
@@ -491,7 +496,7 @@ export const useEditorStore = defineStore('editor', {
       if (!this.currentFile) return
       const { lineEnding } = this.currentFile
       if (lineEnding) {
-        const { windowId } = window.marktext?.env ?? { windowId: -1 }
+        const { windowId } = window.colamd?.env ?? { windowId: -1 }
         window.electron.ipcRenderer.send(
           'mt::update-line-ending-menu',
           windowId,
@@ -872,14 +877,8 @@ export const useEditorStore = defineStore('editor', {
             project: projectStore
           })
         )
-        bus.emit(
-          'cmd::register-command',
-          new LineEndingCommand(this)
-        )
-        bus.emit(
-          'cmd::register-command',
-          new TrailingNewlineCommand(this)
-        )
+        bus.emit('cmd::register-command', new LineEndingCommand(this))
+        bus.emit('cmd::register-command', new TrailingNewlineCommand(this))
 
         setTimeout(() => {
           window.electron.ipcRenderer.send('mt::request-keybindings')
@@ -1108,8 +1107,7 @@ export const useEditorStore = defineStore('editor', {
       this.updateTabIdToIndex() // Update before sending it out to prevent stale mappings.
 
       if (this.currentFile == null && this.tabs.length > 0) {
-        this.currentFile =
-          this.tabs[tabIndex] ?? this.tabs[tabIndex - 1] ?? this.tabs[0] ?? null
+        this.currentFile = this.tabs[tabIndex] ?? this.tabs[tabIndex - 1] ?? this.tabs[0] ?? null
         if (this.currentFile && typeof this.currentFile.markdown === 'string') {
           const { id, markdown, cursor, history, pathname, scrollTop, blocks, muyaIndexCursor } =
             this.currentFile
@@ -1242,7 +1240,10 @@ export const useEditorStore = defineStore('editor', {
     NEW_UNTITLED_TAB({
       markdown: markdownString,
       selected
-    }: { markdown?: string; selected?: boolean }): void {
+    }: {
+      markdown?: string
+      selected?: boolean
+    }): void {
       if (selected == null) {
         selected = true
       }
@@ -1513,7 +1514,7 @@ export const useEditorStore = defineStore('editor', {
         }
       }
 
-      const { windowId } = window.marktext?.env ?? { windowId: -1 }
+      const { windowId } = window.colamd?.env ?? { windowId: -1 }
       window.electron.ipcRenderer.send(
         'mt::editor-selection-changed',
         windowId,
@@ -1537,7 +1538,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     SELECTION_FORMATS(formats: SelectionFormat[]): void {
-      const { windowId } = window.marktext?.env ?? { windowId: -1 }
+      const { windowId } = window.colamd?.env ?? { windowId: -1 }
       window.electron.ipcRenderer.send(
         'mt::update-format-menu',
         windowId,
@@ -1799,10 +1800,7 @@ const getRootFolderFromState = (projectStore: ProjectStoreLike): string => {
  * @param markdown The text to trim.
  * @param trimTrailingNewlineOption The option how we should trim the final newlines.
  */
-const adjustTrailingNewlines = (
-  markdown: string,
-  trimTrailingNewlineOption: number
-): string => {
+const adjustTrailingNewlines = (markdown: string, trimTrailingNewlineOption: number): string => {
   if (!markdown) {
     return ''
   }
@@ -1975,9 +1973,7 @@ const createApplicationMenuState = ({
 /**
  * Creates a object that contains the formats selection state.
  */
-export const createSelectionFormatState = (
-  formats: SelectionFormat[]
-): Record<string, boolean> => {
+export const createSelectionFormatState = (formats: SelectionFormat[]): Record<string, boolean> => {
   const state: Record<string, boolean> = {}
   for (const item of formats) {
     // Underline/superscript/subscript/highlight are carried as `html_tag`
@@ -2079,11 +2075,11 @@ interface BufferedEditorState {
 const createBufferedEditorState = (state: unknown): BufferedEditorState | null => {
   const s = state as
     | {
-      tabs?: unknown
-      currentFileId?: string
-      currentFile?: { id?: string } | null
-      restoreWarnings?: unknown
-    }
+        tabs?: unknown
+        currentFileId?: string
+        currentFile?: { id?: string } | null
+        restoreWarnings?: unknown
+      }
     | null
     | undefined
   if (!s || !Array.isArray(s.tabs)) {
@@ -2095,8 +2091,8 @@ const createBufferedEditorState = (state: unknown): BufferedEditorState | null =
     tabs: (s.tabs as Array<Partial<IFileState> & { id: string }>).map(createBufferedTabState),
     restoreWarnings: Array.isArray(s.restoreWarnings)
       ? (s.restoreWarnings as RestoreWarning[])
-        .map(createBufferedRestoreWarning)
-        .filter((w): w is BufferedRestoreWarning => w !== null)
+          .map(createBufferedRestoreWarning)
+          .filter((w): w is BufferedRestoreWarning => w !== null)
       : []
   }
 }

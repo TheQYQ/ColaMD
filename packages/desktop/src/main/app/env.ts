@@ -73,7 +73,7 @@ const setupEnvironment = (args: Record<string, unknown>): AppEnvironment => {
 
   const isDevMode = process.env.NODE_ENV !== 'production'
   const debug =
-    !!args['--debug'] || !!process.env.MARKTEXT_DEBUG || process.env.NODE_ENV !== 'production'
+    !!args['--debug'] || !!process.env.COLAMD_DEBUG || process.env.NODE_ENV !== 'production'
   const verbose = (args['--verbose'] as number | undefined) || 0
   const safeMode = !!args['--safe']
   const userDataPath = args['--user-data-dir'] as string | undefined // or undefined (= default user data path)
@@ -92,13 +92,13 @@ const setupEnvironment = (args: Record<string, unknown>): AppEnvironment => {
 
   // Keep this for easier access.
   const mutableGlobal = global as unknown as {
-    MARKTEXT_DEBUG: boolean
-    MARKTEXT_DEBUG_VERBOSE: number
-    MARKTEXT_SAFE_MODE: boolean
+    COLAMD_DEBUG: boolean
+    COLAMD_DEBUG_VERBOSE: number
+    COLAMD_SAFE_MODE: boolean
   }
-  mutableGlobal.MARKTEXT_DEBUG = debug
-  mutableGlobal.MARKTEXT_DEBUG_VERBOSE = verbose
-  mutableGlobal.MARKTEXT_SAFE_MODE = safeMode
+  mutableGlobal.COLAMD_DEBUG = debug
+  mutableGlobal.COLAMD_DEBUG_VERBOSE = verbose
+  mutableGlobal.COLAMD_SAFE_MODE = safeMode
 
   return appEnvironment
 }

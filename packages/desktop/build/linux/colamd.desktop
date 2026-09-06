@@ -1,0 +1,17 @@
+[Desktop Entry]
+Name=ColaMD
+Comment=Next generation markdown editor
+Exec=colamd %F
+Terminal=false
+Type=Application
+Icon=colamd
+Categories=Office;TextEditor;Utility;
+MimeType=text/markdown;
+Keywords=colamd;
+StartupWMClass=colamd
+Actions=NewWindow;
+
+[Desktop Action NewWindow]
+Name=New Window
+Exec=colamd --new-window %F
+Icon=colamd

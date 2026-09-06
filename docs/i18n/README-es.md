@@ -1,10 +1,10 @@
-<p align="center"><img src="../assets/logo-small.png" alt="MarkText" width="100" height="100"></p>
+<p align="center"><img src="../assets/logo-small.png" alt="ColaMD" width="100" height="100"></p>
 
-<h1 align="center">MarkText</h1>
+<h1 align="center">ColaMD</h1>
 
 <div align="center">
-  <a href="https://twitter.com/intent/tweet?via=marktextme&url=https://github.com/marktext/marktext/&text=What%20do%20you%20want%20to%20say%20to%20app?&hashtags=happyMarkText">
-    <img src="https://img.shields.io/twitter/url/https/github.com/marktext/marktext.svg?style=for-the-badge" alt="twitter">
+  <a href="https://twitter.com/intent/tweet?via=colamdme&url=https://github.com/TheQYQ/ColaMD/&text=What%20do%20you%20want%20to%20say%20to%20app?&hashtags=happyColaMD">
+    <img src="https://img.shields.io/twitter/url/https/github.com/TheQYQ/ColaMD.svg?style=for-the-badge" alt="twitter">
   </a>
 </div>
 <div align="center">
@@ -18,41 +18,41 @@
 <div align="center">
   <!-- License -->
   <a href="../../LICENSE">
-    <img src="https://img.shields.io/github/license/marktext/marktext.svg" alt="LICENSE">
+    <img src="https://img.shields.io/github/license/TheQYQ/ColaMD.svg" alt="LICENSE">
   </a>
   <!-- Downloads total -->
-  <a href="https://github.com/marktext/marktext/releases">
-    <img src="https://img.shields.io/github/downloads/marktext/marktext/total.svg" alt="total download">
+  <a href="https://github.com/TheQYQ/ColaMD/releases">
+    <img src="https://img.shields.io/github/downloads/TheQYQ/ColaMD/total.svg" alt="total download">
   </a>
   <!-- Downloads latest release -->
-  <a href="https://github.com/marktext/marktext/releases/latest">
-    <img src="https://img.shields.io/github/downloads/marktext/marktext/v0.17.1/total.svg" alt="latest download">
+  <a href="https://github.com/TheQYQ/ColaMD/releases/latest">
+    <img src="https://img.shields.io/github/downloads/TheQYQ/ColaMD/v0.17.1/total.svg" alt="latest download">
   </a>
   <!-- sponsors -->
-  <a href="https://opencollective.com/marktext">
-    <img src="https://opencollective.com/marktext/tiers/silver-sponsors/badge.svg?label=SilverSponsors&color=brightgreen" alt="sponsors">
+  <a href="https://opencollective.com/colamd">
+    <img src="https://opencollective.com/colamd/tiers/silver-sponsors/badge.svg?label=SilverSponsors&color=brightgreen" alt="sponsors">
   </a>
 </div>
 
 <div align="center">
   <h3>
-    <a href="https://github.com/marktext/marktext">
+    <a href="https://github.com/TheQYQ/ColaMD">
       Website
     </a>
     <span> | </span>
-    <a href="https://github.com/marktext/marktext#features">
+    <a href="https://github.com/TheQYQ/ColaMD#features">
       Características
     </a>
     <span> | </span>
-    <a href="https://github.com/marktext/marktext#download-and-installation">
+    <a href="https://github.com/TheQYQ/ColaMD#download-and-installation">
       Descarga e Instalación
     </a>
     <span> | </span>
-    <a href="https://github.com/marktext/marktext#development">
+    <a href="https://github.com/TheQYQ/ColaMD#development">
       Desarrollo
     </a>
     <span> | </span>
-    <a href="https://github.com/marktext/marktext#contribution">
+    <a href="https://github.com/TheQYQ/ColaMD#contribution">
       Contribución
     </a>
   </h3>
@@ -98,26 +98,26 @@
 <div align="center">
   <sub>Este editor Markdown fue creado con ❤︎ por
     <a href="https://github.com/Jocs">Jocs</a> y
-    <a href="https://github.com/marktext/marktext/graphs/contributors">
+    <a href="https://github.com/TheQYQ/ColaMD/graphs/contributors">
       colaboradores
     </a>.</sub>
 </div>
 
 <br />
 
-<h2 align="center">Apoyando a MarkText</h2>
+<h2 align="center">Apoyando a ColaMD</h2>
 
-MarkText es un editor de Markdown de código abierto impulsado por el apoyo de su comunidad. Si MarkText mejora tu flujo de trabajo, considera [patrocinar el proyecto](https://github.com/sponsors/marktext). Gracias a todos los patrocinadores ❤️
+ColaMD es un editor de Markdown de código abierto impulsado por el apoyo de su comunidad. Si ColaMD mejora tu flujo de trabajo, considera [patrocinar el proyecto](https://github.com/sponsors/colamd). Gracias a todos los patrocinadores ❤️
 
 **Patrocinador Especial**
 
-| [<img src="../assets/sponsors/serpapi.png" width="150">](https://serpapi.com/?utm_source=marktext) | [Extrae resultados de Google y otros motores de búsqueda con nuestra API rápida, sencilla y completa.](https://serpapi.com/?utm_source=marktext) |
-| ------------- |:-------------|
-| [<img src="../assets/sponsors/ukey.png" width="150">](https://www.ukey.com) | [Secure hardware wallet made simple.](https://www.ukey.com) |
+| [<img src="../assets/sponsors/serpapi.png" width="150">](https://serpapi.com/?utm_source=colamd) | [Extrae resultados de Google y otros motores de búsqueda con nuestra API rápida, sencilla y completa.](https://serpapi.com/?utm_source=colamd) |
+| ------------------------------------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------- |
+| [<img src="../assets/sponsors/ukey.png" width="150">](https://www.ukey.com)                      | [Secure hardware wallet made simple.](https://www.ukey.com)                                                                                    |
 
 ## Capturas de pantalla
 
-![](../assets/marktext.png?raw=true)
+![](../assets/colamd.png?raw=true)
 
 ## Características
 
@@ -134,15 +134,15 @@ MarkText es un editor de Markdown de código abierto impulsado por el apoyo de s
 
 ![Plataforma](https://img.shields.io/static/v1.svg?label=Platform&message=Linux-64%20|%20macOS-64%20|%20Win-32%20|%20Win-64&style=for-the-badge)
 
-| ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/mac-pass-sm.png)                                                                                                  | ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/windows-pass-sm.png)                                                                                                          | ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/linux-pass-sm.png)                                                                                                                        |
-|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-| [![latest version](https://img.shields.io/github/downloads/marktext/marktext/latest/marktext-x64.dmg.svg)](https://github.com/marktext/marktext/releases/download/v0.17.1/marktext-x64.dmg) | [![latest version](https://img.shields.io/github/downloads/marktext/marktext/latest/marktext-setup.exe.svg)](https://github.com/marktext/marktext/releases/download/v0.17.1/marktext-setup.exe) | [![latest version](https://img.shields.io/github/downloads/marktext/marktext/latest/marktext-x86_64.AppImage.svg)](https://github.com/marktext/marktext/releases/download/v0.17.1/marktext-x86_64.AppImage) |
+|                                       ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/mac-pass-sm.png)                                       |                                       ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/windows-pass-sm.png)                                       |                                              ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/linux-pass-sm.png)                                              |
+| :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [![latest version](https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/colamd-x64.dmg.svg)](https://github.com/TheQYQ/ColaMD/releases/download/v0.17.1/colamd-x64.dmg) | [![latest version](https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/colamd-setup.exe.svg)](https://github.com/TheQYQ/ColaMD/releases/download/v0.17.1/colamd-setup.exe) | [![latest version](https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/colamd-x86_64.AppImage.svg)](https://github.com/TheQYQ/ColaMD/releases/download/v0.17.1/colamd-x86_64.AppImage) |
 
 ¿Quieres ver las nuevas funciones de la última versión? Consulta el [CHANGELOG](../CHANGELOG.md).
 
 #### macOS
 
-Puedes descargar el último `marktext-%version%.dmg` desde la [página de releases](https://github.com/marktext/marktext/releases/latest) o instalar MarkText usando [**homebrew cask**](https://github.com/caskroom/homebrew-cask). Para usar Homebrew-Cask solo necesitas tener [Homebrew](https://brew.sh/) instalado.
+Puedes descargar el último `colamd-%version%.dmg` desde la [página de releases](https://github.com/TheQYQ/ColaMD/releases/latest) o instalar ColaMD usando [**homebrew cask**](https://github.com/caskroom/homebrew-cask). Para usar Homebrew-Cask solo necesitas tener [Homebrew](https://brew.sh/) instalado.
 
 ```bash
 brew install --cask mark-text
@@ -150,18 +150,18 @@ brew install --cask mark-text
 
 #### Windows
 
-Simplemente descarga e instala MarkText mediante el asistente de configuración (`marktext-setup-%version%.exe`) y elige si instalarlo por usuario o para todo el sistema. Alternativamente, instala MarkText usando un gestor de paquetes como [Chocolatey](https://chocolatey.org/) o [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/).
+Simplemente descarga e instala ColaMD mediante el asistente de configuración (`colamd-setup-%version%.exe`) y elige si instalarlo por usuario o para todo el sistema. Alternativamente, instala ColaMD usando un gestor de paquetes como [Chocolatey](https://chocolatey.org/) o [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/).
 
 Para usar Chocolatey, necesitas tener [Chocolatey](https://chocolatey.org/install) instalado:
 
 ```bash
-choco install marktext
+choco install colamd
 ```
 
 Para usar Winget, necesitas tener [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/#install-winget) instalado:
 
 ```bash
-winget install marktext
+winget install colamd
 ```
 
 #### Linux
@@ -170,27 +170,26 @@ Por favor sigue las [instrucciones de instalación de Linux](../end-user/LINUX.m
 
 #### Otros
 
-Todos los binarios para Linux, macOS y Windows se pueden descargar desde la [página de releases](https://github.com/marktext/marktext/releases/latest). Si no hay una versión disponible para tu sistema, por favor abre un [issue](https://github.com/marktext/marktext/issues).
+Todos los binarios para Linux, macOS y Windows se pueden descargar desde la [página de releases](https://github.com/TheQYQ/ColaMD/releases/latest). Si no hay una versión disponible para tu sistema, por favor abre un [issue](https://github.com/TheQYQ/ColaMD/issues).
 
 ## Desarrollo
 
-Si deseas compilar MarkText tú mismo, consulta nuestras [instrucciones de compilación](../dev/BUILD.md).
+Si deseas compilar ColaMD tú mismo, consulta nuestras [instrucciones de compilación](../dev/BUILD.md).
 
 - [Documentación de usuario](../README.md)
 - [Documentación de desarrollador](../dev/README.md)
 
-Si tienes preguntas sobre MarkText, puedes abrir un issue. Por favor usa el formato predeterminado al hacerlo. Por supuesto, si envías un PR directamente, será muy apreciado.
+Si tienes preguntas sobre ColaMD, puedes abrir un issue. Por favor usa el formato predeterminado al hacerlo. Por supuesto, si envías un PR directamente, será muy apreciado.
 
 ## Contribución
 
-MarkText está en desarrollo. Por favor lee la [Guía de Contribución](../../.github/CONTRIBUTING.md) antes de hacer un pull request. ¿Quieres añadir funciones a MarkText? Consulta nuestra [hoja de ruta](https://github.com/marktext/marktext/projects) e issues abiertos.
-
+ColaMD está en desarrollo. Por favor lee la [Guía de Contribución](../../.github/CONTRIBUTING.md) antes de hacer un pull request. ¿Quieres añadir funciones a ColaMD? Consulta nuestra [hoja de ruta](https://github.com/TheQYQ/ColaMD/projects) e issues abiertos.
 
 ## Colaboradores
 
-Gracias a todas las personas que ya han contribuido a MarkText[[colaboradores](https://github.com/marktext/marktext/graphs/contributors)].
+Gracias a todas las personas que ya han contribuido a ColaMD[[colaboradores](https://github.com/TheQYQ/ColaMD/graphs/contributors)].
 
-<a href="https://github.com/marktext/marktext/graphs/contributors"><img src="https://opencollective.com/marktext/contributors.svg?width=890" /></a>
+<a href="https://github.com/TheQYQ/ColaMD/graphs/contributors"><img src="https://opencollective.com/colamd/contributors.svg?width=890" /></a>
 
 ## Licencia
 

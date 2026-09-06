@@ -6,7 +6,7 @@ import { Muya } from '../muya';
 
 // Coverage for muya.updateParagraph — the block-type conversions the desktop
 // Paragraph menu drives (added for the muyajs -> @muyajs/core migration). It
-// accepts the marktext/muyajs label vocabulary and maps onto muya's
+// accepts the colamd/muyajs label vocabulary and maps onto muya's
 // replaceBlockByLabel + list/heading handling. State flushes on rAF, so
 // assertions wait via vi.waitFor.
 

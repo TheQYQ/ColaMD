@@ -51,8 +51,8 @@ export const hasSameKeys = (a: Record<string, unknown>, b: Record<string, unknow
 export type LogLevel = 'silly' | 'debug' | 'verbose' | 'info'
 
 export const getLogLevel = (): LogLevel => {
-  const verbose = (globalThis as typeof globalThis & { MARKTEXT_DEBUG_VERBOSE?: number })
-    .MARKTEXT_DEBUG_VERBOSE
+  const verbose = (globalThis as typeof globalThis & { COLAMD_DEBUG_VERBOSE?: number })
+    .COLAMD_DEBUG_VERBOSE
   if (!verbose || typeof verbose !== 'number' || verbose <= 0) {
     return process.env.NODE_ENV === 'development' ? 'debug' : 'info'
   } else if (verbose === 1) {

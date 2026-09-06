@@ -3,7 +3,7 @@
 // stex (LaTeX) mode. Without this wrapper the standard markdown mode highlights
 // `_` as emphasis delimiters even inside math, producing spurious italics for
 // subscript expressions like `$\text{F}_\text{A} = \text{F}_\text{B}$` in the
-// source view. See https://github.com/marktext/marktext/issues/4121.
+// source view. See https://github.com/TheQYQ/ColaMD/issues/4121.
 //
 // The outer mode is `gfm` to preserve the tables / autolinks / task lists
 // styling the previous `setMode(cm, 'markdown')` call resolved to via
@@ -33,7 +33,7 @@ const registerMarkdownMathMode = (CodeMirror: CodeMirrorLike): void => {
     return
   }
 
-  CodeMirror.defineMode('markdown-math', function(config: AnyObj) {
+  CodeMirror.defineMode('markdown-math', function (config: AnyObj) {
     const gfmMode = CodeMirror.getMode(config, {
       name: 'gfm',
       fencedCodeBlocks: true,

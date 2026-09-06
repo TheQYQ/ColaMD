@@ -25,7 +25,7 @@ export default [
       'packages/muyajs/lib/parser/marked/urlify.js',
       // muya v2 (TS) self-lints with its own antfu-based config
       // (packages/muya/eslint.config.mjs). Different style rules from the
-      // marktext-desktop config (4-space indent, semis required, strict
+      // colamd-desktop config (4-space indent, semis required, strict
       // ts/no-explicit-any), so we keep them isolated rather than try to
       // merge two flat configs.
       'packages/muya/**',
@@ -63,8 +63,8 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.node,
-        MARKTEXT_VERSION_STRING: 'readonly',
-        MARKTEXT_VERSION: 'readonly',
+        COLAMD_VERSION_STRING: 'readonly',
+        COLAMD_VERSION: 'readonly',
         __static: 'readonly'
       }
     },
@@ -149,8 +149,8 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.node,
-        MARKTEXT_VERSION_STRING: 'readonly',
-        MARKTEXT_VERSION: 'readonly',
+        COLAMD_VERSION_STRING: 'readonly',
+        COLAMD_VERSION: 'readonly',
         __static: 'readonly'
       }
     },
