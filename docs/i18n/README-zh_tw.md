@@ -3,13 +3,8 @@
 <h1 align="center">ColaMD</h1>
 
 <div align="center">
-  <a href="https://twitter.com/intent/tweet?via=colamdme&url=https://github.com/TheQYQ/ColaMD/&text=What%20do%20you%20want%20to%20say%20to%20app?&hashtags=happyColaMD">
-    <img src="https://img.shields.io/twitter/url/https/github.com/TheQYQ/ColaMD.svg?style=for-the-badge" alt="twitter">
-  </a>
-</div>
-<div align="center">
   <strong>:high_brightness: 下一代 Markdown 編輯器 :crescent_moon:</strong><br>
-  一款專注於速度和易用性的簡潔優雅的開源 Markdown 編輯器。<br>
+  一款專注於速度和易用性的簡潔優雅的 Markdown 編輯器。<br>
   <sub>支援 Linux、macOS 和 Windows。</sub>
 </div>
 
@@ -26,20 +21,12 @@
   </a>
   <!-- Downloads latest release -->
   <a href="https://github.com/TheQYQ/ColaMD/releases/latest">
-    <img src="https://img.shields.io/github/downloads/TheQYQ/ColaMD/v0.17.1/total.svg" alt="latest download">
-  </a>
-  <!-- sponsors -->
-  <a href="https://opencollective.com/colamd">
-    <img src="https://opencollective.com/colamd/tiers/silver-sponsors/badge.svg?label=SilverSponsors&color=brightgreen" alt="sponsors">
+    <img src="https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/total.svg" alt="latest download">
   </a>
 </div>
 
 <div align="center">
   <h3>
-    <a href="https://github.com/TheQYQ/ColaMD">
-      Website
-    </a>
-    <span> | </span>
     <a href="https://github.com/TheQYQ/ColaMD#features">
       功能
     </a>
@@ -59,62 +46,10 @@
 </div>
 
 <div align="center">
-  <sub>其他語言翻譯：</sub>
-  <a href="../../README.md">
-    <span>:uk:</span>
-  </a>
-  <a href="README-zh_cn.md#readme">
-    <span>:cn:</span>
-  </a>
-  <a href="README-de.md#readme">
-    <span>:de:</span>
-  </a>
-  <a href="README-jp.md#readme">
-    <span>:jp:</span>
-  </a>
-  <a href="README-fr.md#readme">
-    <span>:fr:</span>
-  </a>
-  <a href="README-tr.md#readme">
-    <span>:tr:</span>
-  </a>
-  <a href="README-es.md#readme">
-    <span>:es:</span>
-  </a>
-  <a href="README-pt.md#readme">
-    <span>:portugal:</span>
-  </a>
-  <a href="README-kr.md#readme">
-    <span>:kr:</span>
-  </a>
-  <a href="README-ar.md#readme">
-    <span>:saudi_arabia:</span>
-  </a>
-  <a href="README-bn.md#readme">
-    <span>:bangladesh:</span>
-  </a>
-</div>
-
-<div align="center">
-  <sub>這款 Markdown 編輯器由
-    <a href="https://github.com/Jocs">Jocs</a> 和
-    <a href="https://github.com/TheQYQ/ColaMD/graphs/contributors">
-      貢獻者們
-    </a>
-    用 ❤︎ 構建。</sub>
+  <sub>MarkText 的分支版本，由 <a href="https://github.com/TheQYQ">TheQYQ</a> 維護。</sub>
 </div>
 
 <br />
-
-<h2 align="center">支持 ColaMD</h2>
-
-ColaMD 是一款由社群支持驅動的開源 Markdown 編輯器。如果 ColaMD 改善了您的工作流程，請考慮[贊助本專案](https://github.com/sponsors/colamd)。感謝所有贊助者 ❤️
-
-**特別贊助商**
-
-| [<img src="../assets/sponsors/serpapi.png" width="150">](https://serpapi.com/?utm_source=colamd) | [透過我們快速、便捷且完整的 API 抓取 Google 及其他搜尋引擎的資料。](https://serpapi.com/?utm_source=colamd) |
-| ------------------------------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------- |
-| [<img src="../assets/sponsors/ukey.png" width="150">](https://www.ukey.com)                      | [Secure hardware wallet made simple.](https://www.ukey.com)                                                 |
 
 ## 截圖
 
@@ -127,47 +62,29 @@ ColaMD 是一款由社群支持驅動的開源 Markdown 編輯器。如果 ColaM
 - 支援數學表達式（KaTeX）、Front Matter 和表情符號等 Markdown 擴展。
 - 支援段落和內聯樣式快捷方式，提升寫作效率。
 - 可匯出 **HTML** 和 **PDF** 文件。
-- 多種[主題](../end-user/THEMES.md)：**Cadmium Light**、**Material Dark** 等。
+- 多種主題：**Cadmium Light**、**Material Dark** 等。
 - 多種編輯模式：**原始碼模式**、**打字機模式**、**專注模式**。
 - 支援直接從剪貼簿貼上圖片。
 
 ## 下載與安裝
 
-![平台](https://img.shields.io/static/v1.svg?label=Platform&message=Linux-64%20|%20macOS-64%20|%20Win-32%20|%20Win-64&style=for-the-badge)
+![platform](https://img.shields.io/static/v1.svg?label=Platform&message=Linux%20x64%20|%20macOS%20x64%2Farm64%20|%20Windows%20x64%2Farm64&style=for-the-badge)
 
-|                                       ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/mac-pass-sm.png)                                       |                                       ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/windows-pass-sm.png)                                       |                                              ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/linux-pass-sm.png)                                              |
-| :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| [![latest version](https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/colamd-x64.dmg.svg)](https://github.com/TheQYQ/ColaMD/releases/download/v0.17.1/colamd-x64.dmg) | [![latest version](https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/colamd-setup.exe.svg)](https://github.com/TheQYQ/ColaMD/releases/download/v0.17.1/colamd-setup.exe) | [![latest version](https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/colamd-x86_64.AppImage.svg)](https://github.com/TheQYQ/ColaMD/releases/download/v0.17.1/colamd-x86_64.AppImage) |
-
-想瞭解最新版本的新功能？請參閱 [CHANGELOG](../CHANGELOG.md)。
+|             ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/mac-pass-sm.png)             |             ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/windows-pass-sm.png)             |            ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/linux-pass-sm.png)            |
+| :-------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------: |
+| [![Download for macOS](https://img.shields.io/badge/macOS-Download-blue)](https://github.com/TheQYQ/ColaMD/releases/latest) | [![Download for Windows](https://img.shields.io/badge/Windows-Download-blue)](https://github.com/TheQYQ/ColaMD/releases/latest) | [![Download for Linux](https://img.shields.io/badge/Linux-Download-blue)](https://github.com/TheQYQ/ColaMD/releases/latest) |
 
 #### macOS
 
-你可以從[發布頁](https://github.com/TheQYQ/ColaMD/releases/latest)下載最新的 `colamd-%version%.dmg`，或通過 [**homebrew cask**](https://github.com/caskroom/homebrew-cask) 安裝 ColaMD。使用 Homebrew-Cask 只需先安裝 [Homebrew](https://brew.sh/)。
-
-```bash
-brew install --cask mark-text
-```
+需要 macOS 11 (Big Sur) 或更新版本。未提供通用建置——請選擇與機器相符的 `colamd-mac-(arm64|x64)-<版本>.dmg`。
 
 #### Windows
 
-只需下載並通過安裝嚮導（`colamd-setup-%version%.exe`）安裝 ColaMD，並選擇使用者級或系統級安裝。或者，使用套件管理器 [Chocolatey](https://chocolatey.org/) 或 [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/) 安裝 ColaMD。
-
-使用 Chocolatey，需先安裝 [Chocolatey](https://chocolatey.org/install)：
-
-```bash
-choco install colamd
-```
-
-使用 Winget，需先安裝 [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/#install-winget)：
-
-```bash
-winget install colamd
-```
+需要 Windows 10 或 11。提供 x64 與 arm64 安裝套件——請選擇與機器相符的架構（`colamd-win-(x64|arm64)-<版本>-setup.exe`）。
 
 #### Linux
 
-請參閱 [Linux 安裝說明](../end-user/LINUX.md)。
+從發布頁下載你偏好的格式：**AppImage**、**deb**、**rpm**、**snap** 或 **tar.gz**。
 
 #### 其他
 
@@ -175,23 +92,27 @@ winget install colamd
 
 ## 開發
 
-如果你希望自行構建 ColaMD，請參閱我們的[構建說明](../dev/BUILD.md)。
+如果你希望自行建置 ColaMD，請參閱[開發指南](../../CLAUDE.md)。
 
-- [使用者文件](../README.md)
-- [開發者文件](../dev/README.md)
+- [開發指南](../../CLAUDE.md)
+- [貢獻指南](../../.github/CONTRIBUTING.md)
 
 如果你對 ColaMD 有任何疑問，歡迎提交 issue。提交時請使用開啟 issue 時的預設格式。當然，如果你直接提交 PR，將不勝感激。
 
 ## 貢獻
 
-ColaMD 正在開發中，請在提交 pull request 之前確保閱讀[貢獻指南](../../.github/CONTRIBUTING.md)。想為 ColaMD 新增功能？請參閱我們的[路線圖](https://github.com/TheQYQ/ColaMD/projects)和開放 issue。
+ColaMD 正在開發中，請在提交 pull request 之前確保閱讀[貢獻指南](../../.github/CONTRIBUTING.md)。
 
 ## 貢獻者
 
 感謝所有已經為 ColaMD 做出貢獻的人[[貢獻者](https://github.com/TheQYQ/ColaMD/graphs/contributors)]。
 
-<a href="https://github.com/TheQYQ/ColaMD/graphs/contributors"><img src="https://opencollective.com/colamd/contributors.svg?width=890" /></a>
+<a href="https://github.com/TheQYQ/ColaMD/graphs/contributors"><img src="https://contrib.rocks/image?repo=TheQYQ/ColaMD" /></a>
+
+## 致謝
+
+ColaMD 基於 [MarkText](https://github.com/marktext/marktext) 建立，原作者為 [Luo Ran (Jocs)](https://github.com/Jocs) 與 [MarkText 貢獻者們](https://github.com/marktext/marktext/graphs/contributors)。感謝他們為這款編輯器打下堅實基礎。
 
 ## 許可證
 
-[**MIT**](../../LICENSE).
+[**MIT**](../../LICENSE)——依授權要求，LICENSE 檔案中保留了 MarkText 的原始版權聲明。

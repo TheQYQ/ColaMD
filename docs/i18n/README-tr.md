@@ -3,13 +3,8 @@
 <h1 align="center">ColaMD</h1>
 
 <div align="center">
-  <a href="https://twitter.com/intent/tweet?via=colamdme&url=https://github.com/TheQYQ/ColaMD/&text=What%20do%20you%20want%20to%20say%20to%20app?&hashtags=happyColaMD">
-    <img src="https://img.shields.io/twitter/url/https/github.com/TheQYQ/ColaMD.svg?style=for-the-badge" alt="twitter">
-  </a>
-</div>
-<div align="center">
   <strong>:high_brightness: Yeni nesil markdown editörü :crescent_moon:</strong><br>
-  Sade ve zarif, açık kaynaklı, hız ve kullanılabilirliğe odaklı markdown editörü.<br>
+  Sade ve zarif, hız ve kullanılabilirliğe odaklı markdown editörü.<br>
   <sub>Linux, macOS ve Windows için kullanılabilir.</sub>
 </div>
 
@@ -26,20 +21,12 @@
   </a>
   <!-- Downloads latest release -->
   <a href="https://github.com/TheQYQ/ColaMD/releases/latest">
-    <img src="https://img.shields.io/github/downloads/TheQYQ/ColaMD/v0.17.1/total.svg" alt="latest download">
-  </a>
-  <!-- sponsors -->
-  <a href="https://opencollective.com/colamd">
-    <img src="https://opencollective.com/colamd/tiers/silver-sponsors/badge.svg?label=SilverSponsors&color=brightgreen" alt="sponsors">
+    <img src="https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/total.svg" alt="latest download">
   </a>
 </div>
 
 <div align="center">
   <h3>
-    <a href="https://github.com/TheQYQ/ColaMD">
-      Website
-    </a>
-    <span> | </span>
     <a href="https://github.com/TheQYQ/ColaMD#features">
       Özellikler
     </a>
@@ -59,62 +46,10 @@
 </div>
 
 <div align="center">
-  <sub>Çeviriler:</sub>
-  <a href="../../README.md">
-    <span>:uk:</span>
-  </a>
-  <a href="README-zh_cn.md#readme">
-    <span>:cn:</span>
-  </a>
-  <a href="README-zh_tw.md#readme">
-    <span>:taiwan:</span>
-  </a>
-  <a href="README-de.md#readme">
-    <span>:de:</span>
-  </a>
-  <a href="README-jp.md#readme">
-    <span>:jp:</span>
-  </a>
-  <a href="README-fr.md#readme">
-    <span>:fr:</span>
-  </a>
-  <a href="README-es.md#readme">
-    <span>:es:</span>
-  </a>
-  <a href="README-pt.md#readme">
-    <span>:portugal:</span>
-  </a>
-  <a href="README-kr.md#readme">
-    <span>:kr:</span>
-  </a>
-  <a href="README-ar.md#readme">
-    <span>:saudi_arabia:</span>
-  </a>
-  <a href="README-bn.md#readme">
-    <span>:bangladesh:</span>
-  </a>
-</div>
-
-<div align="center">
-  <sub>Bu Markdown editörü
-    <a href="https://github.com/Jocs">Jocs</a> ve
-    <a href="https://github.com/TheQYQ/ColaMD/graphs/contributors">
-      katkıda bulunanlar
-    </a>
-    tarafından ❤︎ ile yapıldı.</sub>
+  <sub>MarkText'in bir fork'u; <a href="https://github.com/TheQYQ">TheQYQ</a> tarafından sürdürülüyor.</sub>
 </div>
 
 <br />
-
-<h2 align="center">ColaMD'e Destek Olun</h2>
-
-ColaMD, topluluğunun desteğiyle hayata geçirilmiş açık kaynaklı bir Markdown editörüdür. ColaMD iş akışınızı iyileştiriyorsa, lütfen [projeye destek olmayı](https://github.com/sponsors/colamd) düşünün. Tüm destekçilere teşekkürler ❤️
-
-**Özel Destekçi**
-
-| [<img src="../assets/sponsors/serpapi.png" width="150">](https://serpapi.com/?utm_source=colamd) | [Hızlı, kolay ve kapsamlı API'miz ile Google ve diğer arama motorlarından veri çekin.](https://serpapi.com/?utm_source=colamd) |
-| ------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------- |
-| [<img src="../assets/sponsors/ukey.png" width="150">](https://www.ukey.com)                      | [Secure hardware wallet made simple.](https://www.ukey.com)                                                                    |
 
 ## Ekran Görüntüsü
 
@@ -127,47 +62,29 @@ ColaMD, topluluğunun desteğiyle hayata geçirilmiş açık kaynaklı bir Markd
 - Matematiksel ifadeler (KaTeX), front matter ve emoji gibi Markdown uzantıları.
 - Yazma verimliliğinizi artırmak için paragraf ve satır içi stil kısayolları.
 - **HTML** ve **PDF** dosyası çıktısı.
-- Çeşitli [temalar](../end-user/THEMES.md): **Cadmium Light**, **Material Dark** vb.
+- Çeşitli temalar: **Cadmium Light**, **Material Dark** vb.
 - Çeşitli düzenleme modları: **Kaynak Kodu modu**, **Daktilo modu**, **Odak modu**.
 - Görüntüleri doğrudan panodan yapıştırın.
 
 ## İndirme ve Kurulum
 
-![Platform](https://img.shields.io/static/v1.svg?label=Platform&message=Linux-64%20|%20macOS-64%20|%20Win-32%20|%20Win-64&style=for-the-badge)
+![platform](https://img.shields.io/static/v1.svg?label=Platform&message=Linux%20x64%20|%20macOS%20x64%2Farm64%20|%20Windows%20x64%2Farm64&style=for-the-badge)
 
-|                                       ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/mac-pass-sm.png)                                       |                                       ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/windows-pass-sm.png)                                       |                                              ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/linux-pass-sm.png)                                              |
-| :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| [![latest version](https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/colamd-x64.dmg.svg)](https://github.com/TheQYQ/ColaMD/releases/download/v0.17.1/colamd-x64.dmg) | [![latest version](https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/colamd-setup.exe.svg)](https://github.com/TheQYQ/ColaMD/releases/download/v0.17.1/colamd-setup.exe) | [![latest version](https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/colamd-x86_64.AppImage.svg)](https://github.com/TheQYQ/ColaMD/releases/download/v0.17.1/colamd-x86_64.AppImage) |
-
-En son sürümün yeni özelliklerini görmek ister misiniz? Lütfen [CHANGELOG](../CHANGELOG.md)'a bakın.
+|             ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/mac-pass-sm.png)             |             ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/windows-pass-sm.png)             |            ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/linux-pass-sm.png)            |
+| :-------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------: |
+| [![Download for macOS](https://img.shields.io/badge/macOS-Download-blue)](https://github.com/TheQYQ/ColaMD/releases/latest) | [![Download for Windows](https://img.shields.io/badge/Windows-Download-blue)](https://github.com/TheQYQ/ColaMD/releases/latest) | [![Download for Linux](https://img.shields.io/badge/Linux-Download-blue)](https://github.com/TheQYQ/ColaMD/releases/latest) |
 
 #### macOS
 
-[Sürümler sayfasından](https://github.com/TheQYQ/ColaMD/releases/latest) en son `colamd-%version%.dmg`'yi indirebilir veya [**homebrew cask**](https://github.com/caskroom/homebrew-cask) kullanarak ColaMD'i kurabilirsiniz. Homebrew-Cask kullanmak için [Homebrew](https://brew.sh/)'ün yüklü olması gerekir.
-
-```bash
-brew install --cask mark-text
-```
+macOS 11 (Big Sur) veya üzeri gerekir. Evrensel derlemeler yayınlanmaz — makinenize uygun `colamd-mac-(arm64|x64)-<sürüm>.dmg` kurulumunu seçin.
 
 #### Windows
 
-ColaMD'i kurulum sihirbazı (`colamd-setup-%version%.exe`) aracılığıyla indirip kurun ve kullanıcı başına mı yoksa sistem genelinde mi kurulacağını seçin. Alternatif olarak [Chocolatey](https://chocolatey.org/) veya [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/) gibi bir paket yöneticisi kullanabilirsiniz.
-
-Chocolatey kullanmak için [Chocolatey](https://chocolatey.org/install)'nin yüklü olması gerekir:
-
-```bash
-choco install colamd
-```
-
-Winget kullanmak için [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/#install-winget)'in yüklü olması gerekir:
-
-```bash
-winget install colamd
-```
+Windows 10 veya 11 gerekir. x64 ve arm64 yükleyicileri yayınlanır — makinenizin mimarisine uygun olanı (`colamd-win-(x64|arm64)-<sürüm>-setup.exe`) seçin.
 
 #### Linux
 
-Lütfen [Linux kurulum talimatlarını](../end-user/LINUX.md) takip edin.
+Sürüm sayfasından istediğiniz formatı indirin: **AppImage**, **deb**, **rpm**, **snap** veya **tar.gz**.
 
 #### Diğer
 
@@ -175,23 +92,27 @@ Linux, macOS ve Windows için tüm ikili dosyalar [sürümler sayfasından](http
 
 ## Geliştirme
 
-ColaMD'i kendiniz derlemek istiyorsanız lütfen [derleme talimatlarımıza](../dev/BUILD.md) bakın.
+ColaMD'yi kendiniz derlemek isterseniz [geliştirme rehberine](../../CLAUDE.md) göz atın.
 
-- [Kullanıcı belgeleri](../README.md)
-- [Geliştirici belgeleri](../dev/README.md)
+- [Geliştirme rehberi](../../CLAUDE.md)
+- [Katkı rehberi](../../.github/CONTRIBUTING.md)
 
 ColaMD hakkında sorularınız varsa bir issue yazabilirsiniz. Bunu yaparken issue açarken görünen varsayılan formatı kullanın. Elbette doğrudan bir PR gönderirseniz çok memnun oluruz.
 
 ## Katkı
 
-ColaMD geliştirme aşamasındadır. Bir pull request oluşturmadan önce [Katkı Kılavuzunu](../../.github/CONTRIBUTING.md) okuduğunuzdan emin olun. ColaMD'e özellik eklemek ister misiniz? [Yol haritamıza](https://github.com/TheQYQ/ColaMD/projects) ve açık issue'lara bakın.
+ColaMD geliştirme aşamasındadır — pull request açmadan önce lütfen [katkı rehberini](../../.github/CONTRIBUTING.md) okuyun.
 
 ## Katkıda Bulunanlar
 
 ColaMD'e zaten katkıda bulunan herkese teşekkür ederiz[[katkıda bulunanlar](https://github.com/TheQYQ/ColaMD/graphs/contributors)].
 
-<a href="https://github.com/TheQYQ/ColaMD/graphs/contributors"><img src="https://opencollective.com/colamd/contributors.svg?width=890" /></a>
+<a href="https://github.com/TheQYQ/ColaMD/graphs/contributors"><img src="https://contrib.rocks/image?repo=TheQYQ/ColaMD" /></a>
+
+## Teşekkürler
+
+ColaMD, [MarkText](https://github.com/marktext/marktext) üzerine kurulmuş bir fork'tur; asıl yaratıcıları [Luo Ran (Jocs)](https://github.com/Jocs) ve [MarkText katkıda bulunanları](https://github.com/marktext/marktext/graphs/contributors)'dır. Bu düzenleyicinin temellerini attıkları için teşekkürler.
 
 ## Lisans
 
-[**MIT**](../../LICENSE).
+[**MIT**](../../LICENSE) — lisansın gereği olarak, MarkText'in orijinal telif hakkı bildirimi LICENSE dosyasında korunur.

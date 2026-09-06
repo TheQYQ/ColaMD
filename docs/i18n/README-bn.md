@@ -3,13 +3,8 @@
 <h1 align="center">ColaMD</h1>
 
 <div align="center">
-  <a href="https://twitter.com/intent/tweet?via=colamdme&url=https://github.com/TheQYQ/ColaMD/&text=What%20do%20you%20want%20to%20say%20to%20app?&hashtags=happyColaMD">
-    <img src="https://img.shields.io/twitter/url/https/github.com/TheQYQ/ColaMD.svg?style=for-the-badge" alt="twitter">
-  </a>
-</div>
-<div align="center">
   <strong>:high_brightness: আধুনিক প্রজন্মের Markdown এডিটর :crescent_moon:</strong><br>
-  একটি সাধারণ এবং অত্যাধুনিক ওপেন-সোর্স Markdown এডিটর যা গতি এবং ব্যবহারযোগ্যতার দিকে গুরুত্ত দেয়।<br>
+  একটি সাধারণ এবং অত্যাধুনিক Markdown এডিটর যা গতি এবং ব্যবহারযোগ্যতার দিকে গুরুত্ত দেয়।<br>
   <sub>Linux, macOS এবং Windows-এর জন্য।</sub>
 </div>
 
@@ -28,18 +23,10 @@
   <a href="https://github.com/TheQYQ/ColaMD/releases/latest">
     <img src="https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/total.svg" alt="latest download">
   </a>
-  <!-- sponsors -->
-  <a href="https://opencollective.com/colamd">
-    <img src="https://opencollective.com/colamd/tiers/silver-sponsors/badge.svg?label=SilverSponsors&color=brightgreen" alt="sponsors">
-  </a>
 </div>
 
 <div align="center">
   <h3>
-    <a href="https://github.com/TheQYQ/ColaMD">
-      Website
-    </a>
-    <span> | </span>
     <a href="https://github.com/TheQYQ/ColaMD#features">
       বৈশিষ্ট্য
     </a>
@@ -59,62 +46,10 @@
 </div>
 
 <div align="center">
-  <sub>অনুবাদসমূহ:</sub>
-  <a href="../../README.md">
-    <span>:uk:</span>
-  </a>
-  <a href="README-zh_cn.md#readme">
-    <span>:cn:</span>
-  </a>
-  <a href="README-zh_tw.md#readme">
-    <span>:taiwan:</span>
-  </a>
-  <a href="README-de.md#readme">
-    <span>:de:</span>
-  </a>
-  <a href="README-jp.md#readme">
-    <span>:jp:</span>
-  </a>
-  <a href="README-fr.md#readme">
-    <span>:fr:</span>
-  </a>
-  <a href="README-tr.md#readme">
-    <span>:tr:</span>
-  </a>
-  <a href="README-es.md#readme">
-    <span>:es:</span>
-  </a>
-  <a href="README-pt.md#readme">
-    <span>:portugal:</span>
-  </a>
-  <a href="README-kr.md#readme">
-    <span>:kr:</span>
-  </a>
-  <a href="README-ar.md#readme">
-    <span>:saudi_arabia:</span>
-  </a>
-</div>
-
-<div align="center">
-  <sub>এই Markdown এডিটরটি ❤︎ দিয়ে তৈরি করেছেন
-    <a href="https://github.com/Jocs">Jocs</a> এবং
-    <a href="https://github.com/TheQYQ/ColaMD/graphs/contributors">
-      অবদানকারীরা
-    </a>
-    ।
-  </sub>
+  <sub>MarkText-এর একটি ফর্ক, পরিচর্যায় <a href="https://github.com/TheQYQ">TheQYQ</a>।</sub>
 </div>
 
 <br />
-
-<h2 align="center">স্পনসর</h2>
-
-ColaMD একটি ওপেন-সোর্স Markdown এডিটর, যা এর কমিউনিটির সহায়তায় এগিয়ে চলছে। ColaMD যদি আপনার কাজের ধারা উন্নত করে থাকে, তাহলে অনুগ্রহ করে [প্রজেক্টটিকে স্পনসর করার](https://github.com/sponsors/colamd) কথা বিবেচনা করুন। সব স্পনসরকে ধন্যবাদ ❤️
-
-**বিশেষ স্পনসর**
-
-| [<img src="../assets/sponsors/serpapi.png" width="150">](https://serpapi.com/?utm_source=colamd) | [আমাদের দ্রুত, সহজ এবং পূর্ণাঙ্গ API দিয়ে Google ও অন্যান্য সার্চ ইঞ্জিন থেকে ফলাফল সংগ্রহ করুন।](https://serpapi.com/?utm_source=colamd) |
-| ------------------------------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------- |
 
 ## স্ক্রিনশট
 
@@ -139,35 +74,17 @@ ColaMD একটি ওপেন-সোর্স Markdown এডিটর, য�
 | :-------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------: |
 | [![Download for macOS](https://img.shields.io/badge/macOS-Download-blue)](https://github.com/TheQYQ/ColaMD/releases/latest) | [![Download for Windows](https://img.shields.io/badge/Windows-Download-blue)](https://github.com/TheQYQ/ColaMD/releases/latest) | [![Download for Linux](https://img.shields.io/badge/Linux-Download-blue)](https://github.com/TheQYQ/ColaMD/releases/latest) |
 
-সর্বশেষ সংস্করণের নতুন ফিচারগুলো দেখতে [CHANGELOG](https://github.com/TheQYQ/ColaMD/docs/changelog) দেখুন।
-
 #### macOS
 
 macOS 11 (Big Sur) বা পরবর্তী সংস্করণ প্রয়োজন। Universal build প্রকাশ করা হয় না, তাই আপনার মেশিনের সঙ্গে মিল থাকা `arm64` বা `x64` installer বেছে নিন।
 
-আপনি [release page](https://github.com/TheQYQ/ColaMD/releases/latest) থেকে সর্বশেষ `colamd-mac-(arm64|x64)-%version%.dmg` ডাউনলোড করতে পারেন, অথবা [**homebrew cask**](https://github.com/caskroom/homebrew-cask) ব্যবহার করে ColaMD ইনস্টল করতে পারেন। Homebrew-Cask ব্যবহার করতে হলে আগে [Homebrew](https://brew.sh/) ইনস্টল করা থাকতে হবে।
-
-```bash
-brew install --cask mark-text
-```
+macOS 11 (Big Sur) বা তার পরের সংস্করণ প্রয়োজন। ইউনিভার্সাল বিল্ড প্রকাশিত হয় না — আপনার মেশিনের সাথে মিলিয়ে `colamd-mac-(arm64|x64)-<সংস্করণ>.dmg` বেছে নিন।
 
 #### Windows
 
 Windows 10 অথবা 11 প্রয়োজন। x64 এবং arm64 - উভয় installer প্রকাশ করা হয়, তাই আপনার মেশিনের architecture অনুযায়ীটি বেছে নিন।
 
-শুধু setup wizard (`colamd-win-(x64|arm64)-%version%-setup.exe`) ডাউনলোড করে ইনস্টল করুন এবং user-only নাকি machine-wide ইনস্টল করবেন তা বেছে নিন। বিকল্পভাবে, [Chocolatey](https://chocolatey.org/) বা [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/) এর মতো package manager ব্যবহার করেও ColaMD ইনস্টল করতে পারেন।
-
-Chocolatey ব্যবহার করতে চাইলে আগে [Chocolatey](https://chocolatey.org/install) ইনস্টল করা থাকতে হবে:
-
-```bash
-choco install colamd
-```
-
-Winget ব্যবহার করতে চাইলে আগে [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/#install-winget) ইনস্টল করা থাকতে হবে:
-
-```bash
-winget install colamd
-```
+Windows 10 বা 11 প্রয়োজন। x64 এবং arm64 উভয় ইনস্টলারই প্রকাশিত হয় — আপনার মেশিনের আর্কিটেকচারের সাথে মিলিয়ে (`colamd-win-(x64|arm64)-<সংস্করণ>-setup.exe`) বেছে নিন।
 
 #### Linux
 
@@ -188,14 +105,18 @@ ColaMD সম্পর্কে আপনার কোনো প্রশ্ন 
 
 ## অবদান
 
-ColaMD এখনো উন্নয়নাধীন, তাই pull request করার আগে [Contributing Guide](../../.github/CONTRIBUTING.md) পড়ে নিন। ColaMD-এ নতুন ফিচার যোগ করতে চান? আমাদের [roadmap](https://github.com/TheQYQ/ColaMD/projects) এবং open issue দেখুন।
+ColaMD উন্নয়নের পর্যায়ে আছে — pull request করার আগে অনুগ্রহ করে [অবদান নির্দেশিকা](../../.github/CONTRIBUTING.md) পড়ে নিন।
 
 ## অবদানকারীরা
 
 যারা ইতিমধ্যেই ColaMD-এ অবদান রেখেছেন, তাদের সবাইকে ধন্যবাদ [[contributors](https://github.com/TheQYQ/ColaMD/graphs/contributors)]।
 
-<a href="https://github.com/TheQYQ/ColaMD/graphs/contributors"><img src="https://opencollective.com/colamd/contributors.svg?width=890" /></a>
+<a href="https://github.com/TheQYQ/ColaMD/graphs/contributors"><img src="https://contrib.rocks/image?repo=TheQYQ/ColaMD" /></a>
+
+## কৃতজ্ঞতা স্বীকার
+
+ColaMD [MarkText](https://github.com/marktext/marktext)-এর একটি ফর্ক, যার মূল নির্মাতা [Luo Ran (Jocs)](https://github.com/Jocs) এবং [MarkText অবদানকারীরা](https://github.com/marktext/marktext/graphs/contributors)। এই সম্পাদকের ভিত্তি স্থাপনের জন্য তাদের ধন্যবাদ।
 
 ## লাইসেন্স
 
-[**MIT**](../../LICENSE)।
+[**MIT**](../../LICENSE) — লাইসেন্সের শর্ত অনুযায়ী, LICENSE ফাইলে MarkText-এর মূল কপিরাইট নোটিশ সংরক্ষিত আছে।

@@ -3,13 +3,8 @@
 <h1 align="center">ColaMD</h1>
 
 <div align="center">
-  <a href="https://twitter.com/intent/tweet?via=colamdme&url=https://github.com/TheQYQ/ColaMD/&text=What%20do%20you%20want%20to%20say%20to%20app?&hashtags=happyColaMD">
-    <img src="https://img.shields.io/twitter/url/https/github.com/TheQYQ/ColaMD.svg?style=for-the-badge" alt="twitter">
-  </a>
-</div>
-<div align="center">
   <strong>:high_brightness: Markdown-Editor der nächsten Generation :crescent_moon:</strong><br>
-  Ein einfacher und eleganter Open-Source-Markdown-Editor mit Fokus auf Geschwindigkeit und Benutzerfreundlichkeit.<br>
+  Ein einfacher und eleganter Markdown-Editor mit Fokus auf Geschwindigkeit und Benutzerfreundlichkeit.<br>
   <sub>Verfügbar für Linux, macOS und Windows.</sub>
 </div>
 
@@ -26,20 +21,12 @@
   </a>
   <!-- Downloads latest release -->
   <a href="https://github.com/TheQYQ/ColaMD/releases/latest">
-    <img src="https://img.shields.io/github/downloads/TheQYQ/ColaMD/v0.17.1/total.svg" alt="latest download">
-  </a>
-  <!-- sponsors -->
-  <a href="https://opencollective.com/colamd">
-    <img src="https://opencollective.com/colamd/tiers/silver-sponsors/badge.svg?label=SilverSponsors&color=brightgreen" alt="sponsors">
+    <img src="https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/total.svg" alt="latest download">
   </a>
 </div>
 
 <div align="center">
   <h3>
-    <a href="https://github.com/TheQYQ/ColaMD">
-      Website
-    </a>
-    <span> | </span>
     <a href="https://github.com/TheQYQ/ColaMD#features">
       Funktionen
     </a>
@@ -59,61 +46,10 @@
 </div>
 
 <div align="center">
-  <sub>Übersetzungen:</sub>
-  <a href="../../README.md">
-    <span>:uk:</span>
-  </a>
-  <a href="README-zh_cn.md#readme">
-    <span>:cn:</span>
-  </a>
-  <a href="README-zh_tw.md#readme">
-    <span>:taiwan:</span>
-  </a>
-  <a href="README-jp.md#readme">
-    <span>:jp:</span>
-  </a>
-  <a href="README-fr.md#readme">
-    <span>:fr:</span>
-  </a>
-  <a href="README-tr.md#readme">
-    <span>:tr:</span>
-  </a>
-  <a href="README-es.md#readme">
-    <span>:es:</span>
-  </a>
-  <a href="README-pt.md#readme">
-    <span>:portugal:</span>
-  </a>
-  <a href="README-kr.md#readme">
-    <span>:kr:</span>
-  </a>
-  <a href="README-ar.md#readme">
-    <span>:saudi_arabia:</span>
-  </a>
-  <a href="README-bn.md#readme">
-    <span>:bangladesh:</span>
-  </a>
-</div>
-
-<div align="center">
-  <sub>Dieser Markdown-Editor wurde mit ❤︎ erstellt von
-    <a href="https://github.com/Jocs">Jocs</a> und
-    <a href="https://github.com/TheQYQ/ColaMD/graphs/contributors">
-      Mitwirkenden
-    </a>.</sub>
+  <sub>Ein Fork von MarkText, gepflegt von <a href="https://github.com/TheQYQ">TheQYQ</a>.</sub>
 </div>
 
 <br />
-
-<h2 align="center">ColaMD unterstützen</h2>
-
-ColaMD ist ein Open-Source-Markdown-Editor, der von seiner Community unterstützt wird. Wenn ColaMD Ihren Workflow verbessert, erwägen Sie bitte, [das Projekt zu sponsern](https://github.com/sponsors/colamd). Vielen Dank an alle Sponsoren ❤️
-
-**Besonderer Sponsor**
-
-| [<img src="../assets/sponsors/serpapi.png" width="150">](https://serpapi.com/?utm_source=colamd) | [Extrahieren Sie Daten von Google und anderen Suchmaschinen über unsere schnelle, einfache und vollständige API.](https://serpapi.com/?utm_source=colamd) |
-| ------------------------------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [<img src="../assets/sponsors/ukey.png" width="150">](https://www.ukey.com)                      | [Secure hardware wallet made simple.](https://www.ukey.com)                                                                                               |
 
 ## Screenshot
 
@@ -126,47 +62,29 @@ ColaMD ist ein Open-Source-Markdown-Editor, der von seiner Community unterstütz
 - Markdown-Erweiterungen wie mathematische Ausdrücke (KaTeX), Front Matter und Emojis.
 - Unterstützung für Absatz- und Inline-Stil-Kurzbefehle zur Verbesserung der Schreibeffizienz.
 - Ausgabe von **HTML**- und **PDF**-Dateien.
-- Verschiedene [Themes](../end-user/THEMES.md): **Cadmium Light**, **Material Dark** usw.
+- Verschiedene Themes: **Cadmium Light**, **Material Dark** usw.
 - Verschiedene Bearbeitungsmodi: **Quellcode-Modus**, **Schreibmaschinen-Modus**, **Fokus-Modus**.
 - Bilder direkt aus der Zwischenablage einfügen.
 
 ## Download und Installation
 
-![Plattform](https://img.shields.io/static/v1.svg?label=Platform&message=Linux-64%20|%20macOS-64%20|%20Win-32%20|%20Win-64&style=for-the-badge)
+![platform](https://img.shields.io/static/v1.svg?label=Platform&message=Linux%20x64%20|%20macOS%20x64%2Farm64%20|%20Windows%20x64%2Farm64&style=for-the-badge)
 
-|                                       ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/mac-pass-sm.png)                                       |                                       ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/windows-pass-sm.png)                                       |                                              ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/linux-pass-sm.png)                                              |
-| :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| [![latest version](https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/colamd-x64.dmg.svg)](https://github.com/TheQYQ/ColaMD/releases/download/v0.17.1/colamd-x64.dmg) | [![latest version](https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/colamd-setup.exe.svg)](https://github.com/TheQYQ/ColaMD/releases/download/v0.17.1/colamd-setup.exe) | [![latest version](https://img.shields.io/github/downloads/TheQYQ/ColaMD/latest/colamd-x86_64.AppImage.svg)](https://github.com/TheQYQ/ColaMD/releases/download/v0.17.1/colamd-x86_64.AppImage) |
-
-Möchtest du die neuen Funktionen der neuesten Version sehen? Bitte sieh dir das [CHANGELOG](../CHANGELOG.md) an.
+|             ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/mac-pass-sm.png)             |             ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/windows-pass-sm.png)             |            ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/linux-pass-sm.png)            |
+| :-------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------: |
+| [![Download for macOS](https://img.shields.io/badge/macOS-Download-blue)](https://github.com/TheQYQ/ColaMD/releases/latest) | [![Download for Windows](https://img.shields.io/badge/Windows-Download-blue)](https://github.com/TheQYQ/ColaMD/releases/latest) | [![Download for Linux](https://img.shields.io/badge/Linux-Download-blue)](https://github.com/TheQYQ/ColaMD/releases/latest) |
 
 #### macOS
 
-Du kannst entweder die neueste `colamd-%version%.dmg` von der [Release-Seite](https://github.com/TheQYQ/ColaMD/releases/latest) herunterladen oder ColaMD über [**homebrew cask**](https://github.com/caskroom/homebrew-cask) installieren. Für Homebrew-Cask muss [Homebrew](https://brew.sh/) installiert sein.
-
-```bash
-brew install --cask mark-text
-```
+Benötigt macOS 11 (Big Sur) oder neuer. Universelle Builds werden nicht veröffentlicht — wähle das zu deinem Gerät passende `colamd-mac-(arm64|x64)-<Version>.dmg`.
 
 #### Windows
 
-Lade ColaMD einfach über den Setup-Assistenten (`colamd-setup-%version%.exe`) herunter und installiere es, wähle dabei zwischen Benutzer- oder systemweiter Installation. Alternativ kann ColaMD über einen Paketmanager wie [Chocolatey](https://chocolatey.org/) oder [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/) installiert werden.
-
-Für Chocolatey muss [Chocolatey](https://chocolatey.org/install) installiert sein:
-
-```bash
-choco install colamd
-```
-
-Für Winget muss [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/#install-winget) installiert sein:
-
-```bash
-winget install colamd
-```
+Benötigt Windows 10 oder 11. Es werden x64- und arm64-Installer veröffentlicht — wähle die zu deinem Gerät passende Architektur (`colamd-win-(x64|arm64)-<Version>-setup.exe`).
 
 #### Linux
 
-Bitte folge den [Linux-Installationsanweisungen](../end-user/LINUX.md).
+Lade das gewünschte Format von der Release-Seite herunter: **AppImage**, **deb**, **rpm**, **snap** oder **tar.gz**.
 
 #### Andere
 
@@ -174,23 +92,27 @@ Alle Binärdateien für Linux, macOS und Windows können von der [Release-Seite]
 
 ## Entwicklung
 
-Wenn du ColaMD selbst erstellen möchtest, sieh dir bitte unsere [Build-Anleitung](../dev/BUILD.md) an.
+Wenn du ColaMD selbst bauen möchtest, wirf einen Blick auf die [Entwicklungsdokumentation](../../CLAUDE.md).
 
-- [Benutzerdokumentation](../README.md)
-- [Entwicklerdokumentation](../dev/README.md)
+- [Entwicklungsdokumentation](../../CLAUDE.md)
+- [Beitragshinweise](../../.github/CONTRIBUTING.md)
 
 Bei Fragen zu ColaMD kannst du gerne ein Issue erstellen. Bitte verwende dabei das Standardformat. Natürlich ist auch ein direkter PR sehr willkommen.
 
 ## Beitrag
 
-ColaMD befindet sich in der Entwicklung. Bitte lies den [Beitragsleitfaden](../../.github/CONTRIBUTING.md) vor dem Erstellen eines Pull Requests. Möchtest du Funktionen zu ColaMD hinzufügen? Sieh dir unsere [Roadmap](https://github.com/TheQYQ/ColaMD/projects) und offene Issues an.
+ColaMD ist in Entwicklung — lies bitte vor einem Pull Request die [Beitragshinweise](../../.github/CONTRIBUTING.md).
 
 ## Mitwirkende
 
 Danke an alle, die bereits zu ColaMD beigetragen haben[[Mitwirkende](https://github.com/TheQYQ/ColaMD/graphs/contributors)].
 
-<a href="https://github.com/TheQYQ/ColaMD/graphs/contributors"><img src="https://opencollective.com/colamd/contributors.svg?width=890" /></a>
+<a href="https://github.com/TheQYQ/ColaMD/graphs/contributors"><img src="https://contrib.rocks/image?repo=TheQYQ/ColaMD" /></a>
+
+## Danksagungen
+
+ColaMD ist ein Fork von [MarkText](https://github.com/marktext/marktext), ursprünglich erstellt von [Luo Ran (Jocs)](https://github.com/Jocs) und den [MarkText-Mitwirkenden](https://github.com/marktext/marktext/graphs/contributors). Dank an sie für das Fundament dieses Editors.
 
 ## Lizenz
 
-[**MIT**](../../LICENSE).
+[**MIT**](../../LICENSE) — wie von der Lizenz verlangt bleibt der ursprüngliche MarkText-Copyright-Hinweis in der LICENSE-Datei erhalten.
