@@ -373,6 +373,7 @@
         "zoom": "Yakınlaştırma düzeyi. 0.5 ile 2.0 arasında (dahil)",
         "hideScrollbar": "Kaydırma çubuklarının gizlenip gizlenmeyeceği",
         "wordWrapInToc": "İçindekilerde sözcük kaydırmanın etkinleştirilip etkinleştirilmeyeceği",
+        "autoShowToc": "Bir dosya açılırken içindekiler bölümünü otomatik olarak gösterir.",
         "fileSortBy": "Açık klasördeki dosyaları oluşturulma zamanı, değiştirilme zamanı ve başlığa göre sırala",
         "startUpAction": "ColaMD başladıktan sonraki eylem: son düzenlenen içeriği aç, belirtilen klasörü aç veya boş sayfa",
         "restoreLayoutState": "Başlangıçta önceki düzenleyici durumunu geri yükle",
@@ -472,6 +473,7 @@
         "title": "Kenar Çubuğu",
         "wrapTextInToc": "İçindekilerde metni kaydır",
         "showOpenedFiles": "Açık dosyaları göster",
+        "autoShowToc": "Dosya açılırken içindekiler bölümünü otomatik göster",
         "excludePatterns": "Hariç tutma desenleri",
         "excludePatternsNotes": "Hariç tutma desenleri (Notlar)",
         "fileSortBy": {

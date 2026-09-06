@@ -374,6 +374,7 @@
         "zoom": "O nível de zoom. Entre 0.5 e 2.0 inclusive",
         "hideScrollbar": "Se ocultar as barras de rolagem",
         "wordWrapInToc": "Se habilitar a quebra de linha na tabela de conteúdos",
+        "autoShowToc": "Mostra automaticamente o índice ao abrir um ficheiro.",
         "fileSortBy": "Ordenar arquivos na pasta aberta por tempo de criação, tempo de modificação e título",
         "startUpAction": "A ação após a inicialização do ColaMD, abrir o último conteúdo editado, abrir a pasta especificada ou página em branco",
         "restoreLayoutState": "Restaurar o estado anterior do editor na inicialização",
@@ -472,6 +473,7 @@
         "title": "Barra Lateral",
         "wrapTextInToc": "Quebrar texto no índice",
         "showOpenedFiles": "Mostrar arquivos abertos",
+        "autoShowToc": "Mostrar automaticamente o índice ao abrir um ficheiro",
         "excludePatterns": "Padrões de exclusão",
         "excludePatternsNotes": "Padrões de exclusão (Notas)",
         "fileSortBy": {

@@ -29,6 +29,7 @@ export interface PreferencesState {
   zoom: number
   hideScrollbar: boolean
   wordWrapInToc: boolean
+  autoShowToc: boolean
   fileSortBy: FileSortBy | string
   fileSortOrder: FileSortOrder | string
   startUpAction: StartUpAction | string
@@ -147,6 +148,7 @@ export const usePreferencesStore = defineStore('preferences', {
     zoom: 1.0,
     hideScrollbar: false,
     wordWrapInToc: false,
+    autoShowToc: true,
     fileSortBy: 'created',
     fileSortOrder: 'asc',
     startUpAction: 'restoreAll',

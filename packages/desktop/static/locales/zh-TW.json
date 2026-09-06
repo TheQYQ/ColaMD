@@ -374,6 +374,7 @@
         "zoom": "縮放層級。介於 0.5 和 2.0 之間",
         "hideScrollbar": "是否隱藏捲軸",
         "wordWrapInToc": "是否在目錄中啟用自動換行",
+        "autoShowToc": "開啟 Markdown 檔案時自動顯示目錄。",
         "fileSortBy": "按建立時間、修改時間和標題對開啟資料夾中的檔案進行排序",
         "startUpAction": "ColaMD 啟動後的操作，開啟最後編輯的內容、開啟指定資料夾或空白頁面",
         "restoreLayoutState": "啟動時還原上次編輯器狀態",
@@ -472,6 +473,7 @@
         "title": "側邊欄",
         "wrapTextInToc": "在目錄中換行文字",
         "showOpenedFiles": "顯示已開啟的檔案",
+        "autoShowToc": "開啟檔案時自動顯示目錄",
         "excludePatterns": "排除模式",
         "excludePatternsNotes": "排除模式（備註）",
         "fileSortBy": {

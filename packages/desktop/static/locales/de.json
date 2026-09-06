@@ -374,6 +374,7 @@
         "zoom": "Das Zoom-Level. Zwischen 0.5 und 2.0 inklusive",
         "hideScrollbar": "Ob Scrollbalken ausgeblendet werden sollen",
         "wordWrapInToc": "Ob Zeilenumbruch im Inhaltsverzeichnis aktiviert werden soll",
+        "autoShowToc": "Zeigt das Inhaltsverzeichnis automatisch an, wenn eine Datei geöffnet wird.",
         "fileSortBy": "Dateien im geöffneten Ordner nach Erstellungszeit, Änderungszeit und Titel sortieren",
         "startUpAction": "Die Aktion nach ColaMD-Start, letzten bearbeiteten Inhalt öffnen, angegebenen Ordner öffnen oder leere Seite",
         "restoreLayoutState": "Vorherigen Editorzustand beim Start wiederherstellen",
@@ -472,6 +473,7 @@
         "title": "Seitenleiste",
         "wrapTextInToc": "Text im Inhaltsverzeichnis umbrechen",
         "showOpenedFiles": "Geöffnete Dateien anzeigen",
+        "autoShowToc": "Inhaltsverzeichnis beim Öffnen einer Datei automatisch anzeigen",
         "excludePatterns": "Ausschlussmuster",
         "excludePatternsNotes": "Hinweise zu Ausschlussmustern",
         "fileSortBy": {

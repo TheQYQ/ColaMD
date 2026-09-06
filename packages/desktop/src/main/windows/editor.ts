@@ -112,6 +112,7 @@ class EditorWindow extends BaseWindow {
       titleBarStyle,
       theme,
       sideBarVisibility,
+      autoShowToc,
       restoreLayoutState,
       tabBarVisibility,
       sourceCodeModeEnabled,
@@ -176,6 +177,7 @@ class EditorWindow extends BaseWindow {
         markdownList: this.bufferStoreInfo!.filePath ? [] : this._markdownToOpen,
         lineEnding,
         sideBarVisibility: resolvedSideBarVisibility,
+        autoShowToc,
         tabBarVisibility,
         sourceCodeModeEnabled
       })
@@ -484,8 +486,13 @@ class EditorWindow extends BaseWindow {
     browserWindow!.webContents.once('did-finish-load', () => {
       this.lifecycle = WindowLifecycle.READY
       const { preferences } = this._accessor
-      const { sideBarVisibility, restoreLayoutState, tabBarVisibility, sourceCodeModeEnabled } =
-        preferences.getAll()
+      const {
+        sideBarVisibility,
+        autoShowToc,
+        restoreLayoutState,
+        tabBarVisibility,
+        sourceCodeModeEnabled
+      } = preferences.getAll()
       const resolvedSideBarVisibility = restoreLayoutState ? !!sideBarVisibility : false
       const lineEnding = preferences.getPreferredEol()
       browserWindow!.webContents.send('mt::bootstrap-editor', {
@@ -493,6 +500,7 @@ class EditorWindow extends BaseWindow {
         markdownList: [],
         lineEnding,
         sideBarVisibility: resolvedSideBarVisibility,
+        autoShowToc,
         tabBarVisibility,
         sourceCodeModeEnabled
       })

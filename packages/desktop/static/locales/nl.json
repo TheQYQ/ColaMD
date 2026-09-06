@@ -373,6 +373,7 @@
         "zoom": "Het zoomniveau. Tussen 0,5 en 2,0",
         "hideScrollbar": "Schuifbalken verbergen",
         "wordWrapInToc": "Tekstterugloop in inhoudsopgave",
+        "autoShowToc": "Geeft de inhoudsopgave automatisch weer wanneer een bestand wordt geopend.",
         "fileSortBy": "Bestanden sorteren op aanmaaktijd, wijzigingstijd of titel",
         "startUpAction": "De actie na het opstarten van ColaMD",
         "restoreLayoutState": "Vorige editorstatus herstellen bij opstarten",
@@ -472,6 +473,7 @@
         "title": "Zijbalk",
         "wrapTextInToc": "Tekstterugloop in inhoudsopgave",
         "showOpenedFiles": "Geopende bestanden tonen",
+        "autoShowToc": "Inhoudsopgave automatisch weergeven bij het openen van een bestand",
         "excludePatterns": "Uitsluitpatronen",
         "excludePatternsNotes": "Uitsluitpatronen (opmerkingen)",
         "fileSortBy": {

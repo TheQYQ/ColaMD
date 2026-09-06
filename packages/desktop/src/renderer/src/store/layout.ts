@@ -129,6 +129,16 @@ export const useLayoutStore = defineStore('layout', () => {
     debouncedSendBufferedState()
   }
 
+  // Reveal the sidebar's TOC tab for a freshly opened document. Untitled
+  // blanks carry no pathname (no TOC to show) and the `autoShowToc`
+  // preference gates the whole behavior. No-op when the TOC tab is already
+  // on screen so repeated opens don't spam preference/buffer writes.
+  function SHOW_TOC_FOR_OPENED_FILE(pathname?: string): void {
+    if (!pathname || !usePreferencesStore().autoShowToc) return
+    if (rightColumn.value === 'toc' && showSideBar.value) return
+    SET_LAYOUT({ rightColumn: 'toc', showSideBar: true })
+  }
+
   function SET_SIDE_BAR_WIDTH(
     width: number | string,
     { scheduleBufferUpdate = true }: SetLayoutOptions = {}
@@ -193,6 +203,7 @@ export const useLayoutStore = defineStore('layout', () => {
     CREATE_BUFFERED_STATE,
     RESTORE_BUFFERED_STATE,
     TOGGLE_LAYOUT_ENTRY,
+    SHOW_TOC_FOR_OPENED_FILE,
     SET_SIDE_BAR_WIDTH,
     LISTEN_FOR_LAYOUT,
     DISPATCH_LAYOUT_MENU_ITEMS,

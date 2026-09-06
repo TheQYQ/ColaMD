@@ -374,6 +374,7 @@
         "zoom": "ズームレベル。0.5 から 2.0 の間",
         "hideScrollbar": "スクロールバーを非表示にするかどうか",
         "wordWrapInToc": "目次で自動改行を有効にするかどうか",
+        "autoShowToc": "ファイルを開くときに目次を自動的に表示します。",
         "fileSortBy": "開いたフォルダー内のファイルを作成時刻、変更時刻、タイトルで並べ替え",
         "startUpAction": "ColaMD 起動後のアクション、最後に編集したコンテンツを開く、指定されたフォルダーを開く、または空白ページ",
         "restoreLayoutState": "起動時に前回のエディター状態を復元",
@@ -472,6 +473,7 @@
         "title": "サイドバー",
         "wrapTextInToc": "目次でテキストを折り返し",
         "showOpenedFiles": "開いているファイルを表示",
+        "autoShowToc": "ファイルを開くときに目次を自動表示",
         "excludePatterns": "除外パターン",
         "excludePatternsNotes": "除外パターンの注意事項",
         "fileSortBy": {

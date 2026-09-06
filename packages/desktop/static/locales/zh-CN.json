@@ -374,6 +374,7 @@
         "zoom": "缩放级别。介于 0.5 和 2.0 之间",
         "hideScrollbar": "是否隐藏滚动条",
         "wordWrapInToc": "是否在目录中启用自动换行",
+        "autoShowToc": "打开 Markdown 文件时自动显示目录。",
         "fileSortBy": "按创建时间、修改时间和标题对打开文件夹中的文件进行排序",
         "startUpAction": "ColaMD 启动后的操作，打开最后编辑的内容、打开指定文件夹或空白页",
         "restoreLayoutState": "启动时恢复上次编辑器状态",
@@ -472,6 +473,7 @@
         "title": "侧边栏",
         "wrapTextInToc": "在目录中换行文本",
         "showOpenedFiles": "显示已打开文件",
+        "autoShowToc": "打开文件时自动显示目录",
         "excludePatterns": "排除模式",
         "excludePatternsNotes": "排除模式（注释）",
         "fileSortBy": {

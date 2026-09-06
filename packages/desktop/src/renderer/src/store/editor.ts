@@ -892,13 +892,14 @@ export const useEditorStore = defineStore('editor', {
           markdownList,
           lineEnding,
           sideBarVisibility,
+          autoShowToc,
           tabBarVisibility,
           sourceCodeModeEnabled
         } = config
 
         window.electron.ipcRenderer.send('mt::window-initialized')
         mainStore.SET_INITIALIZED()
-        preferencesStore.SET_USER_PREFERENCE({ endOfLine: lineEnding })
+        preferencesStore.SET_USER_PREFERENCE({ endOfLine: lineEnding, autoShowToc })
         layoutStore.SET_LAYOUT({
           rightColumn: 'files',
           showSideBar: !!sideBarVisibility,

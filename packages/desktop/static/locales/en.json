@@ -373,6 +373,7 @@
         "zoom": "The zoom level. Between 0.5 and 2.0 inclusive",
         "hideScrollbar": "Whether to hide scrollbars",
         "wordWrapInToc": "Whether to enable word wrap in TOC",
+        "autoShowToc": "Automatically show the table of contents when opening a file.",
         "fileSortBy": "Sort files in opened folder by created time, modified time and title",
         "startUpAction": "The action after ColaMD startup, open the last edited content, open the specified folder or blank page",
         "restoreLayoutState": "Restore previous editor state on startup",
@@ -472,6 +473,7 @@
         "title": "Sidebar",
         "wrapTextInToc": "Wrap text in table of contents",
         "showOpenedFiles": "Show opened files",
+        "autoShowToc": "Automatically show table of contents when opening a file",
         "excludePatterns": "Exclude patterns",
         "excludePatternsNotes": "Exclude patterns (Notes)",
         "fileSortBy": {

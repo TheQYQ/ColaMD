@@ -180,6 +180,17 @@ onMounted(async () => {
   editorStore.LISTEN_FOR_SAVE()
   editorStore.LISTEN_FOR_SET_PATHNAME()
   editorStore.LISTEN_FOR_BOOTSTRAP_WINDOW()
+
+  // Auto-show the sidebar TOC for each newly opened document. Only fresh
+  // opens emit 'file-loaded' (tab switches emit 'file-changed'), and the
+  // layout action filters untitled blanks and honors the `autoShowToc`
+  // preference.
+  bus.on('file-loaded', (payload) => {
+    const { id } = (payload ?? {}) as { id?: string }
+    const tab = editorStore.tabs.find((t) => t.id === id)
+    layoutStore.SHOW_TOC_FOR_OPENED_FILE(tab?.pathname)
+  })
+
   editorStore.LISTEN_FOR_SAVE_CLOSE()
   editorStore.LISTEN_FOR_RENAME()
   editorStore.LISTEN_FOR_SET_LINE_ENDING()
