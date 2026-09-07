@@ -1,6 +1,6 @@
 import './globalSetting'
 import path from 'path'
-import { app, dialog, crashReporter } from 'electron'
+import { app, dialog } from 'electron'
 import log from 'electron-log'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
@@ -38,7 +38,6 @@ const initializeLogger = (env: AppEnvironment): void => {
     return path.join(env.paths.logPath, 'main.log')
   }
   log.transports.file.level = getLogLevel()
-  log.transports.file.sync = true
   log.errorHandler.startCatching({
     onError(error: unknown) {
       // This callback receives the full Error object with stack
@@ -50,13 +49,8 @@ const initializeLogger = (env: AppEnvironment): void => {
 
 initializeLogger(appEnvironment)
 
-// Handles native level crashes
-crashReporter.start({
-  companyName: '',
-  productName: 'colamd',
-  uploadToServer: false, // collect locally
-  compress: true
-})
+// Native-level crashes are captured by the crashReporter started inside
+// setupExceptionHandler(); a second start() here would be a silent no-op.
 process.on('uncaughtException', (err: Error) => {
   log.error('Main uncaughtException:', err.stack)
 })

@@ -1,7 +1,5 @@
 import eslintJs from '@eslint/js'
 import pluginVue from 'eslint-plugin-vue'
-import pluginHtml from 'eslint-plugin-html'
-import pluginI18nJson from 'eslint-plugin-i18n-json'
 import pluginJsonc from 'eslint-plugin-jsonc'
 import neostandard from 'neostandard'
 import babelParser from '@babel/eslint-parser'
@@ -17,13 +15,7 @@ export default [
       '.claude/**',
       '**/out/**',
       '**/dist/**',
-      // The website ships with its own ESLint v8 config (React conventions).
-      // The root config here is desktop-focused; mixing the two surfaces
-      // pre-existing website style errors into desktop CI.
-      'packages/website/**',
-      'packages/muyajs/lib/assets/libs/**',
-      'packages/muyajs/lib/parser/marked/urlify.js',
-      // muya v2 (TS) self-lints with its own antfu-based config
+      // muya self-lints with its own antfu-based config
       // (packages/muya/eslint.config.mjs). Different style rules from the
       // colamd-desktop config (4-space indent, semis required, strict
       // ts/no-explicit-any), so we keep them isolated rather than try to
@@ -31,8 +23,8 @@ export default [
       'packages/muya/**',
       'packages/desktop/src/renderer/src/assets/symbolIcon/index.js',
       '**/*.min.json',
-      'test-results/**',
-      'playwright-report/**'
+      '**/test-results/**',
+      '**/playwright-report/**'
     ]
   },
 
@@ -123,22 +115,15 @@ export default [
     }
   },
 
-  // 6. JS/MJS/CJS files: keep Babel parser. After Commit 11 (allowJs:false),
-  // the only remaining JS in the source tree is packages/muyajs/ (kept JS pending
-  // upstream TS muya replacement) + a couple of assets/symbolIcon files.
-  // Narrow the JS-file scope to prevent stray .js files in the migrated
-  // directories from slipping past the TS lint rules.
+  // 6. JS/MJS/CJS files: keep Babel parser. The only remaining JS in the
+  // source tree is the symbolIcon asset plus this config file. Narrow the
+  // JS-file scope to prevent stray .js files in the migrated directories
+  // from slipping past the TS lint rules.
   {
     files: [
-      'packages/muyajs/**/*.js',
-      'packages/muyajs/**/*.mjs',
-      'packages/muyajs/**/*.cjs',
       'packages/desktop/src/renderer/src/assets/symbolIcon/**/*.js',
       'eslint.config.js'
     ],
-    plugins: {
-      html: pluginHtml
-    },
     languageOptions: {
       parser: babelParser,
       parserOptions: {
@@ -168,8 +153,7 @@ export default [
       'require-atomic-updates': 'off',
       'prefer-const': 'off',
       'no-prototype-builtins': 'off'
-    },
-    ignores: ['node_modules', 'packages/muyajs/dist/**/*', 'packages/muyajs/webpack.config.js']
+    }
   },
 
   // 7. Test files: add Vitest globals (covers both .js and .ts specs)
@@ -180,37 +164,6 @@ export default [
     }
   },
 
-  // 8. Relax behavioral rules for the legacy muya editor engine (JS only — muya stays JS)
-  {
-    files: ['packages/muyajs/lib/**/*.js'],
-    rules: {
-      'no-sequences': 'off',
-      'no-unused-expressions': 'off',
-      'no-return-assign': 'off',
-      'no-extra-semi': 'off',
-      eqeqeq: 'warn',
-      'no-var': 'warn'
-    }
-  },
-
-  // 9. JSON validation
-  ...pluginJsonc.configs['flat/recommended-with-json'],
-
-  // 10. i18n JSON locales
-  {
-    files: ['packages/desktop/src/shared/i18n/locales/*.json'],
-    plugins: {
-      'i18n-json': pluginI18nJson
-    },
-    rules: {
-      'i18n-json/valid-json': 'error',
-      'i18n-json/sorted-keys': 'warn',
-      'i18n-json/identical-keys': [
-        'error',
-        {
-          filePath: 'packages/desktop/src/shared/i18n/locales/en.json'
-        }
-      ]
-    }
-  }
+  // 8. JSON validation
+  ...pluginJsonc.configs['flat/recommended-with-json']
 ]

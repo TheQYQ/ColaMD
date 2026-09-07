@@ -130,7 +130,9 @@ export interface IpcSendChannels {
   'mt::open-file-by-window-id': [windowId: number, filePath: string, options?: unknown]
   'mt::open-keybindings-config': []
   'mt::open-setting-window': []
-  'mt::rename': [payload: { id: string; pathname: string; newPathname: string; currentFile?: unknown }]
+  'mt::rename': [
+    payload: { id: string; pathname: string; newPathname: string; currentFile?: unknown }
+  ]
   'mt::request-keybindings': []
   'mt::set-editor-format-menus-enabled': [windowId: number, enabled: boolean]
   'mt::response-export': [
@@ -186,7 +188,6 @@ export interface IpcSendChannels {
   'mt::window-toggle-always-on-top': []
   'mt::window::drop': [payload: unknown]
   'screen-capture': [payload: unknown]
-  'set-image-folder-path': [path: string]
   'set-user-preference': [partial: unknown]
   'watcher-unwatch-all-by-id': [windowId: number]
   'watcher-unwatch-directory': [windowId: number, path: string]

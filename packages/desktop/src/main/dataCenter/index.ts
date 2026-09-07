@@ -160,10 +160,6 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
   }
 
   _listenForIpcMain(): void {
-    ipcMain.on('set-image-folder-path', (newPath) => {
-      this.setItem('imageFolderPath', newPath)
-    })
-
     ipcMain.on('mt::ask-for-user-data', async(e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return

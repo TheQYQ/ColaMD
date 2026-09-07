@@ -2,18 +2,28 @@ import { ipcMain, shell, clipboard } from 'electron'
 import log from 'electron-log'
 import * as plist from 'plist'
 
+// Defense-in-depth: the renderer renders untrusted markdown, so only web
+// links may leave the app. file:// / smb:// / custom schemes stay blocked.
+const OPEN_EXTERNAL_RE = /^https?:\/\//i
+
+const openExternalSafe = async(url: string): Promise<boolean> => {
+  if (!OPEN_EXTERNAL_RE.test(url)) {
+    log.warn('shell.openExternal blocked non-http(s) URL:', url)
+    return false
+  }
+  try {
+    await shell.openExternal(url)
+    return true
+  } catch (err) {
+    log.error('shell.openExternal failed:', err)
+    return false
+  }
+}
+
 export const registerShellHandlers = (): void => {
-  ipcMain.handle('mt::shell::open-external', async(_e, url: string) => {
-    try {
-      await shell.openExternal(url)
-      return true
-    } catch (err) {
-      log.error('shell.openExternal failed:', err)
-      return false
-    }
-  })
+  ipcMain.handle('mt::shell::open-external', (_e, url: string) => openExternalSafe(url))
   ipcMain.on('mt::shell::open-external', (_e, url: string) => {
-    shell.openExternal(url).catch((err) => log.error('shell.openExternal failed:', err))
+    openExternalSafe(url).catch((err) => log.error('shell.openExternal failed:', err))
   })
   ipcMain.on('mt::shell::show-item', (_e, fullPath: string) => {
     try {
@@ -62,7 +72,12 @@ export const registerShellHandlers = (): void => {
         // UTF-16LE instead, then take the first non-empty entry.
         const buffer = clipboard.readBuffer('FileNameW')
         if (buffer.length > 0) {
-          return buffer.toString('utf16le').split('\u0000').find(p => p.length > 0) ?? ''
+          return (
+            buffer
+              .toString('utf16le')
+              .split('\u0000')
+              .find((p) => p.length > 0) ?? ''
+          )
         }
         return ''
       }

@@ -35,7 +35,7 @@
     "rebuild-native": "electron-rebuild -f",
     "start": "cross-env PERF_TESTING=true electron-vite preview",
     "dev": "electron-vite dev",
-    "build": "electron-vite build",
+    "build": "tsx ../../scripts/minify-locales.ts && electron-vite build",
     "build:unpack": "tsx ../../scripts/minify-locales.ts && electron-vite build",
     "build:win": "tsx ../../scripts/minify-locales.ts && electron-rebuild && electron-vite build && electron-builder --win --x64 --publish never",
     "build:win:x64": "tsx ../../scripts/minify-locales.ts && electron-rebuild && electron-vite build && electron-builder --win --x64 --publish never",

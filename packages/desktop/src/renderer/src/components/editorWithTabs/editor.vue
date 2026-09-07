@@ -2047,7 +2047,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style>
-/* ... existing style ... */
 .editor-wrapper {
   height: 100%;
   position: relative;
