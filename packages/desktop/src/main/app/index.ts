@@ -6,6 +6,7 @@ import log from 'electron-log'
 import { app, BrowserWindow, clipboard, dialog, nativeTheme, shell, ipcMain } from 'electron'
 import type { BrowserWindowConstructorOptions } from 'electron'
 import { isChildOfDirectory } from 'common/filesystem/paths'
+import { addAllowedRoot, assertPathInScope } from '../security/pathScope'
 import type { IUserPreferences } from '@shared/types/preferences'
 import { isLinux, isOsx, isWindows } from '../config'
 import parseArgs from '../cli/parser'
@@ -232,7 +233,8 @@ class App {
     const { preferences, editorBufferStore } = this._accessor
 
     // Initialize language settings
-    const { startUpAction, defaultDirectoryToOpen, theme, language } = preferences.getAll()
+    const { startUpAction, defaultDirectoryToOpen, theme, language, imageFolderPath } =
+      preferences.getAll()
     const followSystemTheme = preferences.getItem<boolean>('followSystemTheme')
     const lastOpenedFolder = preferences.getItem<string>('lastOpenedFolder')
     const lightModeTheme = preferences.getItem<string>('lightModeTheme')
@@ -241,6 +243,12 @@ class App {
     if (language) {
       setLanguage(language)
     }
+
+    // Grant mutation scope for app-managed locations: the user data dir is
+    // always allowed (it is the app's own config/storage area); the configured
+    // image folder when set (renderer may write uploaded images there).
+    addAllowedRoot(app.getPath('userData'))
+    if (imageFolderPath) addAllowedRoot(imageFolderPath)
 
     if (args._.length) {
       for (const pathname of args._) {
@@ -289,54 +297,57 @@ class App {
       selectTheme(newTheme)
     }
 
-    onInternalChannel(
-      'broadcast-preferences-changed',
-      (change: Partial<IUserPreferences>) => {
-        const nextPreferences = {
-          ...preferences.getAll(),
-          ...change
-        }
-        nativeTheme.themeSource = getNativeThemeSource(nextPreferences)
+    onInternalChannel('broadcast-preferences-changed', (change: Partial<IUserPreferences>) => {
+      const nextPreferences = {
+        ...preferences.getAll(),
+        ...change
+      }
+      nativeTheme.themeSource = getNativeThemeSource(nextPreferences)
+
+      // Keep the image-folder write scope in sync with the preference.
+      if (typeof change.imageFolderPath === 'string' && change.imageFolderPath) {
+        addAllowedRoot(change.imageFolderPath)
+      }
 
       // When followSystemTheme is enabled, immediately switch to match system
-        if (change.followSystemTheme === true) {
-          const systemIsDark = nativeTheme.shouldUseDarkColors
-          const lightModeTheme = preferences.getItem<string>('lightModeTheme')
-          const darkModeTheme = preferences.getItem<string>('darkModeTheme')
-          const newTheme = systemIsDark ? darkModeTheme : lightModeTheme
+      if (change.followSystemTheme === true) {
+        const systemIsDark = nativeTheme.shouldUseDarkColors
+        const lightModeTheme = preferences.getItem<string>('lightModeTheme')
+        const darkModeTheme = preferences.getItem<string>('darkModeTheme')
+        const newTheme = systemIsDark ? darkModeTheme : lightModeTheme
 
-          log.info(
-            `followSystemTheme enabled, switching to: ${newTheme} (system ${systemIsDark ? 'dark' : 'light'})`
-          )
-          selectTheme(newTheme)
-          preferences.setItem('theme', newTheme)
-        }
+        log.info(
+          `followSystemTheme enabled, switching to: ${newTheme} (system ${systemIsDark ? 'dark' : 'light'})`
+        )
+        selectTheme(newTheme)
+        preferences.setItem('theme', newTheme)
+      }
       // When light/dark mode theme preferences change, apply immediately if following system
-        if (
-          preferences.getItem<boolean>('followSystemTheme') &&
+      if (
+        preferences.getItem<boolean>('followSystemTheme') &&
         (change.lightModeTheme || change.darkModeTheme)
-        ) {
-          const systemIsDark = nativeTheme.shouldUseDarkColors
+      ) {
+        const systemIsDark = nativeTheme.shouldUseDarkColors
 
         // Get current values, but prefer the NEW values from the change event
-          let lightModeTheme = preferences.getItem<string>('lightModeTheme')
-          let darkModeTheme = preferences.getItem<string>('darkModeTheme')
+        let lightModeTheme = preferences.getItem<string>('lightModeTheme')
+        let darkModeTheme = preferences.getItem<string>('darkModeTheme')
 
         // If these preferences were just changed, use the new values from the change object
-          if (change.lightModeTheme !== undefined) {
-            lightModeTheme = change.lightModeTheme
-          }
-          if (change.darkModeTheme !== undefined) {
-            darkModeTheme = change.darkModeTheme
-          }
-
-          const newTheme = systemIsDark ? darkModeTheme : lightModeTheme
-
-          log.info(`Theme preference changed, applying: ${newTheme}`)
-          selectTheme(newTheme)
-          preferences.setItem('theme', newTheme)
+        if (change.lightModeTheme !== undefined) {
+          lightModeTheme = change.lightModeTheme
         }
-      })
+        if (change.darkModeTheme !== undefined) {
+          darkModeTheme = change.darkModeTheme
+        }
+
+        const newTheme = systemIsDark ? darkModeTheme : lightModeTheme
+
+        log.info(`Theme preference changed, applying: ${newTheme}`)
+        selectTheme(newTheme)
+        preferences.setItem('theme', newTheme)
+      }
+    })
 
     // Listen for system theme changes and auto-switch if enabled
     if (!this._themeListenerRegistered) {
@@ -534,6 +545,12 @@ class App {
       }
     }
 
+    // Grant mutation scope for paths opened via trusted flows (argv/CLI /
+    // file-association / recent files all funnel through here). This is a
+    // trusted grant site — see pathScope.ts for the threat model.
+    for (const dir of directorySet) addAllowedRoot(dir)
+    for (const file of fileSet) addAllowedRoot(path.dirname(file))
+
     // Filter out directories that are already opened.
     for (const window of _windowManager.windows.values()) {
       if (window.type === WindowType.EDITOR) {
@@ -714,7 +731,8 @@ class App {
     })
 
     onInternalChannel('app-open-file-by-id', (windowId: number, filePath: string) => {
-      const openFilesInNewWindow = this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
+      const openFilesInNewWindow =
+        this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
       if (openFilesInNewWindow) {
         this._createEditorWindow(null, [filePath])
       } else {
@@ -725,7 +743,8 @@ class App {
       }
     })
     onInternalChannel('app-open-files-by-id', (windowId: number, fileList: string[]) => {
-      const openFilesInNewWindow = this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
+      const openFilesInNewWindow =
+        this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
       if (openFilesInNewWindow) {
         this._createEditorWindow(null, fileList)
       } else {
@@ -742,7 +761,8 @@ class App {
     })
 
     onInternalChannel('app-open-markdown-by-id', (windowId: number, data: string) => {
-      const openFilesInNewWindow = this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
+      const openFilesInNewWindow =
+        this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
       if (openFilesInNewWindow) {
         this._createEditorWindow(null, [], [data])
       } else {
@@ -776,7 +796,8 @@ class App {
 
     ipcMain.on('mt::open-file-by-window-id', (_e, windowId: number, filePath: string) => {
       const resolvedPath = normalizeAndResolvePath(filePath)
-      const openFilesInNewWindow = this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
+      const openFilesInNewWindow =
+        this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
       if (openFilesInNewWindow) {
         this._createEditorWindow(null, [resolvedPath])
       } else {
@@ -849,6 +870,7 @@ class App {
     })
 
     ipcMain.handle('mt::fs-trash-item', async(_event, fullPath: string) => {
+      await assertPathInScope(fullPath)
       return shell.trashItem(fullPath)
     })
   }

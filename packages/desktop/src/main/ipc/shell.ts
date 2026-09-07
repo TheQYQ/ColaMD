@@ -1,6 +1,7 @@
 import { ipcMain, shell, clipboard } from 'electron'
 import log from 'electron-log'
 import * as plist from 'plist'
+import { assertPathInScope } from '../security/pathScope'
 
 // Defense-in-depth: the renderer renders untrusted markdown, so only web
 // links may leave the app. file:// / smb:// / custom schemes stay blocked.
@@ -25,18 +26,21 @@ export const registerShellHandlers = (): void => {
   ipcMain.on('mt::shell::open-external', (_e, url: string) => {
     openExternalSafe(url).catch((err) => log.error('shell.openExternal failed:', err))
   })
-  ipcMain.on('mt::shell::show-item', (_e, fullPath: string) => {
+  ipcMain.on('mt::shell::show-item', async(_e, fullPath: string) => {
     try {
+      await assertPathInScope(fullPath)
       shell.showItemInFolder(fullPath)
     } catch (err) {
-      log.error('shell.showItemInFolder failed:', err)
+      log.error('shell.showItemInFolder blocked:', err)
     }
   })
   ipcMain.handle('mt::shell::open-path', async(_e, fullPath: string) => {
     try {
+      // openPath on an .exe launches it — effectively exec. Scope it.
+      await assertPathInScope(fullPath)
       return await shell.openPath(fullPath)
     } catch (err) {
-      log.error('shell.openPath failed:', err)
+      log.error('shell.openPath blocked:', err)
       return String(err instanceof Error ? err.message : err)
     }
   })

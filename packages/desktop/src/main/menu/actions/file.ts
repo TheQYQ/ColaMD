@@ -23,6 +23,7 @@ import type { CommandManager } from '../../commands'
 import { EXTENSION_HASN, PANDOC_EXTENSIONS, URL_REG } from '../../config'
 import { normalizeAndResolvePath, writeFile } from '../../filesystem'
 import { writeMarkdownFile } from '../../filesystem/markdown'
+import { addAllowedRoot } from '../../security/pathScope'
 import { getPath, getRecommendTitleFromMarkdownString } from '../../utils'
 import pandoc from '../../utils/pandoc'
 import { t } from '../../i18n'
@@ -770,8 +771,12 @@ export const openFolder = async(win: BrowserWindow | null): Promise<void> => {
 export const openFileOrFolder = (win: BrowserWindow, pathname: string): void => {
   const resolvedPath = normalizeAndResolvePath(pathname)
   if (isFile(resolvedPath)) {
+    // Trusted grant site: every caller of openFileOrFolder is a user-driven
+    // dialog or a user-clicked recent-file entry. See pathScope.ts.
+    addAllowedRoot(path.dirname(resolvedPath))
     ipcMain.emit('app-open-file-by-id', win.id, resolvedPath)
   } else if (isDirectory(resolvedPath)) {
+    addAllowedRoot(resolvedPath)
     ipcMain.emit('app-open-directory-by-id', win.id, resolvedPath)
   } else {
     console.error(`[ERROR] Cannot open unknown file: "${resolvedPath}"`)

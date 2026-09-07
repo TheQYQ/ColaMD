@@ -11,6 +11,7 @@ import { TITLE_BAR_HEIGHT, editorWinOptions, isLinux, isOsx } from '../config'
 import { showEditorContextMenu } from '../contextMenu/editor'
 import { loadMarkdownFile } from '../filesystem/markdown'
 import { switchLanguage } from '../spellchecker'
+import { addAllowedRoot } from '../security/pathScope'
 import fs from 'fs'
 
 type RawMarkdownDocument = Awaited<ReturnType<typeof loadMarkdownFile>>
@@ -285,6 +286,9 @@ class EditorWindow extends BaseWindow {
     // Delay load files and directories after the current control flow.
     setTimeout(() => {
       if (rootDirectory) {
+        // Trusted grant site: rootDirectory flows from argv/CLI/dialog via
+        // _createEditorWindow — see pathScope.ts.
+        addAllowedRoot(rootDirectory)
         this.openFolder(rootDirectory)
       }
       if (fileList.length) {

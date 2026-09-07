@@ -16,7 +16,12 @@ export const editorWinOptions: Readonly<BrowserWindowConstructorOptions> = Objec
     // enable it always and set the HTML spelling attribute to false.
     spellcheck: true,
     nodeIntegration: false,
-    webSecurity: false,
+    // webSecurity is only relaxed in development: the Vite dev server serves
+    // the renderer from http://localhost and needs to load file:// images
+    // from disk. In production the renderer loads from a same-origin
+    // file:// URL, so the same-origin policy already covers local assets
+    // and we can enforce the full policy.
+    webSecurity: process.env.NODE_ENV !== 'development',
     preload: path.join(__dirname, '../preload/index.js')
   },
   useContentSize: true,
@@ -37,7 +42,7 @@ export const preferencesWinOptions: Readonly<BrowserWindowConstructorOptions> = 
     // Always true to access native spellchecker.
     spellcheck: true,
     nodeIntegration: false,
-    webSecurity: false,
+    webSecurity: process.env.NODE_ENV !== 'development',
     preload: path.join(__dirname, '../preload/index.js')
   },
   fullscreenable: false,

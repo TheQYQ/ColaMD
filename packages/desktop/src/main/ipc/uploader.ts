@@ -1,6 +1,6 @@
 import path from 'path'
 import { tmpdir } from 'os'
-import { exec, execFile } from 'child_process'
+import { execFile } from 'child_process'
 import fs from 'fs-extra'
 import { ipcMain } from 'electron'
 import commandExists from 'command-exists'
@@ -91,8 +91,12 @@ const uploadByPicgo = (localPath: string): Promise<string> =>
   new Promise((resolve, reject) => {
     const cmd = resolvePicgoBinary()
     if (!cmd) return reject(new Error('PicGo command not found in PATH'))
-    exec(
-      `${cmd} u "${localPath}"`,
+    // Use execFile (not exec with a shell string) so localPath is passed as a
+    // single argv element and cannot inject shell metacharacters — the
+    // cliScript uploader just below already follows this pattern.
+    execFile(
+      cmd,
+      ['u', localPath],
       { env: { ...process.env, PATH: buildPreferredPathEnv() } },
       (err, stdout, stderr) => {
         if (err) return reject(err)
