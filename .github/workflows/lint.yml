@@ -22,5 +22,8 @@ jobs:
       - name: Run ESLint
         run: pnpm lint
 
+      - name: Check dependency hygiene (knip)
+        run: pnpm knip
+
       - name: Run TypeScript typecheck
         run: pnpm typecheck

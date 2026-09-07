@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  // patch-package runs from scripts/postinstall.ts with cwd=packages/desktop,
+  // which the static import scan cannot see.
+  "ignoreDependencies": ["patch-package"],
+  // `screencapture` is the macOS system binary spawned by
+  // packages/desktop/src/main/app/index.ts, not an npm binary.
+  "ignoreBinaries": ["screencapture"]
+}

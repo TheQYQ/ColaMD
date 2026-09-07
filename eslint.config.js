@@ -165,5 +165,14 @@ export default [
   },
 
   // 8. JSON validation
-  ...pluginJsonc.configs['flat/recommended-with-json']
+  ...pluginJsonc.configs['flat/recommended-with-json'],
+
+  // 9. knip.json is parsed as JSONC by knip itself, so inline comments are
+  // legal there (and carry the rationale for each ignore).
+  {
+    files: ['knip.json'],
+    rules: {
+      'jsonc/no-comments': 'off'
+    }
+  }
 ]

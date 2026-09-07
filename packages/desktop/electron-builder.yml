@@ -22,12 +22,6 @@ files:
   - '!node_modules/@vscode/ripgrep/lib/download.js'
   - '!node_modules/@vscode/ripgrep/lib/postinstall.js'
   - '!node_modules/ced/vendor'
-  # Large source files
-  - '!node_modules/mermaid/dist/mermaid.js'
-  - '!node_modules/mermaid/dist/mermaid.min.js'
-  - '!node_modules/mermaid/dist/mermaid.esm.min.mjs'
-  - '!node_modules/katex/dist/katex.min.js'
-  - '!node_modules/katex/dist/katex.mjs'
   # Don't bundle Linux build files
   - '!node_modules/ced/build/Release/compact_enc_det.a'
   - '!node_modules/**/{*.vcxproj,*.vcxproj.filters}'
