@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, clickMenuById, waitForEditor } from './helpers'
+import { launchWithMarkdown, clickMenuById, waitForEditor, ensureTocVisible } from './helpers'
 
 // Build a long document with many top-level headings so the editor content
 // overflows its scroll container. Each heading title is unique so the sidebar
@@ -14,7 +14,9 @@ const buildLongDoc = (): string => {
     parts.push(`# Heading Number ${i}`)
     // Several filler paragraphs so each section is taller than the viewport.
     for (let p = 0; p < 6; p++) {
-      parts.push(`Filler paragraph ${p} under heading ${i}. Lorem ipsum dolor sit amet, consectetur adipiscing elit.`)
+      parts.push(
+        `Filler paragraph ${p} under heading ${i}. Lorem ipsum dolor sit amet, consectetur adipiscing elit.`
+      )
     }
   }
   return parts.join('\n\n') + '\n'
@@ -35,7 +37,8 @@ const getScrollTop = (page: Page): Promise<number> =>
 // `#`/whitespace before comparing against the clean TOC label text.
 const headingIndexByText = (page: Page, text: string): Promise<number> =>
   page.evaluate((needle) => {
-    const sel = '.mu-container > h1, .mu-container > h2, .mu-container > h3, .mu-container > h4, .mu-container > h5, .mu-container > h6'
+    const sel =
+      '.mu-container > h1, .mu-container > h2, .mu-container > h3, .mu-container > h4, .mu-container > h5, .mu-container > h6'
     const headings = Array.from(document.querySelectorAll(sel))
     const normalize = (s: string) => s.replace(/^[#\s]+/, '').trim()
     return headings.findIndex((h) => normalize(h.textContent || '') === needle)
@@ -49,7 +52,8 @@ const isHeadingInViewport = (page: Page, index: number): Promise<boolean> =>
   page.evaluate((idx) => {
     const container = document.querySelector('.editor-component') as HTMLElement | null
     if (!container) return false
-    const sel = '.mu-container > h1, .mu-container > h2, .mu-container > h3, .mu-container > h4, .mu-container > h5, .mu-container > h6'
+    const sel =
+      '.mu-container > h1, .mu-container > h2, .mu-container > h3, .mu-container > h4, .mu-container > h5, .mu-container > h6'
     const headings = Array.from(document.querySelectorAll(sel))
     const target = headings[idx] as HTMLElement | undefined
     if (!target) return false
@@ -92,8 +96,7 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
     await waitForEditor(page)
     // Open the sidebar and switch its right column to the ToC (el-tree).
     await showSidebar(app, page)
-    await clickMenuById(app, 'tocMenuItem')
-    await page.waitForSelector('.side-bar-toc .el-tree', { state: 'visible', timeout: 10000 })
+    await ensureTocVisible(app, page)
     // The TOC is seeded from `editor.getTOC()` on mount / json-change. Wait
     // until every heading has rendered a tree node before clicking.
     await page.waitForFunction(
@@ -128,9 +131,7 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
     // The scroll is animated (~300ms). Poll until it settles above 0.
     await expect.poll(() => getScrollTop(page), { timeout: 8000 }).toBeGreaterThan(0)
     // And the target heading must be in the viewport.
-    await expect
-      .poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 })
-      .toBe(true)
+    await expect.poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 }).toBe(true)
   })
 
   test('clicking an earlier heading scrolls back up toward it', async() => {
@@ -146,12 +147,8 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
     await label.click()
 
     // Scrolling up to heading 3 must reduce scrollTop substantially.
-    await expect
-      .poll(() => getScrollTop(page), { timeout: 8000 })
-      .toBeLessThan(fromTop)
-    await expect
-      .poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 })
-      .toBe(true)
+    await expect.poll(() => getScrollTop(page), { timeout: 8000 }).toBeLessThan(fromTop)
+    await expect.poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 }).toBe(true)
   })
 
   test('clicking the same heading twice is idempotent (stays at that heading)', async() => {
@@ -161,17 +158,13 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
 
     const label = tocLabel(page, targetText)
     await label.click()
-    await expect
-      .poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 })
-      .toBe(true)
+    await expect.poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 }).toBe(true)
     const firstScroll = await getScrollTop(page)
 
     // Click again — should land on (essentially) the same scroll position.
     await label.click()
     await page.waitForTimeout(500)
-    await expect
-      .poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 })
-      .toBe(true)
+    await expect.poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 }).toBe(true)
     const secondScroll = await getScrollTop(page)
     expect(Math.abs(secondScroll - firstScroll)).toBeLessThanOrEqual(5)
   })

@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, waitForEditor, enterSourceMode, clickMenuById } from './helpers'
+import {
+  launchWithMarkdown,
+  waitForEditor,
+  enterSourceMode,
+  clickMenuById,
+  ensureTocVisible
+} from './helpers'
 
 // colamd #3580: clicking a TOC entry in SOURCE CODE mode must scroll the
 // editor to that heading and place it near the TOP of the viewport. The editor
@@ -53,8 +59,7 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
       return !!(el && el.offsetParent !== null)
     })
     if (!sbVisible) await clickMenuById(app, 'sideBarMenuItem')
-    await clickMenuById(app, 'tocMenuItem')
-    await page.waitForSelector('.side-bar-toc .el-tree', { state: 'visible', timeout: 10000 })
+    await ensureTocVisible(app, page)
     await page.waitForFunction(
       (c) => document.querySelectorAll('.side-bar-toc .el-tree-node__label').length >= c,
       HEADING_COUNT,

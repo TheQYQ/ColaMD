@@ -194,6 +194,20 @@ export const clickMenuById = async(app: ElectronApplication, id: string): Promis
   }, id)
 }
 
+// Opening a file auto-shows the sidebar TOC (auto-show-toc.spec.ts), but
+// that action lands asynchronously some time after launch. A test that
+// blindly toggles `tocMenuItem` can race it and switch the just-opened
+// panel OFF. Wait for the auto-show to settle first; only fall back to the
+// menu toggle when the TOC never came.
+export const ensureTocVisible = async(app: ElectronApplication, page: Page): Promise<void> => {
+  const tree = page.locator('.side-bar-toc .el-tree')
+  if (await tree.isVisible().catch(() => false)) return
+  await page.waitForTimeout(300)
+  if (await tree.isVisible().catch(() => false)) return
+  await clickMenuById(app, 'tocMenuItem')
+  await page.waitForSelector('.side-bar-toc .el-tree', { state: 'visible', timeout: 10000 })
+}
+
 export const waitForEditor = async(page: Page, timeout = 15000): Promise<void> => {
   await page.waitForSelector('.editor-component', { state: 'attached', timeout })
   await page.waitForFunction(

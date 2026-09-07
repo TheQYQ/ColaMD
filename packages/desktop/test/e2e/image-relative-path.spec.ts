@@ -3,6 +3,7 @@ import type { ElectronApplication, Page } from 'playwright'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { launchElectron, waitForEditor, waitForMenuReady } from './helpers'
 
 // Checklist 122 — integration coverage for the Phase G "G1" blocker: a
@@ -101,7 +102,10 @@ test.describe('Relative-path image resolves to a DIRNAME-anchored file:// URL', 
     // relative path and contains the document directory.
     const withoutQuery = value.split('?')[0]
     expect(withoutQuery.endsWith('assets/cat.png')).toBe(true)
-    const expectedSrc = `file://${docDir.replace(/\\/g, '/')}/assets/cat.png`
+    // pathToFileURL yields the canonical platform form: file:///tmp/... on
+    // POSIX, file:///C:/... on Windows (hand-concatenating `file://${docDir}`
+    // would misparse the drive letter as the URL host on Windows).
+    const expectedSrc = pathToFileURL(path.join(docDir, 'assets', 'cat.png')).href
     expect(withoutQuery).toBe(expectedSrc)
   })
 
@@ -113,9 +117,10 @@ test.describe('Relative-path image resolves to a DIRNAME-anchored file:// URL', 
     expect(src).not.toBeNull()
     const withoutQuery = (src as string).split('?')[0]
     // Convert the file:// URL back to a filesystem path and confirm the engine
-    // resolved it to the on-disk sibling we wrote in setup.
-    const onDiskPath = withoutQuery.replace(/^file:\/\//, '')
+    // resolved it to the on-disk sibling we wrote in setup. fileURLToPath
+    // handles the platform-specific form (drive letter vs leading slash).
+    const onDiskPath = fileURLToPath(withoutQuery)
     expect(fs.existsSync(onDiskPath)).toBe(true)
-    expect(onDiskPath).toBe(path.join(docDir, 'assets', 'cat.png').replace(/\\/g, '/'))
+    expect(onDiskPath).toBe(path.join(docDir, 'assets', 'cat.png'))
   })
 })

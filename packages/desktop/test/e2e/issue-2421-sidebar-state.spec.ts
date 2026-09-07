@@ -26,11 +26,24 @@ test.describe('#2421 sidebar state survives icon toggle', () => {
     const launched = await launchWithMarkdown('# Doc\n\n## A\n\n## B\n')
     app = launched.app
     page = launched.page
-    // The files panel is the default right column; make sure it is open + wide.
-    await page.waitForFunction(() => {
-      const el = document.querySelector('.side-bar') as HTMLElement | null
-      return !!(el && el.offsetParent !== null && el.getBoundingClientRect().width > 220)
-    }, null, { timeout: 5000 })
+    // Opening a doc with headings auto-shows the TOC panel asynchronously
+    // (auto-show-toc.spec.ts). This spec drives the FILES panel — with the
+    // TOC active, clicking the files icon would switch panels instead of
+    // collapsing. Let the auto-show settle, then activate files if needed.
+    await page.waitForTimeout(300)
+    const filesActive = await filesIcon(page).evaluate((el) => el.classList.contains('active'))
+    if (!filesActive) {
+      await filesIcon(page).click()
+    }
+    // The files panel is the active right column; make sure it is open + wide.
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector('.side-bar') as HTMLElement | null
+        return !!(el && el.offsetParent !== null && el.getBoundingClientRect().width > 220)
+      },
+      null,
+      { timeout: 5000 }
+    )
   })
 
   test.afterAll(async() => {
@@ -47,25 +60,37 @@ test.describe('#2421 sidebar state survives icon toggle', () => {
     await page.mouse.down()
     await page.mouse.move(box!.x + box!.width / 2 + 120, box!.y + 80, { steps: 8 })
     await page.mouse.up()
-    await page.waitForFunction(() => {
-      const el = document.querySelector('.side-bar') as HTMLElement | null
-      return !!el && el.getBoundingClientRect().width >= 300
-    }, null, { timeout: 5000 })
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector('.side-bar') as HTMLElement | null
+        return !!el && el.getBoundingClientRect().width >= 300
+      },
+      null,
+      { timeout: 5000 }
+    )
 
     const widened = await sideBarWidth(page)
     expect(widened).toBeGreaterThanOrEqual(300)
 
     await filesIcon(page).click() // collapse to icon strip
-    await page.waitForFunction(() => {
-      const el = document.querySelector('.side-bar') as HTMLElement | null
-      return !!el && el.getBoundingClientRect().width <= 50
-    }, null, { timeout: 5000 })
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector('.side-bar') as HTMLElement | null
+        return !!el && el.getBoundingClientRect().width <= 50
+      },
+      null,
+      { timeout: 5000 }
+    )
 
     await filesIcon(page).click() // re-expand
-    await page.waitForFunction(() => {
-      const el = document.querySelector('.side-bar') as HTMLElement | null
-      return !!el && el.getBoundingClientRect().width > 50
-    }, null, { timeout: 5000 })
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector('.side-bar') as HTMLElement | null
+        return !!el && el.getBoundingClientRect().width > 50
+      },
+      null,
+      { timeout: 5000 }
+    )
 
     const reExpanded = await sideBarWidth(page)
     // The widened width must survive the collapse round-trip (it was reset to
@@ -79,19 +104,27 @@ test.describe('#2421 sidebar state survives icon toggle', () => {
 
     // Collapse the "Opened files" section.
     await arrow.click()
-    await page.waitForFunction(() => {
-      const a = document.querySelector('.side-bar .opened-files .icon-arrow')
-      return !!(a && a.classList.contains('fold'))
-    }, null, { timeout: 5000 })
+    await page.waitForFunction(
+      () => {
+        const a = document.querySelector('.side-bar .opened-files .icon-arrow')
+        return !!(a && a.classList.contains('fold'))
+      },
+      null,
+      { timeout: 5000 }
+    )
 
     // Toggle the whole sidebar off and back on via its icon.
     await filesIcon(page).click()
     await page.waitForTimeout(250)
     await filesIcon(page).click()
-    await page.waitForFunction(() => {
-      const el = document.querySelector('.side-bar .opened-files') as HTMLElement | null
-      return !!(el && el.offsetParent !== null)
-    }, null, { timeout: 5000 })
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector('.side-bar .opened-files') as HTMLElement | null
+        return !!(el && el.offsetParent !== null)
+      },
+      null,
+      { timeout: 5000 }
+    )
 
     const stillCollapsed = await page.evaluate(() => {
       const a = document.querySelector('.side-bar .opened-files .icon-arrow')

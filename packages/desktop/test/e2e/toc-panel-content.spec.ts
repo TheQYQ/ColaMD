@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, clickMenuById, waitForEditor } from './helpers'
+import { launchWithMarkdown, clickMenuById, waitForEditor, ensureTocVisible } from './helpers'
 
 // Item 240 — TOC/outline panel CONTENT + live update.
 //
@@ -76,8 +76,7 @@ test.describe('TOC panel content + live update', () => {
     await waitForEditor(page)
     await ensureSidebarVisible(app, page)
     // Switch the sidebar right-column to the ToC (el-tree).
-    await clickMenuById(app, 'tocMenuItem')
-    await page.waitForSelector('.side-bar-toc .el-tree', { state: 'visible', timeout: 10000 })
+    await ensureTocVisible(app, page)
     // The tree is seeded from `editor.getTOC()` on mount. Wait until every
     // initial heading has rendered a node before asserting.
     await page.waitForFunction(

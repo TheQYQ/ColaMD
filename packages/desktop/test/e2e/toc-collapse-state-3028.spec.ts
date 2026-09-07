@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, clickMenuById, waitForEditor } from './helpers'
+import { launchWithMarkdown, clickMenuById, waitForEditor, ensureTocVisible } from './helpers'
 
 // #3028 — collapsing a heading in the TOC must survive a document edit.
 //
@@ -74,8 +74,7 @@ test.describe('TOC collapse state survives edits (#3028)', () => {
     page = launched.page
     await waitForEditor(page)
     await ensureSidebarVisible(app, page)
-    await clickMenuById(app, 'tocMenuItem')
-    await page.waitForSelector('.side-bar-toc .el-tree', { state: 'visible', timeout: 10000 })
+    await ensureTocVisible(app, page)
     await page.waitForFunction(
       () => document.querySelectorAll('.side-bar-toc .el-tree-node__label').length >= 4,
       null,
@@ -89,13 +88,13 @@ test.describe('TOC collapse state survives edits (#3028)', () => {
 
   test('a collapsed heading stays collapsed after a content edit', async() => {
     // Everything expanded initially.
-    await expect.poll(() => readVisibleTocLabels(page), { timeout: 8000 })
+    await expect
+      .poll(() => readVisibleTocLabels(page), { timeout: 8000 })
       .toEqual(['A', 'B', 'B1', 'C'])
 
     // Collapse "B": its child "B1" disappears.
     await collapseNode(page, 'B')
-    await expect.poll(() => readVisibleTocLabels(page), { timeout: 5000 })
-      .toEqual(['A', 'B', 'C'])
+    await expect.poll(() => readVisibleTocLabels(page), { timeout: 5000 }).toEqual(['A', 'B', 'C'])
 
     // Edit a different heading ("C" -> "C2"), triggering UPDATE_TOC.
     const cContent = page
@@ -107,7 +106,6 @@ test.describe('TOC collapse state survives edits (#3028)', () => {
     await page.keyboard.type('2', { delay: 20 })
 
     // After the live TOC update, "B" must still be collapsed (B1 hidden).
-    await expect.poll(() => readVisibleTocLabels(page), { timeout: 8000 })
-      .toEqual(['A', 'B', 'C2'])
+    await expect.poll(() => readVisibleTocLabels(page), { timeout: 8000 }).toEqual(['A', 'B', 'C2'])
   })
 })
