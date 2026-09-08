@@ -508,9 +508,9 @@ ipcMain.on('mt::rename', async(e, { id, pathname, newPathname }: RenamePayload) 
       if (err) {
         log.error(`mt::rename: Cannot rename "${pathname}" to "${newPathname}".\n${err.stack}`)
         win.webContents.send('mt::show-notification', {
-          title: 'Rename failed',
+          title: t('dialog.renameFailure'),
           type: 'error',
-          message: err.message
+          message: t('store.editor.errorWhileRenaming', { msg: err.message })
         })
         return
       }
@@ -560,9 +560,9 @@ ipcMain.on(
         if (err) {
           log.error(`mt::rename: Cannot rename "${pathname}" to "${filePath}".\n${err.stack}`)
           win.webContents.send('mt::show-notification', {
-            title: 'Move to failed',
+            title: t('dialog.moveFailure'),
             type: 'error',
-            message: err.message
+            message: t('store.editor.errorWhileMoving', { msg: err.message })
           })
           return
         }

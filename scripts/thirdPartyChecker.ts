@@ -30,7 +30,7 @@ const getLicenses = (rootDir, callback) => {
       excludePackages: workspaceExclusions,
       json: true,
       onlyAllow:
-        'Unlicense;WTFPL;ISC;MIT;BSD;Apache-2.0;MIT*;Apache;Apache*;BSD*;CC0-1.0;CC-BY-4.0;CC-BY-3.0'
+        'Unlicense;WTFPL;ISC;MIT;BSD;Apache-2.0;MIT*;Apache;Apache*;BSD*;CC0-1.0;CC-BY-4.0;CC-BY-3.0;BlueOak-1.0.0'
     },
     function(err, packages) {
       callback(err, packages, checker)

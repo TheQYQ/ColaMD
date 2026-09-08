@@ -79,6 +79,13 @@ const clipboardAPI = {
   guessFilePath: () => invoke('mt::clipboard::guess-file-path')
 }
 
+const dialogAPI = {
+  showOpenDialog: (options: unknown) => invoke('mt::dialog::open', options as never),
+  showSaveDialog: (options: unknown) => invoke('mt::dialog::save', options as never),
+  showMessageBox: (options: unknown) => invoke('mt::dialog::message-box', options as never),
+  showErrorBox: (title: string, content: string) => invoke('mt::dialog::error-box', title, content)
+}
+
 const webFrameAPI = {
   setZoomFactor: (factor: number): void => {
     if (typeof factor === 'number' && factor > 0) webFrame.setZoomFactor(factor)
@@ -222,6 +229,22 @@ const uploaderAPI = {
   uploadImage: (req: unknown) => invoke('mt::uploader::upload', req)
 }
 
+const versionHistoryAPI = {
+  save: (snapshot: {
+    id: string
+    pathname: string
+    timestamp: number
+    markdown: string
+    label: string
+    byteLength: number
+  }) => invoke('mt::version-history:save', snapshot),
+  get: (pathname: string) => invoke('mt::version-history:get', pathname),
+  getContent: (pathname: string, id: string) =>
+    invoke('mt::version-history:get-content', pathname, id),
+  delete: (pathname: string, id: string) => invoke('mt::version-history:delete', pathname, id),
+  clear: (pathname: string) => invoke('mt::version-history:clear', pathname)
+}
+
 const fontsAPI = {
   list: () => invoke('mt::fonts::list')
 }
@@ -242,7 +265,8 @@ const electronAPI = {
   },
   paths: bootInfo?.paths || {},
   isUpdatable: !!bootInfo?.isUpdatable,
-  windowControl: windowControlAPI
+  windowControl: windowControlAPI,
+  dialog: dialogAPI
 }
 
 // Expose a Node-`path`-compatible API to the renderer. `pathe` is a
@@ -293,6 +317,7 @@ try {
   contextBridge.exposeInMainWorld('i18nUtils', i18nAPI)
   contextBridge.exposeInMainWorld('ripgrep', ripgrepAPI)
   contextBridge.exposeInMainWorld('uploader', uploaderAPI)
+  contextBridge.exposeInMainWorld('versionHistory', versionHistoryAPI)
   contextBridge.exposeInMainWorld('fonts', fontsAPI)
 } catch (error) {
   console.error(error)

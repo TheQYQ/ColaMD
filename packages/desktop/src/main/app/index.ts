@@ -220,10 +220,8 @@ class App {
     }
   }
 
-  async getScreenshotFileName(): Promise<string> {
-    const screenshotFolderPath = (await this._accessor.dataCenter.getItem(
-      'screenshotFolderPath'
-    )) as string
+  getScreenshotFileName(): string {
+    const screenshotFolderPath = this._accessor.dataCenter.getItem('screenshotFolderPath') as string
     const fileName = `${dayjs().format('YYYY-MM-DD-HH-mm-ss')}-screenshot.png`
     return path.join(screenshotFolderPath, fileName)
   }

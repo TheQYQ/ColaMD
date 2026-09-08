@@ -2,12 +2,13 @@ export type { ILocale } from './i18n/types';
 export { de, en, es, fr, ja, ko, pt, tr, zhCN, zhTW } from './locales';
 
 export { Muya } from './muya';
+export type { IMuyaPluginConstructor } from './muya';
 export type { ITocItem } from './state/getTOC';
 export { MarkdownToHtml } from './state/markdownToHtml';
 export { renderToStaticHTML } from './state/renderToStaticHTML';
 export type { IRenderToStaticHTMLOptions } from './state/renderToStaticHTML';
 export type { TState } from './state/types';
-export type { IMuyaOptions } from './types';
+export type { IMuyaOptions, IPluginEntry } from './types';
 
 export { CodeBlockLanguageSelector } from './ui/codeBlockLanguageSelector';
 // Export ui tools.
@@ -19,6 +20,7 @@ export type { IImagePathSuggestion } from './ui/imagePicker';
 export { ImageResizeBar } from './ui/imageResizeBar';
 export { ImageToolBar } from './ui/imageToolbar';
 export { InlineFormatToolbar } from './ui/inlineFormatToolbar';
+export { default as inlineFormatIcons } from './ui/inlineFormatToolbar/config';
 export { default as LinkTools } from './ui/linkTools';
 export { ParagraphFrontButton } from './ui/paragraphFrontButton';
 export { ParagraphFrontMenu } from './ui/paragraphFrontMenu';

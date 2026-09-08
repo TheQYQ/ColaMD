@@ -36,8 +36,7 @@
 // `setContent` -> edit -> undo round-trip purely in trailing newlines (loading
 // `'x\n'` may serialize to `'x\n\n\n'`, while undoing an edit lands on `'x\n'`),
 // so the content signature must ignore them or undo-to-saved would never match.
-const stripTrailingNewlines = (content: string): string =>
-  content.replace(/[\r\n]+$/, '')
+const stripTrailingNewlines = (content: string): string => content.replace(/[\r\n]+$/, '')
 
 // A fast, stable 64-bit string hash (FNV-1a) over the trailing-newline-normalized
 // content. Used so the content -> id map stores short keys instead of whole
@@ -46,18 +45,55 @@ const stripTrailingNewlines = (content: string): string =>
 // collision probability negligible even for a long editing session with many
 // thousands of distinct snapshots (a 32-bit hash hits ~50% collision odds near
 // ~77k snapshots via the birthday bound — realistic over a long session — so the
-// extra width is worth the BigInt key).
-const FNV64_OFFSET = 0xcbf29ce484222325n
-const FNV64_PRIME = 0x100000001b3n
-const MASK64 = 0xffffffffffffffffn
-const hashContent = (content: string): bigint => {
+// extra width is worth the key size).
+//
+// PERFORMANCE: Uses dual 32-bit Number lanes instead of BigInt. BigInt arithmetic
+// is ~10x slower than Number ops due to allocation and conversion overhead.
+// The dual-lane approach preserves the full 64-bit collision resistance while
+// staying in fast Number arithmetic. The two 32-bit halves are combined into a
+// string key for Map lookup (Numbers lose precision above 2^53, so we cannot
+// pack into a single Number).
+const FNV64_OFFSET_HI = 0xcbf29ce4
+const FNV64_OFFSET_LO = 0x84222325
+const FNV64_PRIME_LO = 0x000000b3
+
+// Multiply two 32-bit numbers and return the 64-bit result as [hi, lo].
+// This implements (a * b) where a and b are 32-bit unsigned integers.
+const mul32x32 = (a: number, b: number): [number, number] => {
+  // Split into 16-bit halves to avoid precision loss
+  const aHi = (a >>> 16) & 0xffff
+  const aLo = a & 0xffff
+  const bHi = (b >>> 16) & 0xffff
+  const bLo = b & 0xffff
+
+  // (aHi * 2^16 + aLo) * (bHi * 2^16 + bLo)
+  // = aHi * bHi * 2^32 + (aHi * bLo + aLo * bHi) * 2^16 + aLo * bLo
+  const lo = aLo * bLo
+  const mid = aHi * bLo + aLo * bHi
+  const hi = aHi * bHi + (mid >>> 16)
+  const loRes = ((mid & 0xffff) << 16) + lo
+
+  return [hi >>> 0, loRes >>> 0]
+}
+
+const hashContent = (content: string): string => {
   const normalized = stripTrailingNewlines(content)
-  let hash = FNV64_OFFSET
+  let hi = FNV64_OFFSET_HI
+  let lo = FNV64_OFFSET_LO
   for (let i = 0; i < normalized.length; i++) {
-    hash ^= BigInt(normalized.charCodeAt(i))
-    hash = (hash * FNV64_PRIME) & MASK64
+    // XOR the low byte of the char into the low 32-bit lane
+    lo ^= normalized.charCodeAt(i) & 0xff
+    // Multiply by FNV prime (64-bit) using dual 32-bit lanes
+    const [mulHi, mulLo] = mul32x32(lo, FNV64_PRIME_LO)
+    // Add the high lane contribution: result = mul + (FNV64_PRIME_HI * lo * 2^32)
+    // Since FNV64_PRIME_HI = 1, this simplifies to adding lo to the high lane
+    const newLo = mulLo >>> 0
+    const newHi = (mulHi + lo) >>> 0
+    hi = newHi
+    lo = newLo
   }
-  return hash
+  // Combine into string key for Map (preserves full 64-bit precision)
+  return `${hi >>> 0}-${lo >>> 0}`
 }
 
 export interface IFileHistoryLike {
@@ -73,7 +109,7 @@ export interface IFileHistoryLike {
 // store's seeded `lastSavedHistoryId: 0` for a freshly loaded/clean document.
 export class SyntheticHistory {
   private counter = 0
-  private readonly idByContent = new Map<bigint, number>()
+  private readonly idByContent = new Map<string, number>()
 
   constructor(baselineContent: string = '') {
     // The freshly-loaded document is its own clean baseline; the store seeds

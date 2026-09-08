@@ -42,8 +42,8 @@ import './assets/styles/prismjs/light.theme.css';
 // `(muya: Muya, options: object)`. `Muya.use` records the constructor + an
 // arbitrary options object; `init()` instantiates each plugin.
 export interface IMuyaPluginConstructor {
-    pluginName: string;
-    new(muya: Muya, options: Record<string, unknown>): unknown;
+    pluginName?: string;
+    new(muya: Muya, options?: Record<string, unknown>): unknown;
 }
 
 interface IPlugin {
@@ -136,7 +136,7 @@ export class Muya {
         });
     }
 
-    public readonly version = typeof window.MUYA_VERSION === 'undefined' ? 'dev' : window.MUYA_VERSION;
+    public readonly version: string;
     public options: IMuyaOptions = MUYA_DEFAULT_OPTIONS;
     public eventCenter: EventCenter;
     public domNode: HTMLElement;
@@ -148,6 +148,14 @@ export class Muya {
 
     constructor(element: HTMLElement, options?: Partial<IMuyaOptions>) {
         this.options = Object.assign({}, MUYA_DEFAULT_OPTIONS, options ?? {});
+        // Version precedence: explicit option > globalThis.MUYA_VERSION > 'dev'.
+        // The globalThis fallback preserves backward compatibility with the
+        // legacy `window.MUYA_VERSION` injection pattern without coupling the
+        // engine to the `window` object directly.
+        const globalVersion = typeof globalThis !== 'undefined'
+            ? (globalThis as Record<string, unknown>).MUYA_VERSION as string | undefined
+            : undefined;
+        this.version = this.options.version ?? globalVersion ?? 'dev';
         this.eventCenter = new EventCenter();
         this.domNode = getContainer(element, this.options);
         // this.domNode[BLOCK_DOM_PROPERTY] = this;
@@ -169,10 +177,27 @@ export class Muya {
     init() {
         this.editor.init();
 
-        // UI plugins
-        if (Muya.plugins.length) {
-            for (const { plugin: Plugin, options: opts } of Muya.plugins)
-                this._uiPlugins[Plugin.pluginName] = new Plugin(this, opts);
+        // Merge global plugins (registered via Muya.use) with per-instance
+        // plugins (passed via options.plugins). Per-instance plugins override
+        // global ones of the same name, so an embedder can replace or
+        // reconfigure a plugin for a single editor instance without affecting
+        // others. The merge is name-based: pluginName ?? Plugin.name.
+        const merged = new Map<string, { plugin: IMuyaPluginConstructor; options: Record<string, unknown> }>();
+
+        // Global plugins registered via Muya.use() fill the map first.
+        for (const entry of Muya.plugins)
+            merged.set(entry.plugin.pluginName ?? entry.plugin.name, entry);
+
+        // Per-instance plugins (from options.plugins) override globals of the
+        // same name — or add new ones.
+        for (const entry of this.options.plugins ?? []) {
+            const name = entry.plugin.pluginName ?? entry.plugin.name;
+            merged.set(name, entry);
+        }
+
+        for (const { plugin: Plugin, options: opts } of merged.values()) {
+            const pluginName = Plugin.pluginName ?? Plugin.name;
+            this._uiPlugins[pluginName] = new Plugin(this, opts);
         }
     }
 

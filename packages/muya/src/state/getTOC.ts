@@ -10,6 +10,7 @@ export interface ITocItem {
     lvl: number;
     slug: string;
     githubSlug: string;
+    [key: string]: unknown;
 }
 
 interface IHeadingBlock extends Parent {

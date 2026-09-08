@@ -180,6 +180,7 @@ onMounted(async () => {
   editorStore.LISTEN_FOR_SAVE()
   editorStore.LISTEN_FOR_SET_PATHNAME()
   editorStore.LISTEN_FOR_BOOTSTRAP_WINDOW()
+  editorStore.LISTEN_FOR_VERSION_RESTORE()
 
   // Auto-show the sidebar TOC for each newly opened document. Only fresh
   // opens emit 'file-loaded' (tab switches emit 'file-changed'), and the

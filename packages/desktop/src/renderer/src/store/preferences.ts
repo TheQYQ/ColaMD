@@ -89,6 +89,7 @@ export interface PreferencesState {
   lightModeTheme: string
   darkModeTheme: string
   customCss: string
+  installedThemes: unknown[]
 
   // ----- Spellchecker -----
   spellcheckerEnabled: boolean
@@ -205,6 +206,7 @@ export const usePreferencesStore = defineStore('preferences', {
     lightModeTheme: 'light',
     darkModeTheme: 'dark',
     customCss: '',
+    installedThemes: [],
 
     spellcheckerEnabled: false,
     spellcheckerNoUnderline: false,

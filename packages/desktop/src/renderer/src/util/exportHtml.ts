@@ -89,9 +89,10 @@ const hf = (value: string): string => sanitize(value, EXPORT_DOMPURIFY_CONFIG) a
 
 const createTableHeader = (header: HeaderFooterPart, headerFooterStyled?: boolean): string => {
   const { type, left = '', center = '', right = '' } = header
-  const headerClass = `page-header ${(type === 1 ? 'single' : '') + styledClass(headerFooterStyled)}`
-    .replace(/\s+/g, ' ')
-    .trim()
+  const headerClass =
+    `page-header ${(type === 1 ? 'single' : '') + styledClass(headerFooterStyled)}`
+      .replace(/\s+/g, ' ')
+      .trim()
   return `<thead class="${headerClass}"><tr><th>
   <div class="hf-container">
     <div class="header-content-left">${hf(left)}</div>
@@ -103,9 +104,10 @@ const createTableHeader = (header: HeaderFooterPart, headerFooterStyled?: boolea
 
 const createRealFooter = (footer: HeaderFooterPart, headerFooterStyled?: boolean): string => {
   const { type, left = '', center = '', right = '' } = footer
-  const footerClass = `page-footer ${(type === 1 ? 'single' : '') + styledClass(headerFooterStyled)}`
-    .replace(/\s+/g, ' ')
-    .trim()
+  const footerClass =
+    `page-footer ${(type === 1 ? 'single' : '') + styledClass(headerFooterStyled)}`
+      .replace(/\s+/g, ' ')
+      .trim()
   return `<div class="${footerClass}">
   <div class="hf-container">
     <div class="footer-content-left">${hf(left)}</div>
@@ -186,7 +188,7 @@ export const exportStyledHTML = async(
 
   // Render the engine's full HTML document. We re-extract its <article> body so
   // we can inject the TOC / header-footer, then re-emit the document shell.
-  const fullDoc = await new MarkdownToHtml(markdown, muya).generate({
+  let fullDoc = await new MarkdownToHtml(markdown, muya).generate({
     title,
     extraCSS: extraCss,
     dir
@@ -206,12 +208,24 @@ export const exportStyledHTML = async(
   // the document explicitly contains `[TOC]`). The marker is rendered as a
   // paragraph by marked, so replace the rendered `<p>[TOC]</p>` first, falling
   // back to a raw `[TOC]` if present.
-  if (toc) {
+  const hasTocMarker = /<p>\s*\[TOC\]\s*<\/p>/i.test(article) || TOC_REG.test(article)
+  if (toc && hasTocMarker) {
     if (/<p>\s*\[TOC\]\s*<\/p>/i.test(article)) {
       article = article.replace(/<p>\s*\[TOC\]\s*<\/p>/i, toc)
     } else if (TOC_REG.test(article)) {
       article = article.replace(TOC_REG, toc)
     }
+  }
+
+  // The engine's base stylesheet always includes `.toc-container` CSS rules.
+  // When the document has no `[TOC]` marker, the TOC HTML is not injected,
+  // so strip the now-unused CSS to keep the export clean. Each `.toc-container`
+  // rule is removed individually; the closing `}` may be followed by another
+  // rule or be the last rule in the block (minified CSS has no trailing }).
+  if (!hasTocMarker && fullDoc.includes('toc-container')) {
+    // Match `.toc-container` followed by a selector and declaration block.
+    // Uses a non-greedy match on `}` content to avoid over-matching.
+    fullDoc = fullDoc.replace(/[^}]?\.toc-container[^{]*\{[^}]*\}/g, '')
   }
 
   let bodyHtml: string

@@ -31,8 +31,6 @@ type EditorBufferStoreEvents = Record<string, unknown[]>
 class EditorBufferStore extends TypedEmitter<EditorBufferStoreEvents> {
   editorBufferStorePath: string
   bufferStores: Record<string, BufferStoreEntry> | null
-  serviceName: string
-  encryptKeys: string[]
 
   constructor(paths: EditorBufferStorePaths) {
     super()
@@ -43,8 +41,6 @@ class EditorBufferStore extends TypedEmitter<EditorBufferStoreEvents> {
     // for performance reasons — they are read from disk when needed and
     // written to disk when updated.
     this.bufferStores = null
-    this.serviceName = 'colamd'
-    this.encryptKeys = []
 
     this.init()
   }

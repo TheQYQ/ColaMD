@@ -1,4 +1,3 @@
-import equal from 'deep-equal'
 import bus from '../bus'
 import { getUniqueId, deepClone } from '../util'
 import listToTree, { type ListItem, type TreeNode } from '../util/listToTree'
@@ -22,6 +21,7 @@ import { useLayoutStore } from './layout'
 import { useMainStore } from '.'
 import { t } from '../i18n'
 import { debouncedSendBufferedState, sendBufferedState } from './bufferedState'
+import type { VersionSnapshot } from '@shared/types/ipc'
 import type {
   IFileState,
   FileNotification,
@@ -35,7 +35,7 @@ import type {
 // Local helper types
 // ----------------------------------------------------------------------------
 
-interface TocItem extends ListItem {
+export interface TocItem extends ListItem {
   slug?: string
   githubSlug?: string
   content?: string
@@ -43,6 +43,13 @@ interface TocItem extends ListItem {
 }
 
 type TocTreeNode = TreeNode<TocItem>
+
+// PERFORMANCE: Cheap signature for TOC comparison. Concatenates `lvl:slug` for
+// each heading into a single string — O(n) with minimal allocation. Used to
+// short-circuit the expensive `equal()` deep comparison and `listToTree()`
+// rebuild: if the signature matches, the TOC hasn't changed and we skip both.
+const tocSignature = (toc: TocItem[]): string =>
+  toc.map((item) => `${item.lvl ?? ''}:${item.slug ?? ''}`).join('|')
 
 interface RestoreWarning {
   tabId?: string | null
@@ -98,13 +105,15 @@ interface AutoSavePayload {
 
 interface ContentChangePayload {
   id: string
-  markdown: string
-  wordCount?: IFileState['wordCount']
-  cursor?: unknown
-  muyaIndexCursor?: unknown
-  history?: IFileState['history']
-  toc?: TocItem[]
-  blocks?: unknown
+  // markdown: null indicates a derived-UI-state-only update (TOC/blocks refresh);
+  // non-null indicates a full content change event.
+  markdown: string | null
+  wordCount?: IFileState['wordCount'] | null
+  cursor?: unknown | null
+  muyaIndexCursor?: unknown | null
+  history?: IFileState['history'] | null
+  toc?: TocItem[] | null
+  blocks?: unknown | null
 }
 
 interface AffiliationEntry {
@@ -522,6 +531,7 @@ export const useEditorStore = defineStore('editor', {
       const options = getOptionsFromState(this.currentFile)
       const defaultPath = getRootFolderFromState(projectStore)
       if (id) {
+        this.SAVE_VERSION_SNAPSHOT('Manual Save')
         window.electron.ipcRenderer.send(
           'mt::response-file-save',
           id,
@@ -553,6 +563,7 @@ export const useEditorStore = defineStore('editor', {
       const defaultPath = getRootFolderFromState(projectStore)
 
       if (id) {
+        this.SAVE_VERSION_SNAPSHOT('Manual Save')
         window.electron.ipcRenderer.send(
           'mt::response-file-save-as',
           id,
@@ -1013,6 +1024,12 @@ export const useEditorStore = defineStore('editor', {
         autoSaveTimers.delete(file.id)
       }
 
+      // Snapshot on close so the user can recover unsaved work from the
+      // history panel even if they chose "Don't Save".
+      if (file.pathname && !file.isSaved) {
+        this.SAVE_VERSION_SNAPSHOT('Session End')
+      }
+
       this.updateTabIdToIndex() // Update before sending it out to prevent stale mappings.
 
       if (currentFile && file.id === currentFile.id) {
@@ -1389,6 +1406,13 @@ export const useEditorStore = defineStore('editor', {
 
     // Content change from realtime preview editor and source code editor
     // There is a chance that this event is fired AFTER the tab is switched.
+    //
+    // PERFORMANCE: Supports two update tiers via nullable fields:
+    //   - Critical path: markdown/history/cursor/wordCount are non-null — drives
+    //     save/dirty tracking and auto-save.
+    //   - Derived UI state: only toc/blocks are non-null — updates sidebar
+    //     rendering. When markdown is null, the critical-path bookkeeping is
+    //     skipped entirely.
     LISTEN_FOR_CONTENT_CHANGE({
       id,
       markdown,
@@ -1399,8 +1423,6 @@ export const useEditorStore = defineStore('editor', {
       toc,
       blocks
     }: ContentChangePayload): void {
-      const preferencesStore = usePreferencesStore()
-      const { autoSave } = preferencesStore
       if (!id) {
         throw new Error('Listen for document change but id was not set!')
       } else if (this.tabs.length === 0) {
@@ -1414,6 +1436,25 @@ export const useEditorStore = defineStore('editor', {
       const tab = this.tabs[this.tabIdToIndex[id]!]
       if (!tab) return
 
+      // Derived UI state only update (debounced TOC/blocks refresh)
+      if (markdown === null) {
+        if (blocks) tab.blocks = blocks
+        // PERFORMANCE: Cheap signature check first — if the `lvl:slug`
+        // signature hasn't changed, skip the expensive deep-equal and tree
+        // rebuild. Most typing keystrokes don't modify headings.
+        if (
+          id === this.currentFile?.id &&
+          toc &&
+          tocSignature(toc) !== tocSignature(this.listToc)
+        ) {
+          this.listToc = toc
+          this.toc = listToTree<TocItem>(toc)
+        }
+        return
+      }
+
+      const preferencesStore = usePreferencesStore()
+      const { autoSave } = preferencesStore
       const { filename, pathname, markdown: oldMarkdown, trimTrailingNewline } = tab
 
       markdown = adjustTrailingNewlines(markdown, trimTrailingNewline)
@@ -1431,7 +1472,10 @@ export const useEditorStore = defineStore('editor', {
       if (blocks) tab.blocks = blocks
 
       // Only update TOC if it's the current file
-      if (id === this.currentFile?.id && toc && !equal(toc, this.listToc)) {
+      // PERFORMANCE: Cheap signature check first — if the `lvl:slug`
+      // signature hasn't changed, skip the expensive deep-equal and tree
+      // rebuild. Most typing keystrokes don't modify headings.
+      if (id === this.currentFile?.id && toc && tocSignature(toc) !== tocSignature(this.listToc)) {
         this.listToc = toc
         this.toc = listToTree<TocItem>(toc)
       }
@@ -1489,6 +1533,7 @@ export const useEditorStore = defineStore('editor', {
 
         const tab = this.tabs.find((t) => t.id === id)
         if (tab && !tab.isSaved) {
+          this.SAVE_VERSION_SNAPSHOT('Auto-save')
           const defaultPath = getRootFolderFromState(projectStore)
           window.electron.ipcRenderer.send(
             'mt::response-file-save',
@@ -1776,6 +1821,61 @@ export const useEditorStore = defineStore('editor', {
       window.electron.ipcRenderer.on('mt::load-state', (_, state) => {
         this.RESTORE_BUFFERED_STATE(state)
       })
+    },
+
+    /**
+     * Persist a version snapshot of the current document to the main process.
+     * Called on save / auto-save / tab close so the user can later browse and
+     * restore prior versions from the sidebar history panel.
+     *
+     * @param label Human-readable reason for this snapshot.
+     * @param markdownOverride Optional content to snapshot (defaults to current file markdown).
+     */
+    SAVE_VERSION_SNAPSHOT(label: string, markdownOverride?: string): void {
+      if (!this.currentFile) return
+      const { pathname, markdown } = this.currentFile
+      if (!pathname) return
+
+      const content = markdownOverride ?? markdown
+      const snapshot: VersionSnapshot = {
+        id: crypto.randomUUID(),
+        pathname,
+        timestamp: Date.now(),
+        markdown: content,
+        label,
+        byteLength: Buffer.byteLength(content, 'utf8')
+      }
+
+      // Guard for test environments where the preload bridge is not available.
+      window.versionHistory?.save(snapshot).catch((err) => {
+        console.error('Failed to save version snapshot:', err)
+      })
+    },
+
+    /**
+     * Listen for restore events dispatched by the sidebar history panel and
+     * write the restored content back into the active tab.
+     */
+    LISTEN_FOR_VERSION_RESTORE(): void {
+      window.addEventListener('version-history:restore', ((e: CustomEvent) => {
+        const { markdown, pathname } = e.detail as { markdown: string; pathname: string }
+        if (!this.currentFile || this.currentFile.pathname !== pathname) return
+
+        this.currentFile.markdown = markdown
+        this.currentFile.isSaved = false
+        bus.emit('file-changed', {
+          id: this.currentFile.id,
+          markdown,
+          cursor: this.currentFile.cursor,
+          history: this.currentFile.history,
+          scrollTop: this.currentFile.scrollTop,
+          muyaIndexCursor: this.currentFile.muyaIndexCursor,
+          renderCursor: true,
+          isReload: true
+        })
+        this.SAVE_VERSION_SNAPSHOT('Pre-restore Backup', markdown)
+        debouncedSendBufferedState()
+      }) as EventListener)
     }
   }
 })

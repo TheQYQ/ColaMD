@@ -8,8 +8,8 @@
     <div class="left-column">
       <ul>
         <li
-          v-for="(c, index) of sideBarIcons"
-          :key="index"
+          v-for="c of allSideBarIcons"
+          :key="c.id"
           :class="{ active: c.id === rightColumn }"
           @click="handleLeftIconClick(c.id)"
         >
@@ -38,6 +38,11 @@
       />
       <side-bar-search v-else-if="rightColumn === 'search'" />
       <toc v-else-if="rightColumn === 'toc'" />
+      <history v-else-if="rightColumn === 'history'" />
+      <component
+        :is="getSidebarPanel(rightColumn)?.component"
+        v-else-if="getSidebarPanel(rightColumn)"
+      />
     </div>
     <div
       v-show="rightColumn"
@@ -53,10 +58,11 @@ import { useLayoutStore } from '@/store/layout'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
 
-import { sideBarIcons, sideBarBottomIcons } from './help'
+import { getAllSideBarIcons, sideBarBottomIcons, getSidebarPanel } from './help'
 import Tree from './tree.vue'
 import SideBarSearch from './search.vue'
 import Toc from './toc.vue'
+import History from './history.vue'
 import { storeToRefs } from 'pinia'
 import type { TabDescriptor } from './types'
 
@@ -74,6 +80,8 @@ const { rightColumn, showSideBar, sideBarWidth } = storeToRefs(layoutStore)
 
 const { projectTree } = storeToRefs(projectStore)
 const { tabs } = storeToRefs(editorStore)
+
+const allSideBarIcons = getAllSideBarIcons()
 
 const finalSideBarWidth = computed<number>(() => {
   if (!showSideBar.value) return 0

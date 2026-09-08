@@ -32,6 +32,27 @@ import type {
 } from './files'
 import type { BufferedState as BufferedStateType } from './bufferedState'
 import type { MenuTemplate, MenuPopupPosition } from './menu'
+import type {
+  ElectronOpenDialogOptions,
+  ElectronOpenDialogResult,
+  ElectronSaveDialogOptions,
+  ElectronSaveDialogResult,
+  ElectronMessageBoxOptions,
+  ElectronMessageBoxResult
+} from './dialog'
+
+/**
+ * A single document version snapshot. Mirrors the shape persisted by
+ * VersionHistoryStore — shared so both renderer and main can type IPC.
+ */
+export interface VersionSnapshot {
+  id: string
+  pathname: string
+  timestamp: number
+  markdown: string
+  label: string
+  byteLength: number
+}
 
 // =================================================================
 // Invoke channels (renderer → main, returns Promise<T>)
@@ -78,8 +99,30 @@ export interface IpcInvokeChannels {
   'mt::spellchecker-set-enabled': { args: [enabled: boolean]; ret: void }
   'mt::spellchecker-switch-language': { args: [language: string]; ret: void }
   'mt::uploader::upload': { args: [req: unknown]; ret: unknown }
+  'mt::version-history:clear': { args: [pathname: string]; ret: boolean }
+  'mt::version-history:delete': { args: [pathname: string, id: string]; ret: boolean }
+  'mt::version-history:get': { args: [pathname: string]; ret: VersionSnapshot[] }
+  'mt::version-history:get-content': {
+    args: [pathname: string, id: string]
+    ret: string | null
+  }
+  'mt::version-history:save': {
+    args: [snapshot: VersionSnapshot]
+    ret: VersionSnapshot | null
+  }
   'mt::win::is-fullscreen': { args: []; ret: boolean }
   'mt::win::is-maximized': { args: []; ret: boolean }
+  // Dialog operations are delegated to the main process where a BrowserWindow
+  // handle is available. The renderer asks via invoke and the main process
+  // resolves the modal, returning its result. The shape mirrors
+  // Electron's dialog API but is narrowed to what the renderer needs.
+  'mt::dialog::open': { args: [options: ElectronOpenDialogOptions]; ret: ElectronOpenDialogResult }
+  'mt::dialog::save': { args: [options: ElectronSaveDialogOptions]; ret: ElectronSaveDialogResult }
+  'mt::dialog::message-box': {
+    args: [options: ElectronMessageBoxOptions]
+    ret: ElectronMessageBoxResult
+  }
+  'mt::dialog::error-box': { args: [title: string, content: string]; ret: void }
   // Main derives the BrowserWindow via BrowserWindow.fromWebContents(e.sender);
   // no need to pass windowId. Payload is the editor+project+layout snapshot.
   'update-buffer-state': { args: [payload: unknown]; ret: void }

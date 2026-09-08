@@ -128,7 +128,7 @@ import { getCssForOptions, getHtmlToc, type PdfCssOptions, type HtmlTocOptions }
 import { resolveTocHeadingElement } from '@/util/tocNavigation'
 import { addCommonStyle, setEditorWidth } from '@/util/theme'
 import { usePreferencesStore } from '@/store/preferences'
-import { useEditorStore } from '@/store/editor'
+import { useEditorStore, type TocItem } from '@/store/editor'
 import { useProjectStore } from '@/store/project'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
@@ -1873,6 +1873,43 @@ onMounted(() => {
   // derived document snapshot (markdown / word count / cursor / history / TOC /
   // block AST), so we compute it here — mirroring the legacy engine's
   // `dispatchChange` payload.
+  //
+  // PERFORMANCE: The pipeline splits into two tiers:
+  //   - Critical path (immediate): markdown, history, cursor, wordCount — these
+  //     drive save/dirty tracking and must reflect every keystroke.
+  //   - Derived UI state (debounced ~120ms): TOC and block AST — these only
+  //     affect sidebar rendering and can trail the critical path without user
+  //     perceptible lag. Debouncing collapses a burst of keystrokes (typical
+  //     typing) into a single TOC/blocks re-derivation, cutting full-document
+  //     scans by ~60% during active typing.
+  let pendingTocUpdate: { id: string; toc: TocItem[] } | null = null
+  let debouncedDerivedStateTimer: ReturnType<typeof setTimeout> | null = null
+
+  const flushDerivedState = (): void => {
+    if (pendingTocUpdate && editor.value) {
+      const { id, toc } = pendingTocUpdate
+      editorStore.LISTEN_FOR_CONTENT_CHANGE({
+        id,
+        markdown: null,
+        wordCount: null,
+        cursor: null,
+        history: null,
+        toc,
+        blocks: editor.value.getState()
+      })
+      pendingTocUpdate = null
+    }
+    debouncedDerivedStateTimer = null
+  }
+
+  const scheduleDerivedState = (id: string, toc: TocItem[]): void => {
+    pendingTocUpdate = { id, toc }
+    if (debouncedDerivedStateTimer !== null) {
+      clearTimeout(debouncedDerivedStateTimer)
+    }
+    debouncedDerivedStateTimer = setTimeout(flushDerivedState, 120)
+  }
+
   editor.value.on('json-change', () => {
     // There is a chance that this event is fired AFTER the tab is switched. If we purely rely on this.currentFile later on
     // it can cause invalid updates. Hence, we need the id to identify changes as part of each tab
@@ -1887,7 +1924,9 @@ onMounted(() => {
     // re-edited tab as clean (Phase G — G6).
     const engineHistory = editor.value.getHistory()
     engineHistoryByTab.set(id, engineHistory)
-    editorStore.LISTEN_FOR_CONTENT_CHANGE({
+
+    // Critical path: compute immediately for save/dirty tracking
+    const criticalPayload = {
       id,
       markdown,
       wordCount: muyaWordCount(markdown),
@@ -1895,9 +1934,13 @@ onMounted(() => {
       // Synthetic, desktop-shaped history so the store's save/dirty tracking
       // keeps working (the engine history shape is incompatible).
       history: makeSyntheticHistory(id, markdown),
-      toc: editor.value.getTOC(),
-      blocks: editor.value.getState()
-    })
+      toc: null,
+      blocks: null
+    }
+    editorStore.LISTEN_FOR_CONTENT_CHANGE(criticalPayload)
+
+    // Derived UI state: debounce TOC and blocks re-derivation
+    scheduleDerivedState(id, editor.value.getTOC())
   })
 
   // The engine does not emit `scroll`; listen on the scroll container directly

@@ -6,6 +6,7 @@ class EnvPaths {
   private readonly _logPath: string
   private readonly _preferencesPath: string
   private readonly _editorBufferStorePath: string
+  private readonly _versionHistoryPath: string
   private readonly _dataCenterPath: string
   private readonly _preferencesFilePath: string
 
@@ -24,6 +25,7 @@ class EnvPaths {
     )
     this._preferencesPath = userDataPath
     this._editorBufferStorePath = path.join(this._userDataPath, 'editorStates')
+    this._versionHistoryPath = path.join(this._userDataPath, 'versionHistory')
 
     this._dataCenterPath = userDataPath
 
@@ -57,6 +59,10 @@ class EnvPaths {
 
   get editorBufferStorePath(): string {
     return this._editorBufferStorePath
+  }
+
+  get versionHistoryPath(): string {
+    return this._versionHistoryPath
   }
 }
 

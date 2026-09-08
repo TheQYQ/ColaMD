@@ -77,12 +77,44 @@ declare global {
     popupApplicationMenu(position?: MenuPopupPosition): void
   }
 
+  interface ElectronDialogAPI {
+    showOpenDialog(options: {
+      title?: string
+      defaultPath?: string
+      buttonLabel?: string
+      filters?: Array<{ name: string; extensions: string[] }>
+      properties?: string[]
+      message?: string
+    }): Promise<{ canceled: boolean; filePaths: string[] }>
+    showSaveDialog(options: {
+      title?: string
+      defaultPath?: string
+      buttonLabel?: string
+      filters?: Array<{ name: string; extensions: string[] }>
+      message?: string
+      nameFieldLabel?: string
+      showsTagField?: boolean
+    }): Promise<{ canceled: boolean; filePath?: string }>
+    showMessageBox(options: {
+      type?: 'none' | 'info' | 'error' | 'question' | 'warning'
+      title?: string
+      message: string
+      detail?: string
+      buttons?: string[]
+      defaultId?: number
+      cancelId?: number
+      noLink?: boolean
+    }): Promise<{ response: number; checkboxChecked?: boolean }>
+    showErrorBox(title: string, content: string): Promise<void>
+  }
+
   interface ElectronAPI {
     ipcRenderer: ElectronIpcRenderer
     shell: ElectronShellAPI
     clipboard: ElectronClipboardAPI
     webFrame: ElectronWebFrameAPI
     webUtils: ElectronWebUtilsAPI
+    dialog: ElectronDialogAPI
     process: {
       platform: NodeJS.Platform
       arch?: string
@@ -161,6 +193,23 @@ declare global {
     uploadImage(req: unknown): Promise<unknown>
   }
 
+  interface VersionHistorySnapshot {
+    id: string
+    pathname: string
+    timestamp: number
+    markdown: string
+    label: string
+    byteLength: number
+  }
+
+  interface VersionHistoryAPI {
+    save(snapshot: VersionHistorySnapshot): Promise<VersionHistorySnapshot | null>
+    get(pathname: string): Promise<VersionHistorySnapshot[]>
+    getContent(pathname: string, id: string): Promise<string | null>
+    delete(pathname: string, id: string): Promise<boolean>
+    clear(pathname: string): Promise<boolean>
+  }
+
   interface FontsAPI {
     list(): Promise<string[]>
   }
@@ -183,6 +232,7 @@ declare global {
     i18nUtils: I18nUtilsAPI
     ripgrep: RipgrepAPI
     uploader: UploaderAPI
+    versionHistory: VersionHistoryAPI
     fonts: FontsAPI
     process: ProcessShim
     rgPath: string

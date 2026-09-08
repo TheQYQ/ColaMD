@@ -5,6 +5,8 @@ import {
   oneDarkThemes,
   railscastsThemes
 } from '../config'
+import { getCustomTheme, isCustomTheme } from './themeRegistry'
+import { buildThemeCss } from './themeMarket'
 import {
   dark,
   graphite,
@@ -59,7 +61,7 @@ const getEmojiPickerPatch = (): string => {
 export const addThemeStyle = (theme: string): void => {
   const isCmRailscasts = railscastsThemes.includes(theme)
   const isCmOneDark = oneDarkThemes.includes(theme)
-  const isDarkTheme = isCmOneDark || isCmRailscasts
+  let isDarkTheme = isCmOneDark || isCmRailscasts
   let themeStyleEle = document.querySelector(`#${THEME_STYLE_ID}`) as HTMLStyleElement | null
   if (!themeStyleEle) {
     themeStyleEle = document.createElement('style')
@@ -173,6 +175,19 @@ export const addThemeStyle = (theme: string): void => {
       break
     default:
       break
+  }
+
+  // Custom themes (installed via .colamd-theme packages) fall through the
+  // switch above. Resolve and apply them here so they follow the same
+  // body-class + CodeMirror-class paths as built-ins.
+  if (isCustomTheme(theme)) {
+    const manifest = getCustomTheme(theme)
+    if (manifest) {
+      themeStyleEle.innerHTML = patchTheme(buildThemeCss(manifest))
+      if (manifest.type === 'dark') {
+        isDarkTheme = true
+      }
+    }
   }
 
   // workaround: use dark icons

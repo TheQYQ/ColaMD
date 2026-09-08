@@ -24,6 +24,8 @@ import SideBar from '@/prefComponents/sideBar/index.vue'
 import { addThemeStyle } from '@/util/theme'
 import { DEFAULT_STYLE } from '@/config'
 import { isOsx } from '@/util'
+import { hydrateThemes } from '@/util/themeRegistry'
+import type { InstalledTheme } from '@/util/themeMarket'
 
 // Store
 const preferencesStore = usePreferencesStore()
@@ -51,6 +53,12 @@ onMounted(() => {
   nextTick(() => {
     const state = window.colamd?.initialState ?? DEFAULT_STYLE
     addThemeStyle(state.theme ?? DEFAULT_STYLE.theme)
+
+    // Rehydrate custom theme registry from persisted preferences before
+    // ASK_FOR_USER_PREFERENCE fires (it overwrites the store snapshot).
+    const persisted =
+      (window.colamd?.initialState?.installedThemes as unknown as InstalledTheme[]) ?? []
+    hydrateThemes(persisted)
 
     preferencesStore.ASK_FOR_USER_PREFERENCE()
   })

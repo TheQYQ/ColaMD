@@ -1,7 +1,6 @@
 import fs from 'fs'
 import path from 'path'
 import { BrowserWindow, dialog, ipcMain } from 'electron'
-import keytar from 'keytar'
 import schema from './schema.json'
 import Store, { type Schema } from 'electron-store'
 import log from 'electron-log'
@@ -23,8 +22,6 @@ interface DataCenterPaths {
 class DataCenter extends TypedEmitter<DataCenterEvents> {
   dataCenterPath: string
   userDataPath: string
-  serviceName: string
-  encryptKeys: string[]
   hasDataCenterFile: boolean
   store: Store<Record<string, unknown>>
 
@@ -34,8 +31,6 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
     const { dataCenterPath, userDataPath } = paths
     this.dataCenterPath = dataCenterPath
     this.userDataPath = userDataPath
-    this.serviceName = 'colamd'
-    this.encryptKeys = []
     this.hasDataCenterFile = fs.existsSync(
       path.join(this.dataCenterPath, `./${DATA_CENTER_NAME}.json`)
     )
@@ -69,27 +64,8 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
     this._listenForIpcMain()
   }
 
-  async getAll(): Promise<Record<string, unknown>> {
-    const { serviceName, encryptKeys } = this
-    const data = this.store.store
-    try {
-      const encryptData = await Promise.all(
-        encryptKeys.map((key) => {
-          return keytar.getPassword(serviceName, key)
-        })
-      )
-      const encryptObj = encryptKeys.reduce<Record<string, string | null>>((acc, k, i) => {
-        return {
-          ...acc,
-          [k]: encryptData[i]
-        }
-      }, {})
-
-      return Object.assign(data, encryptObj)
-    } catch (err) {
-      log.error('Failed to decrypt secure keys:', err)
-      return data
-    }
+  getAll(): Record<string, unknown> {
+    return this.store.store
   }
 
   addImage(key: string, url: string): void {
@@ -118,31 +94,16 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
     return this.store.set(type, items)
   }
 
-  getItem(key: string): Promise<unknown> {
-    const { encryptKeys, serviceName } = this
-    if (encryptKeys.includes(key)) {
-      return keytar.getPassword(serviceName, key)
-    } else {
-      const value = this.store.get(key)
-      return Promise.resolve(value)
-    }
+  getItem(key: string): unknown {
+    return this.store.get(key)
   }
 
-  async setItem(key: string, value: unknown): Promise<void> {
-    const { encryptKeys, serviceName } = this
+  setItem(key: string, value: unknown): void {
     if (key === 'screenshotFolderPath') {
       ensureDirSync(value as string)
     }
     ipcMain.emit('broadcast-user-data-changed', { [key]: value })
-    if (encryptKeys.includes(key)) {
-      try {
-        return await keytar.setPassword(serviceName, key, value as string)
-      } catch (err) {
-        log.error('Keytar error:', err)
-      }
-    } else {
-      return this.store.set(key, value)
-    }
+    return this.store.set(key, value)
   }
 
   /**

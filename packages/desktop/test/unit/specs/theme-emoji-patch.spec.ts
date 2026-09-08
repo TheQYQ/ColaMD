@@ -47,7 +47,7 @@ describe('theme.ts emoji-picker Linux font patch', () => {
     expect(css).toContain(EMOJI_SELECTOR)
     expect(css).toContain(EMOJI_FONT)
     expect(css).toContain(`${EMOJI_SELECTOR} { font-family: sans-serif, "${EMOJI_FONT}"; }`)
-  })
+  }, 10000) // Extended timeout: dynamic import of theme module is slow under parallel load
 
   it('omits the emoji patch entirely off Linux', async() => {
     const { addCommonStyle } = await loadTheme(false)

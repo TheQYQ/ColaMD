@@ -1,6 +1,40 @@
 import type { TState } from './state/types';
 
+/**
+ * A plugin constructor registered per-instance via `IMuyaOptions.plugins`.
+ *
+ * The shape mirrors the global `Muya.use()` contract: a class with an optional
+ * static `pluginName` and a constructor that takes `(muya, options)`. The
+ * engine instantiates each entry during `init()` and stores the instance on
+ * `Muya` keyed by name.
+ *
+ * Per-instance plugins are merged with globally registered plugins (from
+ * `Muya.use()`); when names collide, the per-instance entry wins. This lets an
+ * embedder override a global plugin's options or replace it entirely for a
+ * specific editor instance without affecting others.
+ */
+export interface IMuyaPluginConstructor {
+    pluginName?: string;
+    new (muya: unknown, options?: unknown): unknown;
+}
+
+/** A single per-instance plugin entry: constructor + options bag. */
+export interface IPluginEntry {
+    plugin: IMuyaPluginConstructor;
+    options: Record<string, unknown>;
+}
+
 export interface IMuyaOptions {
+    /** Engine version override. Defaults to the build-time version. */
+    version?: string;
+    /**
+     * Per-instance plugins. Merged with globally registered plugins (from
+     * `Muya.use()`) during `init()`. When a per-instance plugin shares a name
+     * with a global one, the per-instance entry wins — letting an embedder
+     * override or replace a plugin for this specific instance without affecting
+     * others. Omit to use only the global plugin set.
+     */
+    plugins?: IPluginEntry[];
     fontSize: number;
     lineHeight: number;
     editorFontFamily?: string;

@@ -1,4 +1,5 @@
 import { registerBootInfo } from './bootInfo'
+import { registerDialogHandlers } from './dialog'
 import { registerFsHandlers } from './fs'
 import { registerPathHandlers } from './paths'
 import { registerRipgrepHandlers } from './ripgrep'
@@ -11,6 +12,7 @@ import { registerI18nHandlers } from './i18n'
 
 export const registerSandboxIpcHandlers = (): void => {
   registerBootInfo()
+  registerDialogHandlers()
   registerFsHandlers()
   registerPathHandlers()
   registerRipgrepHandlers()
