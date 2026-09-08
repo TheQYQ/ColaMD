@@ -25,7 +25,6 @@ vi.mock('electron', () => ({
   BrowserWindow: { fromWebContents }
 }))
 
-vi.mock('keytar', () => ({ default: { getPassword: vi.fn(), setPassword: vi.fn() } }))
 vi.mock('electron-log', () => ({ default: { error: vi.fn(), info: vi.fn() } }))
 vi.mock('common/filesystem', () => ({ ensureDirSync: vi.fn() }))
 
