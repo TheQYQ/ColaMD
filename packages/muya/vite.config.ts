@@ -40,6 +40,13 @@ export default defineConfig({
         // inner-loop fast and reports compliance pass-rate as its own
         // surface.
         include: ['src/**/__tests__/**/*.{spec,test}.ts'],
+        // The M1.0 keystroke-pipeline microbench (keystrokePipeline.bench.spec.ts)
+        // runs 100KB/500KB/1MB tiers; the 1MB tier alone takes ~8-10 minutes in
+        // happy-dom. The spec declares its own 600s per-case timeout, but vitest
+        // requires the global hookTimeout/testTimeout floor to not clamp it in
+        // plain `vitest run` (CI has no extra CLI flags).
+        testTimeout: 600_000,
+        hookTimeout: 60_000,
     },
     plugins: [
         dts({
