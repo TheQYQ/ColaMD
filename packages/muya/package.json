@@ -9,16 +9,15 @@
     ],
     "exports": {
         ".": {
-            "import": "./lib/es/index.js",
-            "require": "./lib/cjs/index.js",
-            "types": "./lib/types/index.d.ts"
+            "types": "./lib/types/index.d.ts",
+            "import": "./src/index.ts",
+            "default": "./src/index.ts"
         },
         "./*": {
-            "import": "./lib/es/*",
-            "require": "./lib/cjs/*",
-            "types": "./lib/types/index.d.ts"
-        },
-        "./lib/*": "./lib/*"
+            "types": "./lib/types/index.d.ts",
+            "import": "./src/*",
+            "default": "./src/*"
+        }
     },
     "main": "./lib/cjs/index.js",
     "module": "./lib/es/index.js",
