@@ -25,8 +25,7 @@ jobs:
 
       - name: Run muya unit tests
         # The M1.0 keystroke microbench (keystrokePipeline.bench.spec.ts) is
-        # tagged @perf: its 1MB tier needs ~8-10min and ~2GB+ heap per worker,
-        # which OOMs the default ubuntu runner. Keep PR CI fast and stable by
-        # excluding it; the bench is driven locally / on demand
-        # (pnpm -C packages/muya exec vitest run ... --grep "@perf").
-        run: pnpm -C packages/muya test -- --grep-invert @perf
+        # excluded: its 1MB tier needs ~8-10min and ~2GB+ heap per worker,
+        # which OOMs the default ubuntu runner. Drive it locally / on demand
+        # per packages/muya/docs/perf-baseline.md (pnpm -C packages/muya test:perf).
+        run: pnpm -C packages/muya exec vitest run --exclude 'src/state/__tests__/keystrokePipeline.bench.spec.ts'
