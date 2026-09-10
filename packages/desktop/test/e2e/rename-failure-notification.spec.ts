@@ -19,18 +19,18 @@ test.describe('Rename failure surfaces an error notification', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# Rename failure\n')
     app = launched.app
     page = launched.page
     await waitForEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('a failed rename shows a Rename failed notification', async() => {
+  test('a failed rename shows a Rename failed notification', async () => {
     const missingSource = path.join(
       fs.mkdtempSync(path.join(os.tmpdir(), 'colamd-e2e-rename-')),
       'ghost.md'
@@ -51,7 +51,7 @@ test.describe('Rename failure surfaces an error notification', () => {
 
     const notice = page.locator('.mt-notification')
     await expect(notice).toBeVisible({ timeout: 10000 })
-    await expect(notice.locator('.title span')).toHaveText('Rename failed')
+    await expect(notice.locator('.title span')).toHaveText('Rename failure')
     // The body carries the OS error message (e.g. ENOENT), not an empty shell.
     await expect(notice.locator('.body .left-text')).not.toBeEmpty()
 
