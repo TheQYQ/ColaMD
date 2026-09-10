@@ -174,5 +174,61 @@ export default [
     rules: {
       'jsonc/no-comments': 'off'
     }
+  },
+
+  // 10. Renderer Node-global guard.
+  //
+  // The desktop renderer runs with `nodeIntegration: false` plus context
+  // isolation, so every Node global is `undefined` there. Referencing one
+  // throws a ReferenceError at runtime instead of failing to compile - the
+  // bundler has no way to know the identifier does not exist in this world.
+  //
+  // test/e2e/context-isolation.spec.ts asserts `typeof Buffer ===
+  // 'undefined'`, which proves runtime absence but cannot see a static
+  // reference. This rule catches the static side.
+  //
+  // Motivating bug: SAVE_VERSION_SNAPSHOT called Buffer.byteLength() inside
+  // FILE_SAVE, so mt::response-file-save was never sent and main never wrote
+  // the file. Manual and auto save were both silent no-ops in every
+  // production build until the e2e suite caught it.
+  //
+  // `global` is deliberately NOT listed: vue-i18n is reached via
+  // i18n.global, and the practical risk of a bare `global` in a browser
+  // context is negligible. `require` is listed even though ESM-only code
+  // should not emit it - catching one is a build-system regression worth a
+  // loud failure.
+  {
+    files: [
+      'packages/desktop/src/renderer/**/*.ts',
+      'packages/desktop/src/renderer/**/*.vue'
+    ],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        {
+          name: 'Buffer',
+          message:
+            'Buffer is undefined in the renderer (nodeIntegration: false). Use TextEncoder.encode().length for byte lengths, or Uint8Array / window.crypto.subtle.'
+        },
+        {
+          name: 'process',
+          message:
+            'process is undefined in the renderer. Vite exposes import.meta.env instead.'
+        },
+        {
+          name: '__dirname',
+          message: '__dirname is undefined in the renderer.'
+        },
+        {
+          name: '__filename',
+          message: '__filename is undefined in the renderer.'
+        },
+        {
+          name: 'require',
+          message:
+            'require() is unavailable in the renderer. Use a static ESM import instead.'
+        }
+      ]
+    }
   }
 ]
