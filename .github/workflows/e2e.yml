@@ -14,6 +14,9 @@ concurrency:
 
 jobs:
   e2e:
+    # Full postinstall + build + the whole e2e suite takes ~7 min.
+    timeout-minutes: 30
+
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -42,3 +45,22 @@ jobs:
 
       - name: Run E2E Tests
         run: xvfb-run --auto-servernum pnpm test:e2e
+
+      # Playwright writes traces (see trace: 'on-first-retry' in
+      # test/e2e/playwright.config.ts) and an HTML report under
+      # packages/desktop/. Without this upload a red e2e job produces zero
+      # diagnostics, which is why every past e2e failure had to be
+      # reproduced locally.
+      - name: Upload e2e diagnostics
+        if: D:\pythonCCode\VibeCoding_Self\ColaMD
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-diagnostics
+          path: |
+            packages/desktop/test-results/**
+            packages/desktop/playwright-report/**
+          retention-days: 14
+          # A failure in an earlier step leaves no results dir; the upload
+          # must not turn that into a second failure.
+          if-no-files-found: ignore
+

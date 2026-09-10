@@ -14,6 +14,9 @@ concurrency:
 
 jobs:
   test:
+    # Unit tests take ~1 min. This cap exists to stop a hung dependency
+    # download from eating 6 hours of minutes - the GitHub default is 360.
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
