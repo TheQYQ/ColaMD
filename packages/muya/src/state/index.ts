@@ -208,14 +208,11 @@ class JSONState {
     dispatch(op: JSONOp, source = 'user' /* user, api */) {
         const prevDoc = this.getState();
         this._apply(op);
-        // TODO: remove doc in future
-        const doc = this.getState();
         debug.log(JSON.stringify(op));
         this._muya.eventCenter.emit('json-change', {
             op,
             source,
             prevDoc,
-            doc,
         });
     }
 
@@ -223,8 +220,26 @@ class JSONState {
         return deepClone(this._state);
     }
 
+    // READ-ONLY live-tree accessor for internal hot paths. Ownership rules:
+    //  - callers must not mutate the returned array or any nested object
+    //  - callers must not retain references past the current synchronous
+    //    stack (json1 apply swaps `_state` to a fresh tree per op, so a
+    //    retained live reference goes stale and silently diverges)
+    // External code must keep using getState() (deep clone).
+    getStateLive(): TState[] {
+        return this._state;
+    }
+
     getMarkdown() {
         return this.getMarkdownFromState(this.getState());
+    }
+
+    // Serialize the LIVE tree without the defensive full-document deep clone.
+    // Same output as getMarkdown(); safe whenever the caller only reads the
+    // resulting string within the current synchronous stack (the desktop
+    // json-change callback). Ownership rules mirror getStateLive().
+    getMarkdownLive(): string {
+        return this.getMarkdownFromState(this._state);
     }
 
     getTOC() {
@@ -280,8 +295,6 @@ class JSONState {
         );
         const prevDoc = this.getState();
         this._apply(op);
-        // TODO: remove doc in future
-        const doc = this.getState();
         // Clear before emitting: a listener that edits synchronously then starts
         // a fresh batch instead of mutating the one being flushed.
         this._operationCache = [];
@@ -293,7 +306,6 @@ class JSONState {
             op,
             source: 'user',
             prevDoc,
-            doc,
         });
     }
 }
