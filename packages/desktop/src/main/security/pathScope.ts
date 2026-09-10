@@ -1,6 +1,5 @@
 import path from 'path'
 import { realpath } from 'fs/promises'
-import { pathExists } from 'fs-extra'
 
 // =============================================================================
 // Path scope enforcement for renderer-facing mutating IPC channels.
@@ -81,11 +80,54 @@ export function getAllowedRoots(): readonly string[] {
 /** Test-only: clear the root registry. */
 export function clearAllowedRootsForTest(): void {
   allowedRoots.clear()
+  canonicalRootCache.clear()
 }
 
-const isInScope = (resolved: string): boolean => {
-  const folded = foldCase(resolved)
+// Resolve the longest *existing* prefix of `p` via realpath, then re-append any
+// non-existing tail. This makes a not-yet-existing target (new file/folder)
+// canonicalize consistently with an existing one, and applies the same
+// junction/symlink-following transformation to both candidate and root so the
+// comparison below is source-consistent (platform volume-case form included).
+const canonicalize = async (p: string): Promise<string> => {
+  const abs = path.resolve(p)
+  const tail: string[] = []
+  let cursor = abs
+  for (;;) {
+    try {
+      const resolved = await realpath(cursor)
+      return tail.length ? path.join(resolved, ...tail.reverse()) : resolved
+    } catch {
+      const parent = path.dirname(cursor)
+      if (parent === cursor) return abs
+      tail.push(path.basename(cursor))
+      cursor = parent
+    }
+  }
+}
+
+// Roots are stored in their raw resolved form (addAllowedRoot is sync and may
+// run at startup). We canonicalize them lazily — realpath resolves the longest
+// existing prefix and follows any junction/symlink (e.g. macOS /var →
+// /private/var) so the comparison below uses the same source as the candidate.
+// The cache avoids re-running realpath on every assertion against a stable root.
+const canonicalRootCache = new Map<string, string>()
+
+const getCanonicalRoots = async (): Promise<string[]> => {
+  const out: string[] = []
   for (const root of allowedRoots) {
+    let c = canonicalRootCache.get(root)
+    if (!c) {
+      c = await canonicalize(root)
+      canonicalRootCache.set(root, c)
+    }
+    out.push(c)
+  }
+  return out
+}
+
+const isInScope = (resolved: string, roots: readonly string[]): boolean => {
+  const folded = foldCase(resolved)
+  for (const root of roots) {
     const fRoot = foldCase(root)
     if (folded === fRoot || folded.startsWith(fRoot + path.sep)) return true
     // Drive-root granted as "C:\" — path.resolve keeps the trailing sep only
@@ -113,18 +155,14 @@ export async function assertPathInScope(candidate: string): Promise<string> {
     throw new PathScopeError(candidate, 'path must be absolute')
   }
 
-  let resolved = path.resolve(candidate)
-  // Resolve symlinks so a link planted inside an allowed root cannot redirect
-  // the mutation outside it. Missing target (e.g. new file) → keep normalized.
-  if (await pathExists(resolved)) {
-    try {
-      resolved = await realpath(resolved)
-    } catch {
-      // Keep the normalized path if realpath fails unexpectedly.
-    }
-  }
+  // Canonicalize the candidate the same way we canonicalize registered roots:
+  // resolve symlinks/junctions for the existing prefix and re-append any
+  // not-yet-existing tail. A link planted inside an allowed root is therefore
+  // resolved to its real target and rejected if that target lies outside.
+  const resolved = await canonicalize(path.resolve(candidate))
+  const roots = await getCanonicalRoots()
 
-  if (!isInScope(resolved)) {
+  if (!isInScope(resolved, roots)) {
     throw new PathScopeError(candidate, 'path is outside the allowed scope')
   }
   return resolved
