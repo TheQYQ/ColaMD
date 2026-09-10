@@ -18,6 +18,11 @@ jobs:
       contents: read
       pull-requests: read
       actions: read
+    # postinstall plus a full electron-builder package run takes ~10 min.
+    # Five of these build in parallel; an unbounded hang would burn minutes
+    # across the whole matrix.
+    timeout-minutes: 45
+
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
