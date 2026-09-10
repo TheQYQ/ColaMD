@@ -25,5 +25,12 @@ jobs:
       - name: Check dependency hygiene (knip)
         run: pnpm knip
 
+      # @muyajs/core points its `types` condition at packages/muya/lib/types,
+      # which is git-ignored and therefore absent on CI. Without it vue-tsc
+      # falls through to the `import` condition and type-checks muya's TS
+      # sources under desktop's strict config, which they do not satisfy.
+      - name: Build @muyajs/core types
+        run: pnpm -C packages/muya build
+
       - name: Run TypeScript typecheck
         run: pnpm typecheck
