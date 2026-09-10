@@ -24,8 +24,8 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Run muya unit tests
-        # The M1.0 keystroke microbench (keystrokePipeline.bench.spec.ts) is
-        # excluded: its 1MB tier needs ~8-10min and ~2GB+ heap per worker,
-        # which OOMs the default ubuntu runner. Drive it locally / on demand
-        # per packages/muya/docs/perf-baseline.md (pnpm -C packages/muya test:perf).
-        run: pnpm -C packages/muya exec vitest run --exclude 'src/state/__tests__/keystrokePipeline.bench.spec.ts'
+        # The M1.0 keystroke microbench is excluded from the default run at the
+        # config level (vite.config.ts test.exclude): its 1MB tier needs ~8-10min
+        # and ~2GB+ heap per worker, which OOMs the default ubuntu runner.
+        # Drive it locally / on demand: pnpm -C packages/muya test:perf
+        run: pnpm -C packages/muya test
