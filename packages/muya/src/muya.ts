@@ -236,6 +236,14 @@ export class Muya {
         return this.editor.jsonState.getMarkdown();
     }
 
+    // Live-tree serialization variant of getMarkdown() — see
+    // JSONState.getMarkdownLive() for the ownership rules. Used by the
+    // desktop json-change hot path to drop the per-keystroke full-document
+    // clone (docs/getState-callers.md §1 #4).
+    getMarkdownLive(): string {
+        return this.editor.jsonState.getMarkdownLive();
+    }
+
     // Flush queued edits synchronously; call before swapping the document out
     // (e.g. a tab switch) so a same-frame keystroke isn't lost (#2938).
     flush() {

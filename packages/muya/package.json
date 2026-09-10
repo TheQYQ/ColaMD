@@ -59,7 +59,7 @@
     "build": "tsc && vite build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:perf": "vitest run src/state/__tests__/keystrokePipeline.bench.spec.ts --testTimeout 600000",
+    "test:perf": "vitest run --config vitest.perf.config.ts",
     "test:spec": "vitest run --config vitest.spec.config.ts",
     "test:spec:commonmark": "vitest run --config vitest.spec.config.ts test/spec/commonmark.spec.ts",
     "test:spec:gfm": "vitest run --config vitest.spec.config.ts test/spec/gfm.spec.ts",

@@ -75,7 +75,11 @@ class InlineRenderer {
     }
 
     private _collectReferenceDefinitions() {
-        const state = this.muya.editor.jsonState.getState();
+        // Read-only traversal of the live tree: this method extracts label/info
+        // strings into a fresh Map and retains nothing else (no state refs
+        // survive this call), so the deep clone is unnecessary on the
+        // per-keystroke path (see docs/getState-callers.md §1 #1).
+        const state = this.muya.editor.jsonState.getStateLive();
         const labels = new Map();
 
         const travel = (sts: TState[]) => {
