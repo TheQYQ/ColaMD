@@ -7,6 +7,9 @@ on:
     # own e2e under packages/muya/e2e/ wired via muya-e2e.yml.
     paths-ignore:
       - 'packages/muya/**'
+  # Manual re-run. e2e is the one workflow whose failures historically gave
+  # zero diagnostics, so being able to trigger it without a PR is worth it.
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
