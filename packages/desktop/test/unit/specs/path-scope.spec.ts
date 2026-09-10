@@ -1,4 +1,4 @@
-import { lstatSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'fs'
+import { lstatSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'fs'
 import { realpath } from 'fs/promises'
 import { tmpdir } from 'os'
 import path from 'path'
@@ -21,14 +21,18 @@ function tempDir(): string {
 }
 
 // Mirror of pathScope.canonicalize for expectation building: resolve the longest
-// existing prefix via realpath, re-append any non-existing tail.
-function canonSync(p: string): string {
+// existing prefix via realpath, re-append any non-existing tail. It must use the
+// *async* realpath from fs/promises exactly like the module under test — on
+// Windows CI, os.tmpdir() carries an 8.3 short name (C:\Users\RUNNER~1\...) and
+// fs.realpathSync keeps that short form while fs.promises.realpath expands it to
+// C:\Users\runneradmin\..., so a sync mirror would compare two different strings.
+async function canon(p: string): Promise<string> {
   const abs = path.resolve(p)
   const tail: string[] = []
   let cursor = abs
   for (;;) {
     try {
-      const resolved = realpathSync(cursor)
+      const resolved = await realpath(cursor)
       return tail.length ? path.join(resolved, ...tail.reverse()) : resolved
     } catch {
       const parent = path.dirname(cursor)
@@ -98,14 +102,14 @@ describe('assertPathInScope — scope enforcement', () => {
   it('accepts a path that is exactly the allowed root', async() => {
     const root = tempDir()
     addAllowedRoot(root)
-    await expect(assertPathInScope(root)).resolves.toBe(path.resolve(root))
+    await expect(assertPathInScope(root)).resolves.toBe(await canon(root))
   })
 
   it('accepts a nested subpath of the allowed root', async() => {
     const root = tempDir()
     addAllowedRoot(root)
     const nested = path.join(root, 'sub', 'dir', 'file.md')
-    await expect(assertPathInScope(nested)).resolves.toBe(canonSync(nested))
+    await expect(assertPathInScope(nested)).resolves.toBe(await canon(nested))
   })
 
   it('rejects a path outside any allowed root', async() => {
@@ -133,7 +137,7 @@ describe('assertPathInScope — scope enforcement', () => {
     const root = tempDir()
     addAllowedRoot(root)
     const future = path.join(root, 'new', 'file.md')
-    await expect(assertPathInScope(future)).resolves.toBe(canonSync(future))
+    await expect(assertPathInScope(future)).resolves.toBe(await canon(future))
   })
 })
 
@@ -161,7 +165,7 @@ describe('assertPathInScope — symlink resolution', () => {
     const linkFile = path.join(root, 'link.md')
     if (!(await trySymlink(realFile, linkFile))) return
 
-    await expect(assertPathInScope(linkFile)).resolves.toBe(canonSync(realFile))
+    await expect(assertPathInScope(linkFile)).resolves.toBe(await canon(realFile))
   })
 })
 
