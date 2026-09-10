@@ -1916,7 +1916,11 @@ onMounted(() => {
     if (!currentFile.value || !editor.value) return
     const { id } = currentFile.value
     if (!id) return
-    const markdown = editor.value.getMarkdown()
+    // Live-tree serialization: this callback runs synchronously inside the
+    // flush stack, so the live document is consistent here and the defensive
+    // full-document clone inside getMarkdown() is wasted per-keystroke work
+    // (docs/getState-callers.md §1 #4). getMarkdownLive() skips it.
+    const markdown = editor.value.getMarkdownLive()
     // Stash the real engine history for in-session tab-switch restoration. The
     // synthetic save-tracking id is derived from the live document content (a
     // monotonic, never-reused id — see `syntheticHistory.ts`), NOT the engine
