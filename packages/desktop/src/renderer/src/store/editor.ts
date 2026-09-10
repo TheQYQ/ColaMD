@@ -44,12 +44,35 @@ export interface TocItem extends ListItem {
 
 type TocTreeNode = TreeNode<TocItem>
 
-// PERFORMANCE: Cheap signature for TOC comparison. Concatenates `lvl:slug` for
-// each heading into a single string — O(n) with minimal allocation. Used to
-// short-circuit the expensive `equal()` deep comparison and `listToTree()`
-// rebuild: if the signature matches, the TOC hasn't changed and we skip both.
+// PERFORMANCE: Cheap signature for TOC comparison — O(n) string concat used to
+// short-circuit the expensive deep comparison and `listToTree()` rebuild.
+//
+// The signature must cover everything that determines the rendered tree: each
+// heading's level, its content-derived `githubSlug` (el-tree's `node-key`, so it
+// also decides which expand/collapse state survives, #3028) and its text.
+//
+// Keying on `slug` alone was a real bug: `slug` is a per-render object id
+// (`mu-N`) that stays IDENTICAL when a heading's text changes, so an edit that
+// only renames a heading produced `inSig === curSig`, the update was silently
+// dropped, and the sidebar TOC never refreshed even though the document itself
+// had. (Verified: getTOC() returned content "C2"/githubSlug "c2" while the
+// signature still read `2:mu-7`.)
 const tocSignature = (toc: TocItem[]): string =>
-  toc.map((item) => `${item.lvl ?? ''}:${item.slug ?? ''}`).join('|')
+  toc
+    .map(
+      (item) => `${item.lvl ?? ''}:${item.githubSlug ?? ''}:${item.content ?? ''}`
+    )
+    .join('|')
+
+// Renderer-safe UTF-8 byte length. `Buffer.byteLength()` must not be used here:
+// the renderer runs with `nodeIntegration: false` and context isolation on, so
+// `Buffer` is undefined (asserted by test/e2e/context-isolation.spec.ts). Using
+// it threw `Buffer is not defined` inside SAVE_VERSION_SNAPSHOT — which FILE_SAVE
+// runs BEFORE sending `mt::response-file-save` — silently aborting every manual
+// and auto save in the production build (the unsaved dot never cleared).
+// `TextEncoder.encode().length` is byte-identical to `Buffer.byteLength(s, 'utf8')`.
+const utf8Encoder = new TextEncoder()
+const byteLengthUtf8 = (text: string): number => utf8Encoder.encode(text).length
 
 interface RestoreWarning {
   tabId?: string | null
@@ -1843,7 +1866,7 @@ export const useEditorStore = defineStore('editor', {
         timestamp: Date.now(),
         markdown: content,
         label,
-        byteLength: Buffer.byteLength(content, 'utf8')
+        byteLength: byteLengthUtf8(content)
       }
 
       // Guard for test environments where the preload bridge is not available.

@@ -105,10 +105,13 @@ export class ImageEditTool extends BaseFloat {
      * @param muya - Muya editor instance
      * @param options - Tool options including image picker and upload handler
      */
-    constructor(muya: Muya, options: Options = { ...defaultOptions }) {
+    // Takes the open option bag Muya.use forwards (see IMuyaPluginConstructor)
+    // and narrows it to this tool's own shape.
+    constructor(muya: Muya, options: Record<string, unknown> = {}) {
         const name = 'mu-image-selector';
-        super(muya, name, Object.assign({}, defaultOptions, options));
-        this.options = Object.assign({}, defaultOptions, options);
+        const merged = Object.assign({}, defaultOptions, options) as Options;
+        super(muya, name, merged);
+        this.options = merged;
         this.container!.appendChild(this._imageSelectorContainer);
         this.floatBox!.classList.add('mu-image-selector-wrapper');
         this.listen();
