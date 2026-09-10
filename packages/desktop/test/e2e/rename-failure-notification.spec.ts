@@ -19,18 +19,18 @@ test.describe('Rename failure surfaces an error notification', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async () => {
+  test.beforeAll(async() => {
     const launched = await launchWithMarkdown('# Rename failure\n')
     app = launched.app
     page = launched.page
     await waitForEditor(page)
   })
 
-  test.afterAll(async () => {
+  test.afterAll(async() => {
     if (app) await app.close()
   })
 
-  test('a failed rename shows a Rename failed notification', async () => {
+  test('a failed rename shows a Rename failed notification', async() => {
     const missingSource = path.join(
       fs.mkdtempSync(path.join(os.tmpdir(), 'colamd-e2e-rename-')),
       'ghost.md'

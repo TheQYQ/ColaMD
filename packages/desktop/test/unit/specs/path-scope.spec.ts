@@ -73,7 +73,7 @@ afterEach(() => {
 })
 
 describe('assertPathInScope — input validation', () => {
-  it('rejects non-string input', async () => {
+  it('rejects non-string input', async() => {
     await expect(assertPathInScope(123 as unknown as string)).rejects.toBeInstanceOf(PathScopeError)
     await expect(assertPathInScope(null as unknown as string)).rejects.toBeInstanceOf(
       PathScopeError
@@ -83,11 +83,11 @@ describe('assertPathInScope — input validation', () => {
     )
   })
 
-  it('rejects empty string', async () => {
+  it('rejects empty string', async() => {
     await expect(assertPathInScope('')).rejects.toBeInstanceOf(PathScopeError)
   })
 
-  it('rejects relative paths', async () => {
+  it('rejects relative paths', async() => {
     addAllowedRoot(tempDir())
     await expect(assertPathInScope('foo/bar.md')).rejects.toBeInstanceOf(PathScopeError)
     await expect(assertPathInScope('./relative.md')).rejects.toBeInstanceOf(PathScopeError)
@@ -95,33 +95,33 @@ describe('assertPathInScope — input validation', () => {
 })
 
 describe('assertPathInScope — scope enforcement', () => {
-  it('accepts a path that is exactly the allowed root', async () => {
+  it('accepts a path that is exactly the allowed root', async() => {
     const root = tempDir()
     addAllowedRoot(root)
     await expect(assertPathInScope(root)).resolves.toBe(path.resolve(root))
   })
 
-  it('accepts a nested subpath of the allowed root', async () => {
+  it('accepts a nested subpath of the allowed root', async() => {
     const root = tempDir()
     addAllowedRoot(root)
     const nested = path.join(root, 'sub', 'dir', 'file.md')
     await expect(assertPathInScope(nested)).resolves.toBe(canonSync(nested))
   })
 
-  it('rejects a path outside any allowed root', async () => {
+  it('rejects a path outside any allowed root', async() => {
     addAllowedRoot(tempDir())
     const other = tempDir()
     await expect(assertPathInScope(other)).rejects.toBeInstanceOf(PathScopeError)
   })
 
-  it('rejects ".." escape attempts that leave the root', async () => {
+  it('rejects ".." escape attempts that leave the root', async() => {
     const root = tempDir()
     addAllowedRoot(root)
     const escape = path.join(root, '..', 'evil.md')
     await expect(assertPathInScope(escape)).rejects.toBeInstanceOf(PathScopeError)
   })
 
-  it('rejects a sibling prefix (C:\\docs-evil must not match root C:\\docs)', async () => {
+  it('rejects a sibling prefix (C:\\docs-evil must not match root C:\\docs)', async() => {
     const root = tempDir()
     // Fabricate a sibling by appending a suffix to the resolved root path.
     const sibling = root + '-evil'
@@ -129,7 +129,7 @@ describe('assertPathInScope — scope enforcement', () => {
     await expect(assertPathInScope(sibling)).rejects.toBeInstanceOf(PathScopeError)
   })
 
-  it('accepts a not-yet-existing target under an allowed root', async () => {
+  it('accepts a not-yet-existing target under an allowed root', async() => {
     const root = tempDir()
     addAllowedRoot(root)
     const future = path.join(root, 'new', 'file.md')
@@ -138,7 +138,7 @@ describe('assertPathInScope — scope enforcement', () => {
 })
 
 describe('assertPathInScope — symlink resolution', () => {
-  it('rejects a symlink inside the root that points outside it', async () => {
+  it('rejects a symlink inside the root that points outside it', async() => {
     const root = tempDir()
     const outside = tempDir()
     addAllowedRoot(root)
@@ -152,7 +152,7 @@ describe('assertPathInScope — symlink resolution', () => {
     await expect(assertPathInScope(linkFile)).rejects.toBeInstanceOf(PathScopeError)
   })
 
-  it('accepts a symlink inside the root that points inside the root', async () => {
+  it('accepts a symlink inside the root that points inside the root', async() => {
     const root = tempDir()
     addAllowedRoot(root)
 
@@ -166,7 +166,7 @@ describe('assertPathInScope — symlink resolution', () => {
 })
 
 describe('assertPathInScope — case handling', () => {
-  it('treats root and candidate case-insensitively on case-insensitive platforms', async () => {
+  it('treats root and candidate case-insensitively on case-insensitive platforms', async() => {
     const root = tempDir()
     addAllowedRoot(root)
 

@@ -88,7 +88,7 @@ export function clearAllowedRootsForTest(): void {
 // canonicalize consistently with an existing one, and applies the same
 // junction/symlink-following transformation to both candidate and root so the
 // comparison below is source-consistent (platform volume-case form included).
-const canonicalize = async (p: string): Promise<string> => {
+const canonicalize = async(p: string): Promise<string> => {
   const abs = path.resolve(p)
   const tail: string[] = []
   let cursor = abs
@@ -112,7 +112,7 @@ const canonicalize = async (p: string): Promise<string> => {
 // The cache avoids re-running realpath on every assertion against a stable root.
 const canonicalRootCache = new Map<string, string>()
 
-const getCanonicalRoots = async (): Promise<string[]> => {
+const getCanonicalRoots = async(): Promise<string[]> => {
   const out: string[] = []
   for (const root of allowedRoots) {
     let c = canonicalRootCache.get(root)
