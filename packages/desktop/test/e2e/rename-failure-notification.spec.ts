@@ -51,7 +51,7 @@ test.describe('Rename failure surfaces an error notification', () => {
 
     const notice = page.locator('.mt-notification')
     await expect(notice).toBeVisible({ timeout: 10000 })
-    await expect(notice.locator('.title span')).toHaveText('Rename failed')
+    await expect(notice.locator('.title span')).toHaveText('Rename failure')
     // The body carries the OS error message (e.g. ENOENT), not an empty shell.
     await expect(notice.locator('.body .left-text')).not.toBeEmpty()
 
