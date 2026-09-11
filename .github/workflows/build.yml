@@ -25,6 +25,12 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     strategy:
+      # Without fail-fast: false, one flaky leg cancels the other four, so a
+      # single failure reads as "1 failed + 3 cancelled" and half the matrix
+      # is wasted. Observed on PR #10: linux flaked at 6m, cancelling
+      # windows-x64 / macos-x64 / windows-arm64 which had all passed 10 min
+      # later in the re-run.
+      fail-fast: false
       matrix:
         include:
           - name: linux
