@@ -1466,6 +1466,9 @@ export const useEditorStore = defineStore('editor', {
       // Derived UI state only update (debounced TOC/blocks refresh)
       if (markdown === null) {
         if (blocks) tab.blocks = blocks
+        // wordCount rides this debounced tier too (sidebar counter only —
+        // see the json-change callback in editor.vue); apply it when present.
+        if (wordCount) tab.wordCount = wordCount
         // PERFORMANCE: Cheap signature check first — if the `lvl:slug`
         // signature hasn't changed, skip the expensive deep-equal and tree
         // rebuild. Most typing keystrokes don't modify headings.
