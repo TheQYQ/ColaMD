@@ -43,6 +43,17 @@ const CONTAINER_TOKEN_TYPES = new Set([
     'footnote',
 ]);
 
+/**
+ * Push `children` onto the work stack followed by the synthetic `block-end`
+ * marker. Popping yields children first, then `block-end` — the exact order
+ * the old `tokens.unshift(block-end)` + `tokens.unshift(...children)` pair
+ * produced (children first, marker last before the rest of the stream).
+ */
+function pushChildren(stack: TBlockToken[], children: TBlockToken[], tokenType: string): void {
+    stack.push({ type: 'block-end', tokenType } as TBlockToken);
+    for (let i = children.length - 1; i >= 0; i--) stack.push(children[i]);
+}
+
 export class MarkdownToState {
     constructor(private _options: IMarkdownToStateOptions = DEFAULT_OPTIONS) {}
 
@@ -69,16 +80,27 @@ export class MarkdownToState {
             isGitlabCompatibilityEnabled,
         });
 
+        // LIFO work stack instead of a FIFO queue: `shift()` and
+        // `unshift(...)` on the token stream are O(n) each, which made large
+        // documents quadratic (~2s of pure array re-indexing at 800KB, M1.3).
+        // Popping from the tail is O(1); a container pushes its synthetic
+        // `block-end` marker first and then its children in REVERSE, so the
+        // pop order reproduces the old `unshift(block-end)` +
+        // `unshift(...children)` ordering exactly (children, then block-end,
+        // then the rest of the stream).
+        const stack: TBlockToken[] = [];
+        for (let i = tokens.length - 1; i >= 0; i--) stack.push(tokens[i]);
+
         const states: TState[] = [];
         let token: TBlockToken | undefined;
         const parentList: TState[][] = [states];
 
         // eslint-disable-next-line no-cond-assign
-        while ((token = tokens.shift())) {
+        while ((token = stack.pop())) {
             if (CONTAINER_TOKEN_TYPES.has(token.type))
-                this._handleContainerToken(token, parentList, tokens);
+                this._handleContainerToken(token, parentList, stack);
             else
-                this._handleLeafToken(token, parentList, tokens, trimUnnecessaryCodeBlockEmptyLines);
+                this._handleLeafToken(token, parentList, stack, trimUnnecessaryCodeBlockEmptyLines);
         }
 
         return states.length ? states : [{ name: 'paragraph', text: '' }];
@@ -87,7 +109,7 @@ export class MarkdownToState {
     private _handleContainerToken(
         token: TBlockToken,
         parentList: TState[][],
-        tokens: TBlockToken[],
+        stack: TBlockToken[],
     ) {
         let state: TState;
         switch (token.type) {
@@ -117,8 +139,7 @@ export class MarkdownToState {
                 };
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'blockquote' });
-                tokens.unshift(...(token.tokens as TBlockToken[]));
+                pushChildren(stack, token.tokens as TBlockToken[], 'blockquote');
                 break;
             }
 
@@ -163,8 +184,7 @@ export class MarkdownToState {
                 state = listState;
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'list' });
-                tokens.unshift(...(token.items as TBlockToken[]));
+                pushChildren(stack, token.items as TBlockToken[], 'list');
                 break;
             }
 
@@ -188,8 +208,7 @@ export class MarkdownToState {
                 state = itemState;
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'list-item' });
-                tokens.unshift(...(token.tokens as TBlockToken[]));
+                pushChildren(stack, token.tokens as TBlockToken[], 'list-item');
                 break;
             }
 
@@ -206,8 +225,7 @@ export class MarkdownToState {
                 };
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'footnote' });
-                tokens.unshift(...(token.tokens as TBlockToken[]));
+                pushChildren(stack, token.tokens as TBlockToken[], 'footnote');
                 break;
             }
         }
@@ -216,7 +234,7 @@ export class MarkdownToState {
     private _handleLeafToken(
         token: TBlockToken,
         parentList: TState[][],
-        tokens: TBlockToken[],
+        stack: TBlockToken[],
         trimUnnecessaryCodeBlockEmptyLines: boolean,
     ) {
         let state: TState;
@@ -360,8 +378,8 @@ export class MarkdownToState {
 
             case 'text': {
                 value = token.text;
-                while (tokens[0]?.type === 'text') {
-                    const next = tokens.shift() as Extract<TBlockToken, { type: 'text' }>;
+                while (stack[stack.length - 1]?.type === 'text') {
+                    const next = stack.pop() as Extract<TBlockToken, { type: 'text' }>;
                     value += `\n${next.text}`;
                 }
                 state = {
