@@ -4,6 +4,8 @@
 > 前提是**每一个**读取 `tab.markdown` / 活动引擎 markdown 的路径在读取前保证内容是最新的。
 > 漏挂一个 flush 钩子 = 存盘丢数据。本文档是 M1.2b 实施时的核对清单。
 >
+> 状态（2026-09-12）：R1–R4/R10 已有守卫（#3803/#2938）；R5/R6/R7/R8/R9/R11 漏点已在 PR #23 补齐；M1.2b 懒序列化本体见 PR #25（`lazyMarkdownPipeline`，flush-on-read 升级了 R1–R11 共用的 `flush-active-editor` 通道）。
+>
 > 引擎事实（`packages/muya/src/state/index.ts`）：操作经 `requestAnimationFrame` 延迟 apply，
 > 任何 `getMarkdown()` / `getMarkdownLive()` / `getState()` 都只反映**已 flush** 的状态，
 > 未 flush 的 pending op 不在序列化结果里。因此"读最新内容"的统一原语是：

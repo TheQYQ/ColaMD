@@ -133,6 +133,7 @@ import { useProjectStore } from '@/store/project'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { SyntheticHistory, type IFileHistoryLike } from './syntheticHistory'
+import { createLazyMarkdownPipeline } from './lazyMarkdownPipeline'
 
 // Importing the engine entrypoint auto-injects its editor CSS (the muya.ts
 // module imports its stylesheets at load time). Desktop themes still target the
@@ -327,6 +328,22 @@ const resetSyntheticHistory = (id: string, baselineContent: string): void => {
 const makeSyntheticHistory = (id: string, content: string): IFileHistoryLike => {
   return getSyntheticHistory(id, content).build(content)
 }
+
+// M1.2b lazy-serialization pipeline (setup scope so the flush-on-read sites —
+// `flushActiveEditor`, the source-mode watch, teardown — can reach it). See
+// lazyMarkdownPipeline.ts and the `json-change` registration in onMounted.
+const lazyPipeline = createLazyMarkdownPipeline({
+  getEngine: () => editor.value,
+  getCurrentId: () => currentFile.value?.id,
+  dispatch: (payload) =>
+    editorStore.LISTEN_FOR_CONTENT_CHANGE(
+      payload as Parameters<typeof editorStore.LISTEN_FOR_CONTENT_CHANGE>[0]
+    ),
+  wordCount: (markdown) => muyaWordCount(markdown),
+  serializeCursor: (selection) => serializeCursor(selection as Parameters<typeof serializeCursor>[0]),
+  makeSyntheticHistory,
+  stashEngineHistory: (id, history) => engineHistoryByTab.set(id, history)
+})
 // Drop per-tab bookkeeping for tabs that no longer exist. Tab ids are unique
 // over the session, so without pruning these maps (and the content -> id map
 // each `SyntheticHistory` holds) would grow unbounded as tabs are opened and
@@ -830,6 +847,12 @@ watch(
         // source -> WYSIWYG path. Computing it here rather than on every
         // json-change/selection-change avoids serializing the whole document on
         // each keystroke/caret move, and guarantees a fresh (never stale) value.
+        // M1.2b: sourceCode.vue reads `tab.markdown` at mount — commit any
+        // uncommitted keystrokes first, or the source editor opens on stale
+        // content and the exit `replaceContent` drops them.
+        if (lazyPipeline.hasPendingCommit) {
+          lazyPipeline.flushActive()
+        }
         if (currentFile.value) {
           currentFile.value.muyaIndexCursor = editor.value.getCursorOffset() ?? null
         }
@@ -1478,6 +1501,9 @@ const setMarkdownToEditor = (payload: unknown) => {
     // `setContent` resets the document and clears the undo history; only set a
     // cursor afterwards (a freshly-opened file has no history to restore).
     editor.value.setContent(newMarkdown ?? '')
+    // M1.2b: the loaded document is the new baseline — drop any uncommitted
+    // keystroke bookkeeping left over from the previous document.
+    lazyPipeline.markBaseline()
     // The freshly loaded content is this tab's clean baseline (id 0). Re-seed
     // the monotonic save-tracking allocator so undoing an edit back to this
     // content reads as clean again (matches the store's `lastSavedHistoryId: 0`).
@@ -1559,6 +1585,9 @@ const handleFileChange = (payload: unknown) => {
       // remapping below.
       editor.value.replaceContent(newMarkdown, preSourceModeSelection)
       preSourceModeSelection = null
+      // M1.2b: the source-mode content is the new baseline (any WYSIWYG
+      // keystrokes were committed by the source-mode watch before entry).
+      lazyPipeline.markBaseline()
       editorStore.UPDATE_TOC(editor.value.getTOC())
       // Map the CodeMirror `{ line, ch }` cursor onto a block-key cursor so the
       // WYSIWYG caret lands where the source-mode cursor was (PG2).
@@ -1577,6 +1606,9 @@ const handleFileChange = (payload: unknown) => {
       // `lastSavedHistoryId: 0`), so re-seed the save-tracking allocator BEFORE
       // applying: `replaceContent` fires a SYNCHRONOUS `json-change` that would
       // otherwise mark the tab dirty against the stale (pre-reload) baseline.
+      // M1.2b: the disk content wins — drop any uncommitted WYSIWYG keystrokes
+      // instead of letting them commit against the incoming baseline.
+      lazyPipeline.markBaseline()
       if (id) {
         resetSyntheticHistory(id, newMarkdown)
       }
@@ -1592,6 +1624,11 @@ const handleFileChange = (payload: unknown) => {
       // `history` in the payload is the synthetic desktop-shaped history used
       // for save tracking, not the engine history.
       editor.value.setContent(newMarkdown)
+      // M1.2b: the incoming tab's document is the new baseline. The outgoing
+      // tab's uncommitted keystrokes were already committed by the store's
+      // UPDATE_CURRENT_FILE flush (it flushes while the outgoing tab is still
+      // current, #2938); drop anything that somehow survived.
+      lazyPipeline.markBaseline()
       // Tab switch swaps content without firing `json-change`, so re-seed the
       // TOC (otherwise returning to an open tab keeps the other tab's TOC).
       editorStore.UPDATE_TOC(editor.value.getTOC())
@@ -1640,7 +1677,11 @@ const blurEditor = () => {
 }
 
 const flushActiveEditor = () => {
-  editor.value?.flush()
+  // M1.2b flush-on-read: applies the engine's pending ops AND commits the
+  // serialized markdown snapshot if a keystroke is still uncommitted — every
+  // consumer that reads `tab.markdown` (save / close / switch / crash buffer /
+  // external-change compare) routes through here.
+  lazyPipeline.flushActive()
 }
 
 const focusEditor = () => {
@@ -1872,89 +1913,22 @@ onMounted(() => {
   bus.on('replace-misspelling', replaceMisspelling)
 
   // The engine emits a low-level `json-change` ({ op, source, prevDoc, doc })
-  // on every document mutation; the desktop's content-change pipeline wants the
-  // derived document snapshot (markdown / word count / cursor / history / TOC /
-  // block AST), so we compute it here — mirroring the legacy engine's
-  // `dispatchChange` payload.
-  //
-  // PERFORMANCE: The pipeline splits into two tiers:
-  //   - Critical path (immediate): markdown, history, cursor, wordCount — these
-  //     drive save/dirty tracking and must reflect every keystroke.
-  //   - Derived UI state (debounced ~120ms): TOC, word count and block AST
-  //     — these only affect sidebar rendering and can trail the critical
-  //     path without user perceptible lag. Debouncing collapses a burst of
-  //     keystrokes (typical typing) into a single re-derivation, cutting
-  //     full-document scans by ~60% during active typing. getTOC() is a
-  //     full live-tree walk (~30-50ms on 1MB) and wordCount a full string
-  //     scan, so both are computed INSIDE the debounce; only the markdown
-  //     string (already serialized for the critical path) is held, by
-  //     reference, until the flush.
-  let pendingTocUpdate: { id: string; markdown: string } | null = null
-  let debouncedDerivedStateTimer: ReturnType<typeof setTimeout> | null = null
-
-  const flushDerivedState = (): void => {
-    if (pendingTocUpdate && editor.value) {
-      const { id, markdown } = pendingTocUpdate
-      editorStore.LISTEN_FOR_CONTENT_CHANGE({
-        id,
-        markdown: null,
-        wordCount: muyaWordCount(markdown),
-        cursor: null,
-        history: null,
-        toc: editor.value.getTOC(),
-        blocks: editor.value.getState()
-      })
-      pendingTocUpdate = null
-    }
-    debouncedDerivedStateTimer = null
-  }
-
-  const scheduleDerivedState = (id: string, markdown: string): void => {
-    pendingTocUpdate = { id, markdown }
-    if (debouncedDerivedStateTimer !== null) {
-      clearTimeout(debouncedDerivedStateTimer)
-    }
-    debouncedDerivedStateTimer = setTimeout(flushDerivedState, 120)
-  }
-
-  editor.value.on('json-change', () => {
-    // There is a chance that this event is fired AFTER the tab is switched. If we purely rely on this.currentFile later on
-    // it can cause invalid updates. Hence, we need the id to identify changes as part of each tab
-    if (!currentFile.value || !editor.value) return
-    const { id } = currentFile.value
-    if (!id) return
-    // Live-tree serialization: this callback runs synchronously inside the
-    // flush stack, so the live document is consistent here and the defensive
-    // full-document clone inside getMarkdown() is wasted per-keystroke work
-    // (docs/getState-callers.md §1 #4). getMarkdownLive() skips it.
-    const markdown = editor.value.getMarkdownLive()
-    // Stash the real engine history for in-session tab-switch restoration. The
-    // synthetic save-tracking id is derived from the live document content (a
-    // monotonic, never-reused id — see `syntheticHistory.ts`), NOT the engine
-    // undo-stack depth, which is reused and falsely showed a divergently
-    // re-edited tab as clean (Phase G — G6).
-    const engineHistory = editor.value.getHistory()
-    engineHistoryByTab.set(id, engineHistory)
-
-    // Critical path: compute immediately for save/dirty tracking.
-    // wordCount deliberately NOT computed here — it is a full-string
-    // scan and only feeds the sidebar counter, so it rides the debounced
-    // derived tier with the TOC.
-    const criticalPayload = {
-      id,
-      markdown,
-      wordCount: null,
-      cursor: serializeCursor(editor.value.getSelection()),
-      // Synthetic, desktop-shaped history so the store's save/dirty tracking
-      // keeps working (the engine history shape is incompatible).
-      history: makeSyntheticHistory(id, markdown),
-      toc: null,
-      blocks: null
-    }
-    editorStore.LISTEN_FOR_CONTENT_CHANGE(criticalPayload)
-
-    // Derived UI state: debounce TOC and wordCount re-derivation
-    scheduleDerivedState(id, markdown)
+  // on every document mutation. `lazyMarkdownPipeline` (created at setup scope
+  // so flush-on-read call sites can reach it) splits the reaction into three
+  // tiers (M1.2b lazy serialization):
+  //   - keystroke tier (source 'user'): mark dirty + re-arm auto-save only —
+  //     the full-document serialization (~59ms on 1MB) and the synthetic
+  //     history FNV hash are deferred until markdown is actually read.
+  //   - undo/redo tier (source 'history'): serialize + hash NOW — undo may
+  //     land back on the saved content and clean-vs-dirty must resolve
+  //     immediately (Phase G — G6).
+  //   - debounced pause tier (~120ms): one serialization feeding markdown +
+  //     hash + TOC + wordCount + blocks; re-freshens `tab.markdown` too.
+  // Markdown reads (save / close / switch / export / crash buffer) go through
+  // `flushActiveEditor` → `pipeline.flushActive()`, the flush-on-read
+  // primitive. See lazyMarkdownPipeline.ts for the full contract.
+  editor.value.on('json-change', (payload: { op?: unknown; source?: string }) => {
+    lazyPipeline.onJsonChange(payload)
   })
 
   // The engine does not emit `scroll`; listen on the scroll container directly
@@ -2045,6 +2019,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  lazyPipeline.dispose()
   bus.off('file-loaded', setMarkdownToEditor)
   bus.off('invalidate-image-cache', handleInvalidateImageCache)
   bus.off('undo', handleUndo)

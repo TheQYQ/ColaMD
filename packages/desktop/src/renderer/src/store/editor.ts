@@ -132,9 +132,14 @@ interface AutoSavePayload {
 
 interface ContentChangePayload {
   id: string
-  // markdown: null indicates a derived-UI-state-only update (TOC/blocks refresh);
-  // non-null indicates a full content change event.
+  // M1.2b lazy-serialization payload tiers:
+  //  - markdown non-null → full content change (serialized snapshot included).
+  //  - markdown null + edit true → keystroke-tier notification: the live engine
+  //    holds the new content but no serialized snapshot exists yet; only the
+  //    cheap dirty/auto-save bookkeeping runs.
+  //  - markdown null + edit falsy → derived-UI-state-only update (TOC/blocks).
   markdown: string | null
+  edit?: boolean
   wordCount?: IFileState['wordCount'] | null
   cursor?: unknown | null
   muyaIndexCursor?: unknown | null
@@ -1461,6 +1466,7 @@ export const useEditorStore = defineStore('editor', {
     LISTEN_FOR_CONTENT_CHANGE({
       id,
       markdown,
+      edit,
       wordCount,
       cursor,
       muyaIndexCursor,
@@ -1480,6 +1486,36 @@ export const useEditorStore = defineStore('editor', {
 
       const tab = this.tabs[this.tabIdToIndex[id]!]
       if (!tab) return
+
+      const preferencesStore = usePreferencesStore()
+      const { autoSave } = preferencesStore
+
+      // M1.2b keystroke tier: the engine holds the new content but no
+      // serialized snapshot exists yet. Only the cheap, order-sensitive
+      // bookkeeping runs: a real user edit is deterministically dirty (the
+      // debounced full commit recomputes the content hash and restores
+      // cleanliness if an undo landed back on the saved content), and
+      // auto-save must re-arm per keystroke.
+      if (edit === true) {
+        if (cursor) tab.cursor = cursor
+        if (wordCount) tab.wordCount = wordCount
+        tab.isSaved = false
+        const { filename, pathname } = tab
+        if (pathname && autoSave) {
+          const options = getOptionsFromState(tab)
+          // The auto-save timer re-reads the active tab's markdown at fire
+          // time (flush-on-read), so the possibly-stale snapshot here is fine.
+          this.HANDLE_AUTO_SAVE({
+            id,
+            filename,
+            pathname,
+            markdown: typeof tab.markdown === 'string' ? tab.markdown : '',
+            options
+          })
+        }
+        debouncedSendBufferedState()
+        return
+      }
 
       // Derived UI state only update (debounced TOC/blocks refresh)
       if (markdown === null) {
@@ -1501,8 +1537,6 @@ export const useEditorStore = defineStore('editor', {
         return
       }
 
-      const preferencesStore = usePreferencesStore()
-      const { autoSave } = preferencesStore
       const { filename, pathname, markdown: oldMarkdown, trimTrailingNewline } = tab
 
       markdown = adjustTrailingNewlines(markdown, trimTrailingNewline)

@@ -159,6 +159,32 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 桌面端每击键还省去 getTOC（1MB ≈ 49ms）与 wordCount 全串扫描的同步成本（bench 不覆盖，属应用内收益）。
 - 每击键仍保留：`getMarkdownLive()` 全文序列化 + synthetic history FNV 全文 hash（M1.2b 目标，见 WORKPLAN §6）。
 
+## M1.2b 实测（懒序列化管线 · 2026-09-12）
+
+实现：`perf/m1-2b-lazy-serialization`（PR #25）。桌面 `json-change` 每击键不再执行 `getMarkdownLive()` 全文序列化（1MB ≈ 59-67ms）与 synthetic history FNV 全文 hash：击键层只做脏标记 + 自动保存重排（O(1)），序列化+hash 移到 ① undo/redo（source 'history'，即时提交，保 G6 脏净语义）② 120ms 停顿层 ③ flush-on-read（保存/关闭/切 tab/导出/崩溃缓冲，经 `flushActiveEditor` 单次提交）。环境同基线轮，机器空闲（88s 完整跑）。单位 ms。
+
+### 引擎热路径（edit+flush，本轮改动应为零影响，实测确认）
+
+| 档位  | M1.2 p50 | M1.2b p50 | M1.2b p95 |
+| ----- | -------: | --------: | --------: |
+| 100KB |     0.7  |  **0.3**  |    11.6   |
+| 500KB |     1.8  |  **0.7**  |     3.1   |
+| 1MB   |     2.7  |  **2.9**  |     4.0   |
+
+1MB p50 2.7→2.9ms 在运行间噪声内（n=10，单次跑），p95 反而 4.7→4.0ms。**M1 验收线（1MB P95 < 16ms）保持达成，余量 4×。**
+
+### 应用层收益（bench 不覆盖，M1.2b 的主要目标）
+
+- 每击键移除：`getMarkdownLive()` 1MB ≈ 67.1ms（本轮 getMarkdown 实测 p50）+ FNV 全文 hash ≈ 数 ms + `getHistory()` 栈序列化。
+- 保留的序列化时机：undo/redo（1 次）、120ms 停顿（1 次）、每次实际读取前的 flush-on-read（1 次，带 pending 幂等）。连续打字期间为 **零全文序列化**。
+- `lazyMarkdownPipeline.spec.ts` 以"击键连发 0 次序列化、单次 flush 恰好 1 次"锁住该性质。
+
+### 判读
+
+- 引擎侧数字与 M1.2 轮一致——本轮改动全部在 desktop 消费层与 History 的 source 标记（'history'），不影响 op 路径。
+- M1.2b 后每击键桌面侧剩余工作：selection 序列化 + getHistory + 一次 store mutation，均为 O(1)。
+- M1 剩余大项：M1.3 setContent 1MB ≈ 5-10s 超线性（入口路径，与击键管线无关）。
+
 ## 变更记录
 
 | 日期       | 提交                              | 变化                               | 备注                       |
@@ -166,3 +192,4 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | 2026-09-09 | 601d5c3 (基线)                    | 首次记录                           | M1.0 基线建立              |
 | 2026-09-10 | 19d3c1e (perf/m1-1-getstate-live) | PR-3 实测：edit+flush 1MB p50 −14% | 后台负载偏高，空闲复测待做 |
 | 2026-09-11 | 8a471b1 (perf/m1-2-keystroke-deser) | M1.2 实测：edit+flush 1MB p50 50.8→2.7ms、p95 4.7ms | 验收线达成（<16ms）        |
+| 2026-09-12 | perf/m1-2b-lazy-serialization (PR #25) | M1.2b：桌面每击键去全文序列化+hash（移至 pause/undo/flush-on-read）；引擎热路径无回归（1MB p95 4.0ms） | 桌面击键层 O(1) |
