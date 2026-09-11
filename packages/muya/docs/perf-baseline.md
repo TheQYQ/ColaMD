@@ -130,9 +130,39 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - **getState/getMarkdown/getTOC/setContent 全档名义上涨 60-100%**：与热路径无关（这些是低频/导出路径），主因是本轮系统后台负载；不应据此判断回归。下一轮空闲时段复测可校准。
 - 全部预算门禁依旧通过。
 
+## M1.2 实测（flush prevDoc 去 clone + 桌面派生态防抖 · 2026-09-11）
+
+实现：`perf/m1-2-keystroke-deser` @ 8a471b1（PR #19）。`json-change` 的 `prevDoc` 改为 pre-apply 活树别名（ot-json1 `apply()` 为 copy-on-write，库文档保证旧快照引用持续有效，契约测试 C6 锁定）；History invert 改读活树；桌面端 `getTOC`/`wordCount` 移入 120ms 派生态防抖。环境同基线轮，机器空闲（94s 完整跑）。单位 ms。
+
+### edit+flush（击键热路径，直接受益）
+
+| 档位  | 基线 p50 | PR-3 p50 | M1.2 p50 | 对 PR-3 | M1.2 p95 |
+| ----- | -------: | -------: | -------: | ------: | -------: |
+| 100KB |      4.8 |      4.2 |   **0.7** |   −83%  |    19.0  |
+| 500KB |     25.7 |     28.2 |   **1.8** |   −94%  |     2.9  |
+| 1MB   |     59.4 |     50.8 |   **2.7** | **−95%**|  **4.7** |
+
+**M1 验收线（1MB 击键管线 P95 < 16ms）在该指标上达成，余量 3.4×。**
+
+### 全档数字（p50/p95）
+
+- 100KB：setContent 62.8/84.1 · getState 3.2/4.1 · getMarkdown 5.6/6.6 · getTOC 4.3/8.6
+- 500KB：setContent 1440.1/1523.6 · getState 15.2/20.5 · getMarkdown 27.5/33.2 · getTOC 26.9/35.3
+- 1MB：setContent 8489.9/9228.3 · getState 30.5/36.9 · getMarkdown 59.2/74.5 · getTOC 49.0/59.6
+
+派生路径（getState/getMarkdown/getTOC）语义未变，调用频率由桌面端防抖层控制，数字与 PR-3 轮同量级。
+
+### 判读
+
+- **edit+flush 全档数量级下降**：唯一 O(doc) 的 deepClone 移出 flush 路径后，剩余工作（compose/apply/invertWithDoc）只随 op 路径增长、不随文档体积增长——三档 p50 趋同（0.7/1.8/2.7ms）是这一点的直接证据。
+- 100KB p95=19.0 为单样本尖峰（max=19.0，n=10），p50=0.7 代表稳态。
+- 桌面端每击键还省去 getTOC（1MB ≈ 49ms）与 wordCount 全串扫描的同步成本（bench 不覆盖，属应用内收益）。
+- 每击键仍保留：`getMarkdownLive()` 全文序列化 + synthetic history FNV 全文 hash（M1.2b 目标，见 WORKPLAN §6）。
+
 ## 变更记录
 
 | 日期       | 提交                              | 变化                               | 备注                       |
 | ---------- | --------------------------------- | ---------------------------------- | -------------------------- |
 | 2026-09-09 | 601d5c3 (基线)                    | 首次记录                           | M1.0 基线建立              |
 | 2026-09-10 | 19d3c1e (perf/m1-1-getstate-live) | PR-3 实测：edit+flush 1MB p50 −14% | 后台负载偏高，空闲复测待做 |
+| 2026-09-11 | 8a471b1 (perf/m1-2-keystroke-deser) | M1.2 实测：edit+flush 1MB p50 50.8→2.7ms、p95 4.7ms | 验收线达成（<16ms）        |
