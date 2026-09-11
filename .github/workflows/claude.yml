@@ -12,8 +12,11 @@ on:
 
 jobs:
   claude:
+    # The repo is public: without this guard any third party could summon
+    # Claude Code (with write permissions and the OAuth secret) via an
+    # issue/PR comment. Restrict to the owner.
     if: |
-      github.actor == 'Jocs' &&
+      github.actor == 'TheQYQ' &&
       (
         (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
         (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
