@@ -81,7 +81,7 @@ describe('lazyMarkdownPipeline — keystroke tier does not serialize', () => {
     expect(pipeline.hasPendingCommit).toBe(true)
   })
 
-  it('commits nothing for identity ops and non-user sources', () => {
+  it('commits nothing for identity ops', () => {
     const engine = mockEngine()
     const { deps } = makeDeps(engine)
     const dispatched: Captured[] = []
@@ -93,10 +93,34 @@ describe('lazyMarkdownPipeline — keystroke tier does not serialize', () => {
     })
 
     pipeline.onJsonChange({ op: null, source: 'user' }) // IME compose-away
-    pipeline.onJsonChange({ op: [{ p: ['x'] }], source: 'api' }) // setContent/replaceContent
 
     expect(engine.calls.serialize).toBe(0)
     expect(dispatched).toHaveLength(0)
+    expect(pipeline.hasPendingCommit).toBe(false)
+  })
+
+  it('api baseline swaps (setContent/replaceContent) commit WITHOUT the edit flag', () => {
+    const engine = mockEngine()
+    const { deps } = makeDeps(engine)
+    const dispatched: Captured[] = []
+    const pipeline = createLazyMarkdownPipeline({
+      ...deps,
+      dispatch: (p) => {
+        dispatched.push({ ...(p as unknown as Record<string, unknown>) })
+      }
+    })
+
+    // setContent / replaceContent install a new document programmatically.
+    // The commit must refresh the serialized snapshot + synthetic id (so an
+    // undo back to this content reads clean) but must NOT flag an edit — the
+    // store's hash comparison decides cleanliness.
+    pipeline.onJsonChange({ op: [{ p: ['x'] }], source: 'api' })
+
+    expect(engine.calls.serialize).toBe(1)
+    expect(dispatched).toHaveLength(1)
+    expect(dispatched[0]).toMatchObject({ id: 'tab-1', markdown: 'md#1' })
+    expect(dispatched[0].edit).toBeUndefined()
+    expect(dispatched[0].history).toMatchObject({ savedContent: 'md#1' })
     expect(pipeline.hasPendingCommit).toBe(false)
   })
 })

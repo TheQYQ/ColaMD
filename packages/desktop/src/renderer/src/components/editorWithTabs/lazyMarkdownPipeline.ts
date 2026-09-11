@@ -25,8 +25,11 @@
 // active document (save, close, switch, source-mode entry, crash buffer) must
 // route through `flushActive()` or `markBaseline()`.
 //
-// Sources (see muya history): 'user' = real edits, 'history' = undo/redo
-// replay, 'api' = setContent/replaceContent baseline swaps. Identity ops
+// Sources (see muya history): 'user' = real edits (lazy tier), 'history' =
+// undo/redo replay (immediate commit), 'api' = setContent/replaceContent
+// baseline swaps (immediate commit WITHOUT the dirty flag — the store's hash
+// comparison decides cleanliness, which is what lets an undo land back on
+// programmatically-installed content and read clean). Identity ops
 // (compose-away, e.g. IME) carry a null op — content did not change.
 
 export interface PipelineEngine {
@@ -130,6 +133,18 @@ export function createLazyMarkdownPipeline(deps: LazyMarkdownPipelineDeps) {
 
       if (payload.source === 'history') {
         // Undo/redo: uncertain state — resolve clean/dirty NOW (G6).
+        commitPendingMarkdown()
+        return
+      }
+
+      if (payload.source === 'api') {
+        // Baseline swap (setContent / replaceContent): re-sync the serialized
+        // snapshot and the synthetic content id WITHOUT flagging an edit — the
+        // store's hash comparison then decides cleanliness by itself (a reload
+        // back to the saved content stays clean, source-mode edits read dirty
+        // against the saved id). The pre-lazy pipeline processed these events
+        // uniformly; keeping that invariant is what allows an undo to land
+        // back on content that was only ever installed programmatically.
         commitPendingMarkdown()
         return
       }
