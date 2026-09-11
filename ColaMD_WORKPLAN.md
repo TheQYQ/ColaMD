@@ -98,11 +98,11 @@ vue-tsc and publishConfig for npm.
 | ---- | ---------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | M1.0 | 击键延迟基线（fixture + microbench + baseline 文档） | ✅ 已合并（PR-1 #1, a79ff86）                                                        |
 | M1.1 | 消灭热路径 `getState()` 全文深拷贝                   | ✅ 已合并（审计 PR #2 + PR-3 #3, 90eb73a；每键 4→0 次克隆，edit+flush 1MB p50 −14%） |
-| M1.2 | 击键路径去全文序列化（脏标记改 op 级）               | 📋                                                                                   |
+| M1.2 | 击键路径去全文序列化（脏标记改 op 级）               | ✅ 已合并（PR-4 #19, 8a471b1；flush prevDoc 克隆清零 + getTOC/wordCount 移入防抖；edit+flush 1MB p50 50.8→2.7ms、p95 56.4→4.7ms；**验收线达成**） |
 | M1.3 | 大文档渲染分片 / 懒渲染                              | 📋                                                                                   |
 | M1.4 | 会话持久化减负（buffer store）                       | 📋                                                                                   |
 
-**总验收**：1MB 文档击键派生管线 P95 < 16ms；现有单测全绿；Phase G / PG15 脏净语义不回归。
+**总验收**：1MB 文档击键派生管线 P95 < 16ms —— ✅ **edit+flush 档已达成**（P95 4.7ms，PR #19，余量 3.4×）；现有单测全绿（muya 1468 + desktop 804）；Phase G / PG15 脏净语义未回归（契约测试 C1–C6 锁定）。剩余差距在 M1.2b（每击键 getMarkdown 序列化 + 全文 hash，见 §6）与 M1.3（setContent 1MB ≈ 8.5s）。
 
 ### 第二梯队：DOCX 导出 M4
 
@@ -248,6 +248,15 @@ PR-1 与 PR-2 可并行；PR-3 必须基于 PR-2。
 12. M4 DOCX 导出（可与 M1 后半并行）
 13. 图片引用清理
 14. M1.3 渲染分片
+
+### M1.2b 懒序列化管线（M1.2 遗余，审计先行）
+
+PR #19 后每击键仍同步执行 `getMarkdownLive()` 全文序列化（1MB ≈ 59ms）+ synthetic history FNV 全文 hash。彻底去除需把 `tab.markdown` 改为按需派生（脏标记 + flush-on-read），已核实的读取方（漏挂一个 flush 钩子 = 存盘丢数据，必须逐个覆盖）：
+
+- `editor.ts` L734 关闭未保存提示的非空检查；L1752 外部文件变更比对；L2153 崩溃缓冲持久化
+- 保存流（手动保存 / `HANDLE_AUTO_SAVE` 定时器）/ 导出流 / 版本快照
+- 约束：仅活动 tab 有活引擎，tab 切换前必须同步 flush
+- dirty 语义依赖内容 hash（undo 回到已保存内容判干净，Phase G — G6），不能退化为纯布尔脏标记；可行折中：干净/脏确定态用标志位，仅 undo/redo 后的"不确定态"才惰性算 hash
 
 ---
 
