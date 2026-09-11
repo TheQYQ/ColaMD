@@ -48,8 +48,12 @@ type TocTreeNode = TreeNode<TocItem>
 // short-circuit the expensive deep comparison and `listToTree()` rebuild.
 //
 // The signature must cover everything that determines the rendered tree: each
-// heading's level, its content-derived `githubSlug` (el-tree's `node-key`, so it
-// also decides which expand/collapse state survives, #3028) and its text.
+// heading's level, its content-derived `githubSlug` and its text.
+//
+// `githubSlug` also seeds el-tree's `node-key`, so it decides which
+// expand/collapse state survives (#3028). The key itself is `deriveKeyedToc`'s
+// deduped `githubSlug` -- duplicate headings get `-1`, `-2`, ... -- so the raw
+// `githubSlug` used here is a lower bound on what the tree actually keys on.
 //
 // Keying on `slug` alone was a real bug: `slug` is a per-render object id
 // (`mu-N`) that stays IDENTICAL when a heading's text changes, so an edit that
