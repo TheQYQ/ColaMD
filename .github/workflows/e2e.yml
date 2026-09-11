@@ -55,7 +55,9 @@ jobs:
       # diagnostics, which is why every past e2e failure had to be
       # reproduced locally.
       - name: Upload e2e diagnostics
-        if: failure()
+        # TEMP (verify branch): run unconditionally, and treat an empty match
+        # as a hard failure -- see the PR body. Revert before merging.
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: e2e-diagnostics
@@ -63,7 +65,8 @@ jobs:
             packages/desktop/test-results/**
             packages/desktop/playwright-report/**
           retention-days: 14
-          # A failure in an earlier step leaves no results dir; the upload
-          # must not turn that into a second failure.
-          if-no-files-found: ignore
+          # TEMP (verify branch): 'error' instead of 'ignore' is what makes a
+          # wrong path observable -- an empty match turns the job red. Revert
+          # to 'ignore' before merging.
+          if-no-files-found: error
 
