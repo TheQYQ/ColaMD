@@ -21,6 +21,7 @@ vi.mock('@/services/notification', () => ({
 vi.mock('@/store/bufferedState', () => ({ debouncedSendBufferedState: vi.fn() }))
 
 import { useEditorStore } from '@/store/editor'
+import bus from '@/bus'
 
 // #1861: a watcher 'change' event fires even when only the file's mtime changed
 // (e.g. a git checkout that left the content byte-identical). The handler then
@@ -72,5 +73,28 @@ describe('useEditorStore LISTEN_FOR_FILE_CHANGE — content-identical change (#1
 
     expect(notifySpy).toHaveBeenCalledTimes(1)
     expect(tab.isSaved).toBe(false)
+  })
+
+  // M1.2b audit (tabMarkdown-readers.md R7): the active tab's `tab.markdown`
+  // lags the live engine until a flush. A stale compare would warn on content
+  // that only LOOKS different. The handler now flushes the active tab first —
+  // mirrored here by a listener that commits the pending keystroke — so the
+  // compare runs against fresh content.
+  it('flushes the active tab before comparing, so an equal flushed content is a no-op', () => {
+    const store = useEditorStore()
+    const tab = makeSavedTab(store)
+    store.currentFile = tab as unknown as typeof store.currentFile
+    const notifySpy = vi.spyOn(store, 'pushTabNotification').mockImplementation(() => {})
+    const handler = () => {
+      if (tab.markdown === 'hello') tab.markdown = 'hello flushed'
+    }
+    bus.on('flush-active-editor', handler)
+
+    store.LISTEN_FOR_FILE_CHANGE()
+    fire(captureHandler(), 'hello flushed')
+
+    bus.off('flush-active-editor', handler)
+    expect(notifySpy).not.toHaveBeenCalled()
+    expect(tab.isSaved).toBe(true)
   })
 })
