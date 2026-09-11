@@ -258,7 +258,10 @@ PR #19 后每击键仍同步执行 `getMarkdownLive()` 全文序列化（1MB ≈
 - 约束：仅活动 tab 有活引擎，tab 切换前必须同步 flush
 - dirty 语义依赖内容 hash（undo 回到已保存内容判干净，Phase G — G6），不能退化为纯布尔脏标记；可行折中：干净/脏确定态用标志位，仅 undo/redo 后的"不确定态"才惰性算 hash
 
-**状态**：✅ 审计完成（2026-09-12）——完整读取方核对表见 `packages/muya/docs/tabMarkdown-readers.md`（R1–R14）。审计同时发现 5 处**现状就缺**的 flush 漏点（R5 全部保存、R6 自动保存定时器、R7 外部变更比对、R8/R9 崩溃缓冲与会话结束快照、R11 导出），应作为独立 PR 先补漏再实施懒序列化。
+**状态**：✅ 完成（2026-09-12）。
+① 审计：读取方核对表 `packages/muya/docs/tabMarkdown-readers.md`（R1–R14）。
+② PR #23 补漏：审计发现的 5 处现状缺失的 flush 守卫（save-all / auto-save 定时器 / 外部变更比对 / FORCE_CLOSE_TAB 快照 / CLOSE_UNSAVED_TAB + 崩溃缓冲 + 导出）先行落地。
+③ PR #25 懒序列化：`lazyMarkdownPipeline` 三层管线（击键层 O(1) 脏标记；undo/redo source 'history' 即时序列化判净；120ms 停顿层 + flush-on-read 单次提交）。引擎 History undo/redo 改派 source 'history'（契约测试锁定）；store 新增 keystroke tier。bench：引擎热路径无回归（1MB edit+flush p95 4.0ms，验收线余量 4×），桌面每击键移除 ~59-67ms 全文序列化 + FNV hash。剩余大项：M1.3 setContent 超线性。
 
 ---
 
