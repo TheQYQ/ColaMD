@@ -157,9 +157,12 @@ class History {
             return;
 
         const { operation, selection, rebuild } = this._stack[source].pop()!;
+        // Read-only, synchronous consumer (invertWithDoc never mutates its
+        // doc argument) — the live tree skips the defensive full-document
+        // clone that getState() would make on every undo/redo.
         const inverseOperation = json1.type.invertWithDoc(
             operation,
-            asDoc(this._muya.editor.jsonState.getState()),
+            asDoc(this._muya.editor.jsonState.getStateLive()),
         );
 
         this._stack[dest].push({
