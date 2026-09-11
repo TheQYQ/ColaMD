@@ -7,6 +7,10 @@ on:
     # Skip the multi-platform installer build on muya-only PRs.
     paths-ignore:
       - 'packages/muya/**'
+  # Full 5-OS matrix on demand. One full round is ~250 Linux-equivalent CI
+  # minutes (the two macOS legs bill at 10x) — running it on every PR push
+  # burned the entire monthly allowance in two days.
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -14,13 +18,16 @@ concurrency:
 
 jobs:
   run-on-pr-head:
+    # PR pushes build only the linux leg. The other four — including the
+    # two 10x-billed macOS runners — run via workflow_dispatch, so an
+    # ordinary review round costs ~10 minutes instead of ~250.
+    if: github.event_name == 'workflow_dispatch' || matrix.name == 'linux'
     permissions:
       contents: read
       pull-requests: read
       actions: read
     # postinstall plus a full electron-builder package run takes ~10 min.
-    # Five of these build in parallel; an unbounded hang would burn minutes
-    # across the whole matrix.
+    # An unbounded hang would burn minutes across every queued leg.
     timeout-minutes: 45
 
     runs-on: ${{ matrix.os }}
@@ -95,7 +102,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: colamd-${{ matrix.name }}
-          retention-days: 30
+          # A full round leaves ~1.8 GB of artifacts; at 30-day retention
+          # twelve rounds piled up to 22 GB and ate the storage allowance.
+          # 3 days covers a review round; tag builds upload their own
+          # copies via release.yml.
+          retention-days: 3
           path: |
             dist/*.exe
             dist/*.zip
