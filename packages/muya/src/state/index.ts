@@ -206,7 +206,13 @@ class JSONState {
     }
 
     dispatch(op: JSONOp, source = 'user' /* user, api */) {
-        const prevDoc = this.getState();
+        // ot-json1's apply() is copy-on-write — the library documents that
+        // "the previous snapshot reference is still valid" after apply — so
+        // the pre-apply tree can be handed to json-change listeners without
+        // the defensive full-document deep clone. Every prevDoc consumer is
+        // read-only and synchronous (History's invertWithDoc; the desktop
+        // callback ignores the payload — docs/getState-callers.md §1).
+        const prevDoc = this._state;
         this._apply(op);
         debug.log(JSON.stringify(op));
         this._muya.eventCenter.emit('json-change', {
@@ -293,7 +299,11 @@ class JSONState {
         const op = this._operationCache.reduce(
             (acc, curr) => json1.type.compose(acc, curr) as JSONOpList,
         );
-        const prevDoc = this.getState();
+        // Same live-prevDoc contract as dispatch(): the pre-apply tree alias
+        // replaces the per-flush full-document deepClone (the last remaining
+        // clone on the keystroke path). Safe because json1.type.apply never
+        // mutates its input and consumers only read prevDoc.
+        const prevDoc = this._state;
         this._apply(op);
         // Clear before emitting: a listener that edits synchronously then starts
         // a fresh batch instead of mutating the one being flushed.

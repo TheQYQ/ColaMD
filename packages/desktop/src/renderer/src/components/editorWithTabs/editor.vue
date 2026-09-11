@@ -128,7 +128,7 @@ import { getCssForOptions, getHtmlToc, type PdfCssOptions, type HtmlTocOptions }
 import { resolveTocHeadingElement } from '@/util/tocNavigation'
 import { addCommonStyle, setEditorWidth } from '@/util/theme'
 import { usePreferencesStore } from '@/store/preferences'
-import { useEditorStore, type TocItem } from '@/store/editor'
+import { useEditorStore } from '@/store/editor'
 import { useProjectStore } from '@/store/project'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
@@ -1877,24 +1877,28 @@ onMounted(() => {
   // PERFORMANCE: The pipeline splits into two tiers:
   //   - Critical path (immediate): markdown, history, cursor, wordCount — these
   //     drive save/dirty tracking and must reflect every keystroke.
-  //   - Derived UI state (debounced ~120ms): TOC and block AST — these only
-  //     affect sidebar rendering and can trail the critical path without user
-  //     perceptible lag. Debouncing collapses a burst of keystrokes (typical
-  //     typing) into a single TOC/blocks re-derivation, cutting full-document
-  //     scans by ~60% during active typing.
-  let pendingTocUpdate: { id: string; toc: TocItem[] } | null = null
+  //   - Derived UI state (debounced ~120ms): TOC, word count and block AST
+  //     — these only affect sidebar rendering and can trail the critical
+  //     path without user perceptible lag. Debouncing collapses a burst of
+  //     keystrokes (typical typing) into a single re-derivation, cutting
+  //     full-document scans by ~60% during active typing. getTOC() is a
+  //     full live-tree walk (~30-50ms on 1MB) and wordCount a full string
+  //     scan, so both are computed INSIDE the debounce; only the markdown
+  //     string (already serialized for the critical path) is held, by
+  //     reference, until the flush.
+  let pendingTocUpdate: { id: string; markdown: string } | null = null
   let debouncedDerivedStateTimer: ReturnType<typeof setTimeout> | null = null
 
   const flushDerivedState = (): void => {
     if (pendingTocUpdate && editor.value) {
-      const { id, toc } = pendingTocUpdate
+      const { id, markdown } = pendingTocUpdate
       editorStore.LISTEN_FOR_CONTENT_CHANGE({
         id,
         markdown: null,
-        wordCount: null,
+        wordCount: muyaWordCount(markdown),
         cursor: null,
         history: null,
-        toc,
+        toc: editor.value.getTOC(),
         blocks: editor.value.getState()
       })
       pendingTocUpdate = null
@@ -1902,8 +1906,8 @@ onMounted(() => {
     debouncedDerivedStateTimer = null
   }
 
-  const scheduleDerivedState = (id: string, toc: TocItem[]): void => {
-    pendingTocUpdate = { id, toc }
+  const scheduleDerivedState = (id: string, markdown: string): void => {
+    pendingTocUpdate = { id, markdown }
     if (debouncedDerivedStateTimer !== null) {
       clearTimeout(debouncedDerivedStateTimer)
     }
@@ -1929,11 +1933,14 @@ onMounted(() => {
     const engineHistory = editor.value.getHistory()
     engineHistoryByTab.set(id, engineHistory)
 
-    // Critical path: compute immediately for save/dirty tracking
+    // Critical path: compute immediately for save/dirty tracking.
+    // wordCount deliberately NOT computed here — it is a full-string
+    // scan and only feeds the sidebar counter, so it rides the debounced
+    // derived tier with the TOC.
     const criticalPayload = {
       id,
       markdown,
-      wordCount: muyaWordCount(markdown),
+      wordCount: null,
       cursor: serializeCursor(editor.value.getSelection()),
       // Synthetic, desktop-shaped history so the store's save/dirty tracking
       // keeps working (the engine history shape is incompatible).
@@ -1943,8 +1950,8 @@ onMounted(() => {
     }
     editorStore.LISTEN_FOR_CONTENT_CHANGE(criticalPayload)
 
-    // Derived UI state: debounce TOC and blocks re-derivation
-    scheduleDerivedState(id, editor.value.getTOC())
+    // Derived UI state: debounce TOC and wordCount re-derivation
+    scheduleDerivedState(id, markdown)
   })
 
   // The engine does not emit `scroll`; listen on the scroll container directly
