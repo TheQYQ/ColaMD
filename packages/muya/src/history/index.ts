@@ -173,11 +173,17 @@ class History {
 
         this._lastRecorded = 0;
         this._ignoreChange = true;
+        // Dispatch with the dedicated 'history' source (not 'user'): the undo
+        // replay is NOT a user edit, and the desktop's lazy-serialization
+        // pipeline keys on the source to resolve clean/dirty immediately
+        // (undo may land back on the saved content — Phase G, G6). The
+        // recording listener above early-returns via _ignoreChange, so the
+        // source value here never affects the undo stack.
         try {
             if (rebuild)
-                this._muya.editor.rebuildContents(operation, selection, 'user');
+                this._muya.editor.rebuildContents(operation, selection, 'history');
             else
-                this._muya.editor.updateContents(operation, selection, 'user');
+                this._muya.editor.updateContents(operation, selection, 'history');
         }
         finally {
             this._ignoreChange = false;
