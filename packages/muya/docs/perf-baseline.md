@@ -185,6 +185,34 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - M1.2b 后每击键桌面侧剩余工作：selection 序列化 + getHistory + 一次 store mutation，均为 O(1)。
 - M1 剩余大项：M1.3 setContent 1MB ≈ 5-10s 超线性（入口路径，与击键管线无关）。
 
+## M1.3 实测（setContent 超线性修复 · 2026-09-12）
+
+实现：`perf/m1-3-setcontent`（PR #27）。剖析定位 setContent 的超线性成本**不在渲染**，而在解析管线两处算法级热点：① marked `Marked#walkTokens` 对每个 token 做 `n = n.concat(...)` 累积（O(n²)，1MB ≈ 20k token 时 ~1.8s）——`lexBlock` 改为自写线性前序遍历（同一 visitor，行为等价）；② `markdownToState` 的 token 流处理用 `shift()`/`unshift(...)`（各 O(n)）——改为 LIFO 工作栈（容器反序压子节点 + block-end 标记，弹出顺序与旧实现逐位一致）。环境同基线轮，机器空闲。单位 ms。
+
+### setContent（M1.3 直接目标）
+
+| 档位  | 基线 p50 | M1.2 p50 | M1.3 p50 | 对 M1.2 | p95 |
+| ----- | -------: | -------: | -------: | ------: | --: |
+| 100KB |   62.8   |   62.8   |  **5.6** |  −91%   | 12.4 |
+| 500KB |  1440.1  | 1440.1   | **13.6** |  −99%   | 16.2 |
+| 1MB   |  8489.9  | 8489.9   | **28.2** | **−99.7%** | 28.5 |
+
+**增长曲线已线性**：100KB→1MB（10×体积）耗时 5.6→28.2ms（5×），修复前 400KB→800KB 翻倍体积耗时 290→3128ms（10.8×）。实测剖析曲线：generate(1MB) ≈ 66ms（lex 28.6 + convert 37.5）。
+
+### 全档数字（p50/p95）
+
+- 100KB：getState 1.8/2.0 · getMarkdown 3.0/4.4 · getTOC 2.1/2.8 · edit+flush 0.3/10.2
+- 500KB：getState 7.7/9.1 · getMarkdown 12.2/13.4 · getTOC 10.7/13.8 · edit+flush 0.6/2.5
+- 1MB：getState 16.8/19.2 · getMarkdown 25.3/26.3 · getTOC 21.9/25.4 · edit+flush 1.3/1.9
+
+派生档（getState/getMarkdown/getTOC）不经过被改代码，本轮数字与 M1.2 轮的差异为机器噪声级（均更快，运行间方差）。
+
+### 判读
+
+- **M1.3 的"唯一还难看的大数字"消除**：setContent 1MB 从 ~5-10s 量级降到 28ms，且不再随文档体积超线性增长；超大文档（10MB+）预期同样线性。
+- 真实应用 setContent 还包含 block 树重建与渲染（bench 不覆盖），parse 不再是瓶颈后再评估是否需要渲染分片。
+- 遗留：`getClipboardHtml`/`getHighlightHtml` 仍经 marked 内部 walkTokens（二次方），但它们只处理选区/剪贴板级内容，不在文档级热路径，暂不动。
+
 ## 变更记录
 
 | 日期       | 提交                              | 变化                               | 备注                       |
@@ -193,3 +221,4 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | 2026-09-10 | 19d3c1e (perf/m1-1-getstate-live) | PR-3 实测：edit+flush 1MB p50 −14% | 后台负载偏高，空闲复测待做 |
 | 2026-09-11 | 8a471b1 (perf/m1-2-keystroke-deser) | M1.2 实测：edit+flush 1MB p50 50.8→2.7ms、p95 4.7ms | 验收线达成（<16ms）        |
 | 2026-09-12 | perf/m1-2b-lazy-serialization (PR #25) | M1.2b：桌面每击键去全文序列化+hash（移至 pause/undo/flush-on-read）；引擎热路径无回归（1MB p95 4.0ms） | 桌面击键层 O(1) |
+| 2026-09-12 | perf/m1-3-setcontent (PR #27) | M1.3：setContent 超线性修复——lexBlock 线性遍历（marked walkTokens 的 concat 累积）+ markdownToState 栈式流处理；1MB 5004→28.2ms | 解析管线线性化 |
