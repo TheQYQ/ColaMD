@@ -55,7 +55,7 @@ jobs:
       # diagnostics, which is why every past e2e failure had to be
       # reproduced locally.
       - name: Upload e2e diagnostics
-        if: D:\pythonCCode\VibeCoding_Self\ColaMD
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: e2e-diagnostics
