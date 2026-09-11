@@ -728,6 +728,10 @@ export const useEditorStore = defineStore('editor', {
     },
 
     ASK_FOR_SAVE_ALL(closeTabs: boolean): void {
+      // Only the active tab has a live engine and its `markdown` lags the
+      // engine until a flush — flush once so the active tab's content is
+      // current before the unsaved filter and save payloads read it.
+      this.flushActiveEditor()
       const { tabs } = this
       const projectStore = useProjectStore()
       const unsavedFiles = tabs
@@ -1038,6 +1042,14 @@ export const useEditorStore = defineStore('editor', {
     },
 
     FORCE_CLOSE_TAB(file: IFileState): void {
+      // Flush before the tab is removed: the closing tab may be the active
+      // one with unflushed engine edits, and once spliced the `json-change`
+      // triggered by the flush can no longer reach it (its id is gone from
+      // the tab map) — the 'Session End' snapshot below would read stale
+      // markdown.
+      if (file.id === this.currentFile?.id) {
+        this.flushActiveEditor()
+      }
       const { tabs, currentFile } = this
       const index = tabs.findIndex((t) => t.id === file.id)
       if (index > -1) {
@@ -1095,6 +1107,12 @@ export const useEditorStore = defineStore('editor', {
     },
 
     CLOSE_UNSAVED_TAB(file: IFileState): void {
+      // Save flow: the active tab's markdown lags the live engine until a
+      // flush, and once sent the unflushed edits would be silently dropped
+      // from the written file.
+      if (file.id === this.currentFile?.id) {
+        this.flushActiveEditor()
+      }
       const { id, pathname, filename, markdown } = file
       const options = getOptionsFromState(file)
       window.electron.ipcRenderer.send('mt::save-and-close-tabs', [
@@ -1563,6 +1581,15 @@ export const useEditorStore = defineStore('editor', {
 
         const tab = this.tabs.find((t) => t.id === id)
         if (tab && !tab.isSaved) {
+          // `markdown` was captured when the timer was scheduled; the active
+          // tab's newest content lives in the engine (still unflushed edits
+          // would be silently dropped from the written file). Flush and
+          // re-read so the auto-save persists the content as of NOW.
+          let markdownToSave = markdown
+          if (tab.id === this.currentFile?.id) {
+            this.flushActiveEditor()
+            markdownToSave = tab.markdown
+          }
           this.SAVE_VERSION_SNAPSHOT('Auto-save')
           const defaultPath = getRootFolderFromState(projectStore)
           window.electron.ipcRenderer.send(
@@ -1570,7 +1597,7 @@ export const useEditorStore = defineStore('editor', {
             id,
             filename,
             pathname,
-            markdown,
+            markdownToSave,
             deepClone(options),
             defaultPath
           )
@@ -1748,6 +1775,12 @@ export const useEditorStore = defineStore('editor', {
             }
             case 'add':
             case 'change': {
+              // Flush the active tab first: its `tab.markdown` lags the live
+              // engine until a flush, and comparing against a stale value
+              // would falsely report a content change and warn/reload (#1861).
+              if (tab.id === this.currentFile?.id) {
+                this.flushActiveEditor()
+              }
               // Only the file's metadata changed on disk (e.g. a git checkout
               // that left the content byte-identical) — there is nothing to
               // reload and no reason to warn the user (#1861).

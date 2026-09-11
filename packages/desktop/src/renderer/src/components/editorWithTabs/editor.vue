@@ -1294,6 +1294,9 @@ const handleExport = async (options: unknown) => {
 
   const extraCss = await getCssForOptions(opts as unknown as PdfCssOptions)
   const htmlToc = getHtmlToc(editor.value.getTOC(), opts as unknown as HtmlTocOptions)
+  // The engine serializes only its flushed state; a keystroke in the last
+  // animation frame would otherwise be missing from the export.
+  editor.value.flush()
   const markdown = editor.value.getMarkdown()
   const header = (opts.header ?? null) as HeaderFooterPart | null
   const footer = (opts.footer ?? null) as HeaderFooterPart | null
