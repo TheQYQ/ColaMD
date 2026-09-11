@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-
 // `@/store/editor` reads `window.path` at module load and `window.electron`
 // at runtime; stub those surfaces before the hoisted imports run.
 vi.hoisted(() => {
@@ -165,5 +164,104 @@ describe('editor store — flush pending edits before saving (#3803)', () => {
     expect(flushOrder).toBeDefined()
     expect(renameOrder).toBeDefined()
     expect(flushOrder as number).toBeLessThan(renameOrder as number)
+  })
+})
+
+// M1.2b audit (packages/muya/docs/tabMarkdown-readers.md R5/R6/R7/R9): the same
+// stale-read bug #3803 fixed for the four explicit save paths still existed on
+// four more read paths. Same testing strategy: a real `flush-active-editor`
+// listener commits the pending keystroke, and the assertion is on the SENT or
+// SNAPSHOT payload.
+describe('editor store — flush pending edits on the remaining read paths', () => {
+  let detach: (() => void) | undefined
+
+  const seedTabs = (store: ReturnType<typeof useEditorStore>) => {
+    seedCurrentFile(store)
+    // The tab in the tabs list must be the SAME object as currentFile — that is
+    // how the store reads back the flushed content via the tab reference.
+    store.tabs = [store.currentFile as never]
+    store.tabIdToIndex = { 'tab-1': 0 }
+  }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    detach?.()
+    detach = undefined
+    vi.useRealTimers()
+    delete (window as unknown as { versionHistory?: unknown }).versionHistory
+  })
+
+  it('ASK_FOR_SAVE_ALL sends the flushed markdown for the active tab', () => {
+    const store = useEditorStore()
+    seedTabs(store)
+    detach = onFlushCommit(store)
+    const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
+
+    store.ASK_FOR_SAVE_ALL(false)
+
+    const call = sendSpy.mock.calls.find((c) => c[0] === 'mt::save-tabs')
+    expect(call).toBeDefined()
+    expect((call?.[1] as Array<{ markdown: string }>)[0].markdown).toBe(FLUSHED)
+  })
+
+  it('HANDLE_AUTO_SAVE timer saves the markdown as of fire time, not schedule time', () => {
+    vi.useFakeTimers()
+    const store = useEditorStore()
+    seedTabs(store)
+    detach = onFlushCommit(store)
+    const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
+
+    store.HANDLE_AUTO_SAVE({
+      id: 'tab-1',
+      filename: 'note.md',
+      pathname: '/tmp/note.md',
+      markdown: STALE, // captured at schedule time
+      options: {}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
+
+    // A keystroke lands after scheduling, still unflushed when the timer fires.
+    if (store.currentFile) store.currentFile.markdown = STALE
+    vi.advanceTimersByTime(60_000)
+
+    const call = sendSpy.mock.calls.find((c) => c[0] === 'mt::response-file-save')
+    expect(call).toBeDefined()
+    expect(call?.[MARKDOWN_ARG]).toBe(FLUSHED)
+  })
+
+  it('FORCE_CLOSE_TAB snapshots the flushed markdown (Session End)', async() => {
+    const store = useEditorStore()
+    seedTabs(store)
+    detach = onFlushCommit(store)
+    const saveSnapshot = vi.fn().mockResolvedValue(null)
+    ;(window as unknown as { versionHistory?: unknown }).versionHistory = { save: saveSnapshot }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tab = store.tabs[0] as any
+    tab.pathname = '/tmp/note.md'
+
+    store.FORCE_CLOSE_TAB(tab)
+
+    expect(saveSnapshot).toHaveBeenCalledTimes(1)
+    expect(saveSnapshot.mock.calls[0][0]).toMatchObject({
+      pathname: '/tmp/note.md',
+      markdown: FLUSHED
+    })
+  })
+
+  it('CLOSE_UNSAVED_TAB sends the flushed markdown', () => {
+    const store = useEditorStore()
+    seedTabs(store)
+    detach = onFlushCommit(store)
+    const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
+
+    store.CLOSE_UNSAVED_TAB(store.tabs[0] as never)
+
+    const call = sendSpy.mock.calls.find((c) => c[0] === 'mt::save-and-close-tabs')
+    expect(call).toBeDefined()
+    expect((call?.[1] as Array<{ markdown: string }>)[0].markdown).toBe(FLUSHED)
   })
 })

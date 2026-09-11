@@ -41,6 +41,15 @@ export const createBufferedState = (): Record<string, unknown> | null => {
 }
 
 export const sendBufferedState = (): Promise<unknown> => {
+  if (!stores.editorStore) {
+    stores.editorStore = useEditorStore()
+  }
+  // The crash buffer must never capture a stale snapshot: the engine applies
+  // keystrokes on the next animation frame, so flush any pending batch before
+  // serializing the store (see packages/muya/docs/tabMarkdown-readers.md R8).
+  // A no-op when nothing is pending; harmless before the editor mounts.
+  stores.editorStore.flushActiveEditor()
+
   const snapshot = createBufferedState()
   if (snapshot) {
     return window.electron.ipcRenderer.invoke('update-buffer-state', snapshot)
