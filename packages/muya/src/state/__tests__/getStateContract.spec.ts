@@ -19,6 +19,9 @@ import { Muya } from '../../muya';
 //       that clone afterwards must not corrupt the rendered document.
 //   C4  (baseline for PR-3) getMarkdown() is produced from a cloned
 //       snapshot and is unaffected by later live-tree edits.
+//   C6  (M1.2) prevDoc is the LIVE pre-apply tree, not a clone — the
+//       reference must stay intact after apply() (ot-json1 copy-on-write),
+//       even when retained beyond the synchronous listener stack.
 
 const hosts: HTMLElement[] = [];
 
@@ -158,5 +161,38 @@ describe('getState ownership contract (M1.1.1)', () => {
         expect(pa).not.toBe(pb);
         pa!.text = 'mutant';
         expect(pb!.text).not.toBe('mutant');
+    });
+
+    it('c6: the live pre-apply prevDoc tree survives apply() intact (M1.2)', () => {
+        const muya = boot('c6 baseline paragraph\n');
+        // Independent pre-edit snapshot to compare the retained alias against.
+        const before = JSON.stringify(muya.getState());
+
+        // Retain every prevDoc BEYOND the synchronous listener stack — the
+        // exact thing the getStateLive() contract forbids for the CURRENT
+        // tree, but which is safe for prevDoc: each is a PRE-apply tree, and
+        // ot-json1's copy-on-write apply() must never touch it again.
+        const emittedPrevs: TState[][] = [];
+        muya.eventCenter.on('json-change', (payload: { prevDoc: TState[] }) => {
+            emittedPrevs.push(payload.prevDoc);
+        });
+
+        const leaf = firstLeaf(muya);
+        leaf.text = 'c6 baseline paragraph EDITED';
+        muya.flush();
+        leaf.text = 'c6 baseline paragraph EDITED TWICE';
+        muya.flush();
+
+        expect(emittedPrevs.length).toBe(2);
+        // First flush's prevDoc still equals the pre-edit snapshot — even
+        // after a SECOND apply ran (shared-subtree copy-on-write discipline).
+        expect(JSON.stringify(emittedPrevs[0])).toBe(before);
+        // Second flush's prevDoc is the INTERMEDIATE state (post first edit,
+        // pre second edit) — each prevDoc is its own flush's pre-apply tree.
+        expect(JSON.stringify(emittedPrevs[1])).toContain('EDITED');
+        expect(JSON.stringify(emittedPrevs[1])).not.toContain('TWICE');
+        // And the current document moved on, proving the aliases are true
+        // pre-apply snapshots rather than live views of the new state.
+        expect(muya.getMarkdown()).toContain('EDITED TWICE');
     });
 });
