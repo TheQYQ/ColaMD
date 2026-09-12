@@ -74,9 +74,10 @@ export const PANDOC_EXTENSIONS: readonly string[] = Object.freeze([
 
 export const BLACK_LIST: readonly string[] = Object.freeze(['$RECYCLE.BIN'])
 
-export const EXTENSION_HASN: Readonly<{ styledHtml: string; pdf: string }> = Object.freeze({
+export const EXTENSION_HASN: Readonly<{ styledHtml: string; pdf: string; docx: string }> = Object.freeze({
   styledHtml: '.html',
-  pdf: '.pdf'
+  pdf: '.pdf',
+  docx: '.docx'
 })
 
 export const TITLE_BAR_HEIGHT: number = isOsx ? 21 : 32

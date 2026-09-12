@@ -112,6 +112,7 @@ import {
   type ILocale
 } from '@muyajs/core'
 import { exportStyledHTML, type HeaderFooterPart } from '@/util/exportHtml'
+import { exportDocx } from '@/util/exportDocx'
 import { applyCursor, isIndexCursor } from '@/util/cursor'
 import EditorSearch from '../search/index.vue'
 import bus from '@/bus'
@@ -1311,7 +1312,7 @@ const handleExport = async (options: unknown) => {
   const opts = options as ExportOptions
   const { type, headerFooterStyled, htmlTitle } = opts
 
-  if (!/^pdf|print|styledHtml$/.test(type)) {
+  if (!/^pdf|print|styledHtml|docx$/.test(type)) {
     throw new Error(`Invalid type to export: "${type}".`)
   }
 
@@ -1342,6 +1343,31 @@ const handleExport = async (options: unknown) => {
           type: 'error',
           message:
             (err as { message?: string } | null | undefined)?.message ?? t('editor.export.error')
+        })
+      }
+      break
+    }
+    case 'docx': {
+      try {
+        // No header/footer furniture: DOCX pagination is Word's business. The
+        // [TOC] marker still resolves via htmlToc so the marker isn't lost.
+        const content = await exportStyledHTML(editor.value, markdown, {
+          title: htmlTitle || '',
+          printOptimization: false,
+          extraCss,
+          toc: htmlToc,
+          dir: props.textDirection
+        })
+        const bytes = exportDocx(content, htmlTitle || currentFile.value?.filename || 'Document')
+        editorStore.EXPORT({ type, bytes })
+      } catch (err) {
+        log.error('Failed to export document:', err)
+        notice.notify({
+          title: t('editor.export.failed', { type: htmlTitle || 'Word' }),
+          type: 'error',
+          message:
+            (err as { message?: string | null } | null | undefined)?.message ??
+            t('editor.export.error')
         })
       }
       break
