@@ -171,13 +171,22 @@ class EditorBufferStore extends TypedEmitter<EditorBufferStoreEvents> {
     return buffer
   }
 
-  writeBufferStoreFile(filePath: string, newState: unknown): void {
+  writeBufferStoreFile(filePath: string, newState: unknown): Promise<void> {
     // Durable atomic write: write-file-atomic writes to a temp file, fsyncs it,
     // then renames it over the target. The previous temp-file + rename here was
     // namespace-atomic (crash-safe) but omitted the fsync, so a power loss could
     // still leave this crash-recovery buffer — which holds unsaved tab content —
     // truncated or zero-filled, the same gap the document save path had (#3786).
-    writeFileAtomic.sync(filePath, JSON.stringify(newState), 'utf8')
+    // Async variant keeps the identical durability contract without blocking
+    // the main process (M1.4).
+    const prev = bufferWriteQueues.get(filePath) ?? Promise.resolve()
+    const next = prev
+      .then(() => writeFileAtomic(filePath, JSON.stringify(newState), 'utf8'))
+      .catch((err) => {
+        console.error('Failed to write editor buffer state:', err)
+      })
+    bufferWriteQueues.set(filePath, next.then(() => {}, () => {}))
+    return next
   }
 
   updateBufferState(e: IpcMainInvokeEvent, newState: unknown): boolean {
@@ -190,7 +199,12 @@ class EditorBufferStore extends TypedEmitter<EditorBufferStoreEvents> {
     }
 
     const bufferStore = this.getBufferStoreInfo(restoreBufferId)
-    this.writeBufferStoreFile(bufferStore.filePath, newState)
+    // Fire-and-forget: the queued write preserves per-file ordering, and the
+    // handler returns before the fsync completes instead of stalling the main
+    // process (M1.4).
+    this.writeBufferStoreFile(bufferStore.filePath, newState).catch((err) => {
+      console.error('Buffer state write failed:', err)
+    })
     return true
   }
 
@@ -213,5 +227,12 @@ class EditorBufferStore extends TypedEmitter<EditorBufferStoreEvents> {
     })
   }
 }
+
+// Per-file write chains: async fsync'd writes must never interleave, or an
+// older snapshot could land after a newer one (M1.4 moved these off the
+// main-process sync path, which stalled the whole app on every 1s buffer
+// update for large documents). Module-level: the app has one store instance,
+// and it keeps writeBufferStoreFile callable without `this` (tests).
+const bufferWriteQueues = new Map<string, Promise<void>>()
 
 export default EditorBufferStore

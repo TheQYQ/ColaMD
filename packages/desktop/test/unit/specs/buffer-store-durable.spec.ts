@@ -27,26 +27,41 @@ afterEach(() => {
 })
 
 describe('EditorBufferStore.writeBufferStoreFile — durable atomic write (#4852 follow-up)', () => {
-  it('writes the state as JSON and leaves no temp file behind', () => {
+  it('writes the state as JSON and leaves no temp file behind', async() => {
     const dir = tempDir()
     const target = path.join(dir, 'buffer.json')
     const state = { tabs: [{ id: '1', markdown: 'hello' }] }
 
-    writeBufferStoreFile(target, state)
+    await writeBufferStoreFile(target, state)
 
     expect(JSON.parse(readFileSync(target, 'utf8'))).toEqual(state)
     // The temp file was renamed over the target — nothing left in the dir.
     expect(readdirSync(dir)).toEqual(['buffer.json'])
   })
 
-  it('overwrites an existing buffer file', () => {
+  it('overwrites an existing buffer file', async() => {
     const dir = tempDir()
     const target = path.join(dir, 'buffer.json')
 
-    writeBufferStoreFile(target, { tabs: ['old'] })
-    writeBufferStoreFile(target, { tabs: ['new'] })
+    await writeBufferStoreFile(target, { tabs: ['old'] })
+    await writeBufferStoreFile(target, { tabs: ['new'] })
 
     expect(JSON.parse(readFileSync(target, 'utf8'))).toEqual({ tabs: ['new'] })
+    expect(readdirSync(dir)).toEqual(['buffer.json'])
+  })
+
+  // M1.4: writes left the main-process sync path. Two rapid writes for the
+  // same file must still land in call order — an older snapshot may never
+  // overwrite a newer one.
+  it('serializes rapid writes per file (last write wins)', async() => {
+    const dir = tempDir()
+    const target = path.join(dir, 'buffer.json')
+
+    const first = writeBufferStoreFile(target, { seq: 1 })
+    const second = writeBufferStoreFile(target, { seq: 2 })
+    await Promise.all([first, second])
+
+    expect(JSON.parse(readFileSync(target, 'utf8'))).toEqual({ seq: 2 })
     expect(readdirSync(dir)).toEqual(['buffer.json'])
   })
 })
