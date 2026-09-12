@@ -1957,6 +1957,12 @@ onMounted(() => {
     lazyPipeline.onJsonChange(payload)
   })
 
+  // IMG.2: an image's last markdown reference was removed — let the store
+  // decide (preference-gated) whether the underlying file can be cleaned up.
+  editor.value.on('image-deleted', (payload: { src: string }) => {
+    editorStore.IMAGE_DELETED(payload)
+  })
+
   // The engine does not emit `scroll`; listen on the scroll container directly
   // so the desktop can persist each tab's scroll position.
   scrollHandler = () => {
