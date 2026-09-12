@@ -4,7 +4,7 @@
 
 <div align="center">
   <strong>:high_brightness: A simple and elegant Markdown editor :crescent_moon:</strong><br>
-  Focused on speed and usability. A fork of <a href="https://github.com/marktext/marktext">MarkText</a>.<br>
+  Focused on speed and usability, with a Typora-style distraction-free interface. A fork of <a href="https://github.com/marktext/marktext">MarkText</a>.<br>
   <sub>Available for Linux, macOS and Windows.</sub>
 </div>
 
@@ -90,14 +90,17 @@
 
 ## Features
 
-- Realtime preview (WYSIWYG) and a clean and simple interface to get a distraction-free writing experience.
+- Typora-style minimal interface: a slim title bar and menu bar on top, a distraction-free centered writing area, and a slim status bar (word count, source-code toggle).
+- Realtime preview (WYSIWYG) editing experience focused on speed and usability.
 - Support [CommonMark Spec](https://spec.commonmark.org), [GitHub Flavored Markdown Spec](https://github.github.com/gfm/) and selective support [Pandoc markdown](https://pandoc.org/MANUAL.html#pandocs-markdown).
-- Markdown extensions such as math expressions (KaTeX), front matter and emojis.
-- Support paragraphs and inline style shortcuts to improve your writing efficiency.
-- Output **HTML** and **PDF** files.
-- Various themes: **Cadmium Light**, **Material Dark** etc.
+- Markdown extensions such as math expressions (KaTeX), diagrams (Mermaid, Flowchart, Vega, PlantUML), front matter and emojis.
+- Sidebar with file tree, folder-wide search (powered by ripgrep), outline and version history.
+- Command palette (`Ctrl+Shift+P`) and quick open (`Ctrl+P`) for keyboard-driven workflows.
+- Paragraph and inline style shortcuts to improve your writing efficiency.
+- Output **HTML**, **PDF** and **Word (.docx)** files.
+- 30+ built-in themes (light & dark) plus a theme marketplace for importing custom themes.
 - Various editing modes: **Source Code mode**, **Typewriter mode**, **Focus mode**.
-- Paste images directly from clipboard.
+- Paste images directly from clipboard; unreferenced images can be cleaned up automatically.
 
 ## Download and Installation
 
