@@ -116,9 +116,9 @@ vue-tsc and publishConfig for npm.
 
 | 编号  | 任务                                  | 状态 |
 | ----- | ------------------------------------- | ---- |
-| IMG.1 | 引擎 `deleteImage` 发 `image-deleted` | 📋   |
-| IMG.2 | 桌面：无引用才删 + 路径域 + 偏好      | 📋   |
-| IMG.3 | 单测 / e2e                            | 📋   |
+| IMG.1 | 引擎 `deleteImage` 发 `image-deleted` | ✅ PR #31（所有删除路径共用单一 emit 点，payload 带 as-written src） |
+| IMG.2 | 桌面：无引用才删 + 路径域 + 偏好      | ✅ PR #31（5s 防抖给撤销留窗口；路径域=文档目录或全局图片目录子树；`deleteUnreferencedImages` 默认关；设置页开关） |
+| IMG.3 | 单测 / e2e                            | ✅ PR #31（引擎 emit 契约测试 + 桌面纯逻辑测试：路径域/引用判定/undo 语义） |
 
 ---
 

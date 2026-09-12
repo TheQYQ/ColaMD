@@ -652,7 +652,9 @@
         "neverDetected": "감지된 적 없음",
         "neverSuccessful": "성공한 적 없음"
       },
-      "defaultBehavior": "이미지를 ColaMD에 붙여넣거나 드래그한 후의 기본 동작"
+      "defaultBehavior": "이미지를 ColaMD에 붙여넣거나 드래그한 후의 기본 동작",
+      "deleteUnreferenced": "참조되지 않은 이미지 파일 삭제",
+      "deleteUnreferencedDescription": "로컬 이미지에 대한 마지막 참조가 삭제되면 파일도 삭제합니다(문서 폴더 또는 이미지 폴더 안의 파일만 해당). 몇 초 안에 실행 취소하면 파일이 유지됩니다."
     },
     "markdown": {
       "title": "마크다운",
@@ -976,7 +978,9 @@
       "fileRemovedOnDisk": "“{name}”이(가) 디스크에서 삭제되었습니다.",
       "fileChangedOnDisk": "“{name}”이(가) 디스크에서 변경되었습니다. 다시 로드하시겠습니까?",
       "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}"
+      "errorWhileMoving": "There was an error while moving: {msg}",
+      "imageCleanupTitle": "이미지 파일이 삭제됨",
+      "imageCleanupMessage": "참조되지 않은 파일이 삭제됨: {name}"
     }
   },
   "spellchecker": {

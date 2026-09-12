@@ -652,7 +652,9 @@
         "neverDetected": "從未偵測",
         "neverSuccessful": "從未成功"
       },
-      "defaultBehavior": "貼上或拖曳圖片到 ColaMD 後的預設行為"
+      "defaultBehavior": "貼上或拖曳圖片到 ColaMD 後的預設行為",
+      "deleteUnreferenced": "刪除未引用的圖片檔案",
+      "deleteUnreferencedDescription": "當文件中最後一個對某本機圖片的引用被刪除時，同時刪除對應檔案（僅限文件目錄或圖片目錄內的檔案）。數秒內復原可保留檔案。"
     },
     "markdown": {
       "title": "PicGo 設定",
@@ -976,7 +978,9 @@
       "fileRemovedOnDisk": "「{name}」已在磁碟上被刪除。",
       "fileChangedOnDisk": "「{name}」已在磁碟上發生變更。是否重新載入？",
       "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}"
+      "errorWhileMoving": "There was an error while moving: {msg}",
+      "imageCleanupTitle": "圖片檔案已刪除",
+      "imageCleanupMessage": "已刪除未引用的檔案：{name}"
     }
   },
   "spellchecker": {

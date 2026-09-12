@@ -652,7 +652,9 @@
         "pleaseInstall": "请安装",
         "scriptPath": "脚本路径"
       },
-      "defaultBehavior": "粘贴或拖拽图片到 ColaMD 后的默认行为"
+      "defaultBehavior": "粘贴或拖拽图片到 ColaMD 后的默认行为",
+      "deleteUnreferenced": "删除未引用的图片文件",
+      "deleteUnreferencedDescription": "当文档中最后一个对某本地图片的引用被删除时，同时删除对应文件（仅限文档目录或图片目录内的文件）。数秒内撤销可保留文件。"
     },
     "markdown": {
       "title": "Markdown",
@@ -976,7 +978,9 @@
       "fileRemovedOnDisk": "“{name}” 已在磁盘上被删除。",
       "fileChangedOnDisk": "“{name}” 已在磁盘上发生变更。是否重新加载？",
       "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}"
+      "errorWhileMoving": "There was an error while moving: {msg}",
+      "imageCleanupTitle": "图片文件已删除",
+      "imageCleanupMessage": "已删除未引用的文件：{name}"
     }
   },
   "spellchecker": {

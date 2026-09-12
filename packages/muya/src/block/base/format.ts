@@ -465,6 +465,14 @@ class Format extends Content {
         this.text = oldText.substring(0, start) + oldText.substring(end);
         this.setCursor(start, start, true);
 
+        // The last markdown reference to this image is gone. The desktop layer
+        // listens for this to clean up the underlying file when nothing
+        // references it anymore (IMG.1) — fired for every removal path
+        // (image toolbar, cut, image-selection delete) since they all funnel
+        // through here. Local-path images only; data:/http(s) sources carry
+        // no file to clean and are filtered by the receiver.
+        eventCenter.emit('image-deleted', { src: token.src });
+
         // Hide image toolbar and image transformer
         eventCenter.emit('muya-transformer', { reference: null });
         eventCenter.emit('muya-image-toolbar', { reference: null });
