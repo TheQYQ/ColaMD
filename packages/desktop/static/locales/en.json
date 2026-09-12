@@ -926,7 +926,7 @@
   },
   "dialog": {
     "cancel": "Cancel",
-    "changesWillBeLost": "Changes will be lost",
+    "changesWillBeLost": "If you don't save, your changes will be lost.",
     "close": "Close",
     "dontSave": "Don't Save",
     "file": "File",
@@ -937,7 +937,7 @@
     "keepOpen": "Keep open",
     "replace": "Replace",
     "save": "Save",
-    "saveChanges": "Save changes",
+    "saveChanges": "Save changes?",
     "saveFailure": "Save failure",
     "unsafeFileTitle": "Potentially unsafe file",
     "unsafeFileMessage": "This link opens a file that can run code",

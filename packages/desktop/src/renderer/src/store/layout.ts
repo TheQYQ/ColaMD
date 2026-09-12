@@ -52,12 +52,13 @@ export const useLayoutStore = defineStore('layout', () => {
   const sideBarWidth = ref<number>(initialSideBarWidth)
 
   // Actual rendered sidebar width. `sideBarWidth` is the right-column width
-  // (clamped to ≥220 by `normalizeSideBarWidth`); when `rightColumn` is empty
-  // the sidebar collapses to its 45px icon strip. Consumers that need to
+  // (clamped to ≥220 by `normalizeSideBarWidth`). Consumers that need to
   // subtract the sidebar from viewport space must use this, not the raw ref.
+  // The legacy 45px collapsed-strip state no longer exists — the Typora-style
+  // sidebar is either fully shown (any `rightColumn`, '' falls back to the
+  // files panel) or hidden.
   const effectiveSideBarWidth = computed<number>(() => {
     if (!showSideBar.value) return 0
-    if (!rightColumn.value) return 45
     return Number(sideBarWidth.value)
   })
 
@@ -107,7 +108,11 @@ export const useLayoutStore = defineStore('layout', () => {
     SET_LAYOUT(
       {
         rightColumn: layout.rightColumn,
-        showSideBar: layout.showSideBar,
+        // Typora-style chrome: a restored session never re-opens the sidebar;
+        // it stays hidden until the user opens it (view menu / shortcut /
+        // status-bar toggle). `showTabBar` keeps its restored value because
+        // tab visibility is session state, not chrome.
+        showSideBar: false,
         showTabBar: layout.showTabBar
       },
       { scheduleBufferUpdate: false }
@@ -127,16 +132,6 @@ export const useLayoutStore = defineStore('layout', () => {
       showTabBar.value = !showTabBar.value
     }
     debouncedSendBufferedState()
-  }
-
-  // Reveal the sidebar's TOC tab for a freshly opened document. Untitled
-  // blanks carry no pathname (no TOC to show) and the `autoShowToc`
-  // preference gates the whole behavior. No-op when the TOC tab is already
-  // on screen so repeated opens don't spam preference/buffer writes.
-  function SHOW_TOC_FOR_OPENED_FILE(pathname?: string): void {
-    if (!pathname || !usePreferencesStore().autoShowToc) return
-    if (rightColumn.value === 'toc' && showSideBar.value) return
-    SET_LAYOUT({ rightColumn: 'toc', showSideBar: true })
   }
 
   function SET_SIDE_BAR_WIDTH(
@@ -203,7 +198,6 @@ export const useLayoutStore = defineStore('layout', () => {
     CREATE_BUFFERED_STATE,
     RESTORE_BUFFERED_STATE,
     TOGGLE_LAYOUT_ENTRY,
-    SHOW_TOC_FOR_OPENED_FILE,
     SET_SIDE_BAR_WIDTH,
     LISTEN_FOR_LAYOUT,
     DISPATCH_LAYOUT_MENU_ITEMS,

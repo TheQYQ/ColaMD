@@ -416,7 +416,7 @@ onBeforeUnmount(() => {
 
 <style>
 .source-code {
-  height: calc(100vh - var(--titleBarHeight));
+  height: calc(100vh - var(--titleBarHeight) - var(--menuBarHeight) - var(--statusBarHeight));
   box-sizing: border-box;
   overflow: auto;
 }

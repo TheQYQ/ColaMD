@@ -191,6 +191,10 @@ export interface EditorState {
   tabIdToIndex: Record<string, number>
   listToc: TocItem[]
   toc: TocTreeNode[]
+  // Mirrors of the state pushed to the (native) application menu, consumed by
+  // the frameless HTML menu bar to resolve checked/disabled items locally.
+  selectionMenuState: ApplicationMenuState | null
+  selectionFormatState: Record<string, boolean>
 }
 
 const autoSaveTimers = new Map<string, ReturnType<typeof setTimeout>>()
@@ -207,7 +211,9 @@ export const useEditorStore = defineStore('editor', {
     tabs: [],
     tabIdToIndex: {},
     listToc: [], // Used for equal check and for searching for the correct github-slug to jump to
-    toc: []
+    toc: [],
+    selectionMenuState: null,
+    selectionFormatState: {}
   }),
 
   actions: {
@@ -754,7 +760,6 @@ export const useEditorStore = defineStore('editor', {
 
     LISTEN_FOR_CLOSE(): void {
       const projectStore = useProjectStore()
-      const preferencesStore = usePreferencesStore()
       window.electron.ipcRenderer.on('mt::ask-for-close', () => {
         sendBufferedState()
           .catch((err) => {
@@ -776,8 +781,11 @@ export const useEditorStore = defineStore('editor', {
                 }
               })
 
-            if (unsavedFiles.length && preferencesStore.startUpAction !== 'restoreAll') {
-              // Ignore unsaved files when user has chosen to restore all on startup, as they will be restored anyway.
+            // Always prompt before closing with unsaved changes (Typora
+            // behavior) — even when start-up action is "restore all", because
+            // the user explicitly chooses 保存 / 放弃更改 / 取消 here; the
+            // discard path drops the tabs from the session buffer.
+            if (unsavedFiles.length) {
               window.electron.ipcRenderer.send('mt::close-window-confirm', deepClone(unsavedFiles))
             } else {
               window.electron.ipcRenderer.send('mt::close-window')
@@ -791,6 +799,21 @@ export const useEditorStore = defineStore('editor', {
         if (Array.isArray(tabIdList) && tabIdList.length) {
           this.CLOSE_TABS(tabIdList)
         }
+      })
+      // "Discard changes" on window close: remove the unsaved tabs, flush the
+      // session buffer without them (so a discarded document is not restored
+      // on the next launch), then close the window.
+      window.electron.ipcRenderer.on('mt::discard-unsaved-tabs-and-close', (_, tabIdList) => {
+        if (Array.isArray(tabIdList) && tabIdList.length) {
+          this.CLOSE_TABS(tabIdList)
+        }
+        sendBufferedState()
+          .catch((err) => {
+            console.error('Failed to flush buffered state after discarding tabs', err)
+          })
+          .finally(() => {
+            window.electron.ipcRenderer.send('mt::close-window')
+          })
       })
     },
 
@@ -1001,14 +1024,13 @@ export const useEditorStore = defineStore('editor', {
           markdownList,
           lineEnding,
           sideBarVisibility,
-          autoShowToc,
           tabBarVisibility,
           sourceCodeModeEnabled
         } = config
 
         window.electron.ipcRenderer.send('mt::window-initialized')
         mainStore.SET_INITIALIZED()
-        preferencesStore.SET_USER_PREFERENCE({ endOfLine: lineEnding, autoShowToc })
+        preferencesStore.SET_USER_PREFERENCE({ endOfLine: lineEnding })
         layoutStore.SET_LAYOUT({
           rightColumn: 'files',
           showSideBar: !!sideBarVisibility,
@@ -1713,11 +1735,13 @@ export const useEditorStore = defineStore('editor', {
         }
       }
 
+      const menuState = createApplicationMenuState(changes)
+      this.selectionMenuState = menuState
       const { windowId } = window.colamd?.env ?? { windowId: -1 }
       window.electron.ipcRenderer.send(
         'mt::editor-selection-changed',
         windowId,
-        createApplicationMenuState(changes)
+        menuState
       )
     },
 
@@ -1737,11 +1761,13 @@ export const useEditorStore = defineStore('editor', {
     },
 
     SELECTION_FORMATS(formats: SelectionFormat[]): void {
+      const formatState = createSelectionFormatState(formats)
+      this.selectionFormatState = formatState
       const { windowId } = window.colamd?.env ?? { windowId: -1 }
       window.electron.ipcRenderer.send(
         'mt::update-format-menu',
         windowId,
-        createSelectionFormatState(formats)
+        formatState
       )
     },
 
@@ -2108,7 +2134,7 @@ const trimTrailingNewlines = (text: string): string => {
   return text.replace(/[\r?\n]+$/, '')
 }
 
-interface ApplicationMenuState {
+export interface ApplicationMenuState {
   isDisabled: boolean
   isMultiline: boolean
   isLooseListItem: boolean

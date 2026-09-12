@@ -89,6 +89,7 @@ export interface IpcInvokeChannels {
     ret: { defaultKeybindings: Map<string, string>; userKeybindings: Map<string, string> }
   }
   'mt::keybinding-save-user-keybindings': { args: [bindings: unknown]; ret: boolean }
+  'mt::menu::get-recent-documents': { args: []; ret: string[] }
   'mt::paths::is-image': { args: [path: string]; ret: boolean }
   'mt::rg::start': { args: [req: unknown]; ret: { searchId: string } }
   'mt::shell::open-external': { args: [url: string]; ret: void }
@@ -169,6 +170,10 @@ export interface IpcSendChannels {
   'mt::make-screenshot': []
   'mt::menu::popup': [template: MenuTemplate, position?: MenuPopupPosition]
   'mt::menu::popup-application': [position?: MenuPopupPosition]
+  // Frameless HTML menu bar (menuBar component) support channels.
+  'mt::menu::native-clipboard': [op: 'cut' | 'copy' | 'paste']
+  'mt::menu::open-path': [pathname: string]
+  'mt::unsaved-dialog-response': [result: { needSave: boolean } | null]
   'mt::open-file': [filePath: string, options?: unknown]
   'mt::open-file-by-window-id': [windowId: number, filePath: string, options?: unknown]
   'mt::open-keybindings-config': []
@@ -286,6 +291,8 @@ export interface IpcMainEventChannels {
   'mt::export-success': [payload: { type: string; filePath: string }]
   'mt::file-saved': [tabId: string]
   'mt::force-close-tabs-by-id': [tabIds: string[]]
+  'mt::discard-unsaved-tabs-and-close': [tabIds: string[]]
+  'mt::show-unsaved-dialog': []
   'mt::invalidate-image-cache': []
   'mt::keybindings-response': [bindings: unknown]
   'mt::load-state': [state: BufferedStateType]

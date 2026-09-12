@@ -112,15 +112,15 @@ class EditorWindow extends BaseWindow {
     const {
       titleBarStyle,
       theme,
-      sideBarVisibility,
-      autoShowToc,
-      restoreLayoutState,
       tabBarVisibility,
       sourceCodeModeEnabled,
       spellcheckerEnabled,
       spellcheckerLanguage
     } = preferences.getAll()
-    const resolvedSideBarVisibility = restoreLayoutState ? !!sideBarVisibility : false
+    // Typora-style chrome: the sidebar always starts closed and is opened
+    // only through the view menu / shortcuts / status-bar toggle. The stored
+    // `sideBarVisibility` / `restoreLayoutState` are no longer honored here.
+    const resolvedSideBarVisibility = false
 
     // Enable native or custom/frameless window and titlebar
     if (!isOsx) {
@@ -178,7 +178,6 @@ class EditorWindow extends BaseWindow {
         markdownList: this.bufferStoreInfo!.filePath ? [] : this._markdownToOpen,
         lineEnding,
         sideBarVisibility: resolvedSideBarVisibility,
-        autoShowToc,
         tabBarVisibility,
         sourceCodeModeEnabled
       })
@@ -490,21 +489,15 @@ class EditorWindow extends BaseWindow {
     browserWindow!.webContents.once('did-finish-load', () => {
       this.lifecycle = WindowLifecycle.READY
       const { preferences } = this._accessor
-      const {
-        sideBarVisibility,
-        autoShowToc,
-        restoreLayoutState,
-        tabBarVisibility,
-        sourceCodeModeEnabled
-      } = preferences.getAll()
-      const resolvedSideBarVisibility = restoreLayoutState ? !!sideBarVisibility : false
+      const { tabBarVisibility, sourceCodeModeEnabled } = preferences.getAll()
       const lineEnding = preferences.getPreferredEol()
+      // Same Typora-style rule as createWindow: the sidebar always starts
+      // closed after a reload.
       browserWindow!.webContents.send('mt::bootstrap-editor', {
         addBlankTab: true,
         markdownList: [],
         lineEnding,
-        sideBarVisibility: resolvedSideBarVisibility,
-        autoShowToc,
+        sideBarVisibility: false,
         tabBarVisibility,
         sourceCodeModeEnabled
       })
