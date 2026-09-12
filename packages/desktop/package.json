@@ -91,7 +91,8 @@
     "write-file-atomic": "^7.0.1"
   },
   "optionalDependencies": {
-    "native-keymap": "^3.3.9"
+    "native-keymap": "^3.3.9",
+    "@vscode/ripgrep-win32-x64": "1.18.0"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.4",
