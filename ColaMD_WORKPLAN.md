@@ -100,7 +100,7 @@ vue-tsc and publishConfig for npm.
 | M1.1 | 消灭热路径 `getState()` 全文深拷贝                   | ✅ 已合并（审计 PR #2 + PR-3 #3, 90eb73a；每键 4→0 次克隆，edit+flush 1MB p50 −14%） |
 | M1.2 | 击键路径去全文序列化（脏标记改 op 级）               | ✅ 已合并（PR-4 #19, 8a471b1；flush prevDoc 克隆清零 + getTOC/wordCount 移入防抖；edit+flush 1MB p50 50.8→2.7ms、p95 56.4→4.7ms；**验收线达成**） |
 | M1.3 | 大文档 setContent 超线性修复（剖析证明瓶颈在解析管线而非渲染；渲染分片暂不需要） | ✅ PR #27：1MB 5004→28.2ms，线性化 |
-| M1.4 | 会话持久化减负（buffer store）                       | 📋                                                                                   |
+| M1.4 | 会话持久化减负（buffer store）                       | ✅ PR #32：1s 防抖 → 5s+30s maxWait 节流；O(tabs) 签名门控跳过无变化写盘；主进程 fsync 写改异步链式（顺序保证） |
 
 **总验收**：1MB 文档击键派生管线 P95 < 16ms —— ✅ **edit+flush 档已达成**（P95 4.7ms，PR #19，余量 3.4×）；现有单测全绿（muya 1468 + desktop 804）；Phase G / PG15 脏净语义未回归（契约测试 C1–C6 锁定）。剩余差距在 M1.2b（每击键 getMarkdown 序列化 + 全文 hash，见 §6）与 M1.3（setContent 1MB ≈ 8.5s）。
 
