@@ -652,7 +652,9 @@
         "pleaseInstall": "Installeer a.u.b.",
         "scriptPath": "Scriptpad"
       },
-      "defaultBehavior": "Het standaardgedrag na plakken of slepen van een afbeelding naar ColaMD"
+      "defaultBehavior": "Het standaardgedrag na plakken of slepen van een afbeelding naar ColaMD",
+      "deleteUnreferenced": "Niet-referentieerden afbeeldingsbestanden verwijderen",
+      "deleteUnreferencedDescription": "Wanneer de laatste verwijzing naar een lokale afbeelding wordt verwijderd, wordt het bestand verwijderd (alleen bestanden in de document- of afbeeldingenmap). Ongedaan maken binnen enkele seconden behoudt het bestand."
     },
     "markdown": {
       "title": "Markdown",
@@ -976,7 +978,9 @@
       "fileRemovedOnDisk": "\"{name}\" is verwijderd van schijf.",
       "fileChangedOnDisk": "\"{name}\" is gewijzigd op schijf. Wil je het opnieuw laden?",
       "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}"
+      "errorWhileMoving": "There was an error while moving: {msg}",
+      "imageCleanupTitle": "Afbeeldingsbestand verwijderd",
+      "imageCleanupMessage": "Niet-referentieerden bestand verwijderd: {name}"
     }
   },
   "spellchecker": {

@@ -52,6 +52,7 @@ export interface IUserPreferences {
   imageInsertAction?: 'upload' | 'folder' | 'path'
   imagePreferRelativePath?: boolean
   imageFolderPath?: string
+  deleteUnreferencedImages?: boolean
   screenshotFolderPath?: string
   imageBed?: { selected?: string; [key: string]: unknown }
   imageBedAlias?: { [key: string]: unknown }

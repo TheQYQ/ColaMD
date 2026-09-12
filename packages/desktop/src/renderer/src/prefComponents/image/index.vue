@@ -12,6 +12,13 @@
     <Separator />
     <FolderSetting v-if="imageInsertAction === 'folder' || imageInsertAction === 'path'" />
     <Uploader v-if="imageInsertAction === 'upload'" />
+    <Separator />
+    <Bool
+      :description="t('preferences.image.deleteUnreferenced')"
+      :detailed-description="t('preferences.image.deleteUnreferencedDescription')"
+      :bool="deleteUnreferencedImages"
+      :on-change="(value) => onSelectChange('deleteUnreferencedImages', value)"
+    />
   </div>
 </template>
 
@@ -23,6 +30,7 @@ import type { PreferencesState } from '@/store/preferences'
 import Separator from '../common/separator/index.vue'
 import Uploader from './components/uploader/index.vue'
 import CurSelect from '../common/select/index.vue'
+import Bool from '../common/bool/index.vue'
 import FolderSetting from './components/folderSetting/index.vue'
 import { getImageActions } from './config'
 
@@ -30,7 +38,7 @@ const { t } = useI18n()
 
 const preferenceStore = usePreferencesStore()
 
-const { imageInsertAction } = storeToRefs(preferenceStore)
+const { imageInsertAction, deleteUnreferencedImages } = storeToRefs(preferenceStore)
 
 const imageActions = getImageActions()
 

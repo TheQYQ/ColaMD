@@ -652,7 +652,9 @@
         "neverDetected": "Nunca detectado",
         "neverSuccessful": "Nunca exitoso"
       },
-      "defaultBehavior": "El comportamiento predeterminado después de pegar o arrastrar la imagen a ColaMD"
+      "defaultBehavior": "El comportamiento predeterminado después de pegar o arrastrar la imagen a ColaMD",
+      "deleteUnreferenced": "Eliminar archivos de imagen sin referencia",
+      "deleteUnreferencedDescription": "Cuando se elimina la última referencia a una imagen local, se borra el archivo (solo archivos dentro de la carpeta del documento o de imágenes). Deshacer en pocos segundos conserva el archivo."
     },
     "markdown": {
       "title": "Markdown",
@@ -976,7 +978,9 @@
       "fileRemovedOnDisk": "«{name}» ha sido eliminado del disco.",
       "fileChangedOnDisk": "«{name}» ha cambiado en el disco. ¿Deseas recargarlo?",
       "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}"
+      "errorWhileMoving": "There was an error while moving: {msg}",
+      "imageCleanupTitle": "Archivo de imagen eliminado",
+      "imageCleanupMessage": "Archivo sin referencia eliminado: {name}"
     }
   },
   "spellchecker": {
