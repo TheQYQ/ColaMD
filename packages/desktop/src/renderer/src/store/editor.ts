@@ -21,6 +21,7 @@ import { useLayoutStore } from './layout'
 import { useMainStore } from '.'
 import { t } from '../i18n'
 import { debouncedSendBufferedState, sendBufferedState } from './bufferedState'
+import { isImageUnreferenced, resolveCleanupCandidate, type CleanupCandidate } from '../util/imageCleanup'
 import type { VersionSnapshot } from '@shared/types/ipc'
 import type {
   IFileState,
@@ -193,6 +194,12 @@ export interface EditorState {
 }
 
 const autoSaveTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+// Pending unreferenced-image cleanup checks, keyed by absolute path. The
+// delay gives undo (or a cut followed by an immediate paste-back) a window to
+// restore the reference before the file is unlinked.
+const imageCleanupTimers = new Map<string, ReturnType<typeof setTimeout>>()
+const IMAGE_CLEANUP_DELAY_MS = 5000
 
 export const useEditorStore = defineStore('editor', {
   state: (): EditorState => ({
@@ -532,6 +539,59 @@ export const useEditorStore = defineStore('editor', {
         .then(() => {
           window.electron.clipboard.writeText(deletionUrl)
         })
+    },
+
+    // IMG.2: the engine removed the last markdown reference to an image.
+    // Schedule a debounced cleanup — the reference check re-runs at fire time
+    // so an undo restores cleanliness, and the file is only unlinked when it
+    // lives inside the allowed path domain and no open tab references it.
+    IMAGE_DELETED({ src }: { src: string }): void {
+      const preferencesStore = usePreferencesStore()
+      if (!preferencesStore.deleteUnreferencedImages) return
+      const tab = this.currentFile
+      if (!tab?.pathname) return
+
+      const documentDir = window.path.dirname(tab.pathname)
+      const candidate = resolveCleanupCandidate(src, documentDir, preferencesStore.imageFolderPath, {
+        path: window.path,
+        isChildOfDirectory: window.fileUtils.isChildOfDirectory
+      })
+      if (!candidate) return
+
+      const existing = imageCleanupTimers.get(candidate.absolutePath)
+      if (existing) clearTimeout(existing)
+      imageCleanupTimers.set(
+        candidate.absolutePath,
+        setTimeout(() => {
+          imageCleanupTimers.delete(candidate.absolutePath)
+          this.CLEANUP_UNREFERENCED_IMAGE(candidate).catch((err) => {
+            console.error('Image cleanup failed:', err)
+          })
+        }, IMAGE_CLEANUP_DELAY_MS)
+      )
+    },
+
+    async CLEANUP_UNREFERENCED_IMAGE(candidate: CleanupCandidate): Promise<void> {
+      try {
+        // The active tab's markdown may lag the engine (M1.2b lazy pipeline);
+        // inactive tabs' markdown is static. Flush so the check sees the
+        // post-deletion content.
+        this.flushActiveEditor()
+        const markdowns = this.tabs.map((t) => (typeof t.markdown === 'string' ? t.markdown : ''))
+        if (!isImageUnreferenced(markdowns, candidate)) return
+        if (!(await window.fileUtils.pathExists(candidate.absolutePath))) return
+        await window.fileUtils.unlink(candidate.absolutePath)
+        notice.notify({
+          title: t('store.editor.imageCleanupTitle'),
+          message: t('store.editor.imageCleanupMessage', {
+            name: window.path.basename(candidate.absolutePath)
+          }),
+          showConfirm: false,
+          time: 8000
+        })
+      } catch (err) {
+        console.error('Failed to clean up unreferenced image:', err)
+      }
     },
 
     // We need to update line endings menu when changing tabs.

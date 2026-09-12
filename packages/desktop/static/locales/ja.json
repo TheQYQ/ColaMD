@@ -652,7 +652,9 @@
         "neverDetected": "検出されたことがない",
         "neverSuccessful": "成功したことがない"
       },
-      "defaultBehavior": "ColaMD に画像を貼り付けまたはドラッグした後のデフォルト動作"
+      "defaultBehavior": "ColaMD に画像を貼り付けまたはドラッグした後のデフォルト動作",
+      "deleteUnreferenced": "未参照の画像ファイルを削除",
+      "deleteUnreferencedDescription": "ローカル画像への最後の参照が削除されると、ファイルも削除します（ドキュメントフォルダーまたは画像フォルダー内のみ）。数秒以内に元に戻すとファイルは保持されます。"
     },
     "markdown": {
       "title": "Markdown",
@@ -976,7 +978,9 @@
       "fileRemovedOnDisk": "「{name}」はディスク上で削除されました。",
       "fileChangedOnDisk": "「{name}」はディスク上で変更されました。再読み込みしますか？",
       "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}"
+      "errorWhileMoving": "There was an error while moving: {msg}",
+      "imageCleanupTitle": "画像ファイルを削除しました",
+      "imageCleanupMessage": "未参照のファイルを削除しました：{name}"
     }
   },
   "spellchecker": {
