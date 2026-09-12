@@ -52,38 +52,38 @@ test.describe('Editor input and source-mode roundtrip', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Coverage backfill (checklist item 24). The desktop title-bar word/character/
-// paragraph counter lives in
-// packages/desktop/src/renderer/src/components/titleBar/index.vue: the clickable
-// `.word-count > span.text-center-vertical` renders `${HASH[show].short}
-// ${wordCount[show]}` where `show` cycles word -> paragraph -> character -> all
-// on click (handleWordClick). The counter value flows from
+// Coverage backfill (checklist item 24). The desktop word/character/paragraph
+// counter lives in the Typora-style status bar,
+// packages/desktop/src/renderer/src/components/statusBar/index.vue: the
+// clickable `.word-count > span.text-center-vertical` renders
+// `${wordCount[show]} ${label}` where `show` cycles word -> paragraph ->
+// character on click (handleWordClick). The counter value flows from
 // editor.vue json-change -> LISTEN_FOR_CONTENT_CHANGE -> store/editor.ts tab
-// wordCount -> app.vue currentFile.wordCount -> the title-bar `word-count` prop.
+// wordCount -> the status bar reading currentFile.wordCount from the store.
 // The engine wordCount algorithm itself is unit-covered in
 // packages/muya/src/utils/__tests__/wordCount.spec.ts; this spec only locks the
-// desktop title-bar wiring (the value tracks edits + follows the active mode).
+// desktop status-bar wiring (the value tracks edits + follows the active mode).
 // ---------------------------------------------------------------------------
 
-const WORD_COUNT_TEXT = '.word-count .text-center-vertical'
+const WORD_COUNT_TEXT = '.status-bar .word-count .text-center-vertical'
 
-// Read the title-bar counter text, e.g. "W 12". Returns the trimmed string.
+// Read the status-bar counter text, e.g. "12 Words". Returns the trimmed string.
 const counterText = (page: Page): Promise<string> =>
   page.locator(WORD_COUNT_TEXT).innerText()
 
-// Parse the trailing integer off a counter label like "W 12" / "P 3".
+// Parse the leading integer off a counter label like "12 Words" / "3 Paragraphs".
 const counterValue = async(page: Page): Promise<number> => {
   const text = await counterText(page)
-  const match = text.trim().match(/(\d+)\s*$/)
+  const match = text.trim().match(/^(\d+)\s/)
   return match ? Number(match[1]) : NaN
 }
 
 // Mirror of the engine's wordCount algorithm
 // (packages/muya/src/utils/index.ts) so the test can derive the EXPECTED
-// title-bar value from the exact markdown that is actually loaded — the engine
+// status-bar value from the exact markdown that is actually loaded — the engine
 // algorithm itself is already unit-covered in
 // packages/muya/src/utils/__tests__/wordCount.spec.ts; this is only used to
-// pin the desktop title-bar's value/mode wiring to the live document.
+// pin the desktop status-bar's value/mode wiring to the live document.
 const expectedCount = (markdown: string): { word: number; paragraph: number; character: number; all: number } => {
   const paragraph = markdown.split(/\n{2,}/).filter((line) => line).length
   const removedChinese = markdown.replace(/[一-龥]/g, '')
@@ -95,7 +95,7 @@ const expectedCount = (markdown: string): { word: number; paragraph: number; cha
   return { word, paragraph, character, all }
 }
 
-test.describe('Title-bar word counter (item 24)', () => {
+test.describe('Status-bar word counter (item 24)', () => {
   let app: ElectronApplication
   let page: Page
 
@@ -110,10 +110,10 @@ test.describe('Title-bar word counter (item 24)', () => {
     if (app) await app.close()
   })
 
-  test('the counter is mounted and starts in word ("W") mode', async() => {
+  test('the counter is mounted and starts in word mode', async() => {
     const counter = page.locator(WORD_COUNT_TEXT)
     await expect(counter).toBeVisible({ timeout: 5000 })
-    await expect.poll(() => counterText(page)).toMatch(/^W\s/)
+    await expect.poll(() => counterText(page)).toMatch(/^\d+\s/)
   })
 
   test('typing ASCII words + CJK characters raises the word count to the engine value', async() => {
@@ -131,7 +131,7 @@ test.describe('Title-bar word counter (item 24)', () => {
     await expect.poll(() => counterValue(page), { timeout: 5000 }).toBeGreaterThan(before)
 
     // The displayed value matches the engine's wordCount over the exact markdown
-    // that is now loaded (verifies the title-bar tracks the live document, and
+    // that is now loaded (verifies the status bar tracks the live document, and
     // that the CJK chars each counted as a word).
     const markdown = await getMarkdownContent(page, app)
     await expect.poll(() => counterValue(page), { timeout: 5000 }).toBe(expectedCount(markdown).word)
@@ -143,34 +143,28 @@ test.describe('Title-bar word counter (item 24)', () => {
     await setSourceMarkdown(page, app, 'alpha beta\n\ngamma 字数\n')
     await page.waitForTimeout(400)
 
-    // Derive the four expected values from the exact markdown that is loaded.
+    // Derive the expected values from the exact markdown that is loaded. The
+    // three modes read distinct values for this document (word 6, paragraph 2,
+    // character 15), so the value equality below pins the active mode.
     const markdown = await getMarkdownContent(page, app)
     const expected = expectedCount(markdown)
 
     const counter = page.locator(WORD_COUNT_TEXT)
 
-    // Default word mode: "W" prefix.
-    await expect.poll(() => counterText(page)).toMatch(/^W\s/)
+    // Default word mode: "N <label>".
+    await expect.poll(() => counterText(page)).toMatch(/^\d+\s/)
     await expect.poll(() => counterValue(page)).toBe(expected.word)
 
     // Click cycles word -> paragraph.
     await counter.click()
-    await expect.poll(() => counterText(page)).toMatch(/^P\s/)
     await expect.poll(() => counterValue(page)).toBe(expected.paragraph)
 
     // paragraph -> character.
     await counter.click()
-    await expect.poll(() => counterText(page)).toMatch(/^C\s/)
     await expect.poll(() => counterValue(page)).toBe(expected.character)
 
-    // character -> all (raw markdown length, with spaces).
+    // character -> wraps back to word.
     await counter.click()
-    await expect.poll(() => counterText(page)).toMatch(/^A\s/)
-    await expect.poll(() => counterValue(page)).toBe(expected.all)
-
-    // all -> wraps back to word.
-    await counter.click()
-    await expect.poll(() => counterText(page)).toMatch(/^W\s/)
     await expect.poll(() => counterValue(page)).toBe(expected.word)
   })
 })

@@ -168,6 +168,27 @@ const commands: CommandDescriptor[] = [
   // --------------------------------------------------------------------------
   // Edit
 
+  // Native clipboard edits are routed through webContents in the main process
+  // (same behavior as the native Edit menu); the keybindings map carries the
+  // Ctrl+X/C/V accelerators for these ids.
+  {
+    id: 'edit.cut',
+    execute: async() => {
+      window.electron.ipcRenderer.send('mt::menu::native-clipboard', 'cut')
+    }
+  },
+  {
+    id: 'edit.copy',
+    execute: async() => {
+      window.electron.ipcRenderer.send('mt::menu::native-clipboard', 'copy')
+    }
+  },
+  {
+    id: 'edit.paste',
+    execute: async() => {
+      window.electron.ipcRenderer.send('mt::menu::native-clipboard', 'paste')
+    }
+  },
   {
     id: 'edit.undo',
     execute: async() => {

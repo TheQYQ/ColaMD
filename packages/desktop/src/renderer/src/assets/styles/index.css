@@ -1,6 +1,9 @@
 /* Common CSS use by both light and dark themes */
 :root {
   --titleBarHeight: 32px;
+  /* Rendered by the frameless menu bar (menuBar component); 0 elsewhere. */
+  --menuBarHeight: 0px;
+  --statusBarHeight: 24px;
   --editorAreaWidth: 750px;
 
   /*editor*/
@@ -107,17 +110,23 @@
   --notificationErrorBg: #ff6969;
 }
 
+/* Typora-style slim scrollbar: no visible track, thin rounded thumb. */
 ::-webkit-scrollbar,
 ::-webkit-scrollbar-corner {
-  background: var(--floatHoverColor);
+  background: transparent;
 }
 
 ::-webkit-scrollbar:vertical {
-  width: 12px;
+  width: 8px;
+}
+
+::-webkit-scrollbar:horizontal {
+  height: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--editorColor30);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {

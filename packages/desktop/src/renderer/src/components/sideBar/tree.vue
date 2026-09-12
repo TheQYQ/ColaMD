@@ -1,9 +1,5 @@
 <template>
   <div class="tree-view">
-    <div class="title">
-      <!-- Placeholder -->
-    </div>
-
     <!-- Opened tabs -->
     <div
       v-if="openedFilesInSidebar"
@@ -304,14 +300,6 @@ onMounted(() => {
   flex-direction: column;
   height: 100%;
 }
-.tree-view > .title {
-  height: 35px;
-  line-height: 35px;
-  padding: 0 15px;
-  display: flex;
-  flex-shrink: 0;
-  flex-direction: row-reverse;
-}
 
 .icon-arrow {
   margin-right: 5px;
@@ -423,9 +411,8 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
   align-items: center;
-  padding-bottom: 100px;
+  padding-top: 8px;
 }
 
 .open-project .centered-group {
@@ -435,7 +422,7 @@ onMounted(() => {
 }
 
 .open-project .el-button {
-  margin-top: 20px;
+  margin-top: 8px;
 }
 .open-project .el-button.is-text.is-has-bg,
 .empty-project .el-button.is-text.is-has-bg {

@@ -120,6 +120,24 @@ vue-tsc and publishConfig for npm.
 | IMG.2 | 桌面：无引用才删 + 路径域 + 偏好      | ✅ PR #31（5s 防抖给撤销留窗口；路径域=文档目录或全局图片目录子树；`deleteUnreferencedImages` 默认关；设置页开关） |
 | IMG.3 | 单测 / e2e                            | ✅ PR #31（引擎 emit 契约测试 + 桌面纯逻辑测试：路径域/引用判定/undo 语义） |
 
+### 第四梯队：界面 Typora 化（UI）
+
+> 2026-09-12 立项。目标：MarkText 工具型界面 → Typora 式极简界面（顶部标题栏+菜单栏、无多余 chrome、底部状态栏、设置全收进菜单）。macOS 保持原生菜单不变；不删标签页系统（默认隐藏）；侧边栏彻底重构（去 45px 图标条+设置齿轮，改为文字 tab 单面板）。
+
+| 编号  | 任务                                                                 | 状态 |
+| ----- | -------------------------------------------------------------------- | ---- |
+| UI.1  | 顶部结构重组：标题栏精简（文件名居左）+ 自绘菜单栏行（7 个顶级项）   | ✅ titleBar 重构（去面包屑/字数胶囊/汉堡按钮）；`components/menuBar`；`--menuBarHeight` 变量联动 sourceCode 高度 |
+| UI.2  | 自绘下拉菜单：`renderer/src/menu/schema` + MenuList 递归组件          | ✅ 7 菜单全量项；勾选/禁用/子菜单/快捷键右对齐（commandCenter 快捷键 + FALLBACK_HINTS）；动作走命令中心/bus/IPC；新增 `mt::menu::get-recent-documents`/`open-path`/`native-clipboard` 通道；渲染层补 `edit.cut/copy/paste` 命令 |
+| UI.3  | 底部状态栏：左（侧栏/源码切换图标）右（「N 词」字数，三模式点击切换） | ✅ 字数自标题栏迁移，e2e `editor-input.spec.ts` 同步状态栏选择器与「N 词」格式；`--statusBarHeight` 联动 |
+| UI.3b | 侧边栏彻底重构：去图标条+齿轮，Typora 式 tab 单面板（复用 4 面板）    | ✅ `sideBar/help.ts` 图标条目→tab 条目；点击当前 tab=关闭侧栏；layout store 移除 45px 语义；zh 包补全 `sideBar.history` 段翻译 |
+| UI.4  | 视觉走查与主题适配（亮色 + 暗色主题）                                 | ✅ 修复：scoped `title-no-drag` 不生效致菜单项被拖拽区吞点击；checkbox type 硬编码；选区状态 null 回退默认；菜单栏/状态栏暗色主题背景；主题分组文案去装饰破折号。亮色+Dracula 实机走查通过 |
+| UI.5  | 收尾：偏好设置入口/快捷键确认、单测+typecheck+e2e、本计划更新         | ✅ typecheck + 853 单测全绿；`文件 > 偏好设置 Ctrl+,` 可用 |
+
+**关键实现注记**（后续维护必读）：
+- 菜单状态镜像：`store/editor.ts` 的 `SELECTION_CHANGE`/`SELECTION_FORMATS` 在推送原生菜单状态的同时落本地（`selectionMenuState`/`selectionFormatState`），HTML 菜单按 `main/menu/actions/paragraph.ts` 的 `updateSelectionMenus` 同规则解析勾选/禁用；两套菜单（mac 原生 / Win-Linux 自绘）动作语义保持一致。
+- `-webkit-app-region` 陷阱：scoped class（如 titleBar 的 `title-no-drag`）对其他组件无效，跨组件的 no-drag 必须在组件内显式声明，否则元素仍处于 drag 区、点击被系统吞掉。
+- 编辑菜单剪贴板项走主进程 `webContents.cut/copy/paste`（与原生菜单一致），不走 `document.execCommand`。
+
 ---
 
 ## 4. 第一批可开工：M1.0 + M1.1

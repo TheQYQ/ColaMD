@@ -17,22 +17,11 @@
     >
       <div
         class="title"
+        :class="{ 'align-left': showCustomTitleBar }"
         @dblclick.stop="toggleMaxmizeOnMacOS"
       >
         <span v-if="!filename">ColaMD</span>
         <span v-else>
-          <span
-            v-for="(path, index) of paths"
-            :key="index"
-          >
-            {{ path }}
-            <el-icon
-              class="path-arrow"
-              :size="12"
-            >
-              <ArrowRight />
-            </el-icon>
-          </span>
           <span
             class="filename"
             :class="{ isOsx: platform === 'darwin' }"
@@ -40,61 +29,23 @@
           >
             {{ filename }}
           </span>
-          <span
-            class="save-dot"
-            :class="{ show: !isSaved }"
-          />
         </span>
       </div>
-      <div :class="showCustomTitleBar ? 'left-toolbar title-no-drag' : 'right-toolbar'">
-        <div
-          v-if="showCustomTitleBar"
-          class="frameless-titlebar-menu title-no-drag"
-          @click.stop="handleMenuClick"
-        >
-          <span class="text-center-vertical">&#9776;</span>
-        </div>
-        <el-tooltip
-          v-if="wordCount"
-          class="item"
-          :content="`${wordCount[show]} ${HASH[show].full + (wordCount[show] > 1 ? 's' : '')}`"
-          placement="bottom-end"
-        >
-          <template #content>
-            <div class="title-item">
-              <span class="front">{{ t('menu.counter.words') }}:</span><span class="text">{{ wordCount['word'] }}</span>
-            </div>
-            <div class="title-item">
-              <span class="front">{{ t('menu.counter.characters') }}:</span><span class="text">{{ wordCount['character'] }}</span>
-            </div>
-            <div class="title-item">
-              <span class="front">{{ t('menu.counter.paragraphs') }}:</span><span class="text">{{ wordCount['paragraph'] }}</span>
-            </div>
-          </template>
-          <div
-            v-if="wordCount"
-            class="word-count"
-            @click.stop="handleWordClick"
-          >
-            <span class="text-center-vertical">{{ `${HASH[show].short} ${wordCount[show]}` }}</span>
-          </div>
-        </el-tooltip>
-      </div>
       <div
-        v-if="titleBarStyle === 'custom' && !isFullScreen && !isOsx"
+        v-if="showCustomTitleBar && !isFullScreen"
         class="right-toolbar"
-        :class="[{ 'title-no-drag': titleBarStyle === 'custom' }]"
+        :class="{ 'title-no-drag': !isOsx }"
       >
         <div
-          class="frameless-titlebar-button frameless-titlebar-close"
-          @click.stop="handleCloseClick"
+          class="frameless-titlebar-button frameless-titlebar-minimize"
+          @click.stop="handleMinimizeClick"
         >
           <div>
             <svg
               width="10"
               height="10"
             >
-              <path :d="windowIconClose" />
+              <path :d="windowIconMinimize" />
             </svg>
           </div>
         </div>
@@ -119,15 +70,15 @@
           </div>
         </div>
         <div
-          class="frameless-titlebar-button frameless-titlebar-minimize"
-          @click.stop="handleMinimizeClick"
+          class="frameless-titlebar-button frameless-titlebar-close"
+          @click.stop="handleCloseClick"
         >
           <div>
             <svg
               width="10"
               height="10"
             >
-              <path :d="windowIconMinimize" />
+              <path :d="windowIconClose" />
             </svg>
           </div>
         </div>
@@ -142,12 +93,9 @@ import { useLayoutStore } from '@/store/layout.js'
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { minimizePath, restorePath, maximizePath, closePath } from '../../assets/window-controls.js'
-import { PATH_SEPARATOR } from '../../config'
 import { isOsx as isOsxPlatform } from '@/util'
 import { shouldShowInAppTitleBar } from './visibility'
 import { useEditorStore } from '@/store/editor'
-import { useI18n } from 'vue-i18n'
-import { ArrowRight } from '@element-plus/icons-vue'
 import type { FileWordCount } from '@shared/types/files'
 
 interface ProjectInfo {
@@ -158,37 +106,16 @@ interface ProjectInfo {
 const props = defineProps<{
   project?: ProjectInfo | null
   filename?: string
-  pathname?: string
   active?: boolean
   wordCount?: FileWordCount | null
   platform?: string
-  isSaved?: boolean
 }>()
 
 const preferencesStore = usePreferencesStore()
 const layoutStore = useLayoutStore()
 const editorStore = useEditorStore()
-const { t } = useI18n()
 
 const isOsx = isOsxPlatform
-const HASH = {
-  word: {
-    short: 'W',
-    full: 'word'
-  },
-  character: {
-    short: 'C',
-    full: 'character'
-  },
-  paragraph: {
-    short: 'P',
-    full: 'paragraph'
-  },
-  all: {
-    short: 'A',
-    full: '(with space)character'
-  }
-}
 const windowIconMinimize = minimizePath
 const windowIconRestore = restorePath
 const windowIconMaximize = maximizePath
@@ -196,7 +123,6 @@ const windowIconClose = closePath
 
 const isFullScreen = ref(false)
 const isMaximized = ref(false)
-const show = ref<'word' | 'paragraph' | 'character' | 'all'>('word')
 
 onMounted(async () => {
   try {
@@ -211,12 +137,6 @@ onMounted(async () => {
 
 const { titleBarStyle } = storeToRefs(preferencesStore)
 const { showTabBar } = storeToRefs(layoutStore)
-
-const paths = computed(() => {
-  if (!props.pathname) return []
-  const pathnameToken = props.pathname.split(PATH_SEPARATOR).filter((i) => i)
-  return pathnameToken.slice(0, pathnameToken.length - 1).slice(-3)
-})
 
 const showCustomTitleBar = computed(() => {
   return titleBarStyle.value === 'custom' && !isOsx
@@ -243,15 +163,6 @@ watch(
   }
 )
 
-const handleWordClick = () => {
-  const ITEMS = ['word', 'paragraph', 'character', 'all'] as const
-  const len = ITEMS.length
-  let index = ITEMS.indexOf(show.value)
-  index += 1
-  if (index >= len) index = 0
-  show.value = ITEMS[index]!
-}
-
 const handleCloseClick = () => {
   window.electron.windowControl.close()
 }
@@ -273,10 +184,6 @@ const toggleMaxmizeOnMacOS = () => {
 
 const handleMinimizeClick = () => {
   window.electron.windowControl.minimize()
-}
-
-const handleMenuClick = () => {
-  window.electron.windowControl.popupApplicationMenu({ x: 23, y: 20 })
 }
 
 const rename = () => {
@@ -369,6 +276,11 @@ img {
     -webkit-app-region: no-drag;
   }
 }
+/* Frameless (Windows/Linux): filename sits at the left edge, Typora style. */
+.title.align-left {
+  padding: 0 12px;
+  text-align: left;
+}
 div.title > span {
   /* Workaround for GH#339 */
   display: block;
@@ -377,69 +289,28 @@ div.title > span {
   text-overflow: clip;
   white-space: nowrap;
 }
+.title.align-left > span {
+  direction: ltr;
+}
 
 .title-bar .title .filename.isOsx:hover {
   color: var(--themeColor);
 }
 
-.active .save-dot {
-  margin-right: 0.25rem;
-  width: 8px;
-  height: 8px;
-  display: inline-block;
-  border-radius: 50%;
-  background: var(--highlightThemeColor);
-  opacity: 0.7;
-  visibility: hidden;
-}
-.active .save-dot.show {
-  visibility: visible;
-}
 .title:hover {
   color: var(sideBarTitleColor);
 }
 
-.left-toolbar {
-  padding: 0 10px;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 118px; /* + 2*10px padding*/
-  display: flex;
-  flex-direction: row;
-}
 .right-toolbar {
   height: 100%;
   position: absolute;
   top: 0;
   right: 0;
-  width: 138px;
   display: flex;
   align-items: center;
-  flex-direction: row-reverse;
+  flex-direction: row;
   & .item {
     margin-right: 10px;
-  }
-}
-
-.word-count {
-  -webkit-app-region: no-drag;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--editorColor30);
-  text-align: center;
-  line-height: 24px;
-  padding: 0 5px;
-  box-sizing: border-box;
-  transition: all 0.25s ease-in-out;
-  & > .text-center-vertical {
-    padding: 2px 5px;
-    border-radius: 3px;
-  }
-  &:hover > span {
-    background: var(--sideBarBgColor);
-    color: var(--sideBarTitleColor);
   }
 }
 
@@ -460,9 +331,6 @@ div.title > span {
   left: 50%;
   transform: translateX(-50%) translateY(-50%);
 }
-.frameless-titlebar-menu {
-  color: var(--sideBarColor);
-}
 .frameless-titlebar-close:hover {
   background-color: rgb(228, 79, 79);
 }
@@ -475,24 +343,5 @@ div.title > span {
 }
 .frameless-titlebar-close:hover svg {
   fill: #ffffff;
-}
-
-.text-center-vertical {
-  display: inline-block;
-  vertical-align: middle;
-  line-height: normal;
-}
-</style>
-
-<style>
-.title-item {
-  height: 28px;
-  line-height: 28px;
-  & .front {
-    opacity: 0.7;
-  }
-  & .text {
-    margin-left: 10px;
-  }
 }
 </style>

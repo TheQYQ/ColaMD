@@ -42,11 +42,6 @@
     "type": "boolean",
     "default": false
   },
-  "autoShowToc": {
-    "description": "General--Automatically show the table of contents when opening a markdown file.",
-    "type": "boolean",
-    "default": true
-  },
   "fileSortBy": {
     "description": "General--Sort files in opened folder by created time, modified time and title.",
     "enum": ["modified", "created", "title"],

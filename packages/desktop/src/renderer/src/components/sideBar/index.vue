@@ -3,49 +3,37 @@
     v-show="showSideBar"
     ref="sideBar"
     class="side-bar"
-    :style="[!rightColumn ? { 'min-width': '45px' } : {}, { width: `${finalSideBarWidth}px` }]"
+    :style="{ width: `${finalSideBarWidth}px` }"
   >
-    <div class="left-column">
-      <ul>
-        <li
-          v-for="c of allSideBarIcons"
+    <div class="side-bar-inner">
+      <div class="side-bar-tabs">
+        <button
+          v-for="c of sideBarTabList"
           :key="c.id"
-          :class="{ active: c.id === rightColumn }"
-          @click="handleLeftIconClick(c.id)"
+          class="side-bar-tab"
+          :class="{ active: c.id === activeColumn }"
+          @click="handleTabClick(c.id)"
         >
-          <component :is="c.icon" />
-        </li>
-      </ul>
-      <ul class="bottom">
-        <li
-          v-for="(c, index) of sideBarBottomIcons"
-          :key="index"
-          @click="handleLeftBottomClick(c.id)"
-        >
-          <component :is="c.icon" />
-        </li>
-      </ul>
+          {{ c.name() }}
+        </button>
+      </div>
+      <div class="side-panel">
+        <tree
+          v-if="activeColumn === 'files'"
+          :project-tree="projectTree"
+          :opened-files="openedFiles"
+          :tabs="tabs"
+        />
+        <side-bar-search v-else-if="activeColumn === 'search'" />
+        <toc v-else-if="activeColumn === 'toc'" />
+        <history v-else-if="activeColumn === 'history'" />
+        <component
+          :is="getSidebarPanel(activeColumn)?.component"
+          v-else-if="getSidebarPanel(activeColumn)"
+        />
+      </div>
     </div>
     <div
-      v-show="rightColumn"
-      class="right-column"
-    >
-      <tree
-        v-if="rightColumn === 'files'"
-        :project-tree="projectTree"
-        :opened-files="openedFiles"
-        :tabs="tabs"
-      />
-      <side-bar-search v-else-if="rightColumn === 'search'" />
-      <toc v-else-if="rightColumn === 'toc'" />
-      <history v-else-if="rightColumn === 'history'" />
-      <component
-        :is="getSidebarPanel(rightColumn)?.component"
-        v-else-if="getSidebarPanel(rightColumn)"
-      />
-    </div>
-    <div
-      v-show="rightColumn"
       ref="dragBar"
       class="drag-bar"
     />
@@ -58,7 +46,7 @@ import { useLayoutStore } from '@/store/layout'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
 
-import { getAllSideBarIcons, sideBarBottomIcons, getSidebarPanel } from './help'
+import { getAllSideBarTabs, getSidebarPanel } from './help'
 import Tree from './tree.vue'
 import SideBarSearch from './search.vue'
 import Toc from './toc.vue'
@@ -66,6 +54,12 @@ import History from './history.vue'
 import { storeToRefs } from 'pinia'
 import type { TabDescriptor } from './types'
 
+/**
+ * Typora-style sidebar: a single clean panel with a text tab row on top.
+ * There is no icon strip and no settings gear (preferences live in the
+ * 文件 > 偏好设置 menu). Clicking the active tab closes the sidebar; clicking
+ * another tab switches panels.
+ */
 const layoutStore = useLayoutStore()
 const projectStore = useProjectStore()
 const editorStore = useEditorStore()
@@ -81,11 +75,15 @@ const { rightColumn, showSideBar, sideBarWidth } = storeToRefs(layoutStore)
 const { projectTree } = storeToRefs(projectStore)
 const { tabs } = storeToRefs(editorStore)
 
-const allSideBarIcons = getAllSideBarIcons()
+const sideBarTabList = getAllSideBarTabs()
+
+// External IPC can set `rightColumn` to '' (the old "collapsed to icon strip"
+// state); with the strip gone, fall back to the files panel instead of
+// rendering an empty sidebar.
+const activeColumn = computed<string>(() => rightColumn.value || 'files')
 
 const finalSideBarWidth = computed<number>(() => {
   if (!showSideBar.value) return 0
-  if (rightColumn.value === '') return 45
   return sideBarViewWidth.value < 220 ? 220 : sideBarViewWidth.value
 })
 
@@ -122,27 +120,14 @@ onMounted(() => {
   })
 })
 
-const handleLeftIconClick = (name: string): void => {
-  if (rightColumn.value === name) {
-    // Capture the expanded width BEFORE collapsing: once rightColumn is '',
-    // finalSideBarWidth evaluates to the 45px icon strip and would overwrite
-    // the user's real width with the clamped 220px minimum (#2421).
-    const widthToPersist = finalSideBarWidth.value
-    layoutStore.SET_LAYOUT({ rightColumn: '' })
-    layoutStore.CHANGE_SIDE_BAR_WIDTH(widthToPersist)
+const handleTabClick = (name: string): void => {
+  if (activeColumn.value === name) {
+    // Clicking the active tab closes the sidebar (Typora behavior). The user's
+    // width lives in the store already, so no width bookkeeping is needed.
+    layoutStore.SET_LAYOUT({ showSideBar: false })
   } else {
-    const needDispatch = rightColumn.value === ''
-    layoutStore.SET_LAYOUT({ rightColumn: name })
+    layoutStore.SET_LAYOUT({ rightColumn: name, showSideBar: true })
     sideBarViewWidth.value = +sideBarWidth.value
-    if (needDispatch) {
-      layoutStore.CHANGE_SIDE_BAR_WIDTH(finalSideBarWidth.value)
-    }
-  }
-}
-
-const handleLeftBottomClick = (name: string): void => {
-  if (name === 'settings') {
-    projectStore.OPEN_SETTING_WINDOW()
   }
 }
 </script>
@@ -153,8 +138,8 @@ const handleLeftBottomClick = (name: string): void => {
   flex-shrink: 0;
   flex-grow: 0;
   width: 280px;
-  height: 100vh;
-  min-width: 220px;
+  height: 100%;
+  box-sizing: border-box;
   position: relative;
   color: var(--sideBarColor);
   user-select: none;
@@ -162,71 +147,59 @@ const handleLeftBottomClick = (name: string): void => {
   border-right: 1px solid var(--itemBgColor);
 }
 
-.side-bar .left-column svg {
-  color: var(--iconColor);
-}
-
-.left-column {
-  height: 100%;
-  width: 45px;
+.side-bar-inner {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding-top: 28px;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.side-bar-tabs {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  padding: 2px 14px 0;
   box-sizing: border-box;
 }
 
-.left-column > ul {
-  opacity: 1;
-}
-
-.left-column ul {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-}
-
-.left-column ul > li {
-  width: 45px;
-  height: 45px;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  cursor: pointer;
-}
-
-.left-column ul > li > svg {
-  width: 18px;
-  height: 18px;
-  color: var(--sideBarIconColor);
-  opacity: 1;
-  transition: transform 0.25s ease-in-out;
-}
-
-.left-column ul > li.active > svg {
-  color: var(--themeColor);
-}
-
-.side-bar:hover .left-column ul li svg {
-  opacity: 1;
-}
-
-.right-column {
+.side-bar-tab {
   flex: 1;
-  width: calc(100% - 50px);
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--sideBarColor);
+  font-size: 13px;
+  line-height: 1;
+  text-align: center;
+  padding: 10px 0 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+}
+
+.side-bar-tab:hover {
+  color: var(--sideBarTitleColor);
+}
+
+.side-bar-tab.active {
+  color: var(--sideBarTitleColor);
+  font-weight: 600;
+  border-bottom-color: var(--sideBarTitleColor);
+}
+
+.side-panel {
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
 .drag-bar {
   position: absolute;
   top: 0;
-  right: 0;
   bottom: 0;
-  height: 100%;
+  right: 0;
   width: 3px;
   cursor: col-resize;
 }
