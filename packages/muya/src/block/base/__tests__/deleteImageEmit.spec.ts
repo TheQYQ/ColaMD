@@ -5,8 +5,8 @@
 // its own reference/domain/preference checks). The hand-built token is
 // sufficient here: deleteImage consumes only `token.range` and `token.src`.
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type Format from '../format';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Muya } from '../../../muya';
 
 const bootedHosts: HTMLElement[] = [];
