@@ -26,7 +26,8 @@
       "closeTab": "关闭标签页",
       "closeWindow": "关闭窗口",
       "quit": "退出",
-      "preferences": "偏好设置"
+      "preferences": "偏好设置",
+      "exportDocx": "导出 Word 文档"
     },
     "edit": {
       "edit": "编辑",

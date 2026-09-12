@@ -108,9 +108,9 @@ vue-tsc and publishConfig for npm.
 
 | 编号 | 任务                           | 状态 |
 | ---- | ------------------------------ | ---- |
-| M4.1 | 菜单 / IPC / `ExportType` 接线 | 📋   |
-| M4.2 | HTML → DOCX 转换实现           | 📋   |
-| M4.3 | 样式、locale、测试             | 📋   |
+| M4.1 | 菜单 / IPC / `ExportType` 接线 | ✅ PR #29（菜单 Export > Word、'docx' 进 ExportType、IPC 携带二进制 bytes、主进程保存对话框 + 写盘） |
+| M4.2 | HTML → DOCX 转换实现           | ✅ PR #29（零新依赖：渲染进程 DOMParser 遍历 styled HTML → WordprocessingML，自写 STORE-only ZIP 封包；支持标题导航/列表/表格/引用/代码块/超链接/内联样式/data-URI 图片嵌入） |
+| M4.3 | 样式、locale、测试             | ✅ PR #29（11 语言菜单项 + Heading1-6 样式与 outlineLvl + 11 个单测：ZIP 结构/OOXML part/映射/媒体嵌入） |
 
 ### 第三梯队：图片引用清理
 

@@ -50,6 +50,13 @@ const getExportExtensionFilter = (type: string): Electron.FileFilter[] | undefin
         extensions: ['pdf']
       }
     ]
+  } else if (type === 'docx') {
+    return [
+      {
+        name: 'Word Document',
+        extensions: ['docx']
+      }
+    ]
   } else if (type === 'styledHtml') {
     return [
       {
@@ -83,6 +90,8 @@ const getPdfPageOptions = (options?: PageOptions): Record<string, unknown> => {
 interface ExportPayload {
   type: string
   content?: string
+  /** Binary export payloads (e.g. .docx bytes) — written as-is. */
+  bytes?: Uint8Array
   pathname?: string
   title?: string
   pageOptions?: PageOptions
@@ -124,6 +133,13 @@ const handleResponseForExport = async(e: IpcMainEvent, payload: ExportPayload): 
         const data = await win.webContents.printToPDF(options)
         removePrintServiceFromWindow(win)
         await writeFile(filePath, data, extension!, 'binary')
+      } else if (type === 'docx') {
+        // The .docx package is assembled renderer-side (DOMParser is not
+        // available in the main process); main only persists the bytes.
+        if (!payload.bytes) {
+          throw new Error('No DOCX payload found.')
+        }
+        await writeFile(filePath, Buffer.from(payload.bytes), extension!, 'binary')
       } else {
         if (!content) {
           throw new Error('No HTML content found.')
