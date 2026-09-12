@@ -408,7 +408,9 @@ const updateTranslations = () => {
 const showDialog = (type: unknown) => {
   const exportTypeValue = String(type ?? '')
   exportType.value = exportTypeValue
-  isPrintable.value = exportTypeValue !== 'styledHtml'
+  // Only PDF (and the print handoff) are paged exports; HTML/DOCX show the
+  // plain info tab (title) instead of page/header/footer settings.
+  isPrintable.value = exportTypeValue === 'pdf' || exportTypeValue === 'print'
   if (!isPrintable.value && (activeName.value === 'header' || activeName.value === 'page')) {
     activeName.value = 'info'
   }

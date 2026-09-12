@@ -26,7 +26,8 @@
       "closeTab": "Tabblad sluiten",
       "closeWindow": "Venster sluiten",
       "quit": "Afsluiten",
-      "preferences": "Voorkeuren"
+      "preferences": "Voorkeuren",
+      "exportDocx": "Exporteren als Word"
     },
     "edit": {
       "edit": "Bewerken",
