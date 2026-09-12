@@ -249,32 +249,35 @@ const showUnsavedFilesMessage = async(
   win: BrowserWindow,
   files: UnsavedFile[]
 ): Promise<{ needSave: boolean } | null> => {
-  const { response } = await dialog.showMessageBox(win, {
-    type: 'warning',
-    buttons: [t('dialog.save'), t('dialog.dontSave'), t('dialog.cancel')],
-    defaultId: 0,
-    message: t('dialog.saveChanges', {
-      count: files.length,
-      type: files.length === 1 ? t('dialog.file') : t('dialog.files'),
-      files: files.map((f) => f.filename).join('\n')
-    }),
-    detail: t('dialog.changesWillBeLost'),
-    cancelId: 2,
-    noLink: true
-  })
+  // Typora-style in-window dialog drawn by the renderer. The choice comes
+  // back over IPC: { needSave: true } (保存), { needSave: false } (放弃更改)
+  // or null (取消 / window destroyed while the dialog is open).
+  return new Promise((resolve) => {
+    let settled = false
 
-  switch (response) {
-    case 0:
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ needSave: true })
-        })
-      })
-    case 1:
-      return { needSave: false }
-    default:
-      return null
-  }
+    const cleanup = (): void => {
+      ipcMain.removeListener('mt::unsaved-dialog-response', onResponse)
+      win.removeListener('closed', onClosed)
+    }
+    const finish = (result: { needSave: boolean } | null): void => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve(result)
+    }
+    const onResponse = (
+      e: Electron.IpcMainEvent,
+      result: { needSave: boolean } | null
+    ): void => {
+      if (e.sender !== win.webContents) return
+      finish(result)
+    }
+    const onClosed = (): void => finish(null)
+
+    ipcMain.on('mt::unsaved-dialog-response', onResponse)
+    win.once('closed', onClosed)
+    win.webContents.send('mt::show-unsaved-dialog', files.length)
+  })
 }
 
 const noticePandocNotFound = (win: BrowserWindow): void => {
@@ -472,7 +475,13 @@ ipcMain.on('mt::close-window-confirm', async(e, unsavedFiles: UnsavedFile[]) => 
           })
       })
   } else {
-    ipcMain.emit('window-close-by-id', win.id)
+    // Discard: drop the unsaved tabs in the renderer and let it flush the
+    // session buffer (without them) before closing, so discarded content is
+    // not resurrected by session restore.
+    win.webContents.send(
+      'mt::discard-unsaved-tabs-and-close',
+      unsavedFiles.map((file) => file.id)
+    )
   }
 })
 

@@ -81,11 +81,6 @@
           :bool="openedFilesInSidebar"
           :on-change="(value) => onSelectChange('openedFilesInSidebar', value)"
         />
-        <bool
-          :description="t('preferences.general.sidebar.autoShowToc')"
-          :bool="autoShowToc"
-          :on-change="(value) => onSelectChange('autoShowToc', value)"
-        />
 
         <text-box
           :description="t('preferences.general.sidebar.excludePatterns')"
@@ -222,7 +217,6 @@ const {
   zoom,
   hideScrollbar,
   wordWrapInToc,
-  autoShowToc,
   fileSortBy,
   fileSortOrder,
   language,

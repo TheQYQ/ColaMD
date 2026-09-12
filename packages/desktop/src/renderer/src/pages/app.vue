@@ -1,39 +1,47 @@
 <template>
   <div class="editor-container">
-    <side-bar v-if="init" />
+    <!-- Typora-style chrome: the title bar and menu bar span the full window
+         width; the sidebar starts BELOW the menu bar, and the status bar
+         spans the full width at the bottom. -->
+    <title-bar
+      :project="projectTree"
+      :filename="filename"
+      :active="windowActive"
+      :platform="platform"
+    />
+    <menu-bar />
 
-    <div class="editor-middle">
-      <title-bar
-        :project="projectTree"
-        :pathname="pathname"
-        :filename="filename"
-        :active="windowActive"
-        :word-count="wordCount"
-        :platform="platform"
-        :is-saved="isSaved"
-      />
-
-      <div
-        v-if="!init"
-        class="editor-placeholder"
-      />
-      <recent v-if="!hasCurrentFile && init" />
-      <editor-with-tabs
-        v-if="hasCurrentFile && init"
-        :markdown="markdown"
-        :cursor="cursor"
-        :muya-index-cursor="muyaIndexCursor"
-        :source-code="sourceCode"
-        :show-tab-bar="showTabBar"
-        :text-direction="textDirection"
-        :platform="platform"
-      />
-      <command-palette />
-      <about-dialog />
-      <export-setting-dialog />
-      <rename />
-      <import-modal />
+    <div
+      v-if="!init"
+      class="editor-placeholder"
+    />
+    <div
+      v-else
+      class="editor-body"
+    >
+      <side-bar />
+      <div class="editor-main">
+        <recent v-if="!hasCurrentFile" />
+        <editor-with-tabs
+          v-if="hasCurrentFile"
+          :markdown="markdown"
+          :cursor="cursor"
+          :muya-index-cursor="muyaIndexCursor"
+          :source-code="sourceCode"
+          :show-tab-bar="showTabBar"
+          :text-direction="textDirection"
+          :platform="platform"
+        />
+      </div>
     </div>
+
+    <status-bar />
+    <unsaved-dialog />
+    <command-palette />
+    <about-dialog />
+    <export-setting-dialog />
+    <rename />
+    <import-modal />
   </div>
 </template>
 
@@ -45,6 +53,9 @@ import { addStyles, addThemeStyle, addCustomStyle, type AddStylesOptions } from 
 import Recent from '@/components/recent/index.vue'
 import EditorWithTabs from '@/components/editorWithTabs/index.vue'
 import TitleBar from '@/components/titleBar/index.vue'
+import MenuBar from '@/components/menuBar/index.vue'
+import StatusBar from '@/components/statusBar/index.vue'
+import UnsavedDialog from '@/components/unsavedDialog/index.vue'
 import SideBar from '@/components/sideBar/index.vue'
 import AboutDialog from '@/components/about/index.vue'
 import CommandPalette from '@/components/commandPalette/index.vue'
@@ -80,16 +91,13 @@ const { sourceCode, theme, customCss, textDirection, zoom } = storeToRefs(prefer
 const { projectTree } = storeToRefs(projectStore)
 const { currentFile } = storeToRefs(editorStore)
 
-const pathname = computed(() => currentFile.value?.pathname)
 const filename = computed(() => currentFile.value?.filename)
-const isSaved = computed(() => currentFile.value?.isSaved)
 // `markdown` is read by `<editor-with-tabs>` whose prop is `required: true`.
 // In template space we render that subtree only when `hasCurrentFile` is set,
 // but vue-tsc can't see through the v-if guard — coalesce to '' so the prop
 // type is `string`. The `<editor-with-tabs>` mount is still gated.
 const markdown = computed<string>(() => currentFile.value?.markdown ?? '')
 const cursor = computed(() => currentFile.value?.cursor)
-const wordCount = computed(() => currentFile.value?.wordCount)
 // `muyaIndexCursor` is loosely typed as `unknown` on the editor store; the
 // downstream prop expects `Object | undefined`. Cast at the boundary.
 const muyaIndexCursor = computed<Record<string, unknown> | undefined>(
@@ -182,15 +190,9 @@ onMounted(async () => {
   editorStore.LISTEN_FOR_BOOTSTRAP_WINDOW()
   editorStore.LISTEN_FOR_VERSION_RESTORE()
 
-  // Auto-show the sidebar TOC for each newly opened document. Only fresh
-  // opens emit 'file-loaded' (tab switches emit 'file-changed'), and the
-  // layout action filters untitled blanks and honors the `autoShowToc`
-  // preference.
-  bus.on('file-loaded', (payload) => {
-    const { id } = (payload ?? {}) as { id?: string }
-    const tab = editorStore.tabs.find((t) => t.id === id)
-    layoutStore.SHOW_TOC_FOR_OPENED_FILE(tab?.pathname)
-  })
+  // Typora-style chrome: the sidebar never auto-opens (no auto-TOC on file
+  // open). It is shown only via the view menu, shortcuts, or the status-bar
+  // toggle.
 
   editorStore.LISTEN_FOR_SAVE_CLOSE()
   editorStore.LISTEN_FOR_RENAME()
@@ -234,7 +236,7 @@ onMounted(async () => {
 .editor-placeholder,
 .editor-container {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   position: absolute;
   width: 100vw;
   height: 100vh;
@@ -251,15 +253,19 @@ onMounted(async () => {
 }
 .editor-placeholder {
   background: var(--editorBgColor);
+  flex: 1;
 }
-.editor-middle {
+.editor-body {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+}
+.editor-main {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 100vh;
+  min-width: 0;
   position: relative;
-  & > .editor {
-    flex: 1;
-  }
 }
 </style>
