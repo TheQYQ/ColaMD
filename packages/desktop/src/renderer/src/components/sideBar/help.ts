@@ -1,80 +1,60 @@
-import {
-  Folder as FilesIcon,
-  Search as SearchIcon,
-  Memo as TocIcon,
-  Clock as HistoryIcon,
-  Setting as SettingIcon
-} from '@element-plus/icons-vue'
 import { t } from '@/i18n'
 import { getRegisteredSidebarPanels } from '../../services/pluginRegistry'
 import type { SidebarPanelRegistration } from '../../services/pluginRegistry'
 
-export interface SideBarIconEntry {
+export interface SideBarTabEntry {
   id: string
   name: () => string
-  icon: unknown
 }
 
-export const sideBarIcons: SideBarIconEntry[] = [
+/**
+ * Built-in sidebar tabs, in Typora order (文件 目录 搜索 历史记录): the two
+ * navigation tabs (files + outline) come first, then the tools. Rendered as a
+ * compact text tab row at the top of the panel (no icon strip, no settings
+ * gear — preferences live in the 文件 > 偏好设置 menu).
+ */
+export const sideBarTabs: SideBarTabEntry[] = [
   {
     id: 'files',
-    name: () => t('sideBar.icons.files'),
-    icon: FilesIcon
-  },
-  {
-    id: 'search',
-    name: () => t('sideBar.icons.search'),
-    icon: SearchIcon
+    name: () => t('sideBar.icons.files')
   },
   {
     id: 'toc',
-    name: () => t('sideBar.icons.toc'),
-    icon: TocIcon
+    name: () => t('sideBar.icons.toc')
+  },
+  {
+    id: 'search',
+    name: () => t('sideBar.icons.search')
   },
   {
     id: 'history',
-    name: () => t('sideBar.icons.history'),
-    icon: HistoryIcon
-  }
-]
-
-export const sideBarBottomIcons: SideBarIconEntry[] = [
-  {
-    id: 'settings',
-    name: () => t('sideBar.icons.settings'),
-    icon: SettingIcon
+    name: () => t('sideBar.icons.history')
   }
 ]
 
 /**
- * Build the full list of sidebar icon entries, combining built-in icons with
- * plugin-registered panels. Plugins that registered via
- * `registerSidebarPanel(...)` get an icon in the left column and their panel
- * component renders in the right column when selected.
+ * Build the full list of sidebar tabs, combining built-ins with
+ * plugin-registered panels (`registerSidebarPanel(...)`), which render as
+ * additional tabs.
  *
- * Position handling:
- *   - 'top'    → before all built-in icons
- *   - 'inline' → interleaved alphabetically with built-ins (default)
- *   - 'bottom' → after built-ins, before the settings gear
- *
- * Bottom icons (settings gear) always stay at the very bottom.
+ * Position handling: 'top' → before built-ins, 'inline' → after built-ins
+ * (default), 'bottom' → last.
  */
-export function getAllSideBarIcons(): SideBarIconEntry[] {
+export function getAllSideBarTabs(): SideBarTabEntry[] {
   const plugins = getRegisteredSidebarPanels()
 
   const top = plugins.filter((p) => p.position === 'top')
   const inline = plugins.filter((p) => !p.position || p.position === 'inline')
   const bottom = plugins.filter((p) => p.position === 'bottom')
 
-  const pluginToEntry = (p: SidebarPanelRegistration): SideBarIconEntry => ({
+  const pluginToEntry = (p: SidebarPanelRegistration): SideBarTabEntry => ({
     id: p.id,
-    name: () => p.name,
-    icon: p.icon
+    name: () => p.name
   })
 
   return [
     ...top.map(pluginToEntry),
-    ...sideBarIcons,
+    ...sideBarTabs,
     ...inline.map(pluginToEntry),
     ...bottom.map(pluginToEntry)
   ]
