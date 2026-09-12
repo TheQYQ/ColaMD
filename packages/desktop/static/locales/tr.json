@@ -652,7 +652,9 @@
         "pleaseInstall": "Lütfen yükleyin",
         "scriptPath": "Betik yolu"
       },
-      "defaultBehavior": "Görseli ColaMD'e yapıştırdıktan veya sürükledikten sonraki varsayılan davranış"
+      "defaultBehavior": "Görseli ColaMD'e yapıştırdıktan veya sürükledikten sonraki varsayılan davranış",
+      "deleteUnreferenced": "Başvurulmayan görüntü dosyalarını sil",
+      "deleteUnreferencedDescription": "Yerel bir görüntüye yapılan son başvuru kaldırıldığında dosya silinir (yalnızca belge veya görüntü klasöründeki dosyalar). Birkaç saniye içinde geri almak dosyayı korur."
     },
     "markdown": {
       "title": "Markdown",
@@ -976,7 +978,9 @@
       "fileRemovedOnDisk": "\"{name}\" diskten kaldırıldı.",
       "fileChangedOnDisk": "\"{name}\" dosyasında değişiklikler var, yeniden yüklensin mi?",
       "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}"
+      "errorWhileMoving": "There was an error while moving: {msg}",
+      "imageCleanupTitle": "Görüntü dosyası silindi",
+      "imageCleanupMessage": "Başvurulmayan dosya silindi: {name}"
     }
   },
   "spellchecker": {

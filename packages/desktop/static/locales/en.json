@@ -652,7 +652,9 @@
         "pleaseInstall": "Please install",
         "scriptPath": "Script path"
       },
-      "defaultBehavior": "The default behavior after pasting or dragging the image to ColaMD"
+      "defaultBehavior": "The default behavior after pasting or dragging the image to ColaMD",
+      "deleteUnreferenced": "Delete unreferenced image files",
+      "deleteUnreferencedDescription": "When the last reference to a local image is removed from the document, delete the underlying file (only files inside the document folder or the image folder are eligible). Undo within a few seconds keeps the file."
     },
     "markdown": {
       "title": "Markdown",
@@ -976,7 +978,9 @@
       "fileRemovedOnDisk": "\"{name}\" has been removed on disk.",
       "fileChangedOnDisk": "\"{name}\" has been changed on disk. Do you want to reload it?",
       "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}"
+      "errorWhileMoving": "There was an error while moving: {msg}",
+      "imageCleanupTitle": "Image file deleted",
+      "imageCleanupMessage": "Deleted the unreferenced file: {name}"
     }
   },
   "spellchecker": {
