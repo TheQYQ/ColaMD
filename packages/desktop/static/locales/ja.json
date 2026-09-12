@@ -26,7 +26,8 @@
       "closeTab": "タブを閉じる",
       "closeWindow": "ウィンドウを閉じる",
       "quit": "終了",
-      "preferences": "環境設定"
+      "preferences": "環境設定",
+      "exportDocx": "Word にエクスポート"
     },
     "edit": {
       "edit": "編集",

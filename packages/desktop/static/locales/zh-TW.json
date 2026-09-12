@@ -26,7 +26,8 @@
       "closeTab": "關閉標籤頁",
       "closeWindow": "關閉視窗",
       "quit": "退出",
-      "preferences": "偏好設定"
+      "preferences": "偏好設定",
+      "exportDocx": "匯出 Word 文件"
     },
     "edit": {
       "edit": "編輯",

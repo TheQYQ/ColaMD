@@ -26,7 +26,8 @@
       "closeTab": "Close Tab",
       "closeWindow": "Close Window",
       "quit": "Quit",
-      "preferences": "Preferences"
+      "preferences": "Preferences",
+      "exportDocx": "Export as Word"
     },
     "edit": {
       "edit": "Edit",
