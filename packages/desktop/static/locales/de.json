@@ -652,7 +652,9 @@
         "neverDetected": "Nie erkannt",
         "neverSuccessful": "Nie erfolgreich"
       },
-      "defaultBehavior": "Standardverhalten nach dem Einfügen oder Ziehen eines Bildes in ColaMD"
+      "defaultBehavior": "Standardverhalten nach dem Einfügen oder Ziehen eines Bildes in ColaMD",
+      "deleteUnreferenced": "Nicht referenzierte Bilddateien löschen",
+      "deleteUnreferencedDescription": "Wenn die letzte Referenz auf ein lokales Bild entfernt wird, wird die Datei gelöscht (nur Dateien im Dokument- oder Bildordner). Rückgängig innerhalb weniger Sekunden behält die Datei."
     },
     "markdown": {
       "title": "Markdown",
@@ -976,7 +978,9 @@
       "fileRemovedOnDisk": "„{name}“ wurde auf dem Datenträger gelöscht.",
       "fileChangedOnDisk": "„{name}“ wurde auf dem Datenträger geändert. Möchten Sie neu laden?",
       "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}"
+      "errorWhileMoving": "There was an error while moving: {msg}",
+      "imageCleanupTitle": "Bilddatei gelöscht",
+      "imageCleanupMessage": "Nicht referenzierte Datei gelöscht: {name}"
     }
   },
   "spellchecker": {

@@ -118,6 +118,7 @@ export interface PreferencesState {
 
   // ----- User config -----
   imageFolderPath: string
+  deleteUnreferencedImages: boolean
   webImages: unknown[]
   cloudImages: unknown[]
   currentUploader: string
@@ -235,6 +236,7 @@ export const usePreferencesStore = defineStore('preferences', {
 
     // user configration
     imageFolderPath: '',
+    deleteUnreferencedImages: false,
     webImages: [],
     cloudImages: [],
     currentUploader: 'picgo',
