@@ -26,7 +26,8 @@
       "closeTab": "Cerrar Pestaña",
       "closeWindow": "Cerrar Ventana",
       "quit": "Salir",
-      "preferences": "Preferencias"
+      "preferences": "Preferencias",
+      "exportDocx": "Exportar a Word"
     },
     "edit": {
       "edit": "Editar",

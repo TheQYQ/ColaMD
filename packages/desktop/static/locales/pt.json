@@ -26,7 +26,8 @@
       "closeTab": "Fechar Aba",
       "closeWindow": "Fechar Janela",
       "quit": "Sair",
-      "preferences": "Preferências"
+      "preferences": "Preferências",
+      "exportDocx": "Exportar para Word"
     },
     "edit": {
       "edit": "Editar",

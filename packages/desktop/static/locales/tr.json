@@ -26,7 +26,8 @@
       "closeTab": "Sekmeyi Kapat",
       "closeWindow": "Pencereyi Kapat",
       "quit": "Çıkış",
-      "preferences": "Tercihler"
+      "preferences": "Tercihler",
+      "exportDocx": "Word olarak dışa aktar"
     },
     "edit": {
       "edit": "Düzen",

@@ -183,6 +183,8 @@ export interface IpcSendChannels {
       type: ExportType
       title: string
       content: string
+      /** Binary export payloads (e.g. the assembled .docx package). */
+      bytes?: Uint8Array
       filename: string
       pathname: string
       pageOptions: PageOptions
