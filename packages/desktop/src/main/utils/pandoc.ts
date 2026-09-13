@@ -1,5 +1,8 @@
 // Copy from https://github.com/utatti/simple-pandoc/blob/master/index.js
 import { spawn } from 'child_process'
+import { mkdtemp, unlink, writeFile as fsWriteFile } from 'fs/promises'
+import os from 'os'
+import path from 'path'
 import type { Readable } from 'stream'
 import commandExists from 'command-exists'
 import { isFile2 } from 'common/filesystem'
@@ -61,3 +64,54 @@ const envPathExists = (): boolean => {
 }
 
 export default pandoc
+
+// ---------------------------------------------------------------------------
+// Markdown → file export (Typora parity: export via pandoc to EPUB / LaTeX /
+// RTF / OPML). Writes output with `-o` so binary formats (EPUB is a ZIP) never
+// travel through stdout string accumulation.
+// ---------------------------------------------------------------------------
+
+export interface IPandocExportOptions {
+  /** Document title → pandoc `--metadata title=…` (EPUB metadata). */
+  title?: string
+  /** Extra pandoc CLI arguments (e.g. `--epub-chapter-level=1`). */
+  args?: string[]
+}
+
+export async function exportViaPandoc(
+  markdown: string,
+  format: string,
+  outputPath: string,
+  options: IPandocExportOptions = {}
+): Promise<void> {
+  const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'colamd-pandoc-'))
+  const tmpMarkdown = path.join(tmpDir, 'document.md')
+  await fsWriteFile(tmpMarkdown, markdown, 'utf8')
+
+  try {
+    const command = getCommand()
+    const args = [
+      '-f', 'markdown',
+      '-t', format,
+      '-o', outputPath,
+      ...(options.title ? ['--metadata', `title:${options.title}`] : []),
+      ...(options.args ?? []),
+      tmpMarkdown,
+    ]
+
+    await new Promise<void>((resolve, reject) => {
+      const proc = spawn(command, args)
+      let stderr = ''
+      proc.on('error', reject)
+      proc.stderr?.on('data', (chunk: Buffer | string) => {
+        stderr += chunk.toString()
+      })
+      proc.on('close', (code) => {
+        if (code === 0) { resolve() } else { reject(new Error(stderr.trim() || `pandoc exited with code ${code}`)) }
+      })
+    })
+  } finally {
+    await unlink(tmpMarkdown).catch(() => {})
+    await unlink(tmpDir).catch(() => {})
+  }
+}

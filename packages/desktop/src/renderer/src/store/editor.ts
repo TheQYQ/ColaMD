@@ -122,6 +122,8 @@ interface ExportPayload {
   content?: string
   /** Binary export payloads (e.g. .docx bytes) — written as-is by main. */
   bytes?: Uint8Array
+  /** Raw markdown source — used by the pandoc export formats. */
+  markdown?: string
   pageOptions?: PageOptions
 }
 
@@ -1771,7 +1773,7 @@ export const useEditorStore = defineStore('editor', {
       )
     },
 
-    EXPORT({ type, content, bytes, pageOptions }: ExportPayload): void {
+    EXPORT({ type, content, bytes, markdown, pageOptions }: ExportPayload): void {
       if (this.currentFile === null) return
 
       let title = ''
@@ -1795,6 +1797,7 @@ export const useEditorStore = defineStore('editor', {
         title,
         content: content ?? '',
         bytes,
+        markdown: markdown ?? '',
         filename,
         pathname,
         pageOptions: pageOptions ?? {}
