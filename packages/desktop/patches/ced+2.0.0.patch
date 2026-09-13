@@ -1,0 +1,23 @@
+diff --git a/node_modules/ced/index.js b/node_modules/ced/index.js
+index 0000000..0000000 100644
+--- a/node_modules/ced/index.js
++++ b/node_modules/ced/index.js
+@@ -1,6 +1,17 @@
+ 'use strict'
+ 
+-const bindings = require('bindings')('ced.node')
++const path = require('path')
++
++let bindings
++try {
++  bindings = require('bindings')('ced.node')
++} catch (_) {
++  // electron-rebuild cannot produce build/Release/ced.node without a compiler
++  // toolchain; fall back to the prebuilt binary in bin/<platform>-<abi>/.
++  bindings = require(
++    path.join(__dirname, 'bin', `${process.platform}-${process.arch}-${process.versions.modules}`, 'ced.node')
++  )
++}
+ 
+ module.exports = buf => {
+   if (!Buffer.isBuffer(buf)) {

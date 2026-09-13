@@ -31,6 +31,10 @@ files:
   - '!eslint.config.js'
   - '!jsconfig.json'
   - '!docs/*'
+  # A log file inside the app dir that grows between electron-builder's
+  # directory walk and the asar write shifts every packed file after it
+  # (asar offsets come from the walk-time stat sizes), corrupting the archive.
+  - '!*.log'
 extraResources:
   - from: build/icons
     to: icons # ends up at resources/icons/
