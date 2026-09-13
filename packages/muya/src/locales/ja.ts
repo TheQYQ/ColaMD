@@ -95,6 +95,7 @@ export const ja = {
         'Input Mathematical Formula...': '数式を入力する...',
         'Input Front Matter...': 'ヘッダーを入力する...',
         'Invalid Mathematical Formula': '数式が間違っている',
+        'Empty Table of Contents': '目次は空です',
         'Empty Mathematical Formula': '数式がありません',
     },
 };

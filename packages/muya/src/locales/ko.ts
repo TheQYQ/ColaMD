@@ -95,6 +95,7 @@ export const ko = {
         'Input Mathematical Formula...': '수식 입력...',
         'Input Front Matter...': '머리말 입력...',
         'Invalid Mathematical Formula': '잘못된 수식',
+        'Empty Table of Contents': '빈 목차',
         'Empty Mathematical Formula': '빈 수식',
     },
 };
