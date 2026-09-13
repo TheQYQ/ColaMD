@@ -25,7 +25,8 @@ import { normalizeAndResolvePath, writeFile } from '../../filesystem'
 import { writeMarkdownFile } from '../../filesystem/markdown'
 import { addAllowedRoot } from '../../security/pathScope'
 import { getPath, getRecommendTitleFromMarkdownString } from '../../utils'
-import pandoc from '../../utils/pandoc'
+import pandoc, { exportViaPandoc } from '../../utils/pandoc'
+import { exportDocumentImage } from '../../utils/imageExport'
 import { t } from '../../i18n'
 import type { UnsavedFile } from '@shared/types/files'
 
@@ -64,6 +65,48 @@ const getExportExtensionFilter = (type: string): Electron.FileFilter[] | undefin
         extensions: ['html']
       }
     ]
+  } else if (type === 'png') {
+    return [
+      {
+        name: 'Portable Network Graphics',
+        extensions: ['png']
+      }
+    ]
+  } else if (type === 'jpeg') {
+    return [
+      {
+        name: 'JPEG Image',
+        extensions: ['jpg', 'jpeg']
+      }
+    ]
+  } else if (type === 'epub') {
+    return [
+      {
+        name: 'Electronic Publication',
+        extensions: ['epub']
+      }
+    ]
+  } else if (type === 'latex') {
+    return [
+      {
+        name: 'LaTeX',
+        extensions: ['tex']
+      }
+    ]
+  } else if (type === 'rtf') {
+    return [
+      {
+        name: 'Rich Text Format',
+        extensions: ['rtf']
+      }
+    ]
+  } else if (type === 'opml') {
+    return [
+      {
+        name: 'Outline Processor Markup Language',
+        extensions: ['opml']
+      }
+    ]
   }
 
   // Allow all extensions.
@@ -92,18 +135,32 @@ interface ExportPayload {
   content?: string
   /** Binary export payloads (e.g. .docx bytes) — written as-is. */
   bytes?: Uint8Array
+  /** Raw markdown source — used by the pandoc export formats. */
+  markdown?: string
   pathname?: string
   title?: string
   pageOptions?: PageOptions
 }
 
+// Export types routed through the pandoc CLI (Typora parity: EPUB / LaTeX /
+// RTF / OPML). The names double as pandoc `-t` targets.
+const PANDOC_EXPORT_TYPES = new Set(['epub', 'latex', 'rtf', 'opml'])
+
 // Handle the export response from renderer process.
 const handleResponseForExport = async(e: IpcMainEvent, payload: ExportPayload): Promise<void> => {
-  const { type, content, pathname, title, pageOptions } = payload
+  const { type, content, markdown, pathname, title, pageOptions } = payload
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return
   }
+
+  // Pandoc exports need the CLI — bail before showing a save dialog the user
+  // would then have to cancel.
+  if (PANDOC_EXPORT_TYPES.has(type) && !pandoc.exists()) {
+    noticePandocNotFound(win)
+    return
+  }
+
   const extension = (EXTENSION_HASN as Record<string, string>)[type]
   const dirname = pathname ? path.dirname(pathname) : getPath('documents')
   let nakedFilename = pathname ? path.basename(pathname, '.md') : title
@@ -140,6 +197,21 @@ const handleResponseForExport = async(e: IpcMainEvent, payload: ExportPayload): 
           throw new Error('No DOCX payload found.')
         }
         await writeFile(filePath, Buffer.from(payload.bytes), extension!, 'binary')
+      } else if (PANDOC_EXPORT_TYPES.has(type)) {
+        // Raw markdown in, pandoc writes the converted file directly with -o
+        // (EPUB is a ZIP — stdout string capture would corrupt it).
+        if (!markdown) {
+          throw new Error('No markdown content found.')
+        }
+        await exportViaPandoc(markdown, type, filePath, { title })
+      } else if (type === 'png' || type === 'jpeg') {
+        // Render the styled export HTML offscreen and capture it as one long
+        // image (Typora "Export → Image").
+        if (!content) {
+          throw new Error('No HTML content found.')
+        }
+        const data = await exportDocumentImage(content, type)
+        await writeFile(filePath, data, extension!, 'binary')
       } else {
         if (!content) {
           throw new Error('No HTML content found.')

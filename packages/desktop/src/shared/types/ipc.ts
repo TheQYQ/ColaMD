@@ -190,6 +190,8 @@ export interface IpcSendChannels {
       content: string
       /** Binary export payloads (e.g. the assembled .docx package). */
       bytes?: Uint8Array
+      /** Raw markdown source — used by the pandoc export formats. */
+      markdown?: string
       filename: string
       pathname: string
       pageOptions: PageOptions
