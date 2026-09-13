@@ -2,6 +2,7 @@ import type { Token } from 'marked';
 import type { IFrontmatterToken, ILexOption, TLexedToken } from './types';
 import { Marked } from 'marked';
 import compatibleTaskList from './compatibleTaskList';
+import defListExtension from './extensions/defList';
 import footnoteExtension from './extensions/footnote';
 import mathExtension from './extensions/math';
 import fm from './frontMatter';
@@ -66,7 +67,7 @@ export function lexBlock(
     options: ILexOption = DEFAULT_OPTIONS,
 ): TLexedToken[] {
     options = Object.assign({}, DEFAULT_OPTIONS, options);
-    const { math, frontMatter, footnote } = options;
+    const { math, frontMatter, footnote, mathLatexDelimiters, definitionList } = options;
     const tokens: (Token | IFrontmatterToken)[] = [];
 
     // Use a per-call Marked instance so extensions don't bleed across calls.
@@ -79,9 +80,13 @@ export function lexBlock(
             mathExtension({
                 throwOnError: false,
                 useKatexRender: false,
+                latexDelimiters: mathLatexDelimiters === true,
             }),
         );
     }
+
+    if (definitionList)
+        m.use(defListExtension());
 
     if (footnote) {
         m.use(footnoteExtension());

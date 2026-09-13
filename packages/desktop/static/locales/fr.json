@@ -3,7 +3,8 @@
     "counter": {
       "words": "Mots",
       "characters": "Caractères",
-      "paragraphs": "Paragraphes"
+      "paragraphs": "Paragraphes",
+      "readingTime": "Temps de lecture"
     },
     "file": {
       "file": "Fichier",
@@ -27,7 +28,12 @@
       "closeWindow": "Fermer la fenêtre",
       "quit": "Quitter",
       "preferences": "Préférences",
-      "exportDocx": "Exporter en Word"
+      "exportDocx": "Exporter en Word",
+      "exportImage": "Image (PNG)",
+      "exportEpub": "EPUB",
+      "exportLatex": "LaTeX",
+      "exportRtf": "RTF",
+      "exportOpml": "OPML"
     },
     "edit": {
       "edit": "Édition",
@@ -667,7 +673,10 @@
           "jsonBrace": "Accolade JSON",
           "jsonSemicolon": "Point-virgule JSON",
           "title": "Type de métadonnées"
-        }
+        },
+        "mathLatexDelimiters": "Activer les délimiteurs mathématiques LaTeX",
+        "inlineComment": "Activer les commentaires en ligne",
+        "definitionList": "Activer les listes de définition"
       },
       "diagrams": {
         "title": "Diagrammes",

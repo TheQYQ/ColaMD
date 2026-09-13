@@ -12,16 +12,19 @@ export interface IMathToken {
 interface IOptions {
     throwOnError?: boolean;
     useKatexRender?: boolean;
+    latexDelimiters?: boolean;
 }
 
-const inlineStartRule = /(\s|^)\${1,2}(?!\$)/;
+const inlineStartRule = /(\s|^)(\${1,2}(?!\$)|\\\()/;
 const inlineRule
     = /^(\${1,2})(?!\$)((?:\\.|[^\\\n])*?(?:\\.|[^\\\n$]))\1(?=[\s?!.,:]|$)/;
+const inlineLatexRule = /^(\\\()((?:[^\\\n]|\\.)+?)(\\\))/;
 const blockRule = /^(\${1,2})\n((?:\\[\s\S]|[^\\])+?)\n\1[ \t]*(?:\n|$)/;
 
 const DEFAULT_OPTIONS = {
     throwOnError: false,
     useKatexRender: false,
+    latexDelimiters: false,
 };
 
 export default function (options: IOptions = {}) {
@@ -29,7 +32,7 @@ export default function (options: IOptions = {}) {
 
     return {
         extensions: [
-            inlineKatex(createRenderer(opts, false)),
+            inlineKatex(createRenderer(opts, false), opts.latexDelimiters === true),
             blockKatex(createRenderer(opts, true)),
         ],
     };
@@ -38,7 +41,7 @@ export default function (options: IOptions = {}) {
 function createRenderer(options: IOptions, newlineAfter: boolean) {
     return (token: IMathToken) => {
         const { useKatexRender, ...otherOpts } = options;
-        const { type, text, displayMode, mathStyle } = token;
+        const { type, raw, text, displayMode, mathStyle } = token;
         if (useKatexRender) {
             return (
                 katex.renderToString(text, {
@@ -48,14 +51,18 @@ function createRenderer(options: IOptions, newlineAfter: boolean) {
             );
         }
         else {
+            // LaTeX-delimited spans keep their original `\(...\)` form instead
+            // of being silently rewritten to `$...$`.
             return type === 'inlineMath'
-                ? `$${text}$`
+                ? raw.startsWith('\\(')
+                    ? raw
+                    : `$${text}$`
                 : `<pre class="multiple-math" data-math-style="${mathStyle}">${text}</pre>\n`;
         }
     };
 }
 
-function inlineKatex(renderer: (token: IMathToken) => string) {
+function inlineKatex(renderer: (token: IMathToken) => string, latexDelimiters: boolean) {
     return {
         name: 'inlineMath',
         level: 'inline' as const,
@@ -69,6 +76,13 @@ function inlineKatex(renderer: (token: IMathToken) => string) {
 
             if (inlineRule.test(possibleKatex))
                 return index;
+
+            if (
+                latexDelimiters
+                && inlineLatexRule.test(possibleKatex)
+            ) {
+                return index;
+            }
         },
         tokenizer(src: string) {
             const match = src.match(inlineRule);
@@ -79,6 +93,18 @@ function inlineKatex(renderer: (token: IMathToken) => string) {
                     text: match[2].trim(),
                     displayMode: match[1].length === 2,
                 };
+            }
+
+            if (latexDelimiters) {
+                const latexMatch = src.match(inlineLatexRule);
+                if (latexMatch) {
+                    return {
+                        type: 'inlineMath',
+                        raw: latexMatch[0],
+                        text: latexMatch[2].trim(),
+                        displayMode: false,
+                    };
+                }
             }
         },
         renderer,

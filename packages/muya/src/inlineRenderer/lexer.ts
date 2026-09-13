@@ -37,6 +37,8 @@ interface ILexState {
     top: boolean;
     superSubScript: boolean;
     footnote: boolean;
+    mathLatexDelimiters: boolean;
+    inlineComment: boolean;
 }
 
 function pushPending(state: ILexState) {
@@ -116,6 +118,15 @@ function consumeBeginRules(state: ILexState, beginRules: BeginRules) {
 }
 
 function tryBacklash(state: ILexState): boolean {
+    // A complete `\(...\)` LaTeX math span binds before the `\(` escape pair;
+    // an unclosed `\(` still falls through to the ordinary escape handling.
+    if (
+        state.mathLatexDelimiters
+        && state.inlineRules.inline_math_latex.exec(state.src)
+    ) {
+        return false;
+    }
+
     const backTo = state.inlineRules.backlash.exec(state.src);
     if (!backTo)
         return false;
@@ -192,9 +203,17 @@ function tryStrongEm(state: ILexState): boolean {
 
 // emoji | inline_code | del | inline_math
 function tryChunks(state: ILexState): boolean {
-    const chunks = ['inline_code', 'del', 'emoji', 'inline_math'] as const;
+    const chunks = [
+        'inline_code',
+        'del',
+        'emoji',
+        'inline_math',
+        'inline_math_latex',
+    ] as const;
 
     for (const rule of chunks) {
+        if (rule === 'inline_math_latex' && !state.mathLatexDelimiters)
+            continue;
         const to = state.inlineRules[rule].exec(state.src);
         if (to && isLengthEven(to[3])) {
             if (rule === 'emoji') {
@@ -219,9 +238,12 @@ function tryChunks(state: ILexState): boolean {
                 rule === 'inline_code'
                 || rule === 'emoji'
                 || rule === 'inline_math'
+                || rule === 'inline_math_latex'
             ) {
                 state.tokens.push({
-                    type: rule,
+                    // The LaTeX delimiter reuses the `inline_math` token type
+                    // (marker `\(`) so every downstream consumer keeps working.
+                    type: rule === 'inline_math_latex' ? 'inline_math' : rule,
                     raw: to[0],
                     range,
                     marker,
@@ -282,6 +304,32 @@ function trySuperSubScript(state: ILexState): boolean {
     });
     state.src = state.src.substring(superSubTo[0].length);
     state.pos = state.pos + superSubTo[0].length;
+
+    return true;
+}
+
+function tryInlineComment(state: ILexState): boolean {
+    if (!state.inlineComment)
+        return false;
+
+    const commentTo = state.inlineRules.inline_comment.exec(state.src);
+    if (!commentTo)
+        return false;
+
+    pushPending(state);
+    state.tokens.push({
+        type: 'inline_comment',
+        raw: commentTo[0],
+        marker: commentTo[1],
+        range: {
+            start: state.pos,
+            end: state.pos + commentTo[0].length,
+        },
+        parent: state.tokens,
+        content: commentTo[2],
+    });
+    state.src = state.src.substring(commentTo[0].length);
+    state.pos = state.pos + commentTo[0].length;
 
     return true;
 }
@@ -794,6 +842,7 @@ const INLINE_HANDLERS: ReadonlyArray<(state: ILexState) => boolean> = [
     tryStrongEm,
     tryChunks,
     trySuperSubScript,
+    tryInlineComment,
     tryFootnote,
     tryImage,
     tryLink,
@@ -809,7 +858,7 @@ const INLINE_HANDLERS: ReadonlyArray<(state: ILexState) => boolean> = [
 ];
 
 function tokenizerFac(src: string, beginRules: BeginRules | null, inlineRules: InlineRules, pos = 0, top: boolean, labels: Labels, options: ITokenizerFacOptions) {
-    const { superSubScript, footnote } = options;
+    const { superSubScript, footnote, mathLatexDelimiters, inlineComment } = options;
     const state: ILexState = {
         originSrc: src,
         src,
@@ -823,6 +872,8 @@ function tokenizerFac(src: string, beginRules: BeginRules | null, inlineRules: I
         top,
         superSubScript,
         footnote,
+        mathLatexDelimiters: mathLatexDelimiters === true,
+        inlineComment: inlineComment === true,
     };
 
     if (beginRules && state.pos === 0)

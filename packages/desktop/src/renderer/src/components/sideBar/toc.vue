@@ -8,6 +8,7 @@
     </div>
     <el-tree
       v-if="keyedToc.length"
+      ref="treeRef"
       :data="keyedToc"
       node-key="key"
       :default-expanded-keys="expandedKeys"
@@ -15,6 +16,7 @@
       :expand-on-click-node="false"
       :indent="10"
       :icon="ArrowRight"
+      highlight-current
       @node-click="handleClick"
       @node-expand="onExpand"
       @node-collapse="onCollapse"
@@ -23,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
 import { deriveKeyedToc, type KeyedTocNode } from '@/util/tocKeys'
@@ -89,6 +91,49 @@ const handleClick = (data: { slug?: unknown }): void => {
   if (typeof data.slug !== 'string' || data.slug.length === 0) return
   bus.emit('scroll-to-header', data.slug)
 }
+
+// Outline follow (Typora parity): the editor reports the section currently in
+// view / holding the caret via `toc-active-changed` (the entry's per-render
+// slug). Map it to the tree node key, mark it current and keep it visible.
+const treeRef = ref<{ setCurrentKey: (key?: string) => void; $el?: HTMLElement } | null>(null)
+const activeSlug = ref('')
+
+const findKeyBySlug = (nodes: KeyedTocNode[], slug: string): string | null => {
+  for (const node of nodes) {
+    if (node.slug === slug) return node.key
+    const childKey = findKeyBySlug(node.children, slug)
+    if (childKey) return childKey
+  }
+  return null
+}
+
+const handleTocActiveChanged = (slug: unknown): void => {
+  activeSlug.value = typeof slug === 'string' ? slug : ''
+}
+
+onMounted(() => {
+  bus.on('toc-active-changed', handleTocActiveChanged)
+})
+
+onBeforeUnmount(() => {
+  bus.off('toc-active-changed', handleTocActiveChanged)
+})
+
+watch([activeSlug, keyedToc], () => {
+  nextTick(() => {
+    const tree = treeRef.value
+    if (!tree) return
+    const key = activeSlug.value ? findKeyBySlug(keyedToc.value, activeSlug.value) : null
+    tree.setCurrentKey(key ?? undefined)
+    if (key) {
+      nextTick(() => {
+        treeRef.value?.$el
+          ?.querySelector('.el-tree-node.is-current')
+          ?.scrollIntoView({ block: 'nearest' })
+      })
+    }
+  })
+}, { immediate: true })
 </script>
 
 <style>
@@ -120,6 +165,16 @@ const handleClick = (data: { slug?: unknown }): void => {
 
 .side-bar-toc .el-tree-node:focus > .el-tree-node__content {
   background-color: var(--sideBarItemHoverBgColor);
+}
+
+/* Outline follow: the entry for the section currently in view / under the
+   caret. Uses the editor theme color so it reads as "active" in every theme. */
+.side-bar-toc .el-tree-node.is-current > .el-tree-node__content {
+  background-color: var(--sideBarItemHoverBgColor);
+  color: var(--themeColor);
+}
+.side-bar-toc .el-tree-node.is-current > .el-tree-node__content .el-tree-node__label {
+  color: var(--themeColor);
 }
 
 .side-bar-toc .el-tree-node__content:hover {

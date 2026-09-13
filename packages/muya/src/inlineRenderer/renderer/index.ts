@@ -27,6 +27,7 @@ import htmlRuby from './htmlRuby';
 import htmlTag from './htmlTag';
 import image from './image';
 import inlineCode from './inlineCode';
+import inlineComment from './inlineComment';
 import inlineMath from './inlineMath';
 import link from './link';
 import loadImageAsync from './loadImageAsync';
@@ -71,6 +72,7 @@ const inlineSyntaxRenderer = {
     referenceLink,
     referenceImage,
     superSubScript,
+    inlineComment,
     footnoteIdentifier,
 };
 

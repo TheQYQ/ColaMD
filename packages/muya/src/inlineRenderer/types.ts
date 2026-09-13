@@ -31,6 +31,8 @@ export type Rules = Record<string, RegExp>;
 export interface ITokenizerFacOptions {
     superSubScript: boolean;
     footnote: boolean;
+    mathLatexDelimiters?: boolean;
+    inlineComment?: boolean;
 }
 
 export interface ITokenizerOptions {
@@ -54,6 +56,7 @@ export type Token
         | CodeEmojiMathToken
         | DelToken
         | SuperSubScriptToken
+        | InlineCommentToken
         | FootnoteIdentifierToken
         | ImageToken
         | LinkToken
@@ -130,6 +133,12 @@ export type DelToken = IBaseToken & {
 
 export type SuperSubScriptToken = IBaseToken & {
     type: 'super_sub_script';
+    marker: string;
+    content: string;
+};
+
+export type InlineCommentToken = IBaseToken & {
+    type: 'inline_comment';
     marker: string;
     content: string;
 };
