@@ -23,6 +23,9 @@ import ParagraphContent from './content/paragraphContent';
 import SetextHeadingContent from './content/setextHeadingContent';
 import TableCellContent from './content/tableCell';
 import ThematicBreakContent from './content/thematicBreakContent';
+import DefList from './extra/defList';
+import DefDesc from './extra/defList/defDesc';
+import DefTerm from './extra/defList/defTerm';
 import DiagramBlock from './extra/diagram';
 import DiagramContainer from './extra/diagram/diagramContainer';
 import DiagramPreview from './extra/diagram/diagramPreview';
@@ -30,6 +33,9 @@ import Footnote from './extra/footnote';
 import MathBlock from './extra/math';
 import MathContainer from './extra/math/mathContainer';
 import MathPreview from './extra/math/mathPreview';
+import TocBlock from './extra/toc';
+import TocContainer from './extra/toc/tocContainer';
+import TocPreview from './extra/toc/tocPreview';
 import Table from './gfm/table';
 import Cell from './gfm/table/cell';
 import TableRow from './gfm/table/row';
@@ -85,4 +91,12 @@ export function registerBlocks() {
     ScrollPage.register(DiagramPreview);
     // Footnote
     ScrollPage.register(Footnote);
+    // Definition list
+    ScrollPage.register(DefList);
+    ScrollPage.register(DefTerm);
+    ScrollPage.register(DefDesc);
+    // TOC block
+    ScrollPage.register(TocBlock);
+    ScrollPage.register(TocPreview);
+    ScrollPage.register(TocContainer);
 }

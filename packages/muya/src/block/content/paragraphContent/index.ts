@@ -22,6 +22,7 @@ import { isListItemState, isTaskListItemState } from '../../../state/types';
 import { isKeyboardEvent, isLengthEven } from '../../../utils';
 import logger from '../../../utils/logger';
 import Format from '../../base/format';
+import { alertMarkerType, syncAlertClassName } from '../../commonMark/blockQuote/alert';
 import OrderList from '../../commonMark/orderList';
 import TaskList from '../../gfm/taskList';
 import { ScrollPage } from '../../scrollPage';
@@ -214,6 +215,16 @@ class ParagraphContent extends Format {
 
         if (this.scrollPage && label)
             this.scrollPage.updateRefLinkAndImage(label);
+
+        // GitHub alert sync: this paragraph is the block-quote's first child —
+        // its text decides whether the quote renders as a callout.
+        const quote = this.parent?.parent;
+        if (quote && quote.blockName === 'block-quote' && quote.domNode) {
+            syncAlertClassName(
+                quote.domNode,
+                this.parent === quote.children.head ? alertMarkerType(this.text) : null,
+            );
+        }
     }
 
     override backspaceHandler(event: Event) {

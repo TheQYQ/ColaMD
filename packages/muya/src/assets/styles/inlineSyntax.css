@@ -612,3 +612,10 @@ blockquote .mu-hide.mu-math > .mu-math-render {
     color: var(--editor-color);
     text-decoration: none;
 }
+
+/* Typora-style inline comment `%%text%%` — dimmed italic to read as a
+   non-content aside; the text stays editable in place. */
+.mu-inline-comment {
+    color: var(--editor-color-50);
+    font-style: italic;
+}

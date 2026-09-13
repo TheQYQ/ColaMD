@@ -95,6 +95,7 @@ export const zhCN = {
         'Input Mathematical Formula...': '输入数学公式...',
         'Input Front Matter...': '输入页眉...',
         'Invalid Mathematical Formula': '数学公式错误',
+        'Empty Table of Contents': '空目录',
         'Empty Mathematical Formula': '空数学公式',
     },
 };

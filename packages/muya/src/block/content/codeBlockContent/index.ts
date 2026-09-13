@@ -77,6 +77,7 @@ function parseSelector(str = '') {
 const LANG_HASH = {
     'html-block': 'html',
     'math-block': 'latex',
+    'toc-block': '',
 };
 
 function hasStateMeta(

@@ -4,6 +4,7 @@ import { mixins } from '../../../utils';
 import Parent from '../../base/parent';
 import IContainerQueryBlock from '../../mixins/containerQueryBlock';
 import { ScrollPage } from '../../scrollPage';
+import { alertMarkerType, syncAlertClassName } from './alert';
 
 @mixins(IContainerQueryBlock)
 class BlockQuote extends Parent {
@@ -14,6 +15,8 @@ class BlockQuote extends Parent {
 
         for (const child of state.children)
             blockQuote.append(ScrollPage.loadBlock(child.name).create(muya, child));
+
+        blockQuote.syncAlertClass();
 
         return blockQuote;
     }
@@ -39,6 +42,26 @@ class BlockQuote extends Parent {
         };
 
         return state;
+    }
+
+    /**
+     * GitHub alert sync: when the first child paragraph announces a
+     * `[!TYPE]` marker, style the block-quote as a callout. Called on
+     * document load (create) and from the paragraph content update path.
+     */
+    syncAlertClass() {
+        if (!this.domNode)
+            return;
+
+        const first = this.children.head;
+        const content = first?.isParent()
+            ? first.firstContentInDescendant()
+            : undefined;
+        const type
+            = first?.blockName === 'paragraph' && content
+                ? alertMarkerType(content.text)
+                : null;
+        syncAlertClassName(this.domNode, type);
     }
 }
 

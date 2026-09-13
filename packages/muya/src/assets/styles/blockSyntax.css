@@ -1079,3 +1079,179 @@ pre.mu-active.mu-fenced-code::after {
 .mu-container figure.mu-footnote > i.mu-footnote-backlink:hover {
     color: var(--theme-color);
 }
+
+/* GitHub alerts — `> [!NOTE]` / `[!TIP]` / `[!IMPORTANT]` / `[!WARNING]` /
+   `[!CAUTION]` as the first line of a block quote (Typora 1.10 parity).
+   The marker text stays editable; the quote gains a colored icon, tinted
+   background and accent border via the `mu-alert` classes the engine syncs. */
+.mu-container blockquote.mu-alert {
+    padding: 8px 30px 8px 40px;
+
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--alert-color) 8%, transparent);
+}
+
+.mu-container blockquote.mu-alert::before {
+    top: 10px;
+    left: 12px;
+
+    width: 18px;
+    height: 18px;
+
+    background: none;
+
+    color: var(--alert-color);
+    font-size: 15px;
+    line-height: 18px;
+    text-align: center;
+}
+
+.mu-container blockquote.mu-alert-note {
+    --alert-color: #0969da;
+}
+
+.mu-container blockquote.mu-alert-tip {
+    --alert-color: #1a7f37;
+}
+
+.mu-container blockquote.mu-alert-important {
+    --alert-color: #8250df;
+}
+
+.mu-container blockquote.mu-alert-warning {
+    --alert-color: #9a6700;
+}
+
+.mu-container blockquote.mu-alert-caution {
+    --alert-color: #cf222e;
+}
+
+.mu-container blockquote.mu-alert-note::before {
+    content: '\24D8'; /* ⓘ */
+}
+
+.mu-container blockquote.mu-alert-tip::before {
+    content: '\2714'; /* ✔ */
+}
+
+.mu-container blockquote.mu-alert-important::before {
+    content: '\270E'; /* ✎ */
+}
+
+.mu-container blockquote.mu-alert-warning::before {
+    content: '\26A0'; /* ⚠ */
+}
+
+.mu-container blockquote.mu-alert-caution::before {
+    content: '\26D4'; /* ⛔ */
+}
+
+/* Definition lists — `Term` / `: Definition` (Typora parity). The dl renders
+   compact; the term keeps paragraph styling and the description indents. */
+.mu-container dl.mu-def-list {
+    margin: 0.5em 0;
+    padding: 0 0 0 0.4em;
+}
+
+.mu-container dl.mu-def-list dt.mu-def-term {
+    font-weight: 600;
+    font-style: normal;
+}
+
+.mu-container dl.mu-def-list dd.mu-def-desc {
+    margin: 0 0 0.25em 1.6em;
+}
+
+/* In-document TOC block — `[toc]` (Typora parity). Mirrors the math block's
+   visibility contract: the raw marker container is hidden until the figure is
+   active (focused), the heading-list preview shows otherwise. */
+figure.mu-toc-block > .mu-toc-container {
+    position: absolute;
+    z-index: -1;
+
+    width: 0;
+    height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    overflow: visible;
+
+    opacity: 0;
+}
+
+figure.mu-active.mu-toc-block .mu-toc-container {
+    position: relative;
+    z-index: 1;
+
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    height: auto;
+
+    opacity: 1;
+}
+
+figure:not(.mu-active).mu-toc-block .mu-toc-container {
+    overflow: hidden;
+}
+
+figure.mu-toc-block .mu-toc-preview {
+    display: block;
+    width: 100%;
+}
+
+figure.mu-toc-block {
+    position: relative;
+
+    margin: 1em 0;
+    padding: 0.6em 1em;
+
+    border: 1px solid var(--editor-color-30);
+    border-radius: 6px;
+}
+
+figure.mu-toc-block:not(.mu-active):hover {
+    background: var(--float-hover-color, var(--editor-color-10, transparent));
+}
+
+.mu-toc-block .mu-toc-preview .mu-toc-empty {
+    color: var(--editor-color-50);
+    font-size: 0.9em;
+}
+
+.mu-toc-block .mu-toc-preview .mu-toc-list {
+    margin: 0;
+    padding: 0;
+
+    list-style: none;
+}
+
+.mu-toc-block .mu-toc-preview .mu-toc-item {
+    overflow: hidden;
+
+    margin: 0.15em 0;
+    cursor: pointer;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mu-toc-block .mu-toc-preview .mu-toc-item:hover {
+    color: var(--theme-color);
+}
+
+.mu-toc-block .mu-toc-preview .mu-toc-h1 {
+    font-weight: 600;
+}
+
+.mu-toc-block .mu-toc-preview .mu-toc-h2 {
+    padding-left: 1em;
+}
+
+.mu-toc-block .mu-toc-preview .mu-toc-h3 {
+    padding-left: 2em;
+}
+
+.mu-toc-block .mu-toc-preview .mu-toc-h4,
+.mu-toc-block .mu-toc-preview .mu-toc-h5,
+.mu-toc-block .mu-toc-preview .mu-toc-h6 {
+    padding-left: 3em;
+}
