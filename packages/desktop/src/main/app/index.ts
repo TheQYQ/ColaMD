@@ -58,7 +58,6 @@ class App {
     // this.shortcutCapture = null
 
     // Initialize main process language
-    this._initializeLanguage()
     this._listenForIpcMain()
     // Initialize theme listener
     this._themeListenerRegistered = false
@@ -145,16 +144,29 @@ class App {
   }
 
   /**
-   * Initialize main process language from preferences
+   * Initialize main process language from preferences.
+   *
+   * Must be awaited at the start of `ready()`: `app.getLocale()` returns an
+   * empty string on Windows when called before the `ready` event, and the
+   * result has to be settled before the first window loads so the renderer
+   * starts with the right locale.
    */
   private async _initializeLanguage(): Promise<void> {
     try {
-      let currentLanguage = this._accessor.preferences.getItem<string>('language')
+      const preferences = this._accessor.preferences
+      let currentLanguage = preferences.getItem<string>('language')
 
-      // If no language is set, auto-detect based on the system language
-      if (!currentLanguage) {
-        const systemLanguage = app.getLocale()
-        log.info(`System language detected: ${systemLanguage}`)
+      // First start: auto-detect from the system language. hasPreferencesFile
+      // is a constructor-time snapshot, so it still means "no stored settings
+      // existed at launch"; the schema default makes getItem useless for this
+      // check because it returns 'en' even when nothing was ever saved.
+      if (!preferences.hasPreferencesFile) {
+        // Packaged builds on Windows report the app UI locale (en-US by
+        // default) from getLocale() regardless of the user's actual system
+        // language; getSystemLocale() reads the OS language/regional settings
+        // and matches it in dev and packaged builds alike.
+        const systemLanguage = app.getSystemLocale?.() || app.getLocale()
+        log.info(`System language detected: ${systemLanguage} (app locale: ${app.getLocale()})`)
 
         // Supported language list (based on languages actually supported by the project)
         const supportedLanguages = [
@@ -176,6 +188,10 @@ class App {
           'zh-CN': 'zh-CN',
           'zh-TW': 'zh-TW',
           'zh-HK': 'zh-TW',
+          'zh-Hans-CN': 'zh-CN',
+          'zh-Hant-TW': 'zh-TW',
+          'zh-Hans': 'zh-CN',
+          'zh-Hant': 'zh-TW',
           zh: 'zh-CN',
           en: 'en',
           'en-US': 'en',
@@ -199,7 +215,9 @@ class App {
           'ru-RU': 'ru'
         }
 
-        currentLanguage = languageMap[systemLanguage] || 'en'
+        // An empty locale (offline environment, unavailable before ready, …)
+        // must fall back to 'en' and never hit the map below.
+        currentLanguage = systemLanguage ? (languageMap[systemLanguage] || 'en') : 'en'
 
         // If the detected language is not in the supported list, use English
         if (!supportedLanguages.includes(currentLanguage)) {
@@ -226,7 +244,11 @@ class App {
     return path.join(screenshotFolderPath, fileName)
   }
 
-  ready = (): void => {
+  ready = async (): Promise<void> => {
+    // Detect/store the language before any window exists so the renderer
+    // starts with the right locale on its startup language query.
+    await this._initializeLanguage()
+
     const { _args: args, _openFilesCache } = this
     const { preferences, editorBufferStore } = this._accessor
 
