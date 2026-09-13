@@ -128,6 +128,7 @@ export const CLASS_NAMES = genUpper2LowerKeyHash([
     'MU_HTML_ESCAPE',
     'MU_HTML_ESCAPE_MARKER',
     'MU_HTML_PREVIEW',
+    'MU_INLINE_COMMENT',
     'MU_HTML_TAG',
     'MU_IMAGE_FAIL',
     'MU_IMAGE_BUTTONS',
@@ -344,6 +345,13 @@ export const MUYA_DEFAULT_OPTIONS = {
     frontMatter: true, // Whether to support frontmatter.
     superSubScript: true,
     footnote: false,
+    // Whether to recognize LaTeX style inline math delimiters `\(...\)`
+    // in addition to the default `$...$`.
+    mathLatexDelimiters: false,
+    // Typora-style inline comment `%%text%%` (default off, Typora parity).
+    inlineComment: false,
+    // Definition lists `Term` / `: Definition` (default off, Typora parity).
+    definitionList: false,
     // Whether math block is supported.
     math: true,
     isGitlabCompatibilityEnabled: true,

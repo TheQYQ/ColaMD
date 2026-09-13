@@ -663,6 +663,25 @@ async function applyPaste(clipboard: Clipboard, data: IPasteData): Promise<void>
         content,
     };
 
+    // Smart paste (Typora parity): pasting a single URL over a non-empty
+    // selection wraps the selected text as a link to the URL instead of
+    // replacing the selection with the bare URL. "Paste as Plain Text" keeps
+    // inserting the raw URL. Parens in the destination are percent-encoded so
+    // they cannot terminate the `(...)`.
+    const selectionText = content.substring(start.offset, end.offset);
+    if (
+        pasteType !== PasteType.PASTE_AS_PLAIN_TEXT
+        && start.offset !== end.offset
+        && isSinglePlainUrl(text)
+        && selectionText.length > 0
+    ) {
+        const dest = text.replace(/\(/g, '%28').replace(/\)/g, '%29');
+        // Brackets in the link text would break the `[text](url)` shape.
+        const escapedText = selectionText.replace(/([[\]])/g, '\\$1');
+        applyParsedPaste(clipboard, ctx, `[${escapedText}](${dest})`);
+        return;
+    }
+
     if (/html|text/.test(copyType)) {
         const markdown
             = copyType === 'html' && anchorBlock.blockName !== 'codeblock.content'

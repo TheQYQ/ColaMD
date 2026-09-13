@@ -65,6 +65,9 @@ export interface IMuyaOptions {
     spellcheckHideMarks: boolean;
     superSubScript: boolean;
     footnote: boolean;
+    mathLatexDelimiters: boolean;
+    inlineComment: boolean;
+    definitionList: boolean;
     math: boolean;
     isGitlabCompatibilityEnabled: boolean;
     autoMoveCheckedToEnd: boolean;

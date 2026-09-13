@@ -3,7 +3,8 @@
     "counter": {
       "words": "Sözcükler",
       "characters": "Karakterler",
-      "paragraphs": "Paragraflar"
+      "paragraphs": "Paragraflar",
+      "readingTime": "Okuma süresi"
     },
     "file": {
       "file": "Dosya",
@@ -27,7 +28,12 @@
       "closeWindow": "Pencereyi Kapat",
       "quit": "Çıkış",
       "preferences": "Tercihler",
-      "exportDocx": "Word olarak dışa aktar"
+      "exportDocx": "Word olarak dışa aktar",
+      "exportImage": "Görüntü (PNG)",
+      "exportEpub": "EPUB",
+      "exportLatex": "LaTeX",
+      "exportRtf": "RTF",
+      "exportOpml": "OPML"
     },
     "edit": {
       "edit": "Düzen",
@@ -667,7 +673,10 @@
           "jsonBrace": "Süslü Parantezli JSON",
           "jsonSemicolon": "Noktalı Virgüllü JSON",
           "title": "Ön Bilgi Türü"
-        }
+        },
+        "mathLatexDelimiters": "LaTeX matematik sınırlayıcılarını etkinleştir",
+        "inlineComment": "Satır içi yorumları etkinleştir",
+        "definitionList": "Tanım listelerini etkinleştir"
       },
       "diagrams": {
         "title": "Diyagramlar",

@@ -69,6 +69,13 @@ export type GfmRules = typeof gfmRules;
 export const inlineExtensionRules = {
     // eslint-disable-next-line regexp/no-super-linear-backtracking
     inline_math: /^(\$)((?:[^$\\]|\\.)+)(\\*)\1(?!\1)/,
+    // LaTeX-style inline math delimiter `\(...\)` (Typora 1.11 parity). Only
+    // consulted when the `mathLatexDelimiters` option is on; the marker group
+    // is `\(` so the token's `marker` stays marker-agnostic downstream.
+    inline_math_latex: /^(\\\()((?:[^\\\n]|\\.)+?)(\\\))/,
+    // Typora-style inline comment `%%text%%` (only when `inlineComment` is on).
+    // Single `%` inside is allowed; the span cannot cross a line break.
+    inline_comment: /^(%%)((?:[^\n%]|%(?!%))+)(%%)/,
     // This is not the best regexp, because it not support `2^2\\^`.
     superscript: /^(\^)((?:[^^\s]|(?<=\\)\1|(?<=\\) )+?)(?<!\\)\1(?!\1)/,
     subscript: /^(~)((?:[^~\s]|(?<=\\)\1|(?<=\\) )+?)(?<!\\)\1(?!\1)/,
@@ -94,6 +101,7 @@ const EXCLUDE_KEYS = [
     'superscript',
     'subscript',
     'footnote_identifier',
+    'inline_comment',
 ] as const;
 
 type InlineRuleKeys = keyof InlineRules;

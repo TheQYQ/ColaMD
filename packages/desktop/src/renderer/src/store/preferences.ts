@@ -77,6 +77,9 @@ export interface PreferencesState {
   frontmatterType: FrontmatterType | string
   superSubScript: boolean
   footnote: boolean
+  mathLatexDelimiters: boolean
+  inlineComment: boolean
+  definitionList: boolean
   isHtmlEnabled: boolean
   isGitlabCompatibilityEnabled: boolean
   sequenceTheme: SequenceTheme | string
@@ -194,7 +197,10 @@ export const usePreferencesStore = defineStore('preferences', {
     listIndentation: 1,
     frontmatterType: '-',
     superSubScript: false,
-    footnote: false,
+    footnote: true,
+    mathLatexDelimiters: false,
+    inlineComment: false,
+    definitionList: false,
     isHtmlEnabled: true,
     isGitlabCompatibilityEnabled: false,
     sequenceTheme: 'hand',

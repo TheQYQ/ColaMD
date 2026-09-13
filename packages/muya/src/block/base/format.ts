@@ -110,7 +110,13 @@ function getOffset(offset: number, token: Token) {
         case 'inline_code':
 
         case 'inline_math': {
-            const markerLen = type === 'strong' || type === 'del' ? 2 : 1;
+            // Inline math markers vary in length (`$` vs `\(`); code spans can
+            // be multi-backtick. `strong`/`del` stay at 2 (their token marker
+            // may be the single-char variant of the pair).
+            const markerLen
+                = type === 'inline_math' || type === 'inline_code'
+                    ? token.marker.length
+                    : 2;
             return markeredOffset(dis, len, markerLen, markerLen);
         }
 
@@ -1319,11 +1325,11 @@ class Format extends Content {
 
         // fix: #897 in colamd repo
         const { text } = this;
-        const { footnote, superSubScript } = this.muya.options;
+        const { footnote, superSubScript, mathLatexDelimiters, inlineComment } = this.muya.options;
         const { labels } = this.inlineRenderer;
         const tokens = tokenizer(text, {
             labels,
-            options: { footnote, superSubScript },
+            options: { footnote, superSubScript, mathLatexDelimiters, inlineComment },
         });
         // The caret offset is unreliable when it is parked on a
         // `contenteditable=false` inline image; resolve the real offset from the
