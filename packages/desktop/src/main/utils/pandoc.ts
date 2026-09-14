@@ -90,7 +90,11 @@ export async function exportViaPandoc(
 
   try {
     const command = getCommand()
+    // `-s` emits a complete document (LaTeX `\documentclass`, OPML `<opml>`
+    // root, RTF `{\rtf` header). Without it pandoc only writes a body fragment,
+    // which is not a usable export file.
     const args = [
+      '-s',
       '-f', 'markdown',
       '-t', format,
       '-o', outputPath,

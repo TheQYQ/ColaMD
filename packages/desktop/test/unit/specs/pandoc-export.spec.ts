@@ -46,7 +46,7 @@ describe('exportViaPandoc', () => {
     expect(mockedSpawn).toHaveBeenCalledTimes(1)
     const [command, args] = mockedSpawn.mock.calls[0] as unknown as [string, string[]]
     expect(command).toBe('pandoc')
-    expect(args.slice(0, 6)).toEqual(['-f', 'markdown', '-t', 'epub', '-o', 'C:/out/document.epub'])
+    expect(args.slice(0, 7)).toEqual(['-s', '-f', 'markdown', '-t', 'epub', '-o', 'C:/out/document.epub'])
     // The last argument is the temp markdown file, cleaned up afterwards.
     const tmpMarkdown = args.at(-1) as string
     expect(tmpMarkdown.endsWith('.md')).toBe(true)
