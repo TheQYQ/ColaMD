@@ -509,6 +509,8 @@
         "title": "Barra Lateral",
         "wrapTextInToc": "Ajustar texto en tabla de contenidos",
         "showOpenedFiles": "Mostrar archivos abiertos",
+        "showNonMarkdownFiles": "Mostrar archivos no Markdown en el árbol de archivos",
+        "showHiddenFiles": "Mostrar archivos y carpetas ocultos en el árbol de archivos",
         "autoShowToc": "Mostrar automáticamente la tabla de contenidos al abrir un archivo",
         "excludePatterns": "Patrones de exclusión",
         "excludePatternsNotes": "Patrones de exclusión (Notas)",

@@ -26,6 +26,51 @@ type WatchType = 'dir' | 'file'
 export const isUncPath = (pathname: string): boolean =>
   /^(?:\\\\|\/\/)[^\\/]+[\\/][^\\/]+/.test(pathname)
 
+// Cheap basename check: `.git`, `.env`, `.DS_Store`, etc.
+const isHiddenName = (pathname: string): boolean => {
+  const name = path.basename(pathname)
+  return name.startsWith('.') && name !== '.' && name !== '..'
+}
+
+/**
+ * Decide whether a path should be excluded from the sidebar project tree.
+ * Pure so unit tests can lock the preference matrix without a chokidar instance.
+ */
+export const shouldIgnoreTreePath = (
+  pathname: string,
+  fileInfo: { isDirectory: () => boolean } | undefined,
+  prefs: {
+    treePathExcludePatterns?: readonly string[]
+    treeShowNonMarkdownFiles?: boolean
+    treeShowHiddenFiles?: boolean
+  }
+): boolean => {
+  if (!fileInfo) {
+    return /(?:^|[/\\])(?:node_modules|(?:.+\.asar))/.test(pathname)
+  }
+
+  if (/(?:^|[/\\])(?:node_modules|(?:.+\.asar))/.test(pathname)) {
+    return true
+  }
+
+  if (checkPathExcludePattern(pathname, prefs.treePathExcludePatterns ?? [])) {
+    return true
+  }
+
+  if (!prefs.treeShowHiddenFiles && isHiddenName(pathname)) {
+    return true
+  }
+
+  if (fileInfo.isDirectory()) {
+    return false
+  }
+
+  if (prefs.treeShowNonMarkdownFiles) {
+    return false
+  }
+  return !hasMarkdownExtension(pathname)
+}
+
 interface IgnoreEntry {
   windowId: number
   pathname: string
@@ -94,11 +139,14 @@ const add = async(
         return
       }
     }
-    win.webContents.send(EVENT_NAME[type], {
-      type: 'add',
-      change: file
-    })
   }
+
+  // Dir watchers also list non-markdown files when the tree filter allows it;
+  // the `ignored` callback is the gate — anything that reaches here belongs.
+  win.webContents.send(EVENT_NAME[type], {
+    type: 'add',
+    change: file
+  })
 }
 
 const unlink = (win: BrowserWindow, pathname: string, type: WatchType): void => {
@@ -210,28 +258,14 @@ class Watcher {
     const id = getUniqueId()
 
     const watcher = chokidar.watch(watchPath, {
-      ignored: (pathname: string, fileInfo?: { isDirectory: () => boolean }) => {
-        if (!fileInfo) {
-          return /(?:^|[/\\])(?:node_modules|(?:.+\.asar))/.test(pathname)
-        }
-
-        if (/(?:^|[/\\])(?:node_modules|(?:.+\.asar))/.test(pathname)) {
-          return true
-        }
-
-        if (
-          checkPathExcludePattern(
-            pathname,
-            this._preferences.getItem<readonly string[]>('treePathExcludePatterns')
-          )
-        ) {
-          return true
-        }
-        if (fileInfo.isDirectory()) {
-          return false
-        }
-        return !hasMarkdownExtension(pathname)
-      },
+      ignored: (pathname: string, fileInfo?: { isDirectory: () => boolean }) =>
+        shouldIgnoreTreePath(pathname, fileInfo, {
+          treePathExcludePatterns: this._preferences.getItem<readonly string[]>(
+            'treePathExcludePatterns'
+          ),
+          treeShowNonMarkdownFiles: this._preferences.getItem<boolean>('treeShowNonMarkdownFiles'),
+          treeShowHiddenFiles: this._preferences.getItem<boolean>('treeShowHiddenFiles')
+        }),
       ignoreInitial: type === 'file',
       persistent: true,
       ignorePermissionErrors: true,

@@ -72,6 +72,8 @@ export interface IUserPreferences {
   autoNormalizeLineEndings?: boolean
   watcherUsePolling?: boolean
   treePathExcludePatterns?: string[]
+  treeShowNonMarkdownFiles?: boolean
+  treeShowHiddenFiles?: boolean
   [key: string]: unknown
 }
 

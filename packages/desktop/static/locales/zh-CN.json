@@ -509,6 +509,8 @@
         "title": "侧边栏",
         "wrapTextInToc": "在目录中换行文本",
         "showOpenedFiles": "显示已打开文件",
+        "showNonMarkdownFiles": "在文件树中显示非 Markdown 文件",
+        "showHiddenFiles": "在文件树中显示隐藏文件和文件夹",
         "autoShowToc": "打开文件时自动显示目录",
         "excludePatterns": "排除模式",
         "excludePatternsNotes": "排除模式（注释）",

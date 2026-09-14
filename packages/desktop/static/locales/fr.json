@@ -509,6 +509,8 @@
         "title": "Barre latérale",
         "wrapTextInToc": "Retour à la ligne dans la table des matières",
         "showOpenedFiles": "Afficher les fichiers ouverts",
+        "showNonMarkdownFiles": "Afficher les fichiers non-Markdown dans l'arborescence",
+        "showHiddenFiles": "Afficher les fichiers et dossiers cachés dans l'arborescence",
         "autoShowToc": "Afficher automatiquement la table des matières à l'ouverture d'un fichier",
         "excludePatterns": "Motifs d'exclusion",
         "excludePatternsNotes": "Notes sur les motifs d'exclusion",
