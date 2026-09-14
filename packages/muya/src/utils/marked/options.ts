@@ -4,4 +4,7 @@ export const DEFAULT_OPTIONS = {
     isGitlabCompatibilityEnabled: true,
     frontMatter: true,
     superSubScript: true,
+    mathLatexDelimiters: false,
+    inlineComment: false,
+    definitionList: false,
 };

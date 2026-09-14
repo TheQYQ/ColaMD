@@ -8,8 +8,9 @@ const { headerSize, header } = asar.getRawHeader(asarPath)
 const buf = fs.readFileSync(asarPath)
 const base = 8 + headerSize
 
-let total = 0, bad = []
-function walk(node, prefix) {
+let total = 0
+const bad = []
+function walk (node, prefix) {
   for (const [name, child] of Object.entries(node.files || {})) {
     const p = prefix ? prefix + '\\' + name : name
     if (child.files) { walk(child, p); continue }

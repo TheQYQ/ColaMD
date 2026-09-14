@@ -92,6 +92,7 @@ export const nl = {
         'Input Mathematical Formula...': 'Voer wiskundeformule in...',
         'Input Front Matter...': 'Voer Front Matter in...',
         'Invalid Mathematical Formula': 'Ongeldige wiskundeformule',
+        'Empty Table of Contents': 'Lege inhoudsopgave',
         'Empty Mathematical Formula': 'Lege wiskundeformule',
         // headingCopyLink
         'Copy anchor link to this heading': 'Ankerlink naar deze kop kopiëren',

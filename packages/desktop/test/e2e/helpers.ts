@@ -79,6 +79,7 @@ export const launchElectron = async(
     timeout: 30000
   })
   if (options.suppressErrorDialog) await installRendererErrorCounter(app)
+  await installUnsavedDialogAutoDismiss(app)
   const page = await app.firstWindow()
   await page.waitForLoadState('domcontentloaded')
   await new Promise((resolve) => setTimeout(resolve, 500))
@@ -113,6 +114,24 @@ export const getRendererErrors = async(
       __mt_renderer_errors__?: Array<{ message?: string; name?: string; stack?: string }>
     }
     return (g.__mt_renderer_errors__ || []).slice()
+  })
+}
+
+// Automatically dismiss the "unsaved changes" dialog with "Don't Save".
+// Without this, `app.close()` hangs when dirty tabs exist because the
+// editor window's `close` handler calls `event.preventDefault()` and sends
+// `mt::ask-for-close` → renderer sends `mt::close-window-confirm` → main
+// calls `showUnsavedFilesMessage` → sends `mt::show-unsaved-dialog` →
+// renderer shows a dialog → no one clicks it in headless mode → 30 s timeout.
+// We intercept at the `mt::close-window-confirm` level and emit a direct
+// `mt::discard-unsaved-tabs-and-close` to skip the dialog entirely.
+const installUnsavedDialogAutoDismiss = async(app: ElectronApplication): Promise<void> => {
+  await app.evaluate(({ ipcMain }) => {
+    ipcMain.on('mt::close-window-confirm', (_e, unsavedFiles) => {
+      const tabIds = unsavedFiles.map((f: { id: string }) => f.id)
+      // Force-close the tabs without saving, then close the window.
+      _e.sender.send('mt::discard-unsaved-tabs-and-close', tabIds)
+    })
   })
 }
 
@@ -194,18 +213,32 @@ export const clickMenuById = async(app: ElectronApplication, id: string): Promis
   }, id)
 }
 
-// Opening a file auto-shows the sidebar TOC (auto-show-toc.spec.ts), but
-// that action lands asynchronously some time after launch. A test that
-// blindly toggles `tocMenuItem` can race it and switch the just-opened
-// panel OFF. Wait for the auto-show to settle first; only fall back to the
-// menu toggle when the TOC never came.
+// Ensure the sidebar TOC panel is visible, opening it via the View menu when
+// needed. (The sidebar never auto-opens since the Typora-style rebuild, so a
+// file open leaves whatever panel state the window already had.)
 export const ensureTocVisible = async(app: ElectronApplication, page: Page): Promise<void> => {
   const tree = page.locator('.side-bar-toc .el-tree')
   if (await tree.isVisible().catch(() => false)) return
-  await page.waitForTimeout(300)
-  if (await tree.isVisible().catch(() => false)) return
   await clickMenuById(app, 'tocMenuItem')
   await page.waitForSelector('.side-bar-toc .el-tree', { state: 'visible', timeout: 10000 })
+}
+
+// Mark every open tab clean by mirroring the real post-save IPC. A headless
+// close hangs while any dirty tab is open: main waits on
+// `mt::show-unsaved-dialog` for a click that never comes. Describes that edit
+// content must call this before app.close().
+export const markAllTabsClean = async(app: ElectronApplication, page: Page): Promise<void> => {
+  const tabIds = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('.editor-tabs li[data-id]'))
+      .map((el) => el.getAttribute('data-id'))
+      .filter((id): id is string => !!id)
+  )
+  for (const tabId of tabIds) {
+    await sendIpcToRenderer(app, 'mt::tab-saved', tabId)
+  }
+  await expect
+    .poll(() => page.evaluate(() => !document.querySelector('.editor-tabs li.unsaved')))
+    .toBe(true)
 }
 
 export const waitForEditor = async(page: Page, timeout = 15000): Promise<void> => {

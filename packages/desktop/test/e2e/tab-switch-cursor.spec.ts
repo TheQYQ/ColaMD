@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, sendIpcToRenderer, waitForMenuReady } from './helpers'
+import { launchWithMarkdown, sendIpcToRenderer, waitForMenuReady, markAllTabsClean } from './helpers'
 
 const tabSelector = '.tabs-container > li'
 
@@ -124,7 +124,10 @@ test.describe('Tab switch restores the per-tab undo history', () => {
   })
 
   test.afterAll(async() => {
-    if (app) await app.close()
+    if (app) {
+      await markAllTabsClean(app, page)
+      await app.close()
+    }
   })
 
   // Reuse the proven caret-injection helper (TreeWalker + synthetic keyup) so

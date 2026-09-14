@@ -36,6 +36,8 @@ export interface PreferencesState {
   defaultDirectoryToOpen: string
   lastOpenedFolder: string
   treePathExcludePatterns: string[]
+  treeShowNonMarkdownFiles: boolean
+  treeShowHiddenFiles: boolean
   language: string
 
   // ----- Editor / typography -----
@@ -77,6 +79,9 @@ export interface PreferencesState {
   frontmatterType: FrontmatterType | string
   superSubScript: boolean
   footnote: boolean
+  mathLatexDelimiters: boolean
+  inlineComment: boolean
+  definitionList: boolean
   isHtmlEnabled: boolean
   isGitlabCompatibilityEnabled: boolean
   sequenceTheme: SequenceTheme | string
@@ -156,6 +161,8 @@ export const usePreferencesStore = defineStore('preferences', {
     defaultDirectoryToOpen: '',
     lastOpenedFolder: '',
     treePathExcludePatterns: [],
+    treeShowNonMarkdownFiles: false,
+    treeShowHiddenFiles: false,
     language: 'en',
 
     editorFontFamily: 'Open Sans',
@@ -194,7 +201,10 @@ export const usePreferencesStore = defineStore('preferences', {
     listIndentation: 1,
     frontmatterType: '-',
     superSubScript: false,
-    footnote: false,
+    footnote: true,
+    mathLatexDelimiters: false,
+    inlineComment: false,
+    definitionList: false,
     isHtmlEnabled: true,
     isGitlabCompatibilityEnabled: false,
     sequenceTheme: 'hand',

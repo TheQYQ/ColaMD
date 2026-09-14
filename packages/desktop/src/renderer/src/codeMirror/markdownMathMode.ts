@@ -9,6 +9,10 @@
 // styling the previous `setMode(cm, 'markdown')` call resolved to via
 // `codeMirror/modes.js` (which maps "markdown" → `gfm` / `text/x-gfm`).
 //
+// A second mode, `markdown-math-latex`, additionally delegates `\(...\)` spans
+// (the `mathLatexDelimiters` preference) — registered up front so the editor
+// can switch modes by name without redefining anything.
+//
 // All inner modes are loaded eagerly so `getMode` resolves synchronously at
 // the time the wrapper is instantiated. `gfm` itself depends on `markdown`.
 import 'codemirror/mode/markdown/markdown'
@@ -33,37 +37,54 @@ const registerMarkdownMathMode = (CodeMirror: CodeMirrorLike): void => {
     return
   }
 
-  CodeMirror.defineMode('markdown-math', function(config: AnyObj) {
-    const gfmMode = CodeMirror.getMode(config, {
-      name: 'gfm',
-      fencedCodeBlocks: true,
-      strikethrough: true,
-      taskLists: true
-    })
-    const stexMode = CodeMirror.getMode(config, 'stex')
+  const defineMode = (name: string, latexDelimiters: boolean): void => {
+    CodeMirror.defineMode(name, function(config: AnyObj) {
+      const gfmMode = CodeMirror.getMode(config, {
+        name: 'gfm',
+        fencedCodeBlocks: true,
+        strikethrough: true,
+        taskLists: true
+      })
+      const stexMode = CodeMirror.getMode(config, 'stex')
 
-    // `$$` must come before `$` so the longer delimiter is matched first.
-    // Block math (`$$…$$`) intentionally has no lookahead guard: a matching
-    // closer typically lives on a later line, which CodeMirror's per-line
-    // tokenizer cannot see from the opener.
-    return CodeMirror.multiplexingMode(
-      gfmMode,
-      {
-        open: '$$',
-        close: '$$',
-        mode: stexMode,
-        delimStyle: 'formatting formatting-math formatting-math-block math-block',
-        innerStyle: 'math math-block'
-      },
-      {
-        open: INLINE_MATH_OPEN,
-        close: '$',
-        mode: stexMode,
-        delimStyle: 'formatting formatting-math formatting-math-inline math-inline',
-        innerStyle: 'math math-inline'
+      // `$$` must come before `$` so the longer delimiter is matched first.
+      // Block math (`$$…$$`) intentionally has no lookahead guard: a matching
+      // closer typically lives on a later line, which CodeMirror's per-line
+      // tokenizer cannot see from the opener.
+      const multiplexEntries: AnyObj[] = [
+        {
+          open: '$$',
+          close: '$$',
+          mode: stexMode,
+          delimStyle: 'formatting formatting-math formatting-math-block math-block',
+          innerStyle: 'math math-block'
+        },
+        {
+          open: INLINE_MATH_OPEN,
+          close: '$',
+          mode: stexMode,
+          delimStyle: 'formatting formatting-math formatting-math-inline math-inline',
+          innerStyle: 'math math-inline'
+        }
+      ]
+
+      if (latexDelimiters) {
+        multiplexEntries.push({
+          // `\(` … `\)` — the opener is a literal backslash + paren.
+          open: /\\\(/,
+          close: '\\)',
+          mode: stexMode,
+          delimStyle: 'formatting formatting-math formatting-math-inline math-inline',
+          innerStyle: 'math math-inline'
+        })
       }
-    )
-  })
+
+      return CodeMirror.multiplexingMode(gfmMode, ...multiplexEntries)
+    })
+  }
+
+  defineMode('markdown-math', false)
+  defineMode('markdown-math-latex', true)
 }
 
 export default registerMarkdownMathMode

@@ -9,7 +9,7 @@
 import { ref, markRaw, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
-import { findMarkdownHeadingLine, scrollSourceEditorToLine } from '@/util/sourceModeToc'
+import { findMarkdownHeadingLine, scrollSourceEditorToLine, findActiveHeadingIndex } from '@/util/sourceModeToc'
 import { storeToRefs } from 'pinia'
 import codeMirror, { setCursorAtFirstLine, setTextDirection } from '../../codeMirror'
 import { wordCount as getWordCount } from '@muyajs/core'
@@ -43,7 +43,7 @@ const commitTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const viewDestroyed = ref(false)
 const tabId = ref<string | null>(null)
 
-const { theme, sourceCode } = storeToRefs(preferencesStore)
+const { theme, sourceCode, mathLatexDelimiters } = storeToRefs(preferencesStore)
 const { currentFile: currentTab } = storeToRefs(editorStore)
 
 const isValidMuyaIndexCursor = (cursor: unknown): cursor is MuyaIndexCursorLike => {
@@ -304,8 +304,25 @@ const saveContent = (cm: CMInstance) => {
 const listenChange = () => {
   editor.value.on('cursorActivity', (cm: CMInstance) => {
     saveContent(cm)
+    // Outline follow (Typora parity): highlight the TOC entry of the section
+    // the caret sits in. Heading index maps 1:1 onto the store's listToc.
+    const index = findActiveHeadingIndex(cm.getValue(), cm.getCursor('head').line)
+    const slug = index >= 0 ? editorStore.listToc[index]?.slug ?? '' : ''
+    if (slug !== lastSourceTocSlug) {
+      lastSourceTocSlug = slug
+      bus.emit('toc-active-changed', slug)
+    }
+    // Mirror the WYSIWYG selection prefill: expose the selected text through
+    // the store so opening Find (Ctrl+F) seeds the query with it. Skipped
+    // while a search has results so refreshing matches can't clobber them.
+    const selectionText: string = cm.getSelection()
+    if (selectionText && sourceMatches.value.length === 0 && selectionText.length <= 200) {
+      editorStore.SEARCH({ matches: [], index: -1, value: selectionText })
+    }
   })
 }
+
+let lastSourceTocSlug = ''
 
 // #3580: in Source Code mode the WYSIWYG container is hidden, so the
 // `scroll-to-header` bus event (emitted when a TOC entry is clicked) must scroll
@@ -319,6 +336,158 @@ const handleScrollToHeader = (slug: unknown) => {
   // `.source-code` is the scroll container (CodeMirror renders full-height with
   // viewportMargin: Infinity, so its own scroller never scrolls).
   scrollSourceEditorToLine(editor.value, line, sourceCodeContainer.value)
+}
+
+// ---------------------------------------------------------------------------
+// Find & replace — source-mode CodeMirror backend.
+// In source-code mode the WYSIWYG search handlers in editor.vue step aside and
+// these own the `searchValue` / `replaceValue` / `find-action` bus events,
+// driving CodeMirror's searchcursor addon. Match metadata is published through
+// the same `editorStore.SEARCH` channel, so the shared search bar UI (match
+// count / index) works unchanged across both modes.
+// ---------------------------------------------------------------------------
+
+interface ISearchOptions {
+  isCaseSensitive?: boolean
+  isWholeWord?: boolean
+  isRegexp?: boolean
+}
+
+interface ISourceMatch {
+  from: CMCursor
+  to: CMCursor
+  text: string
+}
+
+const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+const buildSearchQuery = (value: string, opt: ISearchOptions): string | RegExp => {
+  const flags = opt.isCaseSensitive ? 'g' : 'gi'
+  if (opt.isRegexp) return new RegExp(value, flags)
+  if (opt.isWholeWord) return new RegExp(`\\b(?:${escapeRegExp(value)})\\b`, flags)
+  return value
+}
+
+const posCompare = (a: CMCursor, b: CMCursor): number => a.line - b.line || a.ch - b.ch
+
+const sourceMatches = ref<ISourceMatch[]>([])
+const sourceMatchIndex = ref(-1)
+const sourceSearchValue = ref('')
+const lastSearchOpt = ref<ISearchOptions>({})
+
+const publishSourceMatches = () => {
+  editorStore.SEARCH({
+    index: sourceMatchIndex.value,
+    value: sourceSearchValue.value,
+    matches: sourceMatches.value.map(m => ({ start: m.from, end: m.to, match: m.text }))
+  })
+}
+
+const handleSourceSearchValue = (payload: unknown) => {
+  const cm = editor.value
+  if (!cm) return
+  const { value = '', opt = {} } = (payload ?? {}) as { value?: string; opt?: ISearchOptions }
+  lastSearchOpt.value = opt
+  sourceSearchValue.value = value
+
+  if (!value) {
+    sourceMatches.value = []
+    sourceMatchIndex.value = -1
+    editorStore.SEARCH({ index: -1, matches: [], value: '' })
+    return
+  }
+
+  let query: string | RegExp
+  try {
+    query = buildSearchQuery(value, opt)
+  } catch {
+    sourceMatches.value = []
+    sourceMatchIndex.value = -1
+    publishSourceMatches()
+    return
+  }
+
+  const matches: ISourceMatch[] = []
+  cm.operation(() => {
+    const cursor = cm.getSearchCursor(query, { line: 0, ch: 0 }, { multiline: true })
+    while (cursor.findNext()) {
+      matches.push({
+        from: cursor.from(),
+        to: cursor.to(),
+        text: cm.getRange(cursor.from(), cursor.to())
+      })
+      if (matches.length >= 10000) break
+    }
+  })
+  sourceMatches.value = matches
+
+  // Select the first match at/after the caret (wrap to the first match).
+  const head = cm.getCursor('from')
+  let index = matches.findIndex(m => posCompare(m.from, head) >= 0)
+  if (index < 0 && matches.length > 0) index = 0
+  sourceMatchIndex.value = index
+  if (index >= 0) {
+    const match = matches[index]!
+    cm.setSelection(match.from, match.to, { scroll: true })
+  }
+  publishSourceMatches()
+}
+
+const handleSourceFindAction = (action: unknown) => {
+  const cm = editor.value
+  if (!cm || sourceMatches.value.length === 0) return
+  const n = sourceMatches.value.length
+  const next = action === 'prev'
+    ? (sourceMatchIndex.value - 1 + n) % n
+    : (sourceMatchIndex.value + 1) % n
+  const match = sourceMatches.value[next]!
+  sourceMatchIndex.value = next
+  cm.setSelection(match.from, match.to, { scroll: true })
+  cm.focus()
+  publishSourceMatches()
+}
+
+const handleSourceReplaceValue = (payload: unknown) => {
+  const cm = editor.value
+  if (!cm) return
+  const { value: replacement = '', opt = {} } = (payload ?? {}) as {
+    value?: string
+    opt?: { isSingle?: boolean } & ISearchOptions
+  }
+
+  if (opt.isSingle) {
+    const index = sourceMatchIndex.value
+    const match = sourceMatches.value[index]
+    if (index < 0 || !match) return
+    // Replace only while the selection still is the active match.
+    const sel = cm.listSelections()[0]
+    const from = {
+      line: Math.min(sel.anchor.line, sel.head.line),
+      ch: Math.min(sel.anchor.ch, sel.head.ch)
+    }
+    const to = {
+      line: Math.max(sel.anchor.line, sel.head.line),
+      ch: Math.max(sel.anchor.ch, sel.head.ch)
+    }
+    if (posCompare(from, match.from) === 0 && posCompare(to, match.to) === 0) {
+      cm.replaceRange(replacement, match.from, match.to)
+    }
+  } else {
+    let query: string | RegExp
+    try {
+      query = buildSearchQuery(sourceSearchValue.value, opt)
+    } catch {
+      return
+    }
+    cm.operation(() => {
+      const cursor = cm.getSearchCursor(query, { line: 0, ch: 0 }, { multiline: true })
+      while (cursor.findNext()) cursor.replace(replacement)
+    })
+  }
+
+  // Re-run the search: the caret now sits at the end of the replacement, so
+  // "replace" advances to the following match, Typora-style.
+  handleSourceSearchValue({ value: sourceSearchValue.value, opt })
 }
 
 onMounted(() => {
@@ -364,14 +533,25 @@ onMounted(() => {
   bus.on('redo', handleRedo)
   bus.on('image-action', handleImageAction)
   bus.on('scroll-to-header', handleScrollToHeader)
+  bus.on('searchValue', handleSourceSearchValue)
+  bus.on('replaceValue', handleSourceReplaceValue)
+  bus.on('find-action', handleSourceFindAction)
 
   // CodeMirror's line tree relies on object identity and must not be proxied by Vue.
   const codeMirrorInstance = markRaw(codeMirror(container, codeMirrorConfig))
 
   // `markdown-math` wraps the standard Markdown mode and delegates `$...$` and
   // `$$...$$` spans to stex so subscript underscores in math do not flip the
-  // outer mode into emphasis. See src/renderer/src/codeMirror/markdownMathMode.js.
-  codeMirrorInstance.setOption('mode', 'markdown-math')
+  // outer mode into emphasis. The `-latex` variant additionally delegates
+  // `\(...\)` spans (mathLatexDelimiters preference).
+  const applyMathMode = (latex: boolean) => {
+    codeMirrorInstance.setOption('mode', latex ? 'markdown-math-latex' : 'markdown-math')
+  }
+  applyMathMode(mathLatexDelimiters.value)
+
+  watch(mathLatexDelimiters, (value) => {
+    applyMathMode(value)
+  })
 
   codeMirrorInstance.on('contextmenu', (_cm: CMInstance, event: Event) => {
     event.preventDefault()
@@ -381,6 +561,14 @@ onMounted(() => {
   if (isValidMuyaIndexCursor(muyaIndexCursor)) {
     const { anchor, focus } = muyaIndexCursor
     codeMirrorInstance.setSelection(anchor, focus, { scroll: true })
+    // Typora 1.13 parity: entering Source Code keeps the reading position.
+    // viewportMargin: Infinity means CodeMirror's own scroller never moves —
+    // scroll the outer container so the caret's line sits at the top of the
+    // viewport (same convention as scrollSourceEditorToLine).
+    if (sourceCodeContainer.value) {
+      const headLine = Math.max(0, Number(focus?.line) || 0)
+      sourceCodeContainer.value.scrollTop = codeMirrorInstance.heightAtLine(headLine, 'local')
+    }
   } else {
     setCursorAtFirstLine(codeMirrorInstance)
   }
@@ -403,6 +591,9 @@ onBeforeUnmount(() => {
   bus.off('redo', handleRedo)
   bus.off('image-action', handleImageAction)
   bus.off('scroll-to-header', handleScrollToHeader)
+  bus.off('searchValue', handleSourceSearchValue)
+  bus.off('replaceValue', handleSourceReplaceValue)
+  bus.off('find-action', handleSourceFindAction)
 
   const { cursor, markdown: newMarkdown } = getMarkdownAndCursor(editor.value)
   bus.emit('file-changed', {

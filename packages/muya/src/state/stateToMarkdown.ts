@@ -4,6 +4,7 @@ import type {
     IBlockQuoteState,
     IBulletListState,
     ICodeBlockState,
+    IDefListState,
     IDiagramState,
     IFootnoteBlockState,
     IFrontmatterState,
@@ -184,6 +185,16 @@ export default class ExportMarkdown {
             case 'block-quote':
                 this._insertLineBreak(result, indent);
                 result.push(this._serializeBlockquote(state, indent));
+                break;
+
+            case 'def-list':
+                this._insertLineBreak(result, indent);
+                result.push(this._serializeDefList(state, indent));
+                break;
+
+            case 'toc-block':
+                this._insertLineBreak(result, indent);
+                result.push(`${indent}${state.text}\n`);
                 break;
 
             case 'table':
@@ -437,6 +448,21 @@ export default class ExportMarkdown {
         const newIndent = `${indent}> `;
 
         return this._convertStatesToMarkdown(children, newIndent);
+    }
+
+    // `Term` / `: Definition` (pandoc / PHP Markdown Extra style). Term and
+    // description states are flat leaves; the description's `: ` prefix is
+    // re-emitted on serialization.
+    private _serializeDefList(state: IDefListState, indent: string) {
+        const lines: string[] = [];
+        for (const child of state.children) {
+            if (child.name === 'def-term')
+                lines.push(`${indent}${child.text}`);
+            else if (child.name === 'def-desc')
+                lines.push(`${indent}: ${child.text}`);
+        }
+
+        return lines.length > 0 ? `${lines.join('\n')}\n` : '';
     }
 
     private _serializeFootnote(state: IFootnoteBlockState, indent: string) {

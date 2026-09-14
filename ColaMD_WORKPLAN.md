@@ -66,27 +66,64 @@ vue-tsc and publishConfig for npm.
 
 ---
 
-## 2. Typora 对标结论（摘要）
+## 2. Typora 对标结论（2026-09-13 复核，基准：Typora 1.14 / 官网 + 1.9→1.14 更新日志）
 
-### 已具备（相对 MarkText）
+### 已具备（对齐或领先 Typora）
 
-- PDF 书签目录
-- 专注 / 打字机模式
-- 完整中文本地化
-- 图片复制到 `./assets`
-- Mermaid / Vega / PlantUML / Flowchart 等图表
-- 标题字号阶梯清晰
+- WYSIWYG 编辑（Muya）+ 源码模式（CodeMirror）、打字机 / 专注模式
+- PDF（含书签目录）/ HTML / DOCX 导出 + 打印；Pandoc 导入 13 格式
+- 图片：粘贴 / 拖放 / 复制到 `./assets` / PicGo 上传 / 缩放 / 悬浮预览 / 无引用清理
+- 数学（KaTeX + mhchem、GitLab ```math 块）、5 种图表引擎（Mermaid / Vega / PlantUML / Flowchart / Sequence，多于 Typora 的 3 种）
+- 表格全套 UI（拖拽移动行列、行列菜单、对齐、棋盘插入）、emoji、上下标、front matter（YAML/TOML/JSON）
+- 标签页 + 多窗口 + 会话恢复（Typora 无标签页）、命令面板（Typora 无）、版本历史侧栏
+- 33 内置主题 + `.colamd-theme` 自定义主题包 + 跟随系统深浅色 + 自定义 CSS + 导出主题（academic/liber）
+- 文件树 / TOC / 全局搜索（ripgrep）/ 历史侧栏，11 语言 i18n，拼写检查，自动更新
+- 旧表 P0 性能、P1 DOCX 导出、P2 图片清理、界面 Typora 化（UI.1–UI.5）均已完成
 
-### 主要差距（按优先级）
+### 主要差距（长期计划，逐项开工后勾选）
 
-| 优先级 | 项                     | 现状                                                         |
-| ------ | ---------------------- | ------------------------------------------------------------ |
-| P0     | 大文件性能             | 每击键全文序列化 + `getState` 深拷贝；1MB 输入延迟目标未达成 |
-| P1     | Word (.docx) 导出      | 仅 HTML + PDF；roadmap M4                                    |
-| P2     | 删除图片时清理磁盘文件 | 无引用检查 / unlink                                          |
-| P3     | 常驻格式工具栏         | 仅有选中浮动条                                               |
-| P3     | 大纲拖拽重排           | TOC 只读                                                     |
-| 暂缓   | MathJax                | 现用 KaTeX；换引擎与性能目标冲突                             |
+**Phase 1 — 语法快赢包**（每项 ≤1 天）
+
+- [x] **P1.1 脚注默认开启 ✅（schema + static 默认值翻转，老用户已存值不受影响）**：Typora 默认开；Muya `config/index.ts` `footnote:false`，翻转桌面 schema 默认值
+- [x] **P1.2 LaTeX 数学分隔符可配置 ✅（行内 (..)，Muya 词法/渲染/导出/CM 源码高亮 + 偏好开关；块级 [..] 挪 Phase 2）**：`\(...\)` / `\[...\]`（Typora 1.11）；Muya math 扩展目前只认 `$`/`$$`
+- [x] **P1.3 源码模式查找替换 ✅（CM searchcursor 后端，共用搜索条 UI）**：现有搜索 UI 仅 WYSIWYG 可用；同一面板路由到 CodeMirror
+- [x] **P1.4 选中文字粘贴 URL 自动变链接 ✅（括号转义/百分号编码，「粘贴为纯文本」不受影响）**：Typora smart paste；Muya `clipboard/paste.ts` 无此分支
+- [x] **P1.5 大纲跟随滚动高亮当前标题 ✅（WYSIWYG 滚动定位 + 源码光标定位，TOC 树 is-current 高亮）**：`toc.vue` 目前只支持点击跳转
+- [x] **P1.6 状态栏阅读时长 ✅（第 4 种循环模式，words/200）**：Typora 字数含 reading minutes；statusBar 加第 4 种循环模式
+- [x] **P1.7 模式切换保留滚动位置 ✅（进源码按光标行定位，回 WYSIWYG 滚动到恢复的光标处）**（Typora 1.13）：切源码模式目前重置 scrollTop
+
+**Phase 2 — 语法扩展包**（涉及 Muya 新块/内联类型，约 4–6 天）
+
+- [x] **P2.1 GitHub Alerts ✅**：`> [!NOTE]`/`[!TIP]`/`[!IMPORTANT]`/`[!WARNING]`/`[!CAUTION]`（Typora 1.10；选中段落 → 段落菜单转 Alert）
+- [x] **P2.2 定义列表 ✅** `term` / `: def`
+- [x] **P2.3 行内注释 ✅** `%%comment%%`（Typora 有，默认关）
+- [x] **P2.4 文档内 `[toc]` 目录块 ✅**
+- [x] **P2.5 文内锚点跳转 ✅（核实为已有能力，无需开发）**：`[text](#heading)` 点击跳转（Muya headingCopyLink 仅复制链接）
+
+**Phase 3 — 导出能力补全**（约 3–5 天）
+
+- [x] **P3.1 Pandoc 多格式导出 ✅**：EPUB / LaTeX / RTF / OPML，复用 `main/utils/pandoc.ts` 反向管线；EPUB 带大纲层级选项（Typora 1.9）
+- [x] **P3.2 导出为图片 ✅**：整页长图 PNG/JPEG（隐藏窗口全高渲染 + `capturePage`）
+- [x] **P3.3 PDF 导出主题/暗色 ✅（核实为已有能力）**：确认导出主题接线覆盖 PDF 路径，支持暗色 + 页面背景（Typora 1.10）
+
+**Phase 4 — 可选打磨（按需启动）**
+
+- [ ] 侧边栏文件显示配置：隐藏文件 / 非 Markdown 文件 / 自定义过滤（Typora 1.14）
+- [ ] 文件树键盘导航（Typora 1.14；先核实现状）
+- [ ] Markdown 设置改动后生效提示（Typora 1.13 reload prompt 形态）
+- [ ] 公式自动编号（KaTeX 渲染层）
+- [ ] 首次启动欢迎文档
+- [ ] 侧边栏 overlay 浮动模式（Typora 1.4+）
+- [ ] 浮动格式工具栏对齐 Typora 1.14 形态（已有选中浮动条，低优先）
+- [ ] 大纲拖拽重排（Typora 也没有，超集功能）
+- [ ] 远期生态：`colamd://` URL 协议 / VSCode 扩展（对应「Open in Typora」）、PicList 上传器；TextBundle 观察
+
+### 明确不做 / 维持既有决策
+
+- MathJax v4（Typora 1.13 已换）：维持暂缓，KaTeX 已达标，换引擎与性能目标冲突
+- 标题折叠、分屏预览：Typora 原生也没有，不做
+- macOS 26 Tahoe 适配：随 Electron 升级自然获得
+- 插件系统 / 协作 / AI：在 `CODE_REVIEW_AND_ROADMAP.md` L 梯队，不重复立项
 
 ---
 
@@ -137,6 +174,48 @@ vue-tsc and publishConfig for npm.
 - 菜单状态镜像：`store/editor.ts` 的 `SELECTION_CHANGE`/`SELECTION_FORMATS` 在推送原生菜单状态的同时落本地（`selectionMenuState`/`selectionFormatState`），HTML 菜单按 `main/menu/actions/paragraph.ts` 的 `updateSelectionMenus` 同规则解析勾选/禁用；两套菜单（mac 原生 / Win-Linux 自绘）动作语义保持一致。
 - `-webkit-app-region` 陷阱：scoped class（如 titleBar 的 `title-no-drag`）对其他组件无效，跨组件的 no-drag 必须在组件内显式声明，否则元素仍处于 drag 区、点击被系统吞掉。
 - 编辑菜单剪贴板项走主进程 `webContents.cut/copy/paste`（与原生菜单一致），不走 `document.execCommand`。
+
+### 第五梯队：Typora 对标 Phase 1 快赢包（2026-09-13 完成，未提交）
+
+> 明细见 §2 Phase 1 checklist。零新依赖。
+
+| 编号 | 内容 | 落点 |
+| ---- | ---- | ---- |
+| P1.1 | 脚注默认开启 | `preferences/schema.json` + `static/preference.json`（`footnote: true`，老用户已存值不受影响） |
+| P1.2 | 行内 LaTeX 数学分隔符 `\(...\)`（偏好开关，默认关） | Muya：`inlineRenderer/rules.ts` 新增 `inline_math_latex`（token 复用 `inline_math`，marker=`\(`）；`lexer.ts` `tryBacklash` 让位 + `tryChunks` 接线；`renderer/inlineMath.ts` marker 长度自适应（顺带修 `$$` 行内 dataset 偏移）；`marked/extensions/math.ts` + `lexBlock`/`getHighlightHtml`/`markdownToHtml` 贯通 `latexDelimiters`；桌面：schema/static/store 类型 + `editor.vue` options+watch + Markdown 设置页 + 11 语言文案；源码高亮：`markdownMathMode.ts` 注册 `markdown-math-latex` 双模式，`sourceCode.vue` 按偏好选模式。块级 `\[...\]` 涉及 math-block 状态/块 UI，挪 Phase 2 |
+| P1.3 | 源码模式查找替换 | `codeMirror/index.ts` 引入 searchcursor 插件；`sourceCode.vue` 新增 `searchValue`/`replaceValue`/`find-action` 后端（结果经同一 `editorStore.SEARCH` 通道喂给共用搜索条）；`editor.vue` 三个 WYSIWYG 处理器加 `sourceCode` 守卫；搜索条挂载条件 `!sourceCode` → `currentFile` |
+| P1.4 | 选中文字粘贴 URL 自动变链接 | `muya/clipboard/paste.ts`：smart-paste 分支（选择非空 + 单一 URL + 非「粘贴为纯文本」）；目的地括号 %28/%29、链接文本 `[]` 转义 |
+| P1.5 | 大纲跟随高亮 | `util/sourceModeToc.ts` 新增 `findActiveHeadingIndex`；`editor.vue` 滚动 → DOM 标题序 → `listToc[i].slug`，rAF 节流，emit `toc-active-changed`；`sourceCode.vue` 光标行同映射；`toc.vue` el-tree `setCurrentKey` + `is-current` 样式 + scrollIntoView |
+| P1.6 | 状态栏阅读时长 | `statusBar/index.vue` 第 4 循环模式（`ceil(words/200) min`）；11 语言 `menu.counter.readingTime` |
+| P1.7 | 模式切换保留滚动位置 | 进源码：按 `muyaIndexCursor.focus.line` 定位容器 scrollTop（替代回 0）；回 WYSIWYG：`handleFileChange` handoff 分支 `nextTick(scrollToCursor + updateActiveTocEntry)` |
+
+**验证**：muya 1482 单测全绿（新增 `inlineMathLatexDelimiters.spec.ts` 5 例 + `pasteUrlOverSelection.spec.ts` 5 例）；desktop 849 单测全绿；`vue-tsc` 两包通过。遗留：`applyPaste` 复杂度 warning 23→27（原本已超 20 阈值）；e2e（Playwright）未跑。
+
+### 第六梯队：Typora 对标 Phase 2 语法扩展包（2026-09-13 完成，未提交）
+
+> 明细见 §2 Phase 2 checklist。零新依赖；新增 6 个 muya 块/扩展文件 + 3 个测试文件。
+
+| 编号 | 内容 | 落点 |
+| ---- | ---- | ---- |
+| P2.1 | GitHub Alerts：`> [!NOTE]`/`[!TIP]`/`[!IMPORTANT]`/`[!WARNING]`/`[!CAUTION]` | `blockQuote/alert.ts` 纯函数（marker 识别 + DOM 类同步）；`BlockQuote.create` 播种 + `ParagraphContent.update` 每次渲染同步 `mu-alert mu-alert-{type}`；`blockSyntax.css` GitHub 配色（`color-mix` 背景着色 + ::before 图标）。标记文本保持可见可编辑；段落菜单「转 Alert」入口留待后续 |
+| P2.2 | 定义列表 `Term` / `: def`（`definitionList` 偏好，默认关） | 新块家族 `block/extra/defList/{index,defTerm,defDesc}`（dl/dt/dd 三块，平面结构无 item 层）；marked 块级扩展 `extensions/defList.ts`（行扫描词法 + `<dl>` 渲染）；`markdownToState`/`stateToMarkdown` 往返（`: ` 前缀仅在序列化时重写）；`ILexOption`/`MUYA_DEFAULT_OPTIONS`/`IMuyaOptions`/`PARSE_AFFECTING_OPTIONS` + 桌面 schema/static/store/editor.vue/设置页/11 语言 |
+| P2.3 | 行内注释 `%%comment%%`（`inlineComment` 偏好，默认关） | `inlineRenderer`：`inline_comment` 规则 + `tryInlineComment` 处理器（与 superSubScript 同模式）+ `renderer/inlineComment.ts`（暗淡斜体 span，标记隐藏可编辑）；marked 扩展（导出/剪贴板 → `<!--…-->` HTML 注释）；选项全链路贯通 |
+| P2.4 | 文档内 `[toc]` 目录块 | 新块家族 `block/extra/toc/{index,tocContainer,tocPreview}`（复用 math 块的 figure/container/preview + `mu-active` 显隐契约）；`markdownToState` paragraph 分支拦截 `^\[toc\]$` → toc-block；`stateToMarkdown` 原样回写；preview 渲染标题列表（json-change rAF 节流 + 签名门控），点击条目跳转 + 光标落位；`LANG_HASH` 补 `toc-block: ''`；muya 12 语言补「空目录」文案 |
+| P2.5 | 文内锚点跳转 | **核实为已有能力**：`format-click`（Ctrl+点击）/ LinkTools 跳转图标 → `FORMAT_LINK_CLICK` → `listToc` githubSlug 匹配 → `scroll-to-header`。无需开发 |
+
+**验证**：muya 1501 单测全绿（新增 `alert.spec.ts` 6 例 + `defList.spec.ts` 5 例 + `tocBlock.spec.ts` 3 例 + `inlineComment.spec.ts` 5 例）；desktop 849 单测全绿；`vue-tsc` 两包 0 错误。遗留：alert 的段落菜单转换入口、def-list 的 Enter 续行行为按默认块逻辑（可后续打磨）；e2e 未跑。
+
+### 第七梯队：Typora 对标 Phase 3 导出能力补全（2026-09-13 完成，未提交）
+
+> 明细见 §2 Phase 3 checklist。零新依赖（复用 pandoc CLI 与 Electron 原生能力）。
+
+| 编号 | 内容 | 落点 |
+| ---- | ---- | ---- |
+| P3.1 | Pandoc 导出 EPUB / LaTeX / RTF / OPML | `main/utils/pandoc.ts` 新增 `exportViaPandoc()`：临时 md → `pandoc -f markdown -t <fmt> -o <out>`（二进制格式走 `-o`，不经 stdout 字符串）；EPUB 带 `--metadata title`；主进程 `handleResponseForExport` 分支 + 对话前 `pandoc.exists()` 预检（缺 pandoc 提示，不弹保存框）；`ExportType`/`EXTENSION_HASN`/过滤器 + 菜单（原生与自绘两套）+ 11 语言；store `EXPORT` payload 增 `markdown` 字段。EPUB 大纲层级（`--epub-chapter-level`）暂走 pandoc 默认值，需要时在导出参数里加 |
+| P3.2 | 导出为整页长图 PNG/JPEG | `main/utils/imageExport.ts` `exportDocumentImage()`：offscreen 隐藏窗口加载导出 HTML → `document.fonts.ready` → 量取 scrollWidth/Height（钳制 32767 上限）→ `setContentSize` → `capturePage` → toPNG/toJPEG；`EXTENSION_HASN` 补 png/jpeg（MarkText 遗留类型终于落地）；菜单「图片 (PNG)」；renderer 用 `printOptimization: false` 的 styled HTML 保留主题观感 |
+| P3.3 | PDF 导出主题/暗色 | **核实为已有能力**：`getCssForOptions`（academic/liber 内联 + 自定义磁盘主题）→ `exportStyledHTML(extraCss)` → `printer.renderMarkdown` → `printToPDF(printBackground: true)`，主题/页边距/页眉页脚完整进入 PDF 路径；自定义暗色导出主题即可产出暗底 PDF。无需开发 |
+
+**验证**：desktop 855 单测全绿（新增 `pandoc-export.spec.ts` 5 例：参数组装/元数据/失败清理）；`vue-tsc` 0 错误；eslint 无 error。长图与 pandoc 真实转换需实机走查（offscreen 渲染与 pandoc CLI 安装因环境而异）。
 
 ---
 

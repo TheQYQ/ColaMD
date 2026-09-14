@@ -172,6 +172,39 @@ export default function(
           click(_menuItem, browserWindow) {
             actions.exportFile(browserWindow as BrowserWindow | undefined, 'docx')
           }
+        },
+        {
+          label: t('menu.file.exportImage'),
+          click(_menuItem, browserWindow) {
+            actions.exportFile(browserWindow as BrowserWindow | undefined, 'png')
+          }
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: t('menu.file.exportEpub'),
+          click(_menuItem, browserWindow) {
+            actions.exportFile(browserWindow as BrowserWindow | undefined, 'epub')
+          }
+        },
+        {
+          label: t('menu.file.exportLatex'),
+          click(_menuItem, browserWindow) {
+            actions.exportFile(browserWindow as BrowserWindow | undefined, 'latex')
+          }
+        },
+        {
+          label: t('menu.file.exportRtf'),
+          click(_menuItem, browserWindow) {
+            actions.exportFile(browserWindow as BrowserWindow | undefined, 'rtf')
+          }
+        },
+        {
+          label: t('menu.file.exportOpml'),
+          click(_menuItem, browserWindow) {
+            actions.exportFile(browserWindow as BrowserWindow | undefined, 'opml')
+          }
         }
       ]
     },

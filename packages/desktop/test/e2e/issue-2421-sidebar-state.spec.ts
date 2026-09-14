@@ -1,16 +1,17 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown } from './helpers'
+import { launchWithMarkdown, clickMenuById, markAllTabsClean } from './helpers'
 
-// #2421 — toggling the sidebar via its left-column icons must not lose state.
-// Two bugs: (1) collapsing to the icon strip persisted the clamped 220px width
-// instead of the real width, so re-expanding shrank the sidebar; (2) the tree's
-// collapsed sections (Opened files / Directories) are local refs under a v-if,
-// so collapsing the sidebar destroyed the tree and reset them on re-expand.
-// These drive the real built app.
+// #2421 — toggling the sidebar must not lose state.
+// Two bugs (fixed against the old icon-strip sidebar, re-locked here against
+// the Typora-style tab sidebar): (1) collapsing persisted the clamped 220px
+// width instead of the real width, so re-expanding shrank the sidebar;
+// (2) the tree's collapsed sections reset when the sidebar was toggled.
+// Toggle mechanism now: clicking the active text tab closes the sidebar
+// (`v-show`), clicking a tab re-opens it. These drive the real built app.
 
-const filesIcon = (page: Page) =>
-  page.locator('.side-bar .left-column > ul').first().locator('li').nth(0)
+const filesTab = (page: Page) =>
+  page.locator('.side-bar .side-bar-tab').first()
 
 const sideBarWidth = (page: Page) =>
   page.evaluate(() => {
@@ -18,7 +19,13 @@ const sideBarWidth = (page: Page) =>
     return el ? Math.round(el.getBoundingClientRect().width) : 0
   })
 
-test.describe('#2421 sidebar state survives icon toggle', () => {
+const sideBarVisible = (page: Page): Promise<boolean> =>
+  page.evaluate(() => {
+    const el = document.querySelector('.side-bar') as HTMLElement | null
+    return !!(el && el.offsetParent !== null)
+  })
+
+test.describe('#2421 sidebar state survives toggle', () => {
   let app: ElectronApplication
   let page: Page
 
@@ -26,20 +33,13 @@ test.describe('#2421 sidebar state survives icon toggle', () => {
     const launched = await launchWithMarkdown('# Doc\n\n## A\n\n## B\n')
     app = launched.app
     page = launched.page
-    // Opening a doc with headings auto-shows the TOC panel asynchronously
-    // (auto-show-toc.spec.ts). This spec drives the FILES panel — with the
-    // TOC active, clicking the files icon would switch panels instead of
-    // collapsing. Let the auto-show settle, then activate files if needed.
-    await page.waitForTimeout(300)
-    const filesActive = await filesIcon(page).evaluate((el) => el.classList.contains('active'))
-    if (!filesActive) {
-      await filesIcon(page).click()
-    }
-    // The files panel is the active right column; make sure it is open + wide.
+    // A file open starts with the sidebar visible on the default 'files'
+    // panel (only the TOC auto-show was removed). Proceed directly; the
+    // files tab is active, so its click takes the close branch below.
     await page.waitForFunction(
       () => {
         const el = document.querySelector('.side-bar') as HTMLElement | null
-        return !!(el && el.offsetParent !== null && el.getBoundingClientRect().width > 220)
+        return !!(el && el.offsetParent !== null)
       },
       null,
       { timeout: 5000 }
@@ -47,7 +47,10 @@ test.describe('#2421 sidebar state survives icon toggle', () => {
   })
 
   test.afterAll(async() => {
-    if (app) await app.close()
+    if (app) {
+      await markAllTabsClean(app, page)
+      await app.close()
+    }
   })
 
   test('collapsing then re-expanding preserves a widened sidebar width', async() => {
@@ -72,21 +75,15 @@ test.describe('#2421 sidebar state survives icon toggle', () => {
     const widened = await sideBarWidth(page)
     expect(widened).toBeGreaterThanOrEqual(300)
 
-    await filesIcon(page).click() // collapse to icon strip
-    await page.waitForFunction(
-      () => {
-        const el = document.querySelector('.side-bar') as HTMLElement | null
-        return !!el && el.getBoundingClientRect().width <= 50
-      },
-      null,
-      { timeout: 5000 }
-    )
+    await filesTab(page).click() // collapse (active tab click closes)
+    await expect.poll(sideBarVisible.bind(null, page)).toBe(false)
 
-    await filesIcon(page).click() // re-expand
+    // The tab row is inside the hidden sidebar — re-open via the View menu.
+    await clickMenuById(app, 'sideBarMenuItem')
     await page.waitForFunction(
       () => {
         const el = document.querySelector('.side-bar') as HTMLElement | null
-        return !!el && el.getBoundingClientRect().width > 50
+        return !!(el && el.offsetParent !== null)
       },
       null,
       { timeout: 5000 }
@@ -113,10 +110,10 @@ test.describe('#2421 sidebar state survives icon toggle', () => {
       { timeout: 5000 }
     )
 
-    // Toggle the whole sidebar off and back on via its icon.
-    await filesIcon(page).click()
-    await page.waitForTimeout(250)
-    await filesIcon(page).click()
+    // Toggle the whole sidebar off (active tab click) and back on (View menu).
+    await filesTab(page).click()
+    await expect.poll(sideBarVisible.bind(null, page)).toBe(false)
+    await clickMenuById(app, 'sideBarMenuItem')
     await page.waitForFunction(
       () => {
         const el = document.querySelector('.side-bar .opened-files') as HTMLElement | null

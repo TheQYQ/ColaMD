@@ -81,3 +81,47 @@ export function findMarkdownHeadingLine(markdown: string, headingIndex: number):
 
   return -1
 }
+
+/**
+ * Inverse of `findMarkdownHeadingLine`: the document-order index of the last
+ * heading at or above `cursorLine` (-1 when the caret sits above the first
+ * heading). One pass, same heading rules as `findMarkdownHeadingLine`, so the
+ * index maps 1:1 onto the muya TOC entry order. Used by Source Code mode to
+ * keep the sidebar outline highlighted on the section the caret is in.
+ */
+export function findActiveHeadingIndex(markdown: string, cursorLine: number): number {
+  const lines = markdown.split('\n')
+  let fence: string | null = null
+  let index = -1
+
+  const bound = Math.min(cursorLine, lines.length - 1)
+  for (let i = 0; i <= bound; i++) {
+    const line = lines[i]
+
+    // Toggle fenced-code-block state on ``` / ~~~ markers.
+    const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})/)
+    if (fenceMatch) {
+      const marker = fenceMatch[1][0]
+      if (fence === null) fence = marker
+      else if (marker === fence) fence = null
+      continue
+    }
+    if (fence !== null) continue
+
+    // ATX heading.
+    if (/^ {0,3}#{1,6}(?:\s|$)/.test(line)) {
+      index++
+      continue
+    }
+
+    // Setext heading: a non-blank line immediately followed by an `===`/`---`
+    // underline.
+    const next = lines[i + 1]
+    if (line.trim() !== '' && next !== undefined && /^ {0,3}(?:=+|-+)\s*$/.test(next)) {
+      index++
+      i++ // consume the underline line
+    }
+  }
+
+  return index
+}

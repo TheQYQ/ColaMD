@@ -569,6 +569,100 @@ function applyHtmlBlockPaste(
     newBlock.lastContentInDescendant().setCursor(offset, offset, true);
 }
 
+// Firefox only puts the URL in text/plain; promote it so the HTML pipeline
+// auto-links it. Apple Numbers likewise only provides a raw `<table>` blob.
+function promotePlainTextToHtml(text: string, html: string): string {
+    if (URL_REG.test(text) && !/\s/.test(text) && !html)
+        return `<a href="${text}">${text}</a>`;
+
+    if (!html && isStandaloneTableHtml(text))
+        return text;
+
+    return html;
+}
+
+// Snapshot the cursor before HTML normalization detaches anything; a bare
+// pasted URL keeps its link when the tokenizer would not auto-link it anyway.
+async function normalizeClipboardHtml(
+    html: string,
+    text: string,
+    anchorBlock: Content,
+    hasClipboardHtml: boolean,
+): Promise<string> {
+    const cursor = anchorBlock.getCursor();
+
+    return normalizePastedHTML(html, {
+        preserveBareUrlLinks: hasClipboardHtml
+            && cursor != null
+            && shouldPreserveBareUrlLinkForPaste(text, anchorBlock.text, cursor.start, cursor.end),
+    });
+}
+
+// Smart paste (Typora parity): a single URL pasted over a non-empty selection
+// wraps the selection as `[text](url)` instead of replacing it. Returns the
+// markdown to parse, or null when the smart-paste shape does not apply.
+function smartPasteMarkdown(
+    text: string,
+    content: string,
+    start: { offset: number },
+    end: { offset: number },
+    pasteType: PasteType,
+): Nullable<string> {
+    if (pasteType === PasteType.PASTE_AS_PLAIN_TEXT)
+        return null;
+
+    if (start.offset === end.offset || !isSinglePlainUrl(text))
+        return null;
+
+    const selectionText = content.substring(start.offset, end.offset);
+    if (selectionText.length === 0)
+        return null;
+
+    // Parens in the destination are percent-encoded so they cannot terminate
+    // the `(...)`; brackets in the link text are escaped to keep `[text](url)`.
+    const dest = text.replace(/\(/g, '%28').replace(/\)/g, '%29');
+    const escapedText = selectionText.replace(/([[\]])/g, '\\$1');
+
+    return `[${escapedText}](${dest})`;
+}
+
+// Route the normalized payload: parsed markdown for rich/structure anchors,
+// literal insertion for code-ish anchors, plain-text-HTML and live html-block
+// for the remaining copy types.
+function dispatchPasteByCopyType(
+    clipboard: Clipboard,
+    ctx: IPasteContext,
+    copyType: string,
+    pasteType: PasteType,
+    text: string,
+    markdown: string,
+): void {
+    if (/html|text/.test(copyType)) {
+        const isLiteralAnchor
+            = ctx.anchorBlock.blockName === 'language-input'
+                || ctx.anchorBlock.blockName === 'table.cell.content'
+                || ctx.anchorBlock.blockName === 'codeblock.content';
+        const isPlainInlineSpaces = /^ +$/.test(text);
+
+        if (isLiteralAnchor || isPlainInlineSpaces)
+            applyLiteralPaste(clipboard, ctx, isPlainInlineSpaces ? text : markdown);
+        else
+            applyParsedPaste(clipboard, ctx, markdown);
+
+        return;
+    }
+
+    if (pasteType === PasteType.PASTE_AS_PLAIN_TEXT) {
+        // Paste as Plain Text inserts block-level HTML as literal text, not a
+        // live html-block (muyajs `pasteAsPlainText` copyAsHtml branch).
+        applyPlainTextBlockHtml(clipboard, ctx, text);
+
+        return;
+    }
+
+    applyHtmlBlockPaste(clipboard, ctx, text);
+}
+
 // Everything the paste pipeline needs, snapshotted up front so it survives the
 // async hops (image hook, HTML normalization) without re-reading a possibly
 // detached clipboard.
@@ -625,30 +719,8 @@ async function applyPaste(clipboard: Clipboard, data: IPasteData): Promise<void>
     if (await tryPasteImage(clipboard, anchorBlock, imageFile))
         return;
 
-    // Support pasted URLs from Firefox.
-    if (URL_REG.test(text) && !/\s/.test(text) && !html)
-        html = `<a href="${text}">${text}</a>`;
-
-    // Apple Numbers and a handful of other sources only put a raw
-    // `<table>...</table>` blob in text/plain. Promote it to the HTML
-    // slot so it goes through the HTML→Markdown converter rather than
-    // being inserted verbatim.
-    if (!html && isStandaloneTableHtml(text))
-        html = text;
-
-    const cursorBeforeNormalize = anchorBlock.getCursor();
-
-    // Remove crap from HTML such as meta data and styles.
-    html = await normalizePastedHTML(html, {
-        preserveBareUrlLinks: hasClipboardHtml
-            && cursorBeforeNormalize != null
-            && shouldPreserveBareUrlLinkForPaste(
-                text,
-                anchorBlock.text,
-                cursorBeforeNormalize.start,
-                cursorBeforeNormalize.end,
-            ),
-    });
+    html = promotePlainTextToHtml(text, html);
+    html = await normalizeClipboardHtml(html, text, anchorBlock, hasClipboardHtml);
     const copyType = getCopyTextType(html, text, pasteType);
 
     const { start, end } = anchorBlock.getCursor()!;
@@ -663,35 +735,22 @@ async function applyPaste(clipboard: Clipboard, data: IPasteData): Promise<void>
         content,
     };
 
-    if (/html|text/.test(copyType)) {
-        const markdown
-            = copyType === 'html' && anchorBlock.blockName !== 'codeblock.content'
-                ? new HtmlToMarkdown({ bulletListMarker }).generate(html)
-                : text;
+    const smartMarkdown = smartPasteMarkdown(text, content, start, end, pasteType);
+    if (smartMarkdown != null) {
+        applyParsedPaste(clipboard, ctx, smartMarkdown);
 
-        // Every non-literal anchor always parses through `MarkdownToState`,
-        // regardless of line count, so a single line of `# heading` / `- list`
-        // / a one-row table becomes real structure.
-        const isLiteralAnchor
-            = anchorBlock.blockName === 'language-input'
-                || anchorBlock.blockName === 'table.cell.content'
-                || anchorBlock.blockName === 'codeblock.content';
+        return;
+    }
 
-        const isPlainInlineSpaces = /^ +$/.test(text);
+    const markdown
+        = copyType === 'html' && anchorBlock.blockName !== 'codeblock.content'
+            ? new HtmlToMarkdown({ bulletListMarker }).generate(html)
+            : text;
 
-        if (isLiteralAnchor || isPlainInlineSpaces)
-            applyLiteralPaste(clipboard, ctx, isPlainInlineSpaces ? text : markdown);
-        else
-            applyParsedPaste(clipboard, ctx, markdown);
-    }
-    else if (pasteType === PasteType.PASTE_AS_PLAIN_TEXT) {
-        // Paste as Plain Text inserts block-level HTML as literal text, not a
-        // live html-block (muyajs `pasteAsPlainText` copyAsHtml branch).
-        applyPlainTextBlockHtml(clipboard, ctx, text);
-    }
-    else {
-        applyHtmlBlockPaste(clipboard, ctx, text);
-    }
+    // Every non-literal anchor always parses through `MarkdownToState`,
+    // regardless of line count, so a single line of `# heading` / `- list`
+    // / a one-row table becomes real structure.
+    dispatchPasteByCopyType(clipboard, ctx, copyType, pasteType, text, markdown);
 }
 
 // Entry for a trusted DOM `paste` event (native Cmd/Ctrl+V).

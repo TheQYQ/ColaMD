@@ -265,6 +265,21 @@
   "footnote": {
     "description": "Markdown-Enable pandoc's markdown extension footnote.",
     "type": "boolean",
+    "default": true
+  },
+  "mathLatexDelimiters": {
+    "description": "Markdown-Enable LaTeX style math delimiters \\(...\\) for inline math.",
+    "type": "boolean",
+    "default": false
+  },
+  "inlineComment": {
+    "description": "Markdown-Enable Typora style inline comments %%comment%%.",
+    "type": "boolean",
+    "default": false
+  },
+  "definitionList": {
+    "description": "Markdown-Enable definition lists (term / : definition).",
+    "type": "boolean",
     "default": false
   },
   "isHtmlEnabled": {
@@ -373,6 +388,16 @@
     "description": "General--Whether to show opened files in the sidebar.",
     "type": "boolean",
     "default": true
+  },
+  "treeShowNonMarkdownFiles": {
+    "description": "General--Whether the file tree lists non-markdown files.",
+    "type": "boolean",
+    "default": false
+  },
+  "treeShowHiddenFiles": {
+    "description": "General--Whether the file tree lists hidden (dot) files and directories.",
+    "type": "boolean",
+    "default": false
   },
   "searchExclusions": {
     "description": "Searcher--List of glob patterns to exclude from search.--internal",

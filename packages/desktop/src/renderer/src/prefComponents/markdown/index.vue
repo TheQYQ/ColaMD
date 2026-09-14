@@ -63,6 +63,21 @@
           :on-change="(value) => onSelectChange('footnote', value)"
           more="https://pandoc.org/MANUAL.html#footnotes"
         />
+        <bool
+          :description="t('preferences.markdown.extensions.mathLatexDelimiters')"
+          :bool="mathLatexDelimiters"
+          :on-change="(value) => onSelectChange('mathLatexDelimiters', value)"
+        />
+        <bool
+          :description="t('preferences.markdown.extensions.inlineComment')"
+          :bool="inlineComment"
+          :on-change="(value) => onSelectChange('inlineComment', value)"
+        />
+        <bool
+          :description="t('preferences.markdown.extensions.definitionList')"
+          :bool="definitionList"
+          :on-change="(value) => onSelectChange('definitionList', value)"
+        />
       </template>
     </compound>
 
@@ -159,6 +174,9 @@ const {
   frontmatterType,
   superSubScript,
   footnote,
+  mathLatexDelimiters,
+  inlineComment,
+  definitionList,
   isHtmlEnabled,
   isGitlabCompatibilityEnabled,
   sequenceTheme,

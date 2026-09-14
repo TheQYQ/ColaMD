@@ -72,7 +72,6 @@
         </div>
       </template>
     </el-dialog>
-    <editor-search v-if="!sourceCode" />
   </div>
 </template>
 
@@ -114,7 +113,6 @@ import {
 import { exportStyledHTML, type HeaderFooterPart } from '@/util/exportHtml'
 import { exportDocx } from '@/util/exportDocx'
 import { applyCursor, isIndexCursor } from '@/util/cursor'
-import EditorSearch from '../search/index.vue'
 import bus from '@/bus'
 import { DEFAULT_EDITOR_FONT_FAMILY, DEFAULT_CODE_FONT_FAMILY } from '@/config'
 import notice from '@/services/notification'
@@ -222,6 +220,9 @@ const {
   frontmatterType,
   superSubScript,
   footnote,
+  mathLatexDelimiters,
+  inlineComment,
+  definitionList,
   isHtmlEnabled,
   isGitlabCompatibilityEnabled,
   lineHeight,
@@ -675,6 +676,24 @@ watch(superSubScript, (value, oldValue) => {
 watch(footnote, (value, oldValue) => {
   if (value !== oldValue && editor.value) {
     editor.value.setOptions({ footnote: value }, true)
+  }
+})
+
+watch(mathLatexDelimiters, (value, oldValue) => {
+  if (value !== oldValue && editor.value) {
+    editor.value.setOptions({ mathLatexDelimiters: value }, true)
+  }
+})
+
+watch(inlineComment, (value, oldValue) => {
+  if (value !== oldValue && editor.value) {
+    editor.value.setOptions({ inlineComment: value }, true)
+  }
+})
+
+watch(definitionList, (value, oldValue) => {
+  if (value !== oldValue && editor.value) {
+    editor.value.setOptions({ definitionList: value }, true)
   }
 })
 
@@ -1178,13 +1197,17 @@ const toSearchMatches = (result: unknown) => {
   }
 }
 
+// Search bus handlers drive muya in WYSIWYG mode; in source-code mode the
+// CodeMirror instance in sourceCode.vue owns the same bus events.
 const handleSearch = (payload: unknown) => {
+  if (sourceCode.value) return
   const { value, opt } = payload as { value: string; opt: unknown }
   editorStore.SEARCH(toSearchMatches(editor.value.search(value, opt)))
   scrollToHighlight()
 }
 
 const handReplace = (payload: unknown) => {
+  if (sourceCode.value) return
   const { value, opt } = payload as { value: string; opt: unknown }
   editorStore.SEARCH(toSearchMatches(editor.value.replace(value, opt)))
 }
@@ -1199,6 +1222,39 @@ const handleUploadedImage = (url: unknown, deletionUrl?: unknown) => {
 // The legacy engine exposed the same element as `muya.container`.
 const getScrollContainer = (): HTMLElement | null =>
   (editor.value?.domNode as HTMLElement | undefined) ?? null
+
+// Sidebar outline follow (Typora parity): highlight the TOC entry of the
+// section currently in view. Heading blocks render in document order and the
+// store's listToc entries match that order, so the Nth visible heading maps to
+// the Nth TOC entry. Emits `toc-active-changed` with the entry's slug (empty
+// when the viewport sits above the first heading).
+const activeTocSlug = ref('')
+let tocHighlightScheduled = false
+const updateActiveTocEntry = () => {
+  if (tocHighlightScheduled) return
+  tocHighlightScheduled = true
+  requestAnimationFrame(() => {
+    tocHighlightScheduled = false
+    const container = getScrollContainer()
+    if (!container || sourceCode.value) return
+    const headings = container.querySelectorAll('.mu-atx-heading, .mu-setext-heading')
+    let slug = ''
+    if (headings.length > 0) {
+      const containerTop = container.getBoundingClientRect().top
+      let activeIndex = -1
+      for (let i = 0; i < headings.length; i++) {
+        const top = (headings[i] as HTMLElement).getBoundingClientRect().top - containerTop
+        if (top <= container.clientHeight * 0.3) activeIndex = i
+        else break
+      }
+      if (activeIndex >= 0) slug = editorStore.listToc[activeIndex]?.slug ?? ''
+    }
+    if (slug !== activeTocSlug.value) {
+      activeTocSlug.value = slug
+      bus.emit('toc-active-changed', slug)
+    }
+  })
+}
 
 // Viewport-relative caret rect (mirrors the engine's `Selection.getCursorCoords`
 // / legacy `cursorCoords`). Used for typewriter + keep-cursor-visible scrolling
@@ -1291,6 +1347,7 @@ const scrollToElement = (selector: string) => {
 }
 
 const handleFindAction = (action: unknown) => {
+  if (sourceCode.value) return
   editorStore.SEARCH(toSearchMatches(editor.value.find(action)))
   scrollToHighlight()
 }
@@ -1312,7 +1369,7 @@ const handleExport = async (options: unknown) => {
   const opts = options as ExportOptions
   const { type, headerFooterStyled, htmlTitle } = opts
 
-  if (!/^pdf|print|styledHtml|docx$/.test(type)) {
+  if (!/^pdf|print|styledHtml|docx|png|jpeg|epub|latex|rtf|opml$/.test(type)) {
     throw new Error(`Invalid type to export: "${type}".`)
   }
 
@@ -1404,6 +1461,38 @@ const handleExport = async (options: unknown) => {
         })
         handlePrintServiceClearup()
       }
+      break
+    }
+    case 'png':
+    case 'jpeg': {
+      try {
+        // Not print-optimized: the long image keeps the styled document look
+        // (themes, background) instead of paginated print furniture.
+        const content = await exportStyledHTML(editor.value, markdown, {
+          title: htmlTitle || '',
+          printOptimization: false,
+          extraCss,
+          toc: htmlToc,
+          dir: props.textDirection
+        })
+        editorStore.EXPORT({ type, content })
+      } catch (err) {
+        log.error('Failed to export document:', err)
+        notice.notify({
+          title: t('editor.export.failed', { type: 'Image' }),
+          type: 'error',
+          message:
+            (err as { message?: string } | null | undefined)?.message ?? t('editor.export.error')
+        })
+      }
+      break
+    }
+    case 'epub':
+    case 'latex':
+    case 'rtf':
+    case 'opml': {
+      // Pandoc-converted formats: raw markdown goes to the CLI in main.
+      editorStore.EXPORT({ type, markdown })
       break
     }
     case 'print': {
@@ -1618,6 +1707,13 @@ const handleFileChange = (payload: unknown) => {
       // Map the CodeMirror `{ line, ch }` cursor onto a block-key cursor so the
       // WYSIWYG caret lands where the source-mode cursor was (PG2).
       editor.value.setCursorByOffset(muyaIndexCursor)
+      // Typora 1.13 parity: returning from Source Code keeps the reading
+      // position — bring the restored caret into view instead of leaving the
+      // viewport wherever the pre-source-mode scroll happened to be.
+      nextTick(() => {
+        scrollToCursor()
+        updateActiveTocEntry()
+      })
     } else if (isReload) {
       // External disk reload (`loadChange`): the tab is already the live engine
       // document, so record the new on-disk content as a SINGLE invertible undo
@@ -1833,6 +1929,9 @@ onMounted(() => {
     frontmatterType: frontmatterType.value,
     superSubScript: superSubScript.value,
     footnote: footnote.value,
+    mathLatexDelimiters: mathLatexDelimiters.value,
+    inlineComment: inlineComment.value,
+    definitionList: definitionList.value,
     disableHtml: !isHtmlEnabled.value,
     isGitlabCompatibilityEnabled: isGitlabCompatibilityEnabled.value,
     hideQuickInsertHint: hideQuickInsertHint.value,
@@ -1904,6 +2003,9 @@ onMounted(() => {
     scrollToCursor()
   }
 
+  // Initial outline highlight once the document has laid out.
+  nextTick(updateActiveTocEntry)
+
   // listen for bus events.
   bus.on('file-loaded', setMarkdownToEditor)
   bus.on('invalidate-image-cache', handleInvalidateImageCache)
@@ -1969,6 +2071,7 @@ onMounted(() => {
     if (currentFile.value) {
       editorStore.updateScrollPosition(currentFile.value.id, container.scrollTop)
     }
+    updateActiveTocEntry()
   }
   container.addEventListener('scroll', scrollHandler, { passive: true })
 

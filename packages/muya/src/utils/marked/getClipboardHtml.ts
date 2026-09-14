@@ -3,7 +3,9 @@ import { Marked } from 'marked';
 import { EXPORT_DOMPURIFY_CONFIG } from '../../config';
 import { sanitize } from '../index';
 import cjkEmStrongExtension from './extensions/cjkEmStrong';
+import defListExtension from './extensions/defList';
 import footnoteExtension from './extensions/footnote';
+import inlineCommentExtension from './extensions/inlineComment';
 import mathExtension from './extensions/math';
 import superSubScriptExtension from './extensions/superSubscript';
 import fm, { frontMatterRender } from './frontMatter';
@@ -12,8 +14,15 @@ import walkTokens from './walkTokens';
 
 export function getClipBoardHtml(src: string, options: ILexOption = {}) {
     options = Object.assign({}, DEFAULT_OPTIONS, options);
-    const { footnote, frontMatter, math, isGitlabCompatibilityEnabled, superSubScript }
-        = options;
+    const {
+        footnote,
+        frontMatter,
+        math,
+        isGitlabCompatibilityEnabled,
+        superSubScript,
+        inlineComment,
+        definitionList,
+    } = options;
     let html = '';
 
     // Use a fresh Marked instance per call to avoid polluting the global
@@ -41,6 +50,12 @@ export function getClipBoardHtml(src: string, options: ILexOption = {}) {
 
     if (superSubScript)
         marked.use(superSubScriptExtension());
+
+    if (inlineComment)
+        marked.use(inlineCommentExtension());
+
+    if (definitionList)
+        marked.use(defListExtension());
 
     if (footnote)
         marked.use(footnoteExtension());

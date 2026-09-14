@@ -95,6 +95,7 @@ export const zhTW = {
         'Input Mathematical Formula...': '輸入數學公式...',
         'Input Front Matter...': '輸入頁首資訊...',
         'Invalid Mathematical Formula': '數學公式錯誤',
+        'Empty Table of Contents': '空目錄',
         'Empty Mathematical Formula': '空數學公式',
     },
 };
