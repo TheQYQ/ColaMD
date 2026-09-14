@@ -120,6 +120,11 @@ test.describe('Parity G8 — language switch refreshes inline hints', () => {
         return p ? p.getAttribute('empty-hint') : null
       })
 
+    // Ensure we start from English regardless of machine locale.
+    await sendIpcToRenderer(app, 'language-changed', 'en')
+    await sendIpcToRenderer(app, 'mt::user-preference', { language: 'en' })
+    await page.waitForTimeout(400)
+
     const enHint = await hintFor()
     expect(enHint).toBeTruthy()
 

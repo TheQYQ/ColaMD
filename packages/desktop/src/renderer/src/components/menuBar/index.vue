@@ -61,7 +61,7 @@ const openIndex = ref<number | null>(null)
 const openItems = ref<MenuItemDef[]>([])
 const dropdownStyle = ref<Record<string, string>>({})
 
-const openMenu = async(index: number, anchor?: HTMLElement): Promise<void> => {
+const openMenu = async (index: number, anchor?: HTMLElement): Promise<void> => {
   const menu = menus.value[index]
   if (!menu) return
   const el =
@@ -91,12 +91,12 @@ const toggleMenu = (index: number, event: MouseEvent): void => {
     closeAll()
     return
   }
-  void openMenu(index, event.currentTarget as HTMLElement)
+  openMenu(index, event.currentTarget as HTMLElement)
 }
 
 const hoverMenu = (index: number, event: MouseEvent): void => {
   if (openIndex.value === null || openIndex.value === index) return
-  void openMenu(index, event.currentTarget as HTMLElement)
+  openMenu(index, event.currentTarget as HTMLElement)
 }
 
 const closeAll = (): void => {
@@ -104,7 +104,7 @@ const closeAll = (): void => {
   openItems.value = []
 }
 
-const fetchRecentFiles = async(): Promise<void> => {
+const fetchRecentFiles = async (): Promise<void> => {
   try {
     const list = await window.electron.ipcRenderer.invoke('mt::menu::get-recent-documents')
     recentFiles.value = Array.isArray(list) ? (list as string[]) : []
@@ -129,7 +129,7 @@ const onKeyDown = (event: KeyboardEvent): void => {
   if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
     const delta = event.key === 'ArrowLeft' ? -1 : 1
     const next = (openIndex.value + delta + menus.value.length) % menus.value.length
-    void openMenu(next)
+    openMenu(next)
     event.preventDefault()
   }
 }
