@@ -108,11 +108,8 @@ export const useLayoutStore = defineStore('layout', () => {
     SET_LAYOUT(
       {
         rightColumn: layout.rightColumn,
-        // Typora-style chrome: a restored session never re-opens the sidebar;
-        // it stays hidden until the user opens it (view menu / shortcut /
-        // status-bar toggle). `showTabBar` keeps its restored value because
-        // tab visibility is session state, not chrome.
-        showSideBar: false,
+        // Restore the last sidebar open/closed state from the session buffer.
+        showSideBar: layout.showSideBar,
         showTabBar: layout.showTabBar
       },
       { scheduleBufferUpdate: false }
