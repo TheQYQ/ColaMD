@@ -72,7 +72,6 @@
         </div>
       </template>
     </el-dialog>
-    <editor-search v-if="currentFile" />
   </div>
 </template>
 
@@ -114,7 +113,6 @@ import {
 import { exportStyledHTML, type HeaderFooterPart } from '@/util/exportHtml'
 import { exportDocx } from '@/util/exportDocx'
 import { applyCursor, isIndexCursor } from '@/util/cursor'
-import EditorSearch from '../search/index.vue'
 import bus from '@/bus'
 import { DEFAULT_EDITOR_FONT_FAMILY, DEFAULT_CODE_FONT_FAMILY } from '@/config'
 import notice from '@/services/notification'

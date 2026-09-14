@@ -50,7 +50,9 @@ test.describe('Find bar', () => {
 
 // ---------------------------------------------------------------------------
 // Coverage backfill (checklist items 152, 153, 180, 181, 183, 184, 185, 186,
-// 187, 189, 191, 194). Each test exercises the DESKTOP find-bar Vue component
+// 187, 189, 191, 194 — item 194's "suppressed in source mode" was superseded
+// by P1.3 source-mode find via the shared bar; the last block locks the new
+// contract). Each test exercises the DESKTOP find-bar Vue component
 // (packages/desktop/src/renderer/src/components/search/index.vue) wired to the
 // @muyajs/core engine through the renderer bus + `mt::editor-edit-action` IPC.
 // The engine-side search/replace/matchString behaviors are already unit-tested
@@ -292,18 +294,20 @@ test.describe('Find bar — option toggles re-run the search (items 185, 186, 18
     // prior valid match would otherwise linger — that is intentional product
     // behavior, not a bug.)
 
-    // (1) Invalid pattern: unbalanced paren -> "Invalid regular expression"
-    // error and no search runs (no highlights).
+    // (1) Invalid pattern: unbalanced paren -> localized "Invalid regular
+    // expression" error and no search runs (no highlights). Match both
+    // locales: fresh temp profiles default to the system language (b2ee5e3),
+    // so this spec runs in Chinese on zh-CN dev machines and English on CI.
     await page.locator(FIND_INPUT).fill('(')
     await expect(errorMsg).toBeVisible({ timeout: 5000 })
-    await expect(errorMsg).toContainText('Invalid regular expression')
+    await expect(errorMsg).toContainText(/(Invalid regular expression|正则表达式)/)
     await expect.poll(() => page.locator('.mu-highlight').count()).toBe(0)
 
     // (2) Empty-match pattern: "a*" matches the empty string -> dedicated error,
     // still no search.
     await page.locator(FIND_INPUT).fill('a*')
     await expect(errorMsg).toBeVisible({ timeout: 5000 })
-    await expect(errorMsg).toContainText('Regular expression matches empty string')
+    await expect(errorMsg).toContainText(/(matches empty string|空字符串)/)
     await expect.poll(() => page.locator('.mu-highlight').count()).toBe(0)
 
     // (3) Valid pattern: matches "apple" and "apricot"; the error clears and the
@@ -485,7 +489,7 @@ test.describe('Find bar — Escape clears highlights and restores the cursor (it
   })
 })
 
-test.describe('Find bar — suppressed in source-code mode (item 194)', () => {
+test.describe('Find bar — shared with source-code mode (P1.3)', () => {
   let app: ElectronApplication
   let page: Page
 
@@ -503,14 +507,21 @@ test.describe('Find bar — suppressed in source-code mode (item 194)', () => {
     if (app) await app.close()
   })
 
-  test('the WYSIWYG search bar is not mounted while in source-code mode', async() => {
+  test('the shared search bar mounts in source-code mode and finds matches', async() => {
     await enterSourceMode(page, app)
 
-    // The find action is forwarded but the WYSIWYG `.search-bar` is `v-if`-gated
-    // off in source mode, so it must not be present in the DOM.
+    // P1.3 superseded item 194 ("suppressed in source mode"): the find action
+    // is served by the CodeMirror searchcursor backend in sourceCode.vue,
+    // publishing through the same SEARCH channel to the shared `.search-bar`.
     await sendIpcToRenderer(app, 'mt::editor-edit-action', 'find')
-    await page.waitForTimeout(300)
-    await expect(page.locator(SEARCH_BAR)).toHaveCount(0)
+    const searchBar = page.locator(SEARCH_BAR)
+    await expect(searchBar).toBeVisible({ timeout: 5000 })
+
+    await page.locator(FIND_INPUT).fill('source mode')
+    await expect.poll(() => counterText(page)).toContain('/')
+
+    await page.keyboard.press('Escape')
+    await expect(searchBar).toBeHidden({ timeout: 5000 })
 
     await expectNoRendererErrors(app)
     await exitSourceMode(page, app)
