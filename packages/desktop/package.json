@@ -1,6 +1,6 @@
 {
   "name": "colamd",
-  "version": "0.20.0-dev",
+  "version": "0.1.0",
   "description": "ColaMD",
   "main": "./out/main/index.js",
   "author": {
