@@ -509,6 +509,8 @@
         "title": "Sidebar",
         "wrapTextInToc": "Wrap text in table of contents",
         "showOpenedFiles": "Show opened files",
+        "showNonMarkdownFiles": "Show non-markdown files in the file tree",
+        "showHiddenFiles": "Show hidden files and folders in the file tree",
         "autoShowToc": "Automatically show table of contents when opening a file",
         "excludePatterns": "Exclude patterns",
         "excludePatternsNotes": "Exclude patterns (Notes)",

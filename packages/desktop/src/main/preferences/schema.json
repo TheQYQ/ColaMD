@@ -389,6 +389,16 @@
     "type": "boolean",
     "default": true
   },
+  "treeShowNonMarkdownFiles": {
+    "description": "General--Whether the file tree lists non-markdown files.",
+    "type": "boolean",
+    "default": false
+  },
+  "treeShowHiddenFiles": {
+    "description": "General--Whether the file tree lists hidden (dot) files and directories.",
+    "type": "boolean",
+    "default": false
+  },
   "searchExclusions": {
     "description": "Searcher--List of glob patterns to exclude from search.--internal",
     "type": "array",

@@ -509,6 +509,8 @@
         "title": "사이드바",
         "wrapTextInToc": "목차에서 텍스트 줄바꿈",
         "showOpenedFiles": "열린 파일 표시",
+        "showNonMarkdownFiles": "파일 트리에 마크다운이 아닌 파일 표시",
+        "showHiddenFiles": "파일 트리에 숨김 파일 및 폴더 표시",
         "autoShowToc": "파일을 열 때 목차 자동 표시",
         "excludePatterns": "제외 패턴",
         "excludePatternsNotes": "제외 패턴 (참고)",

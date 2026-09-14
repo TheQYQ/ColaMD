@@ -476,6 +476,25 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
     })
 
     onInternalChannel('broadcast-preferences-changed', (prefs: Record<string, unknown>) => {
+      // Sidebar tree filters only apply to paths chokidar chose to watch at
+      // start — flip them and the open folders must be re-scanned.
+      const TREE_FILTER_KEYS = [
+        'treeShowNonMarkdownFiles',
+        'treeShowHiddenFiles',
+        'treePathExcludePatterns'
+      ]
+      if (TREE_FILTER_KEYS.some((key) => key in prefs)) {
+        for (const { browserWindow } of this._windows.values()) {
+          if (!browserWindow) continue
+          const editor = this.get(browserWindow.id) as EditorWindow | undefined
+          const root = editor?.openedRootDirectory
+          if (!editor || !root) continue
+          this._watcher.unwatch(browserWindow, root, 'dir')
+          browserWindow.webContents.send('mt::reload-directory', root)
+          this._watcher.watch(browserWindow, root, 'dir')
+        }
+      }
+
       // We can not dynamic change the title bar style, so do not need to send it to renderer.
       if (typeof prefs.titleBarStyle !== 'undefined') {
         delete prefs.titleBarStyle

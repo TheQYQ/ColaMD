@@ -509,6 +509,8 @@
         "title": "Zijbalk",
         "wrapTextInToc": "Tekstterugloop in inhoudsopgave",
         "showOpenedFiles": "Geopende bestanden tonen",
+        "showNonMarkdownFiles": "Niet-markdown-bestanden tonen in de bestandsboom",
+        "showHiddenFiles": "Verborgen bestanden en mappen tonen in de bestandsboom",
         "autoShowToc": "Inhoudsopgave automatisch weergeven bij het openen van een bestand",
         "excludePatterns": "Uitsluitpatronen",
         "excludePatternsNotes": "Uitsluitpatronen (opmerkingen)",

@@ -509,6 +509,8 @@
         "title": "Kenar Çubuğu",
         "wrapTextInToc": "İçindekilerde metni kaydır",
         "showOpenedFiles": "Açık dosyaları göster",
+        "showNonMarkdownFiles": "Dosya ağında Markdown olmayan dosyaları göster",
+        "showHiddenFiles": "Dosya ağında gizli dosya ve klasörleri göster",
         "autoShowToc": "Dosya açılırken içindekiler bölümünü otomatik göster",
         "excludePatterns": "Hariç tutma desenleri",
         "excludePatternsNotes": "Hariç tutma desenleri (Notlar)",

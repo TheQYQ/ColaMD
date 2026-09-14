@@ -36,6 +36,8 @@ export interface PreferencesState {
   defaultDirectoryToOpen: string
   lastOpenedFolder: string
   treePathExcludePatterns: string[]
+  treeShowNonMarkdownFiles: boolean
+  treeShowHiddenFiles: boolean
   language: string
 
   // ----- Editor / typography -----
@@ -159,6 +161,8 @@ export const usePreferencesStore = defineStore('preferences', {
     defaultDirectoryToOpen: '',
     lastOpenedFolder: '',
     treePathExcludePatterns: [],
+    treeShowNonMarkdownFiles: false,
+    treeShowHiddenFiles: false,
     language: 'en',
 
     editorFontFamily: 'Open Sans',

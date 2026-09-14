@@ -81,6 +81,16 @@
           :bool="openedFilesInSidebar"
           :on-change="(value) => onSelectChange('openedFilesInSidebar', value)"
         />
+        <bool
+          :description="t('preferences.general.sidebar.showNonMarkdownFiles')"
+          :bool="treeShowNonMarkdownFiles"
+          :on-change="(value) => onSelectChange('treeShowNonMarkdownFiles', value)"
+        />
+        <bool
+          :description="t('preferences.general.sidebar.showHiddenFiles')"
+          :bool="treeShowHiddenFiles"
+          :on-change="(value) => onSelectChange('treeShowHiddenFiles', value)"
+        />
 
         <text-box
           :description="t('preferences.general.sidebar.excludePatterns')"
@@ -220,7 +230,9 @@ const {
   fileSortBy,
   fileSortOrder,
   language,
-  openedFilesInSidebar
+  openedFilesInSidebar,
+  treeShowNonMarkdownFiles,
+  treeShowHiddenFiles
 } = storeToRefs(preferenceStore)
 
 const startUpAction = computed<string>({

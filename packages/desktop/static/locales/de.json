@@ -509,6 +509,8 @@
         "title": "Seitenleiste",
         "wrapTextInToc": "Text im Inhaltsverzeichnis umbrechen",
         "showOpenedFiles": "Geöffnete Dateien anzeigen",
+        "showNonMarkdownFiles": "Nicht-Markdown-Dateien im Dateibaum anzeigen",
+        "showHiddenFiles": "Versteckte Dateien und Ordner im Dateibaum anzeigen",
         "autoShowToc": "Inhaltsverzeichnis beim Öffnen einer Datei automatisch anzeigen",
         "excludePatterns": "Ausschlussmuster",
         "excludePatternsNotes": "Hinweise zu Ausschlussmustern",

@@ -509,6 +509,8 @@
         "title": "側邊欄",
         "wrapTextInToc": "在目錄中換行文字",
         "showOpenedFiles": "顯示已開啟的檔案",
+        "showNonMarkdownFiles": "在檔案樹中顯示非 Markdown 檔案",
+        "showHiddenFiles": "在檔案樹中顯示隱藏檔案和資料夾",
         "autoShowToc": "開啟檔案時自動顯示目錄",
         "excludePatterns": "排除模式",
         "excludePatternsNotes": "排除模式（備註）",
