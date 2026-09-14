@@ -43,7 +43,10 @@ export const shouldIgnoreTreePath = (
     treePathExcludePatterns?: readonly string[]
     treeShowNonMarkdownFiles?: boolean
     treeShowHiddenFiles?: boolean
-  }
+  },
+  // Single-file content watchers must not inherit sidebar visibility rules —
+  // e.g. an open `.notes.md` must stay watched even when hidden files are off.
+  scope: 'dir' | 'file' = 'dir'
 ): boolean => {
   if (!fileInfo) {
     return /(?:^|[/\\])(?:node_modules|(?:.+\.asar))/.test(pathname)
@@ -57,7 +60,7 @@ export const shouldIgnoreTreePath = (
     return true
   }
 
-  if (!prefs.treeShowHiddenFiles && isHiddenName(pathname)) {
+  if (scope === 'dir' && !prefs.treeShowHiddenFiles && isHiddenName(pathname)) {
     return true
   }
 
@@ -65,7 +68,7 @@ export const shouldIgnoreTreePath = (
     return false
   }
 
-  if (prefs.treeShowNonMarkdownFiles) {
+  if (scope === 'file' || prefs.treeShowNonMarkdownFiles) {
     return false
   }
   return !hasMarkdownExtension(pathname)
@@ -141,12 +144,15 @@ const add = async(
     }
   }
 
-  // Dir watchers also list non-markdown files when the tree filter allows it;
-  // the `ignored` callback is the gate — anything that reaches here belongs.
-  win.webContents.send(EVENT_NAME[type], {
-    type: 'add',
-    change: file
-  })
+  // Dir watchers may list non-markdown files when the tree filter allows it.
+  // The single-file watcher stays markdown-only so mt::update-file only ever
+  // carries openable documents.
+  if (isMarkdown || type === 'dir') {
+    win.webContents.send(EVENT_NAME[type], {
+      type: 'add',
+      change: file
+    })
+  }
 }
 
 const unlink = (win: BrowserWindow, pathname: string, type: WatchType): void => {
@@ -259,13 +265,18 @@ class Watcher {
 
     const watcher = chokidar.watch(watchPath, {
       ignored: (pathname: string, fileInfo?: { isDirectory: () => boolean }) =>
-        shouldIgnoreTreePath(pathname, fileInfo, {
-          treePathExcludePatterns: this._preferences.getItem<readonly string[]>(
-            'treePathExcludePatterns'
-          ),
-          treeShowNonMarkdownFiles: this._preferences.getItem<boolean>('treeShowNonMarkdownFiles'),
-          treeShowHiddenFiles: this._preferences.getItem<boolean>('treeShowHiddenFiles')
-        }),
+        shouldIgnoreTreePath(
+          pathname,
+          fileInfo,
+          {
+            treePathExcludePatterns: this._preferences.getItem<readonly string[]>(
+              'treePathExcludePatterns'
+            ),
+            treeShowNonMarkdownFiles: this._preferences.getItem<boolean>('treeShowNonMarkdownFiles'),
+            treeShowHiddenFiles: this._preferences.getItem<boolean>('treeShowHiddenFiles')
+          },
+          type
+        ),
       ignoreInitial: type === 'file',
       persistent: true,
       ignorePermissionErrors: true,
@@ -405,15 +416,16 @@ class Watcher {
     return closeFn
   }
 
-  unwatch(win: BrowserWindow, watchPath: string, type: WatchType = 'dir'): void {
+  unwatch(win: BrowserWindow, watchPath: string, type: WatchType = 'dir'): Promise<void> {
     for (const id of Object.keys(this.watchers)) {
       const w = this.watchers[id]
       if (w.win === win && w.pathname === watchPath && w.type === type) {
-        w.watcher.close()
         delete this.watchers[id]
-        break
+        // Wait for close so a follow-up watch() does not double-handle events.
+        return w.watcher.close()
       }
     }
+    return Promise.resolve()
   }
 
   unwatchByWindowId(windowId: number): void {
