@@ -8,7 +8,8 @@ import {
   typeIntoEditor,
   placeCaretInEditor,
   setSourceMarkdown,
-  sendIpcToRenderer
+  sendIpcToRenderer,
+  markAllTabsClean
 } from './helpers'
 
 test.describe('Editor input and source-mode roundtrip', () => {
@@ -22,7 +23,10 @@ test.describe('Editor input and source-mode roundtrip', () => {
   })
 
   test.afterAll(async() => {
-    if (app) await app.close()
+    if (app) {
+      await markAllTabsClean(app, page)
+      await app.close()
+    }
   })
 
   test('Initial markdown is loaded into the editor', async() => {
@@ -57,7 +61,7 @@ test.describe('Editor input and source-mode roundtrip', () => {
 // packages/desktop/src/renderer/src/components/statusBar/index.vue: the
 // clickable `.word-count > span.text-center-vertical` renders
 // `${wordCount[show]} ${label}` where `show` cycles word -> paragraph ->
-// character on click (handleWordClick). The counter value flows from
+// character -> reading time on click (handleWordClick). The counter value flows from
 // editor.vue json-change -> LISTEN_FOR_CONTENT_CHANGE -> store/editor.ts tab
 // wordCount -> the status bar reading currentFile.wordCount from the store.
 // The engine wordCount algorithm itself is unit-covered in
@@ -107,7 +111,10 @@ test.describe('Status-bar word counter (item 24)', () => {
   })
 
   test.afterAll(async() => {
-    if (app) await app.close()
+    if (app) {
+      await markAllTabsClean(app, page)
+      await app.close()
+    }
   })
 
   test('the counter is mounted and starts in word mode', async() => {
@@ -144,10 +151,12 @@ test.describe('Status-bar word counter (item 24)', () => {
     await page.waitForTimeout(400)
 
     // Derive the expected values from the exact markdown that is loaded. The
-    // three modes read distinct values for this document (word 6, paragraph 2,
-    // character 15), so the value equality below pins the active mode.
+    // four modes read distinct values for this document (word 5, paragraph 2,
+    // character 15, reading-time 1 min), so the value equality below pins the
+    // active mode.
     const markdown = await getMarkdownContent(page, app)
     const expected = expectedCount(markdown)
+    const expectedReading = Math.ceil(expected.word / 200)
 
     const counter = page.locator(WORD_COUNT_TEXT)
 
@@ -163,7 +172,11 @@ test.describe('Status-bar word counter (item 24)', () => {
     await counter.click()
     await expect.poll(() => counterValue(page)).toBe(expected.character)
 
-    // character -> wraps back to word.
+    // character -> reading time (P1.6 fourth mode: ceil(words / 200) min).
+    await counter.click()
+    await expect.poll(() => counterValue(page)).toBe(expectedReading)
+
+    // reading -> wraps back to word.
     await counter.click()
     await expect.poll(() => counterValue(page)).toBe(expected.word)
   })

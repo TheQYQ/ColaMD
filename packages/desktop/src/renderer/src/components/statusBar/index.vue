@@ -57,18 +57,21 @@ const { currentFile } = storeToRefs(editorStore)
 
 const wordCount = computed(() => currentFile.value?.wordCount ?? null)
 
-const MODES = ['word', 'paragraph', 'character'] as const
+const MODES = ['word', 'paragraph', 'character', 'reading'] as const
 type CounterMode = (typeof MODES)[number]
 const show = ref<CounterMode>('word')
 
 const counterLabel = (mode: CounterMode): string => {
   if (mode === 'word') return t('menu.counter.words')
   if (mode === 'paragraph') return t('menu.counter.paragraphs')
+  if (mode === 'reading') return t('menu.counter.readingTime')
   return t('menu.counter.characters')
 }
 
 const counterText = computed(() => {
   if (!wordCount.value) return ''
+  // ~200 words per minute, matching Typora's reading-time estimate.
+  if (show.value === 'reading') return `${Math.ceil((wordCount.value.word || 0) / 200)} min`
   const count = wordCount.value[show.value]
   return `${count} ${counterLabel(show.value)}`
 })

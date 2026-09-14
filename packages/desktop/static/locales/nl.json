@@ -3,7 +3,8 @@
     "counter": {
       "words": "Woorden",
       "characters": "Tekens",
-      "paragraphs": "Alinea's"
+      "paragraphs": "Alinea's",
+      "readingTime": "Leestijd"
     },
     "file": {
       "file": "Bestand",
@@ -27,7 +28,12 @@
       "closeWindow": "Venster sluiten",
       "quit": "Afsluiten",
       "preferences": "Voorkeuren",
-      "exportDocx": "Exporteren als Word"
+      "exportDocx": "Exporteren als Word",
+      "exportImage": "Afbeelding (PNG)",
+      "exportEpub": "EPUB",
+      "exportLatex": "LaTeX",
+      "exportRtf": "RTF",
+      "exportOpml": "OPML"
     },
     "edit": {
       "edit": "Bewerken",
@@ -503,6 +509,8 @@
         "title": "Zijbalk",
         "wrapTextInToc": "Tekstterugloop in inhoudsopgave",
         "showOpenedFiles": "Geopende bestanden tonen",
+        "showNonMarkdownFiles": "Niet-markdown-bestanden tonen in de bestandsboom",
+        "showHiddenFiles": "Verborgen bestanden en mappen tonen in de bestandsboom",
         "autoShowToc": "Inhoudsopgave automatisch weergeven bij het openen van een bestand",
         "excludePatterns": "Uitsluitpatronen",
         "excludePatternsNotes": "Uitsluitpatronen (opmerkingen)",
@@ -667,7 +675,10 @@
           "jsonBrace": "JSON met accolades",
           "jsonSemicolon": "JSON met puntkomma",
           "title": "Front Matter-type"
-        }
+        },
+        "mathLatexDelimiters": "LaTeX-wiskundige scheidingstekens inschakelen",
+        "inlineComment": "Inline opmerkingen inschakelen",
+        "definitionList": "Definitielijsten inschakelen"
       },
       "diagrams": {
         "title": "Diagrammen",

@@ -3,7 +3,8 @@
     "counter": {
       "words": "Mots",
       "characters": "Caractères",
-      "paragraphs": "Paragraphes"
+      "paragraphs": "Paragraphes",
+      "readingTime": "Temps de lecture"
     },
     "file": {
       "file": "Fichier",
@@ -27,7 +28,12 @@
       "closeWindow": "Fermer la fenêtre",
       "quit": "Quitter",
       "preferences": "Préférences",
-      "exportDocx": "Exporter en Word"
+      "exportDocx": "Exporter en Word",
+      "exportImage": "Image (PNG)",
+      "exportEpub": "EPUB",
+      "exportLatex": "LaTeX",
+      "exportRtf": "RTF",
+      "exportOpml": "OPML"
     },
     "edit": {
       "edit": "Édition",
@@ -503,6 +509,8 @@
         "title": "Barre latérale",
         "wrapTextInToc": "Retour à la ligne dans la table des matières",
         "showOpenedFiles": "Afficher les fichiers ouverts",
+        "showNonMarkdownFiles": "Afficher les fichiers non-Markdown dans l'arborescence",
+        "showHiddenFiles": "Afficher les fichiers et dossiers cachés dans l'arborescence",
         "autoShowToc": "Afficher automatiquement la table des matières à l'ouverture d'un fichier",
         "excludePatterns": "Motifs d'exclusion",
         "excludePatternsNotes": "Notes sur les motifs d'exclusion",
@@ -667,7 +675,10 @@
           "jsonBrace": "Accolade JSON",
           "jsonSemicolon": "Point-virgule JSON",
           "title": "Type de métadonnées"
-        }
+        },
+        "mathLatexDelimiters": "Activer les délimiteurs mathématiques LaTeX",
+        "inlineComment": "Activer les commentaires en ligne",
+        "definitionList": "Activer les listes de définition"
       },
       "diagrams": {
         "title": "Diagrammes",

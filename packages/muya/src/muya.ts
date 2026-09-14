@@ -115,6 +115,9 @@ const PARSE_AFFECTING_OPTIONS = new Set<keyof IMuyaOptions>([
     'isGitlabCompatibilityEnabled',
     'math',
     'footnote',
+    'mathLatexDelimiters',
+    'inlineComment',
+    'definitionList',
     'frontMatter',
     'trimUnnecessaryCodeBlockEmptyLines',
 ]);

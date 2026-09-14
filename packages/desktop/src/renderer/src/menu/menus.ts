@@ -281,7 +281,13 @@ const buildFileMenu = (
       children: [
         item(t('menu.file.exportHtml'), () => bus.emit('showExportDialog', 'styledHtml')),
         item(t('menu.file.exportPdf'), () => bus.emit('showExportDialog', 'pdf')),
-        item(t('menu.file.exportDocx'), () => bus.emit('showExportDialog', 'docx'))
+        item(t('menu.file.exportDocx'), () => bus.emit('showExportDialog', 'docx')),
+        item(t('menu.file.exportImage'), () => bus.emit('showExportDialog', 'png')),
+        sep(),
+        item(t('menu.file.exportEpub'), () => bus.emit('showExportDialog', 'epub')),
+        item(t('menu.file.exportLatex'), () => bus.emit('showExportDialog', 'latex')),
+        item(t('menu.file.exportRtf'), () => bus.emit('showExportDialog', 'rtf')),
+        item(t('menu.file.exportOpml'), () => bus.emit('showExportDialog', 'opml'))
       ]
     }),
     item(t('menu.file.print'), executeCommand('file.print'), { enabled: hasFile, hint: hintFor(useCommandCenterStore(), 'file.print') }),

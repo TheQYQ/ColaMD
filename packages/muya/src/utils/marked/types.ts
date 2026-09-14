@@ -1,4 +1,5 @@
 import type { MarkedToken, Tokens } from 'marked';
+import type { IDefListToken } from './extensions/defList';
 
 export interface ILexOption {
     footnote?: boolean;
@@ -6,6 +7,9 @@ export interface ILexOption {
     isGitlabCompatibilityEnabled?: boolean;
     frontMatter?: boolean;
     superSubScript?: boolean;
+    mathLatexDelimiters?: boolean;
+    inlineComment?: boolean;
+    definitionList?: boolean;
 }
 
 export type Heading = Tokens.Heading & {
@@ -68,7 +72,8 @@ export type TLexedToken
         | ListItemToken
         | IFootnoteToken
         | IMultipleMathToken
-        | IFrontmatterToken;
+        | IFrontmatterToken
+        | IDefListToken;
 
 // The working token stream `markdownToState` walks: lexer output plus the
 // synthetic `block-end` markers it injects to pop the parent stack.

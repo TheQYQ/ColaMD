@@ -43,6 +43,9 @@ export interface IUserPreferences {
   frontmatterType?: '-' | ';' | '+' | '{'
   superSubScript?: boolean
   footnote?: boolean
+  mathLatexDelimiters?: boolean
+  inlineComment?: boolean
+  definitionList?: boolean
   isHtmlEnabled?: boolean
   isGitlabCompatibilityEnabled?: boolean
   theme?: string
@@ -69,6 +72,8 @@ export interface IUserPreferences {
   autoNormalizeLineEndings?: boolean
   watcherUsePolling?: boolean
   treePathExcludePatterns?: string[]
+  treeShowNonMarkdownFiles?: boolean
+  treeShowHiddenFiles?: boolean
   [key: string]: unknown
 }
 

@@ -3,8 +3,10 @@ import { Marked } from 'marked';
 import { markedHighlight } from 'marked-highlight';
 import Prism from 'prismjs';
 import cjkEmStrongExtension from './extensions/cjkEmStrong';
+import defListExtension from './extensions/defList';
 import emojiExtension from './extensions/emoji';
 import footnoteExtension from './extensions/footnote';
+import inlineCommentExtension from './extensions/inlineComment';
 import mathExtension from './extensions/math';
 import superSubScriptExtension from './extensions/superSubscript';
 import fm, { frontMatterRender } from './frontMatter';
@@ -37,8 +39,16 @@ function highlight(code: string, lang: string) {
 
 export function getHighlightHtml(src: string, options: ILexOption = {}) {
     options = Object.assign({}, DEFAULT_OPTIONS, options);
-    const { footnote, frontMatter, math, isGitlabCompatibilityEnabled, superSubScript }
-        = options;
+    const {
+        footnote,
+        frontMatter,
+        math,
+        isGitlabCompatibilityEnabled,
+        superSubScript,
+        mathLatexDelimiters,
+        inlineComment,
+        definitionList,
+    } = options;
 
     // Build a fresh Marked instance per call. `Marked.use({ walkTokens })`
     // chains rather than replaces, so reusing a module-level singleton would
@@ -62,12 +72,19 @@ export function getHighlightHtml(src: string, options: ILexOption = {}) {
             mathExtension({
                 throwOnError: false,
                 useKatexRender: true,
+                latexDelimiters: mathLatexDelimiters === true,
             }),
         );
     }
 
     if (superSubScript)
         marked.use(superSubScriptExtension());
+
+    if (inlineComment)
+        marked.use(inlineCommentExtension());
+
+    if (definitionList)
+        marked.use(defListExtension());
 
     if (footnote)
         marked.use(footnoteExtension());

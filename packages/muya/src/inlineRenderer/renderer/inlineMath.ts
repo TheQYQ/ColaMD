@@ -86,8 +86,10 @@ export default function inlineMath(this: Renderer, {
                         ? { contenteditable: 'false', title: errorTitle }
                         : { contenteditable: 'false' },
                     dataset: {
-                        start: String(start + 1), // '$'.length
-                        end: String(end - 1), // '$'.length
+                        // Marker length varies: `$` (1) vs `\(` (2) — and `$$`
+                        // inline was already off by one here.
+                        start: String(start + marker.length),
+                        end: String(end - marker.length),
                     },
                 },
                 mathVnode,

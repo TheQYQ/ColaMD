@@ -95,6 +95,7 @@ export const fr = {
         'Input Mathematical Formula...': 'Saisir la formule mathématique...',
         'Input Front Matter...': 'Saisir le Front Matter...',
         'Invalid Mathematical Formula': 'Formule mathématique invalide',
+        'Empty Table of Contents': 'Table des matières vide',
         'Empty Mathematical Formula': 'Formule mathématique vide',
     },
 };

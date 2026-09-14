@@ -146,6 +146,17 @@ export const useProjectStore = defineStore('project', () => {
     window.electron.ipcRenderer.on('mt::open-directory', (_e, pathname) => {
       OPEN_PROJECT(String(pathname))
     })
+    // Tree filter preference changed: clear nodes and wait for the main
+    // process to re-watch the folder (chokidar re-emits matching adds).
+    window.electron.ipcRenderer.on('mt::reload-directory', (_e, pathname) => {
+      if (!projectTree.value) {
+        OPEN_PROJECT(String(pathname), { scheduleBufferUpdate: false })
+        return
+      }
+      projectTree.value.folders = []
+      projectTree.value.files = []
+      pendingTreeEvents.value = []
+    })
   }
 
   function LISTEN_FOR_UPDATE_PROJECT(): void {

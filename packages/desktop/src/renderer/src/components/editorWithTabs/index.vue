@@ -18,17 +18,23 @@
         :text-direction="textDirection"
       />
     </div>
+    <!-- Search bar lives above both panes (rendered after them) so it stays
+         visible in WYSIWYG and source-code mode alike. -->
+    <editor-search v-if="hasCurrentFile" />
     <tab-notifications />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useEditorStore } from '@/store/editor'
 import { useLayoutStore } from '@/store/layout'
 import { storeToRefs } from 'pinia'
 import Tabs from './tabs.vue'
 import Editor from './editor.vue'
 import SourceCode from './sourceCode.vue'
 import TabNotifications from './notifications.vue'
+import EditorSearch from '../search/index.vue'
 
 defineProps<{
   markdown: string
@@ -44,6 +50,10 @@ defineProps<{
 }>()
 
 const { effectiveSideBarWidth } = storeToRefs(useLayoutStore())
+const editorStore = useEditorStore()
+const { currentFile } = storeToRefs(editorStore)
+// `currentFile` is null between tab switches; keep the bar stable otherwise.
+const hasCurrentFile = computed(() => currentFile.value !== null)
 </script>
 
 <style scoped>

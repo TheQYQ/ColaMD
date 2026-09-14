@@ -95,6 +95,7 @@ export const tr = {
         'Input Mathematical Formula...': 'Matematiksel Formülü girin...',
         'Input Front Matter...': 'Ön Bilgiyi girin...',
         'Invalid Mathematical Formula': 'Geçersiz Matematiksel Formül',
+        'Empty Table of Contents': 'Boş içindekiler tablosu',
         'Empty Mathematical Formula': 'Boş Matematiksel Formül',
     },
 };

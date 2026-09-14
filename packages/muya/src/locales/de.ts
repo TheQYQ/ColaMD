@@ -95,6 +95,7 @@ export const de = {
         'Input Mathematical Formula...': 'Mathematische Formel eingeben...',
         'Input Front Matter...': 'Front Matter eingeben...',
         'Invalid Mathematical Formula': 'Ungültige mathematische Formel',
+        'Empty Table of Contents': 'Leeres Inhaltsverzeichnis',
         'Empty Mathematical Formula': 'Leere mathematische Formel',
     },
 };

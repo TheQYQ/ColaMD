@@ -3,6 +3,21 @@ export interface IParagraphState {
     text: string;
 }
 
+export interface IDefTermState {
+    name: 'def-term';
+    text: string;
+}
+
+export interface IDefDescState {
+    name: 'def-desc';
+    text: string;
+}
+
+export interface IDefListState {
+    name: 'def-list';
+    children: TState[];
+}
+
 export interface IAtxHeadingState {
     name: 'atx-heading';
     meta: {
@@ -130,6 +145,11 @@ export interface IMathMeta {
     mathStyle: string; // "" | "gitlab";
 }
 
+export interface ITocBlockState {
+    name: 'toc-block';
+    text: string; // the raw `[toc]` marker as typed
+}
+
 export interface IMathBlockState {
     name: 'math-block';
     meta: IMathMeta;
@@ -170,6 +190,8 @@ export interface IFootnoteBlockState {
 
 export type TLeafState
     = | IParagraphState
+        | IDefTermState
+        | IDefDescState
         | IAtxHeadingState
         | ISetextHeadingState
         | IThematicBreakState
@@ -177,12 +199,14 @@ export type TLeafState
         | IHtmlBlockState
         | ILinkReferenceDefinitionState
         | IMathBlockState
+        | ITocBlockState
         | IFrontmatterState
         | IDiagramState
         | ITableCellState;
 
 export type TContainerState
     = | IBlockQuoteState
+        | IDefListState
         | IOrderListState
         | IBulletListState
         | ITableState
@@ -194,7 +218,7 @@ export type TContainerState
 
 export type TState = TLeafState | TContainerState;
 
-export type CodeContentState = ICodeBlockState | IHtmlBlockState | IDiagramState | IMathBlockState | IFrontmatterState;
+export type CodeContentState = ICodeBlockState | IHtmlBlockState | IDiagramState | IMathBlockState | IFrontmatterState | ITocBlockState;
 
 // Discriminated-union type guards. `TState` is keyed by `name`, so consumers can
 // narrow without `as I<X>State` casts. Use `isStateOfName(state, 'atx-heading')`
@@ -207,6 +231,9 @@ export function isStateOfName<N extends TState['name']>(
 }
 
 export const isParagraphState = (s: TState): s is IParagraphState => s.name === 'paragraph';
+export const isDefListState = (s: TState): s is IDefListState => s.name === 'def-list';
+export const isDefTermState = (s: TState): s is IDefTermState => s.name === 'def-term';
+export const isDefDescState = (s: TState): s is IDefDescState => s.name === 'def-desc';
 export const isAtxHeadingState = (s: TState): s is IAtxHeadingState => s.name === 'atx-heading';
 export const isSetextHeadingState = (s: TState): s is ISetextHeadingState => s.name === 'setext-heading';
 export const isThematicBreakState = (s: TState): s is IThematicBreakState => s.name === 'thematic-break';

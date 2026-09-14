@@ -3,7 +3,8 @@
     "counter": {
       "words": "字數",
       "characters": "字元數",
-      "paragraphs": "段落數"
+      "paragraphs": "段落數",
+      "readingTime": "閱讀時間"
     },
     "file": {
       "file": "檔案",
@@ -27,7 +28,12 @@
       "closeWindow": "關閉視窗",
       "quit": "退出",
       "preferences": "偏好設定",
-      "exportDocx": "匯出 Word 文件"
+      "exportDocx": "匯出 Word 文件",
+      "exportImage": "圖片 (PNG)",
+      "exportEpub": "EPUB 電子書",
+      "exportLatex": "LaTeX",
+      "exportRtf": "RTF",
+      "exportOpml": "OPML 大綱"
     },
     "edit": {
       "edit": "編輯",
@@ -503,6 +509,8 @@
         "title": "側邊欄",
         "wrapTextInToc": "在目錄中換行文字",
         "showOpenedFiles": "顯示已開啟的檔案",
+        "showNonMarkdownFiles": "在檔案樹中顯示非 Markdown 檔案",
+        "showHiddenFiles": "在檔案樹中顯示隱藏檔案和資料夾",
         "autoShowToc": "開啟檔案時自動顯示目錄",
         "excludePatterns": "排除模式",
         "excludePatternsNotes": "排除模式（備註）",
@@ -667,7 +675,10 @@
           "jsonBrace": "JSON 大括號",
           "jsonSemicolon": "JSON 分號",
           "title": "前置資料類型"
-        }
+        },
+        "mathLatexDelimiters": "啟用 LaTeX 數學分隔符",
+        "inlineComment": "啟用行內註解",
+        "definitionList": "啟用定義清單"
       },
       "diagrams": {
         "title": "圖表",

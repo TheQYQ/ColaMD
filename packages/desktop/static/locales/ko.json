@@ -3,7 +3,8 @@
     "counter": {
       "words": "단어 수",
       "characters": "글자 수",
-      "paragraphs": "단락 수"
+      "paragraphs": "단락 수",
+      "readingTime": "읽는 시간"
     },
     "file": {
       "file": "파일",
@@ -27,7 +28,12 @@
       "closeWindow": "창 닫기",
       "quit": "종료",
       "preferences": "환경설정",
-      "exportDocx": "Word로 내보내기"
+      "exportDocx": "Word로 내보내기",
+      "exportImage": "이미지 (PNG)",
+      "exportEpub": "EPUB",
+      "exportLatex": "LaTeX",
+      "exportRtf": "RTF",
+      "exportOpml": "OPML"
     },
     "edit": {
       "edit": "편집",
@@ -503,6 +509,8 @@
         "title": "사이드바",
         "wrapTextInToc": "목차에서 텍스트 줄바꿈",
         "showOpenedFiles": "열린 파일 표시",
+        "showNonMarkdownFiles": "파일 트리에 마크다운이 아닌 파일 표시",
+        "showHiddenFiles": "파일 트리에 숨김 파일 및 폴더 표시",
         "autoShowToc": "파일을 열 때 목차 자동 표시",
         "excludePatterns": "제외 패턴",
         "excludePatternsNotes": "제외 패턴 (참고)",
@@ -667,7 +675,10 @@
           "jsonBrace": "중괄호가 있는 JSON",
           "jsonSemicolon": "세미콜론이 있는 JSON",
           "title": "프론트매터 유형"
-        }
+        },
+        "mathLatexDelimiters": "LaTeX 수학 구분자 사용",
+        "inlineComment": "인라인 주석 사용",
+        "definitionList": "정의 목록 사용"
       },
       "diagrams": {
         "title": "다이어그램",

@@ -2,6 +2,7 @@ import type { TBlockToken } from '../utils/marked/types';
 import type {
     IAtxHeadingState,
     IBulletListState,
+    IDefListState,
     IListItemState,
     IOrderListState,
     ISetextHeadingState,
@@ -18,6 +19,7 @@ const debug = logger('import markdown: ');
 
 interface IMarkdownToStateOptions {
     footnote: boolean;
+    definitionList?: boolean;
     math: boolean;
     isGitlabCompatibilityEnabled: boolean;
     trimUnnecessaryCodeBlockEmptyLines: boolean;
@@ -26,6 +28,7 @@ interface IMarkdownToStateOptions {
 
 const DEFAULT_OPTIONS = {
     footnote: false,
+    definitionList: false,
     math: true,
     isGitlabCompatibilityEnabled: true,
     trimUnnecessaryCodeBlockEmptyLines: false,
@@ -64,6 +67,7 @@ export class MarkdownToState {
     private _convertMarkdownToState(markdown: string): TState[] {
         const {
             footnote = false,
+            definitionList = false,
             math = true,
             isGitlabCompatibilityEnabled = true,
             trimUnnecessaryCodeBlockEmptyLines = false,
@@ -76,6 +80,7 @@ export class MarkdownToState {
         const tokens: TBlockToken[] = lexBlock(markdown, {
             footnote,
             math,
+            definitionList,
             frontMatter,
             isGitlabCompatibilityEnabled,
         });
@@ -267,6 +272,26 @@ export class MarkdownToState {
                 break;
             }
 
+            case 'def-list': {
+                // The def-list token payload comes from the marked block
+                // extension, not from marked's own token shape — no narrower
+                // type is available without modeling marked's internals.
+                // eslint-disable-next-line no-restricted-syntax
+                const { items } = token as unknown as {
+                    items: Array<{ term: string; definitions: string[] }>;
+                };
+                const defListState: IDefListState = { name: 'def-list', children: [] };
+                for (const item of items) {
+                    defListState.children.push({ name: 'def-term', text: item.term });
+                    for (const def of item.definitions)
+                        defListState.children.push({ name: 'def-desc', text: def });
+                }
+
+                state = defListState;
+                parentList[0].push(state);
+                break;
+            }
+
             case 'heading': {
                 const { headingStyle, depth, text, marker } = token;
                 value = headingStyle === 'atx'
@@ -392,10 +417,14 @@ export class MarkdownToState {
 
             case 'paragraph': {
                 value = token.text;
-                state = {
-                    name: 'paragraph' as const,
-                    text: value,
-                };
+                // In-document TOC marker (`[toc]`, Typora parity): a paragraph
+                // whose entire text is the marker becomes a toc block.
+                state = /^\s*\[toc\]\s*$/i.test(value)
+                    ? { name: 'toc-block', text: value.trim() }
+                    : {
+                            name: 'paragraph' as const,
+                            text: value,
+                        };
                 parentList[0].push(state);
                 break;
             }

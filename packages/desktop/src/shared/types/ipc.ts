@@ -190,6 +190,8 @@ export interface IpcSendChannels {
       content: string
       /** Binary export payloads (e.g. the assembled .docx package). */
       bytes?: Uint8Array
+      /** Raw markdown source — used by the pandoc export formats. */
+      markdown?: string
       filename: string
       pathname: string
       pageOptions: PageOptions
@@ -300,6 +302,7 @@ export interface IpcMainEventChannels {
   'mt::menu::closed': []
   'mt::new-untitled-tab': [selected?: boolean, markdown?: string]
   'mt::open-directory': [directoryPath: string]
+  'mt::reload-directory': [directoryPath: string]
   'mt::open-new-tab': [
     markdownDocument: MarkdownDocument | null,
     options?: TabOptions,

@@ -73,7 +73,7 @@ const onRowHover = (item: MenuItemDef, index: number, event: MouseEvent): void =
   }
 }
 
-const positionSubmenu = async(rowEl: HTMLElement): Promise<void> => {
+const positionSubmenu = async (rowEl: HTMLElement): Promise<void> => {
   const rect = rowEl.getBoundingClientRect()
   // Prefer a flyout to the right, flip to the left near the window edge.
   const left = rect.right - 3

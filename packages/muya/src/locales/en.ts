@@ -95,6 +95,7 @@ export const en = {
         'Input Mathematical Formula...': 'Input Mathematical Formula...',
         'Input Front Matter...': 'Input Front Matter...',
         'Invalid Mathematical Formula': 'Invalid Mathematical Formula',
+        'Empty Table of Contents': 'Empty Table of Contents',
         'Empty Mathematical Formula': 'Empty Mathematical Formula',
     },
 };

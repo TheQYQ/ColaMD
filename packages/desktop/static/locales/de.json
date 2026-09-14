@@ -3,7 +3,8 @@
     "counter": {
       "words": "Wörter",
       "characters": "Zeichen",
-      "paragraphs": "Absätze"
+      "paragraphs": "Absätze",
+      "readingTime": "Lesezeit"
     },
     "file": {
       "file": "Datei",
@@ -27,7 +28,12 @@
       "closeWindow": "Fenster schließen",
       "quit": "Beenden",
       "preferences": "Einstellungen",
-      "exportDocx": "Als Word exportieren"
+      "exportDocx": "Als Word exportieren",
+      "exportImage": "Bild (PNG)",
+      "exportEpub": "EPUB",
+      "exportLatex": "LaTeX",
+      "exportRtf": "RTF",
+      "exportOpml": "OPML"
     },
     "edit": {
       "edit": "Bearbeiten",
@@ -503,6 +509,8 @@
         "title": "Seitenleiste",
         "wrapTextInToc": "Text im Inhaltsverzeichnis umbrechen",
         "showOpenedFiles": "Geöffnete Dateien anzeigen",
+        "showNonMarkdownFiles": "Nicht-Markdown-Dateien im Dateibaum anzeigen",
+        "showHiddenFiles": "Versteckte Dateien und Ordner im Dateibaum anzeigen",
         "autoShowToc": "Inhaltsverzeichnis beim Öffnen einer Datei automatisch anzeigen",
         "excludePatterns": "Ausschlussmuster",
         "excludePatternsNotes": "Hinweise zu Ausschlussmustern",
@@ -667,7 +675,10 @@
           "jsonBrace": "JSON-Klammer",
           "jsonSemicolon": "JSON-Semikolon",
           "title": "Front Matter Typ"
-        }
+        },
+        "mathLatexDelimiters": "LaTeX-Mathematik-Trennzeichen aktivieren",
+        "inlineComment": "Inline-Kommentare aktivieren",
+        "definitionList": "Definitionslisten aktivieren"
       },
       "diagrams": {
         "title": "Diagramme",

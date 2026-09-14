@@ -3,7 +3,8 @@
     "counter": {
       "words": "字数",
       "characters": "字符数",
-      "paragraphs": "段落数"
+      "paragraphs": "段落数",
+      "readingTime": "阅读时长"
     },
     "file": {
       "file": "文件",
@@ -27,7 +28,12 @@
       "closeWindow": "关闭窗口",
       "quit": "退出",
       "preferences": "偏好设置",
-      "exportDocx": "导出 Word 文档"
+      "exportDocx": "导出 Word 文档",
+      "exportImage": "图片 (PNG)",
+      "exportEpub": "EPUB 电子书",
+      "exportLatex": "LaTeX",
+      "exportRtf": "RTF",
+      "exportOpml": "OPML 大纲"
     },
     "edit": {
       "edit": "编辑",
@@ -503,6 +509,8 @@
         "title": "侧边栏",
         "wrapTextInToc": "在目录中换行文本",
         "showOpenedFiles": "显示已打开文件",
+        "showNonMarkdownFiles": "在文件树中显示非 Markdown 文件",
+        "showHiddenFiles": "在文件树中显示隐藏文件和文件夹",
         "autoShowToc": "打开文件时自动显示目录",
         "excludePatterns": "排除模式",
         "excludePatternsNotes": "排除模式（注释）",
@@ -667,7 +675,10 @@
           "jsonBrace": "带大括号的 JSON",
           "jsonSemicolon": "带分号的 JSON",
           "title": "前置元数据类型"
-        }
+        },
+        "mathLatexDelimiters": "启用 LaTeX 数学分隔符",
+        "inlineComment": "启用行内注释",
+        "definitionList": "启用定义列表"
       },
       "diagrams": {
         "title": "图表",
