@@ -1023,6 +1023,7 @@ export const useEditorStore = defineStore('editor', {
       window.electron.ipcRenderer.on('mt::bootstrap-editor', (_, config) => {
         const {
           addBlankTab,
+          welcomeMarkdown,
           markdownList,
           lineEnding,
           sideBarVisibility,
@@ -1044,7 +1045,9 @@ export const useEditorStore = defineStore('editor', {
           checked: !!sourceCodeModeEnabled
         })
 
-        if (addBlankTab) {
+        if (welcomeMarkdown) {
+          this.NEW_UNTITLED_TAB({ markdown: String(welcomeMarkdown), selected: true })
+        } else if (addBlankTab) {
           this.NEW_UNTITLED_TAB({ selected: true })
         } else if (markdownList.length) {
           let isFirst = true

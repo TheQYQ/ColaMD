@@ -93,6 +93,19 @@ class EditorWindow extends BaseWindow {
     const { menu: appMenu, env, preferences, editorBufferStore } = this._accessor
     const addBlankTab =
       !bufferStoreInfo && !rootDirectory && fileList.length === 0 && markdownList.length === 0
+    // First session only: Preference.hasPreferencesFile is captured before
+    // init() writes the store, so it stays false for the whole first run.
+    let welcomeMarkdown: string | null = null
+    if (addBlankTab && !preferences.hasPreferencesFile) {
+      try {
+        welcomeMarkdown = fs.readFileSync(
+          path.join(preferences.staticPath, '..', 'welcome', 'welcome.md'),
+          'utf8'
+        )
+      } catch {
+        welcomeMarkdown = null
+      }
+    }
 
     const mainWindowState = windowStateKeeper({
       defaultWidth: 1200,
@@ -175,6 +188,7 @@ class EditorWindow extends BaseWindow {
 
       win!.webContents.send('mt::bootstrap-editor', {
         addBlankTab,
+        welcomeMarkdown,
         markdownList: this.bufferStoreInfo!.filePath ? [] : this._markdownToOpen,
         lineEnding,
         sideBarVisibility: resolvedSideBarVisibility,
