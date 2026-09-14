@@ -59,6 +59,11 @@ test.describe('i18n shell — language switch re-translates the Vue shell', () =
   })
 
   test('command palette placeholder re-translates en -> zh-CN', async() => {
+    // Ensure we start from English regardless of machine locale.
+    await sendIpcToRenderer(app, 'language-changed', 'en')
+    await sendIpcToRenderer(app, 'mt::user-preference', { language: 'en' })
+    await page.waitForTimeout(500)
+
     // 1) Read the English shell label.
     await openPalette(app, page)
     const enPlaceholder = await readPlaceholder(page)

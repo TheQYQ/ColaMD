@@ -244,7 +244,7 @@ class App {
     return path.join(screenshotFolderPath, fileName)
   }
 
-  ready = async (): Promise<void> => {
+  ready = async(): Promise<void> => {
     // Detect/store the language before any window exists so the renderer
     // starts with the right locale on its startup language query.
     await this._initializeLanguage()
