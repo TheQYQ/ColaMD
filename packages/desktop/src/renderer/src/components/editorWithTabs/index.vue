@@ -51,9 +51,10 @@ defineProps<{
 
 const { effectiveSideBarWidth } = storeToRefs(useLayoutStore())
 const editorStore = useEditorStore()
-const { currentFile } = storeToRefs(editorStore)
-// `currentFile` is null between tab switches; keep the bar stable otherwise.
-const hasCurrentFile = computed(() => currentFile.value !== null)
+const { tabs } = storeToRefs(editorStore)
+// `currentFile` is briefly null mid tab-switch; gate on any open tab so the
+// find bar does not unmount and lose focus state on every switch.
+const hasCurrentFile = computed(() => tabs.value.length > 0)
 </script>
 
 <style scoped>

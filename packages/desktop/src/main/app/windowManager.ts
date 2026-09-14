@@ -484,15 +484,17 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
         'treePathExcludePatterns'
       ]
       if (TREE_FILTER_KEYS.some((key) => key in prefs)) {
-        for (const { browserWindow } of this._windows.values()) {
-          if (!browserWindow) continue
-          const editor = this.get(browserWindow.id) as EditorWindow | undefined
-          const root = editor?.openedRootDirectory
-          if (!editor || !root) continue
-          this._watcher.unwatch(browserWindow, root, 'dir')
-          browserWindow.webContents.send('mt::reload-directory', root)
-          this._watcher.watch(browserWindow, root, 'dir')
-        }
+        void (async() => {
+          for (const { browserWindow } of this._windows.values()) {
+            if (!browserWindow) continue
+            const editor = this.get(browserWindow.id) as EditorWindow | undefined
+            const root = editor?.openedRootDirectory
+            if (!editor || !root) continue
+            await this._watcher.unwatch(browserWindow, root, 'dir')
+            browserWindow.webContents.send('mt::reload-directory', root)
+            this._watcher.watch(browserWindow, root, 'dir')
+          }
+        })()
       }
 
       // We can not dynamic change the title bar style, so do not need to send it to renderer.

@@ -3,7 +3,12 @@ import { describe, expect, it, vi } from 'vitest'
 // Mirror watcher-await-write-finish.spec.ts: pull in the real module without
 // loading Electron-native paths (ced bindings are Electron-ABI only).
 vi.mock('chokidar', () => ({
-  default: { watch: () => ({ on: vi.fn(), close: vi.fn() }) }
+  default: {
+    watch: () => ({
+      on: vi.fn(),
+      close: vi.fn(() => Promise.resolve())
+    })
+  }
 }))
 vi.mock('ced', () => ({ default: () => 'UTF-8' }))
 
@@ -55,5 +60,11 @@ describe('shouldIgnoreTreePath', () => {
     const prefs = { ...basePrefs, treePathExcludePatterns: ['**/drafts/**'] }
     expect(shouldIgnoreTreePath('/repo/drafts/notes.md', asFile, prefs)).toBe(true)
     expect(shouldIgnoreTreePath('/repo/public/notes.md', asFile, prefs)).toBe(false)
+  })
+
+  it('does not apply tree visibility filters to single-file watchers', () => {
+    // Open `.notes.md` must stay watched even with hidden files off.
+    expect(shouldIgnoreTreePath('/repo/.notes.md', asFile, basePrefs, 'file')).toBe(false)
+    expect(shouldIgnoreTreePath('/repo/notes.txt', asFile, basePrefs, 'file')).toBe(false)
   })
 })
