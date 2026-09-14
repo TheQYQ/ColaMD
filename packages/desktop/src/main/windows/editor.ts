@@ -589,6 +589,13 @@ class EditorWindow extends BaseWindow {
       if (!Array.isArray(bufferState.restoreWarnings)) {
         bufferState.restoreWarnings = []
       }
+      // A buffer that no longer has any tabs (all closed last session) should
+      // open as a blank Untitled, not an empty window. Bootstrap already ran
+      // with addBlankTab=false for the restore path.
+      if (bufferState.tabs.length === 0) {
+        browserWindow!.webContents.send('mt::new-untitled-tab', true)
+        return
+      }
       const rootDirectory = bufferState.project?.rootDirectory
       if (rootDirectory) {
         this.openFolder(rootDirectory)
@@ -619,6 +626,11 @@ class EditorWindow extends BaseWindow {
                 if (tab.isSaved) {
                   tab.markdown = rawDocument.markdown
                 }
+              } else if (!tab.isSaved) {
+                // Buffer claimed unsaved work but the text is identical to disk
+                // (false-dirty after an earlier session). Treat as clean so the
+                // next close does not prompt to save an unchanged file.
+                tab.isSaved = true
               }
 
               if (!this._openedFiles!.includes(tab.pathname)) {
