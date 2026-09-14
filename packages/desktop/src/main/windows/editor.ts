@@ -126,14 +126,13 @@ class EditorWindow extends BaseWindow {
       titleBarStyle,
       theme,
       tabBarVisibility,
+      sideBarVisibility,
       sourceCodeModeEnabled,
       spellcheckerEnabled,
       spellcheckerLanguage
     } = preferences.getAll()
-    // Typora-style chrome: the sidebar always starts closed and is opened
-    // only through the view menu / shortcuts / status-bar toggle. The stored
-    // `sideBarVisibility` / `restoreLayoutState` are no longer honored here.
-    const resolvedSideBarVisibility = false
+    // Remember the last sidebar open/closed choice (view menu / Ctrl+J).
+    const resolvedSideBarVisibility = !!sideBarVisibility
 
     // Enable native or custom/frameless window and titlebar
     if (!isOsx) {
@@ -503,15 +502,13 @@ class EditorWindow extends BaseWindow {
     browserWindow!.webContents.once('did-finish-load', () => {
       this.lifecycle = WindowLifecycle.READY
       const { preferences } = this._accessor
-      const { tabBarVisibility, sourceCodeModeEnabled } = preferences.getAll()
+      const { tabBarVisibility, sideBarVisibility, sourceCodeModeEnabled } = preferences.getAll()
       const lineEnding = preferences.getPreferredEol()
-      // Same Typora-style rule as createWindow: the sidebar always starts
-      // closed after a reload.
       browserWindow!.webContents.send('mt::bootstrap-editor', {
         addBlankTab: true,
         markdownList: [],
         lineEnding,
-        sideBarVisibility: false,
+        sideBarVisibility: !!sideBarVisibility,
         tabBarVisibility,
         sourceCodeModeEnabled
       })
