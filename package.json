@@ -1,6 +1,6 @@
 {
   "name": "colamd-monorepo",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "ColaMD monorepo root",
   "private": true,
   "homepage": "https://github.com/TheQYQ/ColaMD",
