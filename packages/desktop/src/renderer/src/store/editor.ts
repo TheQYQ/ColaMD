@@ -1031,7 +1031,6 @@ export const useEditorStore = defineStore('editor', {
           sourceCodeModeEnabled
         } = config
 
-        window.electron.ipcRenderer.send('mt::window-initialized')
         mainStore.SET_INITIALIZED()
         preferencesStore.SET_USER_PREFERENCE({ endOfLine: lineEnding })
         layoutStore.SET_LAYOUT({
