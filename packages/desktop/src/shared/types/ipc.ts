@@ -235,7 +235,6 @@ export interface IpcSendChannels {
   'mt::win::toggle-maximize': []
   'mt::win::unmaximize': []
   'mt::window-add-file-path': [windowId: number, filePath: string]
-  'mt::window-initialized': []
   'mt::window-tab-closed': [pathname: string]
   'mt::window-toggle-always-on-top': []
   'mt::window::drop': [payload: unknown]

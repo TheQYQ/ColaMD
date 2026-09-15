@@ -75,6 +75,9 @@ export default [
       'no-unused-vars': 'off',
       'no-undef': 'off',
       'no-redeclare': 'off',
+      // neostandard enables core no-void; `void` is intentional for
+      // fire-and-forget async IIFEs in the main process (windowManager).
+      'no-void': ['error', { allowAsStatement: true }],
       // Defer to @stylistic/no-extra-semi (set by neostandard) — it knows
       // about leading-semi standard-style guards; the deprecated core rule
       // does not.
@@ -111,7 +114,10 @@ export default [
     },
     rules: {
       'vue/multi-word-component-names': 'off',
-      'vue/require-default-prop': 'off'
+      'vue/require-default-prop': 'off',
+      // Core no-unused-vars cannot see component usage inside <template>
+      // (e.g. <tabs> referring to Tabs); vue/no-unused-components covers it.
+      'no-unused-vars': 'off'
     }
   },
 

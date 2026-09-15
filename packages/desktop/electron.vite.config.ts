@@ -85,7 +85,7 @@ export default defineConfig({
       extensions: ['.mjs', '.ts', '.js', '.json', '.vue']
     },
     optimizeDeps: {
-      include: ['pako', 'pathe'],
+      include: ['pathe'],
       esbuildOptions: {
         define: {
           global: 'globalThis'

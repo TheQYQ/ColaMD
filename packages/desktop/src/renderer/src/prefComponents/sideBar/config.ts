@@ -61,6 +61,8 @@ declare global {
 interface CachedTranslator {
   (): TranslatedSearchEntry[]
   lastLanguage?: string
+  /** Language-polling fallback timer; cleared before a new one is set. */
+  pollTimer?: ReturnType<typeof setInterval> | null
 }
 
 const preferencesSchema = preferences as unknown as Record<string, PreferenceSchemaEntry>
@@ -256,8 +258,13 @@ export const setupLanguageChangeListener = (): void => {
     }
   }
 
-  // Add a polling fallback mechanism as a backup
-  setInterval(() => {
+  // Add a polling fallback mechanism as a backup. The settings page can be
+  // mounted repeatedly, so tear down the previous timer first (it used to
+  // leak on every mount).
+  if (getTranslatedSearchContent.pollTimer) {
+    clearInterval(getTranslatedSearchContent.pollTimer)
+  }
+  getTranslatedSearchContent.pollTimer = setInterval(() => {
     try {
       if (window.__VUE_I18N__) {
         const g = resolveGlobal(window.__VUE_I18N__)
