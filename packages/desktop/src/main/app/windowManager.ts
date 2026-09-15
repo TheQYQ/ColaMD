@@ -484,7 +484,8 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
         'treePathExcludePatterns'
       ]
       if (TREE_FILTER_KEYS.some((key) => key in prefs)) {
-        void (async() => {
+        // Fire-and-forget rescan; deliberately unawaited so the preference handler
+        (async() => {
           for (const { browserWindow } of this._windows.values()) {
             if (!browserWindow) continue
             const editor = this.get(browserWindow.id) as EditorWindow | undefined
@@ -494,7 +495,7 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
             browserWindow.webContents.send('mt::reload-directory', root)
             this._watcher.watch(browserWindow, root, 'dir')
           }
-        })()
+        })().catch((err) => log.error('Tree filter rescan failed:', err))
       }
 
       // We can not dynamic change the title bar style, so do not need to send it to renderer.
