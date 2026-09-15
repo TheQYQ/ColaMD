@@ -55,7 +55,7 @@
 
 ## 🟋 建议关注（非 bug，后续优化）
 
-1. **muya 死事件通道**：`muya-format-picker`、`muya-footnote-tool`、`muya-table-picker`、`muya-float-button`、`muya-float`、`muya-front-menu`、`muya-table-bar` 七个 emit 无任何消费者——Typora 化 UI 移除了旧工具浮层。建议下个清理批次把 emit 点一起摘掉，减小 API 面。
+1. ~~muya 死事件通道~~ **勘误（2026-09-16）**：初版审计只 grep 了 eventCenter.on，漏了别名 eventCenter.subscribe（event/index.ts:79，同一 listeners 注册表）。7 个通道实际全部有活跃消费者（ui/inlineFormatToolbar、footnoteTool、tableChessboard、ui.ts 等）——非死通道，无需清理。
 2. **IPC 通道类型表**（`shared/types/ipc.ts`）与实际 handler 基本同步，但 `mt::window-initialized` 若按 BUG-1 删除需同步删类型声明。
 
 ---
