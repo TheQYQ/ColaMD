@@ -84,7 +84,7 @@
   --floatHoverColor: rgba(43, 48, 50, 0.04);
   --floatBorderColor: rgba(0, 0, 0, 0.03);
   --maskColor: rgba(232, 232, 232, 0.8);
-  --editorAreaWidth: 750px;
+  --editorAreaWidth: 800px;
 
   /* @muyajs/core (kebab-case) editor variables
      Additive prep for the muyajs -> @muyajs/core editor swap. These

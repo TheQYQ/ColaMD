@@ -433,6 +433,11 @@ onMounted(() => {
   background-color: var(--buttonPrimaryBgColor);
   color: var(--buttonPrimaryFontColor);
   border-color: transparent;
+  border-radius: var(--radius-md);
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 120ms ease-out;
 }
 .open-project .el-button.is-text.is-has-bg:hover,
 .open-project .el-button.is-text.is-has-bg:focus,
