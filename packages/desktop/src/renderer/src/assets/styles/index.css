@@ -1,6 +1,6 @@
 /* Common CSS use by both light and dark themes */
 :root {
-  --titleBarHeight: 32px;
+  --titleBarHeight: 36px;
   /* Rendered by the frameless menu bar (menuBar component); 0 elsewhere. */
   --menuBarHeight: 0px;
   --statusBarHeight: 26px;

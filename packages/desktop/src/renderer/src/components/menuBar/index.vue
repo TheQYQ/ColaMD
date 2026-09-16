@@ -47,7 +47,7 @@ import type { MenuItemDef } from '@/menu/types'
 const preferencesStore = usePreferencesStore()
 const { titleBarStyle } = storeToRefs(preferencesStore)
 
-const MENU_BAR_HEIGHT = '28px'
+const MENU_BAR_HEIGHT = '26px'
 
 const visible = computed(() => titleBarStyle.value === 'custom' && !isOsx)
 
@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   /* Same background as the editor and the title-bar spacer — transparent
      would let the (white) page background bleed through on dark themes. */
-  background: var(--editorBgColor);
+  background: var(--sideBarBgColor);
   color: var(--editorColor50);
   font-size: 12px;
   overflow: hidden;
@@ -174,7 +174,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   padding: 0 9px;
-  border-radius: 3px;
+  border-radius: 4px;
+  transition: background-color 120ms ease-out, color 120ms ease-out;
   cursor: default;
   white-space: nowrap;
   /* Own no-drag declaration: the shared `title-no-drag` class is scoped to
@@ -199,8 +200,8 @@ onBeforeUnmount(() => {
   overflow-x: visible;
   background: var(--floatBgColor);
   border: 1px solid var(--floatBorderColor);
-  border-radius: 6px;
-  box-shadow: var(--floatShadow);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   padding: 4px 0;
   box-sizing: border-box;
   font-size: 13px;
