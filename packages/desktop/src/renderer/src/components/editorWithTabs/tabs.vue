@@ -341,12 +341,14 @@ onBeforeUnmount(() => {
       margin-right: 3px;
     }
     & > .unsaved-dot {
-      display: none;
       width: 6px;
       height: 6px;
       border-radius: 50%;
       background: var(--text-secondary);
       flex-shrink: 0;
+      opacity: 0;
+      /* V1 guide §四: unsaved dot fades in (opacity 160ms) instead of hard display toggle. */
+      transition: opacity 160ms ease-out;
     }
   }
   & > li.unsaved:not(.active) {
@@ -354,13 +356,13 @@ onBeforeUnmount(() => {
       opacity: 0;
     }
     & > .unsaved-dot {
-      display: block;
+      opacity: 1;
     }
     &:hover > .close-icon {
       opacity: 1;
     }
     &:hover > .unsaved-dot {
-      display: none;
+      opacity: 0;
     }
   }
   & > li.active {
@@ -372,7 +374,7 @@ onBeforeUnmount(() => {
       opacity: 1;
     }
     & > .unsaved-dot {
-      display: none;
+      opacity: 0;
     }
   }
 }
