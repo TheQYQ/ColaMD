@@ -294,7 +294,8 @@ onMounted(() => {
   transform: translateX(-50px);
 }
 .tree-view {
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--sideBarColor);
   display: flex;
   flex-direction: column;
@@ -315,9 +316,12 @@ onMounted(() => {
 
 .opened-files > .title,
 .project-tree > .title {
-  height: 30px;
-  line-height: 30px;
-  font-size: 14px;
+  height: 28px;
+  line-height: 28px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: var(--sideBarTextColor);
 }
 
 .opened-files .title {
@@ -412,7 +416,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 8px;
+  padding-top: 32px;
 }
 
 .open-project .centered-group {
@@ -439,20 +443,20 @@ onMounted(() => {
 }
 .new-input {
   outline: none;
-  height: 22px;
+  height: 24px;
   margin: 5px 0;
   padding: 0 6px;
   color: var(--sideBarColor);
-  border: 1px solid var(--floatBorderColor);
+  border: 1px solid var(--border-strong);
   background: var(--inputBgColor);
   width: calc(100% - 45px);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 .tree-wrapper {
   position: relative;
 }
 .empty-project {
-  font-size: 14px;
+  font-size: 12px;
   display: flex;
   flex-direction: column;
   padding-top: 40px;

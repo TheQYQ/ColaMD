@@ -151,8 +151,10 @@ onMounted(() => {
     user-select: none;
     display: flex;
     align-items: center;
-    height: 30px;
-    padding-right: 15px;
+    height: 28px;
+    border-radius: 4px;
+    padding-right: 12px;
+    transition: background-color 120ms ease-out;
     & > .icon-arrow {
       flex-shrink: 0;
       color: var(--sideBarIconColor);
@@ -171,13 +173,13 @@ onMounted(() => {
 .new-input,
 input.rename {
   outline: none;
-  height: 22px;
+  height: 24px;
   margin: 5px 0;
   padding: 0 6px;
   color: var(--sideBarColor);
-  border: 1px solid var(--floatBorderColor);
-  background: var(--floatBorderColor);
+  border: 1px solid var(--themeColor);
+  background: var(--inputBgColor);
   width: 70%;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 </style>

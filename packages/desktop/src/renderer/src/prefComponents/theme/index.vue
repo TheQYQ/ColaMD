@@ -337,7 +337,7 @@ const persistInstalledThemes = (): void => {
       color: rgba(0, 0, 0, 0.7);
       background: rgba(255, 255, 255, 1);
       & a {
-        color: rgba(33, 181, 111, 1);
+        color: #5b67c7;
       }
     }
     &.graphite {
