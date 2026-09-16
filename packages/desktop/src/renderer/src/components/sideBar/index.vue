@@ -144,7 +144,8 @@ const handleTabClick = (name: string): void => {
   color: var(--sideBarColor);
   user-select: none;
   background: var(--sideBarBgColor);
-  border-right: 1px solid var(--itemBgColor);
+  border-right: 1px solid var(--border-subtle);
+  font-family: var(--font-ui);
 }
 
 .side-bar-inner {
@@ -159,8 +160,11 @@ const handleTabClick = (name: string): void => {
   flex: none;
   display: flex;
   align-items: stretch;
-  padding: 2px 14px 0;
+  margin: 12px 12px 8px;
+  padding: 2px;
   box-sizing: border-box;
+  background: var(--bg-hover);
+  border-radius: 6px;
 }
 
 .side-bar-tab {
@@ -168,25 +172,26 @@ const handleTabClick = (name: string): void => {
   appearance: none;
   border: none;
   background: transparent;
-  color: var(--sideBarColor);
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1;
   text-align: center;
-  padding: 10px 0 11px;
+  padding: 7px 0;
   cursor: pointer;
   white-space: nowrap;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
+  border-radius: 4px;
+  transition: color 120ms ease-out, background-color 120ms ease-out;
 }
 
 .side-bar-tab:hover {
-  color: var(--sideBarTitleColor);
+  color: var(--text-primary);
 }
 
 .side-bar-tab.active {
-  color: var(--sideBarTitleColor);
-  font-weight: 600;
-  border-bottom-color: var(--sideBarTitleColor);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-sm);
 }
 
 .side-panel {

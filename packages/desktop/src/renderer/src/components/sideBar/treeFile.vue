@@ -102,9 +102,11 @@ onMounted(() => {
   align-items: center;
   cursor: default;
   user-select: none;
-  height: 30px;
+  height: 28px;
   box-sizing: border-box;
-  padding-right: 15px;
+  border-radius: 4px;
+  padding-right: 12px;
+  transition: background-color 120ms ease-out;
   &:hover {
     background: var(--sideBarItemHoverBgColor);
   }
@@ -113,37 +115,25 @@ onMounted(() => {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  &::before {
-    content: '';
-    position: absolute;
-    display: block;
-    left: 0;
-    background: var(--themeColor);
-    width: 2px;
-    height: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    transition: all 0.2s ease;
-  }
 }
-.side-bar-file.current::before {
-  height: 100%;
+.side-bar-file.current {
+  background: var(--bg-selected);
 }
 .side-bar-file.current > span {
-  color: var(--themeColor);
+  color: var(--text-primary);
 }
 .side-bar-file.active > span {
-  color: var(--sideBarTitleColor);
+  color: var(--text-primary);
 }
 input.rename {
-  height: 22px;
+  height: 24px;
   outline: none;
   margin: 5px 0;
   padding: 0 8px;
   color: var(--sideBarColor);
-  border: 1px solid var(--floatBorderColor);
-  background: var(--floatBorderColor);
+  border: 1px solid var(--themeColor);
+  background: var(--inputBgColor);
   width: 100%;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 </style>

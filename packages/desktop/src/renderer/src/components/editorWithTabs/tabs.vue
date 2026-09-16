@@ -263,20 +263,19 @@ onBeforeUnmount(() => {
 <style scoped>
 .close-icon {
   cursor: pointer;
-  transition: opacity 0.15s ease-in-out;
+  transition: opacity 120ms ease-out;
 }
 
 .close-icon:hover {
-  color: var(--focusColor);
+  color: var(--text-primary);
 }
 
 .editor-tabs {
   position: relative;
   display: flex;
   flex-direction: row;
-  height: 28px;
+  height: 36px;
   user-select: none;
-  box-shadow: 0px 0px 9px 2px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   &:hover > .new-file {
     opacity: 1 !important;
@@ -284,8 +283,10 @@ onBeforeUnmount(() => {
 }
 .scrollable-tabs {
   flex: 0 1 auto;
-  height: 28px;
+  height: 36px;
   overflow: hidden;
+  padding: 4px 8px 0;
+  box-sizing: border-box;
 }
 .tabs-container {
   min-width: min-content;
@@ -302,27 +303,30 @@ onBeforeUnmount(() => {
     display: none;
   }
   & > li {
-    transition: all 0.15s ease-in-out;
+    transition: color 120ms ease-out, background-color 120ms ease-out;
     position: relative;
-    padding: 0 8px;
-    color: var(--editorColor50);
+    padding: 0 10px;
+    color: var(--text-secondary);
     font-size: 12px;
+    font-weight: 450;
     line-height: 28px;
     height: 28px;
-    max-width: 280px;
+    max-width: 200px;
     display: flex;
     align-items: center;
+    border-radius: 6px;
     &[aria-grabbed='true'] {
-      color: var(--editorColor30) !important;
+      color: var(--text-tertiary) !important;
     }
     & > .close-icon {
       opacity: 0;
     }
-    &:focus {
+    &:focus-visible {
       outline: none;
+      box-shadow: var(--focus-ring);
     }
     &:hover {
-      background: var(--floatBgColor) !important;
+      background: var(--bg-hover);
     }
     &:hover > .close-icon {
       opacity: 1;
@@ -341,7 +345,7 @@ onBeforeUnmount(() => {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: var(--themeColor);
+      background: var(--text-secondary);
       flex-shrink: 0;
     }
   }
@@ -360,17 +364,10 @@ onBeforeUnmount(() => {
     }
   }
   & > li.active {
-    background: var(--itemBgColor);
+    background: var(--editorBgColor);
+    color: var(--text-primary);
     z-index: 3;
-    &:after {
-      content: '';
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      right: 0;
-      height: 2px;
-      background: var(--themeColor);
-    }
+    box-shadow: var(--shadow-sm);
     & > .close-icon {
       opacity: 1;
     }
@@ -380,16 +377,16 @@ onBeforeUnmount(() => {
   }
 }
 .editor-tabs > .new-file {
-  flex: 0 0 28px;
-  width: 28px;
-  height: 28px;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
   border-right: none;
   background: transparent;
   display: flex;
   align-items: center;
   justify-content: space-around;
   cursor: pointer;
-  color: var(--editorColor50);
+  color: var(--text-tertiary);
   opacity: 0;
   &.always-visible {
     opacity: 1;
@@ -397,9 +394,12 @@ onBeforeUnmount(() => {
 }
 
 .editor-tabs > .new-file:hover {
-  transition: all 0.15s ease-in-out;
+  transition: background-color 120ms ease-out, color 120ms ease-out;
+  border-radius: 6px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
   & > svg {
-    fill: var(--focusColor);
+    fill: currentColor;
   }
 }
 

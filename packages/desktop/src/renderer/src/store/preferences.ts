@@ -167,7 +167,7 @@ export const usePreferencesStore = defineStore('preferences', {
 
     editorFontFamily: 'Open Sans',
     fontSize: 16,
-    lineHeight: 1.6,
+    lineHeight: 1.7,
     codeFontSize: 14,
     codeFontFamily: 'DejaVu Sans Mono',
     codeBlockLineNumbers: false,
