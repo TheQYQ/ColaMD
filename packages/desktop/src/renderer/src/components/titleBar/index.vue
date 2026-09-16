@@ -23,6 +23,10 @@
         <span v-if="!filename">ColaMD</span>
         <span v-else>
           <span
+            v-if="showCustomTitleBar && project && project.name"
+            class="crumb-project"
+          >{{ project.name }}<span class="crumb-sep">&nbsp;/&nbsp;</span></span>
+          <span
             class="filename"
             :class="{ isOsx: platform === 'darwin' }"
             @click="rename"
@@ -227,7 +231,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .title-bar-editor-bg {
   height: var(--titleBarHeight);
-  background: var(--editorBgColor);
+  background: var(--sideBarBgColor);
   position: relative;
   left: 0;
   top: 0;
@@ -280,6 +284,8 @@ img {
 .title.align-left {
   padding: 0 12px;
   text-align: left;
+  font-size: 12px;
+  font-weight: 500;
 }
 div.title > span {
   /* Workaround for GH#339 */
@@ -291,6 +297,15 @@ div.title > span {
 }
 .title.align-left > span {
   direction: ltr;
+}
+
+.crumb-project,
+.crumb-sep {
+  color: var(--editorColor40);
+}
+
+.filename {
+  color: inherit;
 }
 
 .title-bar .title .filename.isOsx:hover {
