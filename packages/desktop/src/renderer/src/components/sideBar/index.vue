@@ -146,6 +146,8 @@ const handleTabClick = (name: string): void => {
   background: var(--sideBarBgColor);
   border-right: 1px solid var(--border-subtle);
   font-family: var(--font-ui);
+  /* V1 guide §四: sidebar collapse/expand animates width 240ms with ease-out-expo-ish curve. */
+  transition: width 240ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .side-bar-inner {

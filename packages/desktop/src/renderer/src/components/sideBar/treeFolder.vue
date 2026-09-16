@@ -159,7 +159,8 @@ onMounted(() => {
       flex-shrink: 0;
       color: var(--sideBarIconColor);
       margin-right: 5px;
-      transition: transform 0.25s ease-out;
+      /* V1 guide §四: 160ms ease-out (not 250ms). */
+      transition: transform 160ms ease-out;
       transform: rotate(90deg);
     }
     & > .icon-arrow.fold {

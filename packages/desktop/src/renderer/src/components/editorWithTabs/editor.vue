@@ -2267,13 +2267,33 @@ onBeforeUnmount(() => {
 }
 
 .editor-component .mu-container {
-  padding-top: 20px;
-  padding-bottom: 100vh;
+  /* V1 guide §2.2: 48px top breathing room, 30vh bottom so text doesn't hug the
+     viewport edge on short documents. */
+  padding-top: 48px;
+  padding-bottom: 30vh;
 }
 
 .typewriter .editor-component {
   padding-top: calc(50vh - 136px);
   padding-bottom: calc(50vh - 54px);
+}
+
+/* V1 guide §3.6: block-level hover decoration. The @muyajs/core engine renders
+   paragraph front buttons/handles via the ParagraphFrontButton plugin. Style
+   them to match V1 discipline: 14px, tertiary ink, subtle by default (the
+   engine toggles visibility on hover; we only tune color + size + opacity). */
+.mu-front-button,
+.mu-paragraph-front-button {
+  color: var(--text-tertiary);
+  width: 14px;
+  height: 14px;
+  opacity: 0.6;
+  transition: opacity 120ms ease-out, color 120ms ease-out;
+}
+.mu-front-button:hover,
+.mu-paragraph-front-button:hover {
+  color: var(--text-secondary);
+  opacity: 1;
 }
 
 .image-viewer {
