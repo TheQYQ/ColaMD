@@ -7,7 +7,7 @@ export const useListenForMainStore = defineStore('listenForMain', () => {
     const layoutStore = useLayoutStore()
     if (type === 'findInFolder') {
       layoutStore.SET_LAYOUT({
-        rightColumn: 'search',
+        rightColumn: 'files',
         showSideBar: true
       })
     }

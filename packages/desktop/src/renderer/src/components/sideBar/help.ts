@@ -21,14 +21,6 @@ export const sideBarTabs: SideBarTabEntry[] = [
   {
     id: 'toc',
     name: () => t('sideBar.icons.toc')
-  },
-  {
-    id: 'search',
-    name: () => t('sideBar.icons.search')
-  },
-  {
-    id: 'history',
-    name: () => t('sideBar.icons.history')
   }
 ]
 
