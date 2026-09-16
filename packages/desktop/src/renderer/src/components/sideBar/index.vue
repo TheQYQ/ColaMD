@@ -21,12 +21,8 @@
         <tree
           v-if="activeColumn === 'files'"
           :project-tree="projectTree"
-          :opened-files="openedFiles"
-          :tabs="tabs"
         />
-        <side-bar-search v-else-if="activeColumn === 'search'" />
         <toc v-else-if="activeColumn === 'toc'" />
-        <history v-else-if="activeColumn === 'history'" />
         <component
           :is="getSidebarPanel(activeColumn)?.component"
           v-else-if="getSidebarPanel(activeColumn)"
@@ -44,15 +40,11 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useLayoutStore } from '@/store/layout'
 import { useProjectStore } from '@/store/project'
-import { useEditorStore } from '@/store/editor'
 
 import { getAllSideBarTabs, getSidebarPanel } from './help'
 import Tree from './tree.vue'
-import SideBarSearch from './search.vue'
 import Toc from './toc.vue'
-import History from './history.vue'
 import { storeToRefs } from 'pinia'
-import type { TabDescriptor } from './types'
 
 /**
  * Typora-style sidebar: a single clean panel with a text tab row on top.
@@ -62,18 +54,15 @@ import type { TabDescriptor } from './types'
  */
 const layoutStore = useLayoutStore()
 const projectStore = useProjectStore()
-const editorStore = useEditorStore()
 
 const sideBar = ref<HTMLDivElement | null>(null)
 const dragBar = ref<HTMLDivElement | null>(null)
 
-const openedFiles = ref<TabDescriptor[]>([])
 const sideBarViewWidth = ref(280)
 
 const { rightColumn, showSideBar, sideBarWidth } = storeToRefs(layoutStore)
 
 const { projectTree } = storeToRefs(projectStore)
-const { tabs } = storeToRefs(editorStore)
 
 const sideBarTabList = getAllSideBarTabs()
 
@@ -183,7 +172,9 @@ const handleTabClick = (name: string): void => {
   cursor: pointer;
   white-space: nowrap;
   border-radius: 4px;
-  transition: color 120ms ease-out, background-color 120ms ease-out;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
 }
 
 .side-bar-tab:hover {

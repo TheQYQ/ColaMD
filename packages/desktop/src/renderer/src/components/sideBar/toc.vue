@@ -3,9 +3,6 @@
     class="side-bar-toc"
     :class="[{ 'side-bar-toc-overflow': !wordWrapInToc, 'side-bar-toc-wordwrap': wordWrapInToc }]"
   >
-    <div class="title">
-      {{ t('sideBar.toc.title') }}
-    </div>
     <el-tree
       v-if="keyedToc.length"
       ref="treeRef"
@@ -119,39 +116,35 @@ onBeforeUnmount(() => {
   bus.off('toc-active-changed', handleTocActiveChanged)
 })
 
-watch([activeSlug, keyedToc], () => {
-  nextTick(() => {
-    const tree = treeRef.value
-    if (!tree) return
-    const key = activeSlug.value ? findKeyBySlug(keyedToc.value, activeSlug.value) : null
-    tree.setCurrentKey(key ?? undefined)
-    if (key) {
-      nextTick(() => {
-        treeRef.value?.$el
-          ?.querySelector('.el-tree-node.is-current')
-          ?.scrollIntoView({ block: 'nearest' })
-      })
-    }
-  })
-}, { immediate: true })
+watch(
+  [activeSlug, keyedToc],
+  () => {
+    nextTick(() => {
+      const tree = treeRef.value
+      if (!tree) return
+      const key = activeSlug.value ? findKeyBySlug(keyedToc.value, activeSlug.value) : null
+      tree.setCurrentKey(key ?? undefined)
+      if (key) {
+        nextTick(() => {
+          treeRef.value?.$el
+            ?.querySelector('.el-tree-node.is-current')
+            ?.scrollIntoView({ block: 'nearest' })
+        })
+      }
+    })
+  },
+  { immediate: true }
+)
 </script>
 
 <style>
 .side-bar-toc {
-  height: calc(100% - 35px);
+  height: 100%;
   margin: 0;
-  padding: 0;
+  padding: 8px 0 0 0;
   list-style: none;
   display: flex;
   flex-direction: column;
-}
-
-.side-bar-toc .title {
-  color: var(--sideBarTitleColor);
-  font-weight: 600;
-  font-size: 16px;
-  margin: 37px 0 10px 0;
-  padding-left: 25px;
 }
 
 .side-bar-toc .el-tree-node {

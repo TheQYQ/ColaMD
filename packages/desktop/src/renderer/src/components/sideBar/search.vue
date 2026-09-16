@@ -340,14 +340,21 @@ onMounted(() => {
 }
 .search-wrapper {
   display: flex;
-  margin: 37px 8px 10px 8px;
-  padding: 0 6px;
-  border-radius: 4px;
-  height: 28px;
-  border: 1px solid var(--floatBorderColor);
-  background: var(--inputBgColor);
+  margin: 8px 12px 8px;
+  padding: 0 8px;
+  border-radius: 6px;
+  height: 30px;
+  border: 1px solid transparent;
+  background: var(--bg-hover);
   box-sizing: border-box;
   align-items: center;
+  transition:
+    border-color 120ms ease-out,
+    background-color 120ms ease-out;
+  &:focus-within {
+    border-color: var(--border-strong);
+    background: var(--inputBgColor);
+  }
   & > input {
     color: var(--sideBarColor);
     background: transparent;
@@ -386,17 +393,6 @@ onMounted(() => {
       &.active svg {
         fill: var(--highlightThemeColor);
       }
-    }
-  }
-
-  & > svg {
-    cursor: pointer;
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-    &:hover {
-      color: var(--sideBarIconColor);
     }
   }
 }
