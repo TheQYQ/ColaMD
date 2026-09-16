@@ -198,6 +198,8 @@ onUnmounted(() => {
 .pref-autocomplete {
   background: var(--floatBgColor);
   border-color: var(--floatBorderColor);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   & .el-autocomplete-suggestion__wrap li:hover {
     background: var(--floatHoverColor);
   }
@@ -228,12 +230,14 @@ onUnmounted(() => {
 .category {
   -webkit-app-region: no-drag;
   overflow-y: auto;
+  padding: 0 8px;
   & .item {
     width: 100%;
-    height: 38px;
-    font-size: 16px;
+    height: 32px;
+    font-size: 13px;
     color: var(--sideBarColor);
-    padding-left: 16px;
+    padding: 0 8px;
+    margin: 1px 0;
     box-sizing: border-box;
     display: flex;
     flex-direction: row;
@@ -241,11 +245,13 @@ onUnmounted(() => {
     cursor: pointer;
     position: relative;
     user-select: none;
+    border-radius: var(--radius-md);
+    transition: background-color 120ms ease-out;
     & > svg {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       color: var(--sideBarColor);
-      margin-right: 12px;
+      margin-right: 10px;
     }
     &.active > svg {
       color: var(--sideBarTitleColor);
@@ -253,24 +259,9 @@ onUnmounted(() => {
     &:hover {
       background: var(--sideBarItemHoverBgColor);
     }
-    &::before {
-      content: '';
-      width: 4px;
-      height: 0;
-      background: var(--highlightThemeColor);
-      position: absolute;
-      left: 0;
-      border-top-right-radius: 3px;
-      border-bottom-right-radius: 3px;
-      transition: height 0.25s ease-in-out;
-      top: 50%;
-      transform: translateY(-50%);
-    }
     &.active {
       color: var(--sideBarTitleColor);
-    }
-    &.active::before {
-      height: 100%;
+      background: var(--bg-selected);
     }
   }
 }
