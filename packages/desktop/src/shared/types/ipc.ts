@@ -149,6 +149,7 @@ export interface IpcSendChannels {
   'mt::app-try-quit': []
   'mt::ask-for-image-auto-path': [payload: unknown]
   'mt::ask-for-modify-image-folder-path': [imagePath?: string]
+  'mt::ask-for-open-file-in-sidebar': []
   'mt::ask-for-open-project-in-sidebar': []
   'mt::ask-for-user-data': []
   'mt::ask-for-user-preference': []
