@@ -8,7 +8,7 @@ export interface SideBarTabEntry {
 }
 
 /**
- * Built-in sidebar tabs, in Typora order (文件 目录 搜索 历史记录): the two
+ * Built-in sidebar tabs, in Typora order (文件 目录 搜索): the two
  * navigation tabs (files + outline) come first, then the tools. Rendered as a
  * compact text tab row at the top of the panel (no icon strip, no settings
  * gear — preferences live in the 文件 > 偏好设置 menu).
@@ -21,6 +21,10 @@ export const sideBarTabs: SideBarTabEntry[] = [
   {
     id: 'toc',
     name: () => t('sideBar.icons.toc')
+  },
+  {
+    id: 'search',
+    name: () => t('sideBar.icons.search')
   }
 ]
 
