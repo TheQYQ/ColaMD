@@ -337,10 +337,7 @@ const showUnsavedFilesMessage = async(
       cleanup()
       resolve(result)
     }
-    const onResponse = (
-      e: Electron.IpcMainEvent,
-      result: { needSave: boolean } | null
-    ): void => {
+    const onResponse = (e: Electron.IpcMainEvent, result: { needSave: boolean } | null): void => {
       if (e.sender !== win.webContents) return
       finish(result)
     }
@@ -709,7 +706,7 @@ ipcMain.on('mt::ask-for-open-file-in-sidebar', async(e) => {
     const resolvedPath = normalizeAndResolvePath(filePaths[0])
     // Trusted grant site: the user just picked this file from a trusted dialog.
     addAllowedRoot(path.dirname(resolvedPath))
-    ipcMain.emit('app-open-file-by-id', win.id, resolvedPath, {}, true)
+    ipcMain.emit('app-open-file-by-id', win.id, resolvedPath)
   }
 })
 
