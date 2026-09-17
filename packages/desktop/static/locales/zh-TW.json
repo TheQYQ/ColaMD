@@ -246,6 +246,7 @@
       "closeAll": "全部關閉",
       "emptyProject": "空專案",
       "createFile": "建立檔案",
+      "openFile": "開啟檔案...",
       "openFolder": "開啟資料夾"
     },
     "toc": {

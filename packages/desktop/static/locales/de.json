@@ -246,6 +246,7 @@
       "closeAll": "Alle schließen",
       "emptyProject": "Leeres Projekt",
       "createFile": "Datei erstellen",
+      "openFile": "Datei öffnen...",
       "openFolder": "Ordner öffnen"
     },
     "toc": {

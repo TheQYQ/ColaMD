@@ -246,6 +246,7 @@
       "closeAll": "Tümünü Kapat",
       "emptyProject": "Boş proje",
       "createFile": "Dosya Oluştur",
+      "openFile": "Dosya Aç...",
       "openFolder": "Klasör Aç"
     },
     "toc": {

@@ -236,6 +236,10 @@ export const useProjectStore = defineStore('project', () => {
     window.electron.ipcRenderer.send('mt::ask-for-open-project-in-sidebar')
   }
 
+  function ASK_FOR_OPEN_FILE(): void {
+    window.electron.ipcRenderer.send('mt::ask-for-open-file-in-sidebar')
+  }
+
   function LISTEN_FOR_SIDEBAR_CONTEXT_MENU(): void {
     bus.on('SIDEBAR::show-in-folder', () => {
       const { pathname } = activeItem.value
@@ -396,6 +400,7 @@ export const useProjectStore = defineStore('project', () => {
     CHANGE_ACTIVE_ITEM,
     CHANGE_CLIPBOARD,
     ASK_FOR_OPEN_PROJECT,
+    ASK_FOR_OPEN_FILE,
     LISTEN_FOR_SIDEBAR_CONTEXT_MENU,
     CREATE_FILE_DIRECTORY,
     RENAME_IN_SIDEBAR,
