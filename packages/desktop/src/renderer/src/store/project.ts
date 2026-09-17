@@ -1,6 +1,13 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import { addFile, unlinkFile, addDirectory, unlinkDirectory, resortTree, updateFileMtime } from './treeCtrl'
+import {
+  addFile,
+  unlinkFile,
+  addDirectory,
+  unlinkDirectory,
+  resortTree,
+  updateFileMtime
+} from './treeCtrl'
 import { usePreferencesStore } from './preferences'
 import bus from '../bus'
 import { create, paste, rename, type FileCreateType, type PasteOptions } from '../util/fileSystem'
@@ -175,7 +182,12 @@ export const useProjectStore = defineStore('project', () => {
     switch (type) {
       case 'add': {
         const { pathname, data, isMarkdown } = change
-        addFile(projectTree.value!, change as Parameters<typeof addFile>[1], String(preferencesStore.fileSortBy), String(preferencesStore.fileSortOrder))
+        addFile(
+          projectTree.value!,
+          change as Parameters<typeof addFile>[1],
+          String(preferencesStore.fileSortBy),
+          String(preferencesStore.fileSortOrder)
+        )
         if (isMarkdown && newFileNameCache.value && pathname === newFileNameCache.value) {
           const fileState = getFileStateFromData(data as Record<string, unknown>)
           editorStore.UPDATE_CURRENT_FILE(fileState)
@@ -195,7 +207,12 @@ export const useProjectStore = defineStore('project', () => {
         break
       case 'change':
         if (change?.mtimeMs !== undefined) {
-          updateFileMtime(projectTree.value!, change as Parameters<typeof updateFileMtime>[1], String(preferencesStore.fileSortBy), String(preferencesStore.fileSortOrder))
+          updateFileMtime(
+            projectTree.value!,
+            change as Parameters<typeof updateFileMtime>[1],
+            String(preferencesStore.fileSortBy),
+            String(preferencesStore.fileSortOrder)
+          )
         }
         break
       default:
@@ -346,9 +363,17 @@ export const useProjectStore = defineStore('project', () => {
     if (!src) return
     const dirname = window.path.dirname(src)
     const dest = dirname + PATH_SEPARATOR + name
-    rename(src, dest).then(() => {
-      editorStore.RENAME_IF_NEEDED({ src, dest })
-    })
+    rename(src, dest)
+      .then(() => {
+        editorStore.RENAME_IF_NEEDED({ src, dest })
+      })
+      .catch((err) => {
+        notice.notify({
+          title: '重命名失败',
+          type: 'error',
+          message: err instanceof Error ? err.message : String(err)
+        })
+      })
   }
 
   function OPEN_SETTING_WINDOW(): void {

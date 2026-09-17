@@ -22,7 +22,7 @@
         type="text"
         class="rename"
         @click.stop="noop"
-        @keypress.enter="rename"
+        @keydown.enter="rename"
       >
       <span
         v-else
@@ -46,7 +46,7 @@
         type="text"
         class="new-input"
         :style="{ 'margin-left': `${depth * 5 + 15}px` }"
-        @keypress.enter="handleInputEnter"
+        @keydown.enter="handleInputEnter"
       >
       <File
         v-for="file of folder.files"

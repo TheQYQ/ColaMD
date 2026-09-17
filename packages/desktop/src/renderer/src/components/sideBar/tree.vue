@@ -42,7 +42,7 @@
           type="text"
           class="new-input"
           :style="{ 'margin-left': `${depth * 5 + 15}px` }"
-          @keypress.enter="handleInputEnter"
+          @keydown.enter="handleInputEnter"
         >
         <file
           v-for="file of projectTree.files"
