@@ -12,13 +12,6 @@ export function t(key: string, params: Record<string, string | number> = {}): st
 }
 
 /**
- * Gets the current language.
- */
-export function getCurrentLanguage(): string {
-  return currentLanguage
-}
-
-/**
  * Sets the language.
  */
 export function setLanguage(language: string): void {

@@ -11,10 +11,6 @@ export interface UploaderService {
 
 export type UploaderServiceId = 'picgo' | 'cliScript'
 
-export const isValidService = (name: string): boolean => {
-  return Object.prototype.hasOwnProperty.call(getServices(), name)
-}
-
 const getServices = (): Record<UploaderServiceId, UploaderService> => ({
   picgo: {
     name: t('preferences.image.uploader.services.picgo'),

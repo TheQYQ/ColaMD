@@ -181,18 +181,6 @@ export const getUniqueId = (): string => {
   return `${ID_PREFIX}${id++}`
 }
 
-export const hasKeys = (obj: object): boolean => Object.keys(obj).length > 0
-
-/**
- * Shallow clone the given object.
- *
- * @param obj Object to clone
- * @param inheritFromObject Whether the clone should inherit from `Object`
- */
-export const cloneObject = <T extends object>(obj: T, inheritFromObject = true): T => {
-  return Object.assign(inheritFromObject ? {} : Object.create(null), obj)
-}
-
 /**
  * Deep clone the given object.
  *
@@ -209,5 +197,4 @@ const platform =
     window.electron.process.platform) ||
   ''
 export const isOsx = platform === 'darwin'
-export const isWindows = platform === 'win32'
 export const isLinux = platform === 'linux'

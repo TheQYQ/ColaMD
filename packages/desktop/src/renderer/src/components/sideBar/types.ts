@@ -55,7 +55,7 @@ export interface SearchResult {
 }
 
 // ---------------------------------------------------------------------------
-// Tab descriptor (sideBar/treeOpenedTab.vue)
+// Tab descriptor (consumed by the editor store)
 // ---------------------------------------------------------------------------
 
 // The sideBar consumes the same per-tab state shape as the editor store.

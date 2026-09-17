@@ -225,7 +225,7 @@ export const getTranslatedSearchContent: CachedTranslator = (() => {
 })()
 
 // Add language change listener
-export const setupLanguageChangeListener = (): void => {
+const setupLanguageChangeListener = (): void => {
   // Listen for language change events
   const handleLanguageChange = () => {
     // Trigger search content refresh
@@ -292,23 +292,6 @@ export const setupLanguageChangeListener = (): void => {
 
 // Initialize the language change listener
 setupLanguageChangeListener()
-
-// Add manual refresh function
-export const refreshSearchContent = (): TranslatedSearchEntry[] => {
-  // Clear the language cache to force re-fetch
-  if (getTranslatedSearchContent.lastLanguage) {
-    delete getTranslatedSearchContent.lastLanguage
-  }
-
-  // Trigger the language change event
-  window.dispatchEvent(
-    new CustomEvent('languageChanged', {
-      detail: { language: 'force-refresh' }
-    })
-  )
-
-  return getTranslatedSearchContent()
-}
 
 // Creates the debug popup (ensures the close button is visible)
 function createDebugPopup(): HTMLDivElement {
@@ -408,7 +391,7 @@ function getI18nInstance(): VueI18nGlobal | VueI18nGlobalContainer | null {
 }
 
 // Enhanced debug function (fixes API access issues)
-export const debugLanguageState = (): void => {
+const debugLanguageState = (): void => {
   // Ensure the popup exists and is visible
   let popup = document.getElementById('debugPopup') as HTMLDivElement | null
   if (!popup) {
