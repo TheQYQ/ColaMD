@@ -241,53 +241,14 @@
       "showMoreMatches": "顯示更多符合項目"
     },
     "tree": {
-      "openedFiles": "已開啟的檔案",
-      "saveAll": "全部儲存",
-      "closeAll": "全部關閉",
       "emptyProject": "空專案",
       "createFile": "建立檔案",
-      "openFile": "開啟檔案...",
-      "openFolder": "開啟資料夾"
-    },
-    "toc": {
-      "title": "目錄",
-      "expandAll": "全部展開",
-      "collapseAll": "全部折疊"
+      "openFile": "開啟檔案..."
     },
     "icons": {
       "files": "檔案",
       "search": "搜尋",
-      "toc": "目錄",
-      "settings": "設定",
-      "history": "Version History"
-    },
-    "history": {
-      "title": "Version History",
-      "noFile": "No file open",
-      "loading": "Loading...",
-      "nosnapshots": "No version history yet. Snapshots are created automatically when you save.",
-      "restore": "Restore",
-      "delete": "Delete",
-      "clearAll": "Clear All",
-      "close": "Close",
-      "cancel": "Cancel",
-      "previewTitle": "Version Preview",
-      "restoreConfirm": "Restoring this version will replace the current document content. A backup of the current state will be saved first. Continue?",
-      "restoreTitle": "Restore Version",
-      "restoreFailed": "Failed to restore version",
-      "restoreSuccess": "Version restored successfully",
-      "deleteConfirm": "Are you sure you want to delete this version permanently?",
-      "deleteTitle": "Delete Version",
-      "deleteSuccess": "Version deleted",
-      "deleteFailed": "Failed to delete version",
-      "clearConfirm": "Are you sure you want to clear all version history for this file? This cannot be undone.",
-      "clearTitle": "Clear History",
-      "clearSuccess": "History cleared",
-      "clearFailed": "Failed to clear history",
-      "justNow": "Just now",
-      "minutesAgo": "{count} min ago",
-      "hoursAgo": "{count}h ago",
-      "daysAgo": "{count}d ago"
+      "toc": "目錄"
     }
   },
   "commandPalette": {

@@ -59,7 +59,7 @@ export function getAllSideBarTabs(): SideBarTabEntry[] {
 /**
  * Look up a plugin-registered panel by id. Used by the sidebar to render the
  * selected panel's component. Returns undefined for built-in panels (files,
- * search, toc, history) which the sidebar handles natively.
+ * search, toc) which the sidebar handles natively.
  */
 export function getSidebarPanel(id: string): SidebarPanelRegistration | undefined {
   return getRegisteredSidebarPanels().find((p) => p.id === id)

@@ -13,7 +13,7 @@ interface VersionHistoryFile {
 }
 
 /** Snapshot capture reasons — used as the human-readable label. */
-export const SnapshotLabel = {
+const SnapshotLabel = {
   ManualSave: 'Manual Save',
   AutoSave: 'Auto-save',
   SessionEnd: 'Session End',

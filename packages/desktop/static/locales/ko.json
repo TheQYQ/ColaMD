@@ -241,53 +241,14 @@
       "showMoreMatches": "더 많은 일치 항목 보기"
     },
     "tree": {
-      "openedFiles": "열린 파일",
-      "saveAll": "모두 저장",
-      "closeAll": "모두 닫기",
       "emptyProject": "빈 프로젝트",
       "createFile": "파일 만들기",
-      "openFile": "파일 열기...",
-      "openFolder": "폴더 열기"
-    },
-    "toc": {
-      "title": "목차",
-      "expandAll": "모두 펼치기",
-      "collapseAll": "모두 접기"
+      "openFile": "파일 열기..."
     },
     "icons": {
       "files": "파일",
       "search": "검색",
-      "toc": "목차",
-      "settings": "설정",
-      "history": "Version History"
-    },
-    "history": {
-      "title": "Version History",
-      "noFile": "No file open",
-      "loading": "Loading...",
-      "nosnapshots": "No version history yet. Snapshots are created automatically when you save.",
-      "restore": "Restore",
-      "delete": "Delete",
-      "clearAll": "Clear All",
-      "close": "Close",
-      "cancel": "Cancel",
-      "previewTitle": "Version Preview",
-      "restoreConfirm": "Restoring this version will replace the current document content. A backup of the current state will be saved first. Continue?",
-      "restoreTitle": "Restore Version",
-      "restoreFailed": "Failed to restore version",
-      "restoreSuccess": "Version restored successfully",
-      "deleteConfirm": "Are you sure you want to delete this version permanently?",
-      "deleteTitle": "Delete Version",
-      "deleteSuccess": "Version deleted",
-      "deleteFailed": "Failed to delete version",
-      "clearConfirm": "Are you sure you want to clear all version history for this file? This cannot be undone.",
-      "clearTitle": "Clear History",
-      "clearSuccess": "History cleared",
-      "clearFailed": "Failed to clear history",
-      "justNow": "Just now",
-      "minutesAgo": "{count} min ago",
-      "hoursAgo": "{count}h ago",
-      "daysAgo": "{count}d ago"
+      "toc": "목차"
     }
   },
   "commandPalette": {
