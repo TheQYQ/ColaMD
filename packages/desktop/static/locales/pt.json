@@ -246,6 +246,7 @@
       "closeAll": "Fechar Todos",
       "emptyProject": "Projeto vazio",
       "createFile": "Criar Arquivo",
+      "openFile": "Abrir Arquivo...",
       "openFolder": "Abrir Pasta"
     },
     "toc": {

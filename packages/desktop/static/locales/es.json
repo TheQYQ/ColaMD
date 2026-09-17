@@ -246,6 +246,7 @@
       "closeAll": "Cerrar",
       "emptyProject": "Proyecto vacío",
       "createFile": "Crear Archivo",
+      "openFile": "Abrir archivo...",
       "openFolder": "Abrir Carpeta"
     },
     "toc": {

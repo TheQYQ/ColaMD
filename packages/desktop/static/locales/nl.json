@@ -246,6 +246,7 @@
       "closeAll": "Alles sluiten",
       "emptyProject": "Leeg project",
       "createFile": "Bestand aanmaken",
+      "openFile": "Bestand openen...",
       "openFolder": "Map openen"
     },
     "toc": {

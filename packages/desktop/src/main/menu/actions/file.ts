@@ -690,6 +690,29 @@ ipcMain.on('mt::ask-for-open-project-in-sidebar', async(e) => {
   }
 })
 
+// Empty-state "Open File" button in the sidebar — picker filtered to markdown
+// and text files. Grants mutation scope for the file's parent directory.
+ipcMain.on('mt::ask-for-open-file-in-sidebar', async(e) => {
+  const win = BrowserWindow.fromWebContents(e.sender)
+  if (!win) {
+    return
+  }
+  const { filePaths } = await dialog.showOpenDialog(win, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'Markdown / Text', extensions: ['md', 'markdown', 'mdx', 'txt', 'text'] },
+      { name: 'All Files', extensions: ['*'] }
+    ]
+  })
+
+  if (filePaths && filePaths[0]) {
+    const resolvedPath = normalizeAndResolvePath(filePaths[0])
+    // Trusted grant site: the user just picked this file from a trusted dialog.
+    addAllowedRoot(path.dirname(resolvedPath))
+    ipcMain.emit('app-open-file-by-id', win.id, resolvedPath, {}, true)
+  }
+})
+
 interface FormatLinkPayload {
   data: { href?: string; text?: string }
   dirname?: string

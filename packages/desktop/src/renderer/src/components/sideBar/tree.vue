@@ -79,9 +79,9 @@
           text
           bg
           type="primary"
-          @click="openFolder"
+          @click="openFile"
         >
-          {{ t('sideBar.tree.openFolder') }}
+          {{ t('sideBar.tree.openFile') }}
         </el-button>
       </div>
     </div>
@@ -135,8 +135,8 @@ const createCacheDirname = computed<string | undefined>(() => {
 })
 
 // Methods
-const openFolder = (): void => {
-  projectStore.ASK_FOR_OPEN_PROJECT()
+const openFile = (): void => {
+  projectStore.ASK_FOR_OPEN_FILE()
 }
 
 const createFile = (): void => {
