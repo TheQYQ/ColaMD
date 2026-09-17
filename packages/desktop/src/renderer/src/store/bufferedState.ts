@@ -31,7 +31,7 @@ const stores: StoreCache = {
   layoutStore: null
 }
 
-export const createBufferedState = (): Record<string, unknown> | null => {
+const createBufferedState = (): Record<string, unknown> | null => {
   if (!stores.editorStore) {
     stores.editorStore = useEditorStore()
   }

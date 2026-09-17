@@ -82,8 +82,3 @@ export const registerBootInfo = (): void => {
     return cached
   })
 }
-
-export const getBootInfo = (): BootInfo => {
-  if (!cached) cached = buildBootInfo()
-  return cached
-}

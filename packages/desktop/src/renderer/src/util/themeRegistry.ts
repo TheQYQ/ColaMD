@@ -1,5 +1,4 @@
 import { themes as builtInThemes } from '../prefComponents/theme/config'
-import type { ThemeDescriptor } from '../prefComponents/theme/config'
 import type { ColaMDThemeManifest, InstalledTheme } from './themeMarket'
 
 /**
@@ -13,17 +12,6 @@ import type { ColaMDThemeManifest, InstalledTheme } from './themeMarket'
  */
 
 const customThemeMap = new Map<string, InstalledTheme>()
-
-/** Resolves to all registered themes (built-in + custom) in a stable order. */
-export const getAllThemes = (): ThemeDescriptor[] => {
-  const builtins = builtInThemes.map((t): ThemeDescriptor => ({ name: t.name }))
-  const customs = [...customThemeMap.values()].map(
-    (t): ThemeDescriptor => ({
-      name: t.manifest.id
-    })
-  )
-  return [...builtins, ...customs]
-}
 
 /** Looks up a custom theme manifest by id. Returns undefined if it's a built-in. */
 export const getCustomTheme = (id: string): ColaMDThemeManifest | undefined => {
@@ -63,11 +51,6 @@ export const hydrateThemes = (themes: InstalledTheme[]): void => {
 /** Removes a custom theme from the registry. Returns true if it existed. */
 export const unregisterTheme = (id: string): boolean => {
   return customThemeMap.delete(id)
-}
-
-/** Clears all custom themes (testing/cleanup). */
-export const clearCustomThemes = (): void => {
-  customThemeMap.clear()
 }
 
 /** Returns all installed custom themes as an array (for persistence). */
