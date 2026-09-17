@@ -304,6 +304,14 @@ class EditorWindow extends BaseWindow {
         this.openFolder(rootDirectory)
       }
       if (fileList.length) {
+        // Trusted grant site: fileList is set by trusted callers (CLI/argv,
+        // openFileOrFolder dialog, recent files). Grant mutation scope for the
+        // parent dir of each file so that rename / save / delete inside that
+        // directory is allowed — otherwise single-file opens get a tab with no
+        // write scope (#PathScopeError).
+        for (const filePath of fileList) {
+          if (filePath) addAllowedRoot(path.dirname(filePath))
+        }
         this.openTabsFromPaths(fileList)
       }
     }, 0)
@@ -598,6 +606,13 @@ class EditorWindow extends BaseWindow {
       }
       const rootDirectory = bufferState.project?.rootDirectory
       if (rootDirectory) {
+        // Trusted grant site: rootDirectory comes from bufferStoreInfo, which
+        // was originally written when the user opened this folder via a trusted
+        // dialog/CLI flow. Restore the mutation scope that the constructor's
+        // setTimeout block skipped (because buffer-restore passes null
+        // rootDirectory / empty fileList) (#PathScopeError on rename after
+        // relaunch).
+        addAllowedRoot(rootDirectory)
         this.openFolder(rootDirectory)
       }
 
@@ -611,6 +626,12 @@ class EditorWindow extends BaseWindow {
         if (!tab.pathname) {
           continue
         }
+
+        // Trusted grant: tab.pathname originates from a previous user session
+        // where the file was opened by the user. The buffer-restore path does
+        // not run the constructor setTimeout (which normally grants scope for
+        // fileList), so grant it here to avoid PathScopeError on first rename.
+        addAllowedRoot(path.dirname(tab.pathname))
 
         fileOpenRequests.push(
           loadMarkdownFile(

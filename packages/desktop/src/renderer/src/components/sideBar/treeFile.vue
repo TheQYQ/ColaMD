@@ -17,7 +17,7 @@
       type="text"
       class="rename"
       @click.stop="noop"
-      @keypress.enter="rename"
+      @keydown.enter="rename"
     >
     <span v-else>{{ file.name }}</span>
   </div>
@@ -71,14 +71,20 @@ const focusRenameInput = (): void => {
   nextTick(() => {
     if (renameInput.value) {
       renameInput.value.focus()
-      newName.value = props.file.name
+      // Only show the filename stem in the rename input — extension is
+      // display-only and not user-editable (#2887).
+      const ext = window.path.extname(props.file.name)
+      newName.value = ext ? props.file.name.slice(0, -ext.length) : props.file.name
     }
   })
 }
 
 const rename = (): void => {
+  // newName holds only the stem — re-attach the original extension so the
+  // file keeps its type after rename.
   if (newName.value) {
-    projectStore.RENAME_IN_SIDEBAR(newName.value)
+    const ext = window.path.extname(props.file.name)
+    projectStore.RENAME_IN_SIDEBAR(newName.value + ext)
   }
 }
 
