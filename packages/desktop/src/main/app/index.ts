@@ -217,7 +217,7 @@ class App {
 
         // An empty locale (offline environment, unavailable before ready, …)
         // must fall back to 'en' and never hit the map below.
-        currentLanguage = systemLanguage ? (languageMap[systemLanguage] || 'en') : 'en'
+        currentLanguage = systemLanguage ? languageMap[systemLanguage] || 'en' : 'en'
 
         // If the detected language is not in the supported list, use English
         if (!supportedLanguages.includes(currentLanguage)) {
@@ -858,11 +858,6 @@ class App {
       const { keybindings } = this._accessor
       // Convert map to object
       win.webContents.send('mt::keybindings-response', Object.fromEntries(keybindings.keys))
-    })
-
-    ipcMain.on('mt::open-keybindings-config', () => {
-      const { keybindings } = this._accessor
-      keybindings.openConfigInFileManager()
     })
 
     ipcMain.handle('mt::keybinding-get-pref-keybindings', () => {

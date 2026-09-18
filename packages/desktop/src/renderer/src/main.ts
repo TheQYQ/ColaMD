@@ -1,7 +1,6 @@
 import { createApp, type App } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import bootstrapRenderer from './bootstrap'
-import axios from './axios'
 import pinia from './store'
 import './assets/symbolIcon'
 
@@ -13,8 +12,6 @@ import en from 'element-plus/es/locale/lang/en'
 // I18n translation system
 import i18nPlugin from './i18n'
 
-// something is wrong here! \/
-import services from './services/index'
 import routes from './router'
 import Main from './Main.vue'
 
@@ -49,14 +46,6 @@ const router = createRouter({
 app.use(router)
 app.use(pinia)
 app.use(i18nPlugin)
-
-// Configure axios globally
-app.config.globalProperties.$http = axios
-
-// Register services globally
-;(services as unknown as Array<Record<string, unknown> & { name: string }>).forEach((s) => {
-  app.config.globalProperties['$' + s.name] = s[s.name]
-})
 
 // Mount the app
 app.mount('#app')

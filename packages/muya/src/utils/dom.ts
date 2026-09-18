@@ -18,15 +18,6 @@ export function query<T extends Element = HTMLElement>(
     return parent.querySelector<T>(selector);
 }
 
-// Typed querySelectorAll, returning a plain array (most callers want to
-// .map / .filter, not the live NodeList).
-export function queryAll<T extends Element = HTMLElement>(
-    selector: string,
-    parent: ParentNode = document,
-): T[] {
-    return Array.from(parent.querySelectorAll<T>(selector));
-}
-
 // Walk up from `node` (inclusive) to the nearest scrollable ancestor. The
 // editor's scroll container is not fixed across embeddings — in the desktop
 // app `muya.domNode` itself scrolls (`overflow:auto`), while other hosts may
@@ -84,12 +75,6 @@ export function operateClassName(element: HTMLElement, ctrl: 'add' | 'remove', c
 
     if ((ctrl === 'add' && !existed) || (ctrl === 'remove' && existed))
         element.classList[ctrl](className);
-}
-
-export function insertBefore(newNode: HTMLElement, originNode: HTMLElement) {
-    const parentNode = originNode.parentNode;
-    if (parentNode)
-        parentNode.insertBefore(newNode, originNode);
 }
 
 // DOM operations

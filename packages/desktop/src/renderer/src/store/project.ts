@@ -228,14 +228,6 @@ export const useProjectStore = defineStore('project', () => {
     activeItem.value = item
   }
 
-  function CHANGE_CLIPBOARD(data: ClipboardEntry | null): void {
-    clipboard.value = data
-  }
-
-  function ASK_FOR_OPEN_PROJECT(): void {
-    window.electron.ipcRenderer.send('mt::ask-for-open-project-in-sidebar')
-  }
-
   function ASK_FOR_OPEN_FILE(): void {
     window.electron.ipcRenderer.send('mt::ask-for-open-file-in-sidebar')
   }
@@ -380,10 +372,6 @@ export const useProjectStore = defineStore('project', () => {
       })
   }
 
-  function OPEN_SETTING_WINDOW(): void {
-    window.electron.ipcRenderer.send('mt::open-setting-window')
-  }
-
   return {
     activeItem,
     createCache,
@@ -398,12 +386,9 @@ export const useProjectStore = defineStore('project', () => {
     LISTEN_FOR_LOAD_PROJECT,
     LISTEN_FOR_UPDATE_PROJECT,
     CHANGE_ACTIVE_ITEM,
-    CHANGE_CLIPBOARD,
-    ASK_FOR_OPEN_PROJECT,
     ASK_FOR_OPEN_FILE,
     LISTEN_FOR_SIDEBAR_CONTEXT_MENU,
     CREATE_FILE_DIRECTORY,
-    RENAME_IN_SIDEBAR,
-    OPEN_SETTING_WINDOW
+    RENAME_IN_SIDEBAR
   }
 })

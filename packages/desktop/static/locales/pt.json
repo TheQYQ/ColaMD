@@ -53,7 +53,6 @@
       "replace": "Substituir",
       "findNext": "Localizar Próximo",
       "findPrevious": "Localizar Anterior",
-      "findInFolder": "Localizar na Pasta",
       "screenshot": "Captura de Tela",
       "lineEnding": "Terminação de Linha",
       "lineEndingCrlf": "CRLF(Windows)",
@@ -227,19 +226,9 @@
     "replaceAll": "Substituir Todos",
     "replaceSingle": "Substituir Um",
     "invalidRegex": "Expressão regular inválida \"{pattern}\"",
-    "regexMatchEmpty": "Expressão regular corresponde à string vazia \"{pattern}\"",
-    "searchResultInfo": "{matchCount} correspondências em {fileCount} arquivos",
-    "searchLimited": "Pesquisa limitada aos primeiros {count} resultados"
+    "regexMatchEmpty": "Expressão regular corresponde à string vazia \"{pattern}\""
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "Pesquisar na pasta...",
-      "noFolderOpen": "Nenhuma pasta aberta",
-      "noResultsFound": "Nenhum resultado encontrado.",
-      "cancel": "Cancelar",
-      "openFolder": "Abrir Pasta",
-      "showMoreMatches": "Mostrar mais correspondências"
-    },
     "tree": {
       "emptyProject": "Projeto vazio",
       "createFile": "Criar Arquivo",
@@ -247,7 +236,6 @@
     },
     "icons": {
       "files": "Arquivos",
-      "search": "Pesquisar",
       "toc": "Índice"
     }
   },
@@ -800,7 +788,6 @@
       "findNext": "Localizar Próximo",
       "findPrevious": "Localizar Anterior",
       "replace": "Substituir",
-      "findInFolder": "Localizar na Pasta",
       "screenshot": "Captura de Tela"
     },
     "paragraph": {
@@ -943,8 +930,6 @@
       "errorLoadingTabTitle": "Erro ao carregar a aba",
       "errorLoadingTabMessage": "Ocorreu um erro ao carregar a alteração do arquivo porque a aba não pôde ser encontrada.",
       "mixedLineEndingsNormalized": "“{name}” possui finais de linha mistos que foram normalizados automaticamente para {lineEnding}.",
-      "imageDeletionUrlTitle": "URL de exclusão da imagem",
-      "imageDeletionUrlMessage": "Clique para copiar para a área de transferência a URL de exclusão da imagem enviada ({url}).",
       "errorWhileSaving": "Ocorreu um erro ao salvar: {msg}",
       "exportSuccessTitle": "Exportado com sucesso",
       "exportSuccessMessage": "“{name}” foi exportado com sucesso!",

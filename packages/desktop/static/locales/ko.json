@@ -53,7 +53,6 @@
       "replace": "바꾸기",
       "findNext": "다음 찾기",
       "findPrevious": "이전 찾기",
-      "findInFolder": "폴더에서 찾기",
       "screenshot": "스크린샷",
       "lineEnding": "줄 끝",
       "lineEndingCrlf": "CRLF(Windows)",
@@ -227,19 +226,9 @@
     "replaceAll": "모두 바꾸기",
     "replaceSingle": "하나 바꾸기",
     "invalidRegex": "잘못된 정규식 \"{pattern}\"",
-    "regexMatchEmpty": "정규식이 빈 문자열 \"{pattern}\"과 일치",
-    "searchResultInfo": "{fileCount}개의 파일에서 {matchCount}개 일치",
-    "searchLimited": "처음 {count}개의 결과까지만 검색"
+    "regexMatchEmpty": "정규식이 빈 문자열 \"{pattern}\"과 일치"
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "폴더에서 검색...",
-      "noFolderOpen": "열린 폴더 없음",
-      "noResultsFound": "결과를 찾을 수 없습니다.",
-      "cancel": "취소",
-      "openFolder": "폴더 열기",
-      "showMoreMatches": "더 많은 일치 항목 보기"
-    },
     "tree": {
       "emptyProject": "빈 프로젝트",
       "createFile": "파일 만들기",
@@ -247,7 +236,6 @@
     },
     "icons": {
       "files": "파일",
-      "search": "검색",
       "toc": "목차"
     }
   },
@@ -800,7 +788,6 @@
       "findNext": "다음 찾기",
       "findPrevious": "이전 찾기",
       "replace": "바꾸기",
-      "findInFolder": "폴더에서 찾기",
       "screenshot": "스크린샷"
     },
     "paragraph": {
@@ -943,8 +930,6 @@
       "errorLoadingTabTitle": "탭 로드 오류",
       "errorLoadingTabMessage": "파일 변경을 로드하는 동안 오류가 발생했습니다. 탭을 찾을 수 없습니다.",
       "mixedLineEndingsNormalized": "“{name}”에 혼합 줄 끝이 포함되어 있으며 {lineEnding}(으)로 자동 정규화되었습니다.",
-      "imageDeletionUrlTitle": "이미지 삭제 URL",
-      "imageDeletionUrlMessage": "업로드된 이미지의 삭제 URL을 클립보드에 복사합니다 ({url}).",
       "errorWhileSaving": "저장 중 오류가 발생했습니다: {msg}",
       "exportSuccessTitle": "내보내기 성공",
       "exportSuccessMessage": "“{name}”을(를) 성공적으로 내보냈습니다!",

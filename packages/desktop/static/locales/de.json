@@ -53,7 +53,6 @@
       "replace": "Ersetzen",
       "findNext": "Weitersuchen",
       "findPrevious": "Rückwärts suchen",
-      "findInFolder": "Im Ordner suchen",
       "screenshot": "Screenshot",
       "lineEnding": "Zeilenendezeichen",
       "lineEndingCrlf": "CRLF (Windows)",
@@ -227,19 +226,9 @@
     "replaceAll": "Alle ersetzen",
     "replaceSingle": "Einzeln ersetzen",
     "invalidRegex": "Ungültiger regulärer Ausdruck \"{pattern}\"",
-    "regexMatchEmpty": "Regulärer Ausdruck entspricht leerem String \"{pattern}\"",
-    "searchResultInfo": "{matchCount} Treffer in {fileCount} Dateien",
-    "searchLimited": "Suche auf die ersten {count} Ergebnisse beschränkt"
+    "regexMatchEmpty": "Regulärer Ausdruck entspricht leerem String \"{pattern}\""
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "Im Ordner suchen...",
-      "noFolderOpen": "Kein Ordner geöffnet",
-      "noResultsFound": "Keine Ergebnisse gefunden.",
-      "cancel": "Abbrechen",
-      "openFolder": "Ordner öffnen",
-      "showMoreMatches": "Weitere Treffer anzeigen"
-    },
     "tree": {
       "emptyProject": "Leeres Projekt",
       "createFile": "Datei erstellen",
@@ -247,7 +236,6 @@
     },
     "icons": {
       "files": "Dateien",
-      "search": "Suchen",
       "toc": "Inhaltsverzeichnis"
     }
   },
@@ -800,7 +788,6 @@
       "findNext": "Weitersuchen",
       "findPrevious": "Rückwärts suchen",
       "replace": "Ersetzen",
-      "findInFolder": "Im Ordner suchen",
       "screenshot": "Screenshot"
     },
     "paragraph": {
@@ -943,8 +930,6 @@
       "errorLoadingTabTitle": "Fehler beim Laden des Tabs",
       "errorLoadingTabMessage": "Beim Laden der Dateiänderung ist ein Fehler aufgetreten, da der Tab nicht gefunden werden kann.",
       "mixedLineEndingsNormalized": "„{name}“ enthält gemischte Zeilenenden, die automatisch zu {lineEnding} normalisiert wurden.",
-      "imageDeletionUrlTitle": "Bild‑Lösch‑URL",
-      "imageDeletionUrlMessage": "Klicken, um die Lösch-URL des hochgeladenen Bildes in die Zwischenablage zu kopieren ({url}).",
       "errorWhileSaving": "Beim Speichern ist ein Fehler aufgetreten: {msg}",
       "exportSuccessTitle": "Erfolgreich exportiert",
       "exportSuccessMessage": "„{name}“ wurde erfolgreich exportiert!",

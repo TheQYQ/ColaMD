@@ -1,26 +1,15 @@
 import { defineStore } from 'pinia'
-import bus from '../bus'
-import { useLayoutStore } from './layout'
+import bus, { listenBoth } from '../bus'
 
 export const useListenForMainStore = defineStore('listenForMain', () => {
   function EDITOR_EDIT_ACTION(type: string): void {
-    const layoutStore = useLayoutStore()
-    if (type === 'findInFolder') {
-      layoutStore.SET_LAYOUT({
-        rightColumn: 'search',
-        showSideBar: true
-      })
-    }
     bus.emit(type, type)
   }
 
   function LISTEN_FOR_EDIT(): void {
     // Pass `type` through as-is (no String() coercion) — matches develop's JS
     // behavior, including when callers send unexpected non-string values.
-    window.electron.ipcRenderer.on('mt::editor-edit-action', (_e, type) => {
-      EDITOR_EDIT_ACTION(type as string)
-    })
-    bus.on('mt::editor-edit-action', (type: unknown) => {
+    listenBoth('mt::editor-edit-action', (type) => {
       EDITOR_EDIT_ACTION(type as string)
     })
   }
