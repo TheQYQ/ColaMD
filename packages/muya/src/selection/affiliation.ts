@@ -202,16 +202,6 @@ function _ancestorBlocks(leaf: Content | null): Parent[] {
 }
 
 /**
- * Walk from a content leaf up to the outermost block, collecting the
- * paragraph-type ancestors into an affiliation chain (outermost-first).
- */
-export function buildAffiliation(leaf: Content | null): IAffiliationEntry[] {
-    return _ancestorBlocks(leaf).map(block =>
-        _buildEntry(block, _markdownTypeOf(block)!),
-    );
-}
-
-/**
  * Compute the shared-ancestor affiliation for a selection. When both endpoints
  * sit in the same block the anchor chain is returned; otherwise the chain is
  * trimmed to the ancestor block instances shared by both endpoints.

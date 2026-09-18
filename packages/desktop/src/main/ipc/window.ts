@@ -52,12 +52,6 @@ export const registerWindowHandlers = (): void => {
     const win = windowFromEvent(event)
     if (win) win.minimize()
   })
-  ipcMain.on('mt::win::toggle-maximize', (event) => {
-    const win = windowFromEvent(event)
-    if (!win) return
-    if (win.isMaximized()) win.unmaximize()
-    else win.maximize()
-  })
   ipcMain.on('mt::win::maximize', (event) => {
     const win = windowFromEvent(event)
     if (win) win.maximize()
@@ -113,18 +107,6 @@ export const registerWindowHandlers = (): void => {
     } catch (err) {
       popups.delete(win.id)
       log.error('menu popup failed:', err)
-    }
-  })
-
-  ipcMain.on('mt::menu::popup-application', (event, position?: MenuPopupPosition) => {
-    const win = windowFromEvent(event)
-    if (!win) return
-    try {
-      const appMenu = Menu.getApplicationMenu()
-      if (!appMenu) return
-      appMenu.popup({ window: win, x: position?.x, y: position?.y })
-    } catch (err) {
-      log.error('application menu popup failed:', err)
     }
   })
 }

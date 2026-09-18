@@ -6,14 +6,6 @@
 
 export type LineEnding = 'lf' | 'crlf'
 
-export interface SerializedStat {
-  size: number
-  mtimeMs: number
-  isFile: boolean
-  isDirectory: boolean
-  isSymbolicLink?: boolean
-}
-
 export interface MarkdownDocument {
   markdown: string
   filename: string
@@ -168,14 +160,14 @@ export interface PageOptions {
   [key: string]: unknown
 }
 
-export type ExportType
-  = | 'pdf'
-    | 'html'
-    | 'styledHtml'
-    | 'png'
-    | 'jpeg'
-    | 'docx'
-    | 'epub'
-    | 'latex'
-    | 'rtf'
-    | 'opml'
+export type ExportType =
+  | 'pdf'
+  | 'html'
+  | 'styledHtml'
+  | 'png'
+  | 'jpeg'
+  | 'docx'
+  | 'epub'
+  | 'latex'
+  | 'rtf'
+  | 'opml'

@@ -342,7 +342,8 @@ const lazyPipeline = createLazyMarkdownPipeline({
       payload as Parameters<typeof editorStore.LISTEN_FOR_CONTENT_CHANGE>[0]
     ),
   wordCount: (markdown) => muyaWordCount(markdown),
-  serializeCursor: (selection) => serializeCursor(selection as Parameters<typeof serializeCursor>[0]),
+  serializeCursor: (selection) =>
+    serializeCursor(selection as Parameters<typeof serializeCursor>[0]),
   makeSyntheticHistory,
   stashEngineHistory: (id, history) => engineHistoryByTab.set(id, history)
 })
@@ -1174,12 +1175,6 @@ const handleCopyPaste = (type: unknown) => {
   }
 }
 
-const insertImage = (src: unknown) => {
-  if (!sourceCode.value) {
-    editor.value && editor.value.insertImage({ src })
-  }
-}
-
 // muya's search/replace/find return the live Search instance (circular:
 // Search -> muya -> ... -> ScrollPage) and each match carries a live `block`
 // reference. The store deep-clones (JSON.stringify) its payload, so extract
@@ -1210,11 +1205,6 @@ const handReplace = (payload: unknown) => {
   if (sourceCode.value) return
   const { value, opt } = payload as { value: string; opt: unknown }
   editorStore.SEARCH(toSearchMatches(editor.value.replace(value, opt)))
-}
-
-const handleUploadedImage = (url: unknown, deletionUrl?: unknown) => {
-  insertImage(url)
-  editorStore.SHOW_IMAGE_DELETION_URL(deletionUrl as string)
 }
 
 // `muya.domNode` is the contenteditable + scroll container (it inherits the
@@ -2019,8 +2009,6 @@ onMounted(() => {
   bus.on('searchValue', handleSearch)
   bus.on('replaceValue', handReplace)
   bus.on('find-action', handleFindAction)
-  bus.on('insert-image', insertImage)
-  bus.on('image-uploaded', handleUploadedImage)
   bus.on('file-changed', handleFileChange)
   bus.on('flush-active-editor', flushActiveEditor)
   bus.on('editor-blur', blurEditor)
@@ -2167,8 +2155,6 @@ onBeforeUnmount(() => {
   bus.off('searchValue', handleSearch)
   bus.off('replaceValue', handReplace)
   bus.off('find-action', handleFindAction)
-  bus.off('insert-image', insertImage)
-  bus.off('image-uploaded', handleUploadedImage)
   bus.off('file-changed', handleFileChange)
   bus.off('flush-active-editor', flushActiveEditor)
   bus.off('editor-blur', blurEditor)
@@ -2288,7 +2274,9 @@ onBeforeUnmount(() => {
   width: 14px;
   height: 14px;
   opacity: 0.6;
-  transition: opacity 120ms ease-out, color 120ms ease-out;
+  transition:
+    opacity 120ms ease-out,
+    color 120ms ease-out;
 }
 .mu-front-button:hover,
 .mu-paragraph-front-button:hover {

@@ -4,13 +4,6 @@ import { getUniqueId, deepClone } from '../util'
 // Helper module (NOT a Pinia store): defaults and factories for the editor
 // document state objects.
 
-/**
- * Canonical document state shape used by the editor store. Re-exported as a
- * structural alias of `IFileState` from `@shared/types/files` so consumers
- * that historically imported `IDocumentState` keep compiling.
- */
-export type IDocumentState = IFileState
-
 // Re-export the cross-process shape for convenience so renderer code can
 // continue to import these from `./help`.
 export type { IFileState }
