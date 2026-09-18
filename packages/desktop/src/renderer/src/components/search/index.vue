@@ -215,7 +215,6 @@ onMounted(() => {
   bus.on('findPrev', listenFindPrev)
   document.addEventListener('click', docClick)
   document.addEventListener('keyup', docKeyup)
-  bus.on('search-blur', blurSearch)
 })
 
 onBeforeUnmount(() => {
@@ -225,7 +224,6 @@ onBeforeUnmount(() => {
   bus.off('findPrev', listenFindPrev)
   document.removeEventListener('click', docClick)
   document.removeEventListener('keyup', docKeyup)
-  bus.off('search-blur', blurSearch)
 })
 
 const toggleCtrl = (ctrl: 'isCaseSensitive' | 'isWholeWord' | 'isRegexp') => {
@@ -280,10 +278,6 @@ const docKeyup = (event: KeyboardEvent) => {
 
 const docClick = () => {
   if (!showSearch.value) return
-  emptySearch(true)
-}
-
-const blurSearch = () => {
   emptySearch(true)
 }
 

@@ -89,9 +89,6 @@ const dialogAPI = {
 const webFrameAPI = {
   setZoomFactor: (factor: number): void => {
     if (typeof factor === 'number' && factor > 0) webFrame.setZoomFactor(factor)
-  },
-  setZoomLevel: (level: number): void => {
-    if (typeof level === 'number') webFrame.setZoomLevel(level)
   }
 }
 
@@ -103,16 +100,13 @@ const windowControlAPI = {
   minimize: () => send('mt::win::minimize'),
   maximize: () => send('mt::win::maximize'),
   unmaximize: () => send('mt::win::unmaximize'),
-  toggleMaximize: () => send('mt::win::toggle-maximize'),
   close: () => send('mt::win::close'),
   setFullScreen: (flag: boolean) => send('mt::win::set-fullscreen', flag),
   toggleFullScreen: () => send('mt::win::toggle-fullscreen'),
   isMaximized: () => invoke('mt::win::is-maximized'),
   isFullScreen: () => invoke('mt::win::is-fullscreen'),
   popupMenu: (template: unknown, position?: { x: number; y: number }) =>
-    send('mt::menu::popup', template as never, position),
-  popupApplicationMenu: (position?: { x: number; y: number }) =>
-    send('mt::menu::popup-application', position)
+    send('mt::menu::popup', template as never, position)
 }
 
 // These three predicates are pure path-string operations: implementing them
@@ -165,12 +159,10 @@ const isSamePathSync = (pathA: string, pathB: string, isNormalized: boolean = fa
 const fileUtilsAPI = {
   isFile: (p: string) => invoke('mt::fs::is-file', p),
   isDirectory: (p: string) => invoke('mt::fs::is-directory', p),
-  emptyDir: (p: string) => invoke('mt::fs::empty-dir', p),
   copy: (src: string, dest: string) => invoke('mt::fs::copy', src, dest),
   ensureDir: (p: string) => invoke('mt::fs::ensure-dir', p),
   outputFile: (p: string, data: string | Uint8Array) => invoke('mt::fs::output-file', p, data),
   move: (src: string, dest: string) => invoke('mt::fs::move', src, dest),
-  stat: (p: string) => invoke('mt::fs::stat', p),
   writeFile: (p: string, data: string | Uint8Array) => invoke('mt::fs::write-file', p, data),
   readFile: (p: string, encoding?: string) => invoke('mt::fs::read-file', p, encoding),
   pathExists: (p: string) => invoke('mt::fs::path-exists', p),
@@ -237,12 +229,7 @@ const versionHistoryAPI = {
     markdown: string
     label: string
     byteLength: number
-  }) => invoke('mt::version-history:save', snapshot),
-  get: (pathname: string) => invoke('mt::version-history:get', pathname),
-  getContent: (pathname: string, id: string) =>
-    invoke('mt::version-history:get-content', pathname, id),
-  delete: (pathname: string, id: string) => invoke('mt::version-history:delete', pathname, id),
-  clear: (pathname: string) => invoke('mt::version-history:clear', pathname)
+  }) => invoke('mt::version-history:save', snapshot)
 }
 
 const fontsAPI = {

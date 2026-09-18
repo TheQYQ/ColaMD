@@ -15,12 +15,6 @@ interface IUnion {
 // without dragging the loosely-typed `any[]` back in.
 type Constructor = new (...args: never[]) => object;
 
-interface IDefer<T> {
-    resolve: (value: T) => void;
-    reject: (reason?: unknown) => void;
-    promise: Promise<T>;
-}
-
 export function* uniqueIdGenerator() {
     let id = 0;
 
@@ -40,8 +34,6 @@ export function getLongUniqueId() {
 export function noop() {}
 
 export const identity = <T>(i: T): T => i;
-
-export const isOdd = (n: number) => Math.abs(n) % 2 === 1;
 
 export const isEven = (n: number) => Math.abs(n) % 2 === 0;
 
@@ -203,25 +195,6 @@ export function sanitize(html: string, purifyOptions: Config, disableHtml: boole
         return runSanitize(escapeInBlockHtml(html), purifyOptions);
 }
 
-/**
- * TODO: @jocs remove in the future, because it's not used.
- * @param ele
- * @param id
- * @returns A floating-ui-compatible virtual reference positioned at the element's bounding rect.
- */
-export function getParagraphReference(ele: HTMLElement, id: string) {
-    const { x, y, left, top, bottom, height } = ele.getBoundingClientRect();
-
-    return {
-        getBoundingClientRect() {
-            return { x, y, left, top, bottom, height, width: 0, right: left };
-        },
-        clientWidth: 0,
-        clientHeight: height,
-        id,
-    };
-}
-
 function visibleLength(str: string) {
     return [...new Intl.Segmenter().segment(str)].length;
 }
@@ -294,17 +267,6 @@ export function hasPick(c: { p?: number; r?: unknown } | null | undefined): bool
     return !!c && (c.p != null || c.r !== undefined);
 }
 
-export function getDefer<T>() {
-    const defer: IDefer<T> = {} as IDefer<T>;
-    const promise = new Promise<T>((resolve, reject) => {
-        defer.resolve = resolve;
-        defer.reject = reject;
-    });
-    defer.promise = promise;
-
-    return defer;
-}
-
 export function methodMixins(
     // `never[]` in the arg-tuple position (contravariant) accepts any
     // function shape — the inlineSyntaxRenderer mixin map has methods with
@@ -372,12 +334,4 @@ export function isHTMLElement(value: unknown): value is HTMLElement {
 
 export function isHTMLInputElement(value: unknown): value is HTMLInputElement {
     return value instanceof HTMLInputElement;
-}
-
-export function isHTMLTextAreaElement(value: unknown): value is HTMLTextAreaElement {
-    return value instanceof HTMLTextAreaElement;
-}
-
-export function isHTMLAnchorElement(value: unknown): value is HTMLAnchorElement {
-    return value instanceof HTMLAnchorElement;
 }
