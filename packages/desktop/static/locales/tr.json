@@ -930,8 +930,6 @@
       "errorLoadingTabTitle": "Sekme yüklenirken hata",
       "errorLoadingTabMessage": "Sekme bulunamadığı için dosya değişikliği yüklenirken bir hata oluştu.",
       "mixedLineEndingsNormalized": "\"{name}\" karışık satır sonları içeriyor; otomatik olarak {lineEnding} biçimine normalleştirildi.",
-      "imageDeletionUrlTitle": "Görsel silme URL'si",
-      "imageDeletionUrlMessage": "Yüklenen görselin silme URL'sini panoya kopyalamak için tıklayın {url}",
       "errorWhileSaving": "Kaydedilirken bir hata oluştu: {msg}",
       "exportSuccessTitle": "Başarıyla dışa aktarıldı",
       "exportSuccessMessage": "\"{name}\" başarıyla dışa aktarıldı!",

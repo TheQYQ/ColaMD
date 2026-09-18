@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { de, en, es, fr, ja, ko, nl, pt, zhCN, zhTW } from '../locales';
+import { de, en, es, fr, ja, ko, pt, zhCN, zhTW } from '../locales';
 
 // CHARACTERIZATION: every shipped locale must carry the exact same translation
 // keys as the canonical `en` locale (no missing/extra keys), and expose a
@@ -12,7 +12,6 @@ const nonEnLocales: Array<[string, typeof en]> = [
     ['fr', fr],
     ['ja', ja],
     ['ko', ko],
-    ['nl', nl],
     ['pt', pt],
     ['zh-CN', zhCN],
     ['zh-TW', zhTW],
@@ -40,7 +39,7 @@ const TECHNICAL_TERMS: Record<string, string> = {
     'Plantuml': 'PlantUML', // key is misspelled upstream; display value uses correct casing
 };
 
-const LATIN_SCRIPT_LOCALES = ['de', 'es', 'fr', 'nl', 'pt'];
+const LATIN_SCRIPT_LOCALES = ['de', 'es', 'fr', 'pt'];
 
 describe('locale completeness', () => {
     const enKeys = Object.keys(en.resource).sort();
@@ -50,8 +49,8 @@ describe('locale completeness', () => {
         expect(enKeys.length).toBeGreaterThan(0);
     });
 
-    it('ships exactly ten built-in locales (en + 9 translations)', () => {
-        expect(nonEnLocales).toHaveLength(9);
+    it('ships exactly nine built-in locales (en + 8 translations)', () => {
+        expect(nonEnLocales).toHaveLength(8);
     });
 
     describe('key parity with en', () => {
@@ -69,7 +68,6 @@ describe('locale completeness', () => {
             'fr': 'fr',
             'ja': 'ja',
             'ko': 'ko',
-            'nl': 'nl',
             'pt': 'pt',
             'zh-CN': 'zh-CN',
             'zh-TW': 'zh-TW',

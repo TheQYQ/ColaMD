@@ -2,13 +2,12 @@ export type { ILocale } from './i18n/types';
 export { de, en, es, fr, ja, ko, pt, tr, zhCN, zhTW } from './locales';
 
 export { Muya } from './muya';
-export type { IMuyaPluginConstructor } from './muya';
 export type { ITocItem } from './state/getTOC';
 export { MarkdownToHtml } from './state/markdownToHtml';
 export { renderToStaticHTML } from './state/renderToStaticHTML';
 export type { IRenderToStaticHTMLOptions } from './state/renderToStaticHTML';
 export type { TState } from './state/types';
-export type { IMuyaOptions, IPluginEntry } from './types';
+export type { IMuyaOptions, IMuyaPluginConstructor, IPluginEntry } from './types';
 
 export { CodeBlockLanguageSelector } from './ui/codeBlockLanguageSelector';
 // Export ui tools.
