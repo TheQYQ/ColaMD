@@ -930,8 +930,6 @@
       "errorLoadingTabTitle": "Fout bij laden tabblad",
       "errorLoadingTabMessage": "Er is een fout opgetreden bij het laden van de bestandswijziging omdat het tabblad niet gevonden kan worden.",
       "mixedLineEndingsNormalized": "\"{name}\" heeft gemengde regeleindes die automatisch genormaliseerd zijn naar {lineEnding}.",
-      "imageDeletionUrlTitle": "Verwijder-URL afbeelding",
-      "imageDeletionUrlMessage": "Klik om de verwijder-URL van de geüploade afbeelding naar het klembord te kopiëren {url}",
       "errorWhileSaving": "Er is een fout opgetreden bij het opslaan: {msg}",
       "exportSuccessTitle": "Succesvol geëxporteerd",
       "exportSuccessMessage": "\"{name}\" is succesvol geëxporteerd!",

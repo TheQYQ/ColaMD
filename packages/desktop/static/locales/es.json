@@ -930,8 +930,6 @@
       "errorLoadingTabTitle": "Error al cargar la pestaña",
       "errorLoadingTabMessage": "Se produjo un error al cargar la modificación del archivo porque no se puede encontrar la pestaña.",
       "mixedLineEndingsNormalized": "«{name}» tiene finales de línea mixtos que se normalizaron automáticamente a {lineEnding}.",
-      "imageDeletionUrlTitle": "URL de eliminación de la imagen",
-      "imageDeletionUrlMessage": "Haz clic para copiar al portapapeles la URL de eliminación de la imagen subida ({url}).",
       "errorWhileSaving": "Se produjo un error al guardar: {msg}",
       "exportSuccessTitle": "Exportado correctamente",
       "exportSuccessMessage": "¡Se exportó «{name}» correctamente!",

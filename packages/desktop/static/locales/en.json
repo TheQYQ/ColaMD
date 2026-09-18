@@ -930,8 +930,6 @@
       "errorLoadingTabTitle": "Error loading tab",
       "errorLoadingTabMessage": "There was an error while loading the file changes because the tab cannot be found.",
       "mixedLineEndingsNormalized": "\"{name}\" has mixed line endings which are automatically normalized to {lineEnding}.",
-      "imageDeletionUrlTitle": "Image deletion URL",
-      "imageDeletionUrlMessage": "Click to copy the deletion URL of the uploaded image to the clipboard {url}",
       "errorWhileSaving": "There was an error while saving: {msg}",
       "exportSuccessTitle": "Exported successfully",
       "exportSuccessMessage": "Exported \"{name}\" successfully!",

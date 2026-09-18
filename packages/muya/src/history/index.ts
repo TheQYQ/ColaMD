@@ -10,7 +10,6 @@ import { deepClone } from '../utils';
 interface IOptions {
     delay: number;
     maxStack: number;
-    userOnly: boolean;
 }
 
 interface IOperation {
@@ -75,7 +74,6 @@ enum HistoryAction {
 const DEFAULT_OPTIONS = {
     delay: 1000,
     maxStack: 100,
-    userOnly: false,
 };
 
 export type TInputKind = 'insert' | 'delete';
@@ -127,11 +125,9 @@ class History {
             'json-change',
             ({
                 op,
-                source,
                 prevDoc,
             }: {
                 op: Nullable<JSONOpList>;
-                source: string;
                 prevDoc: TState[];
             }) => {
                 if (this._ignoreChange)
@@ -144,10 +140,7 @@ class History {
                 if (op == null)
                     return;
 
-                if (!this._options.userOnly || source === 'user')
-                    this._record(op, prevDoc);
-                else
-                    this._transform(op);
+                this._record(op, prevDoc);
             },
         );
     }
@@ -387,36 +380,12 @@ class History {
         this._change(HistoryAction.REDO, HistoryAction.UNDO);
     }
 
-    private _transform(op: JSONOpList) {
-        transformStack(this._stack.undo, op);
-        transformStack(this._stack.redo, op);
-    }
-
     canUndo() {
         return this._stack.undo.length > 0;
     }
 
     undo() {
         this._change(HistoryAction.UNDO, HistoryAction.REDO);
-    }
-}
-
-function transformStack(stack: IOperation[], operation: JSONOpList) {
-    let remoteOperation = operation;
-
-    for (let i = stack.length - 1; i >= 0; i -= 1) {
-        const { operation: oldOperation } = stack[i];
-        // TODO: need test.
-        stack[i] = Object.assign(stack[i], {
-            operation: json1.type.transform(oldOperation, remoteOperation, 'left'),
-        });
-        remoteOperation = json1.type.transform(
-            remoteOperation,
-            oldOperation,
-            'right',
-        )!;
-        if (stack[i].operation.length === 0)
-            stack.splice(i, 1);
     }
 }
 
