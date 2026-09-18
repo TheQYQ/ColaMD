@@ -43,7 +43,6 @@ const keybindings: Map<string, string> = new Map([
   ['edit.find-next', 'Cmd+G'],
   ['edit.find-previous', 'Cmd+Shift+G'],
   ['edit.replace', 'Command+Option+F'],
-  ['edit.find-in-folder', 'Shift+Command+F'],
   ['edit.screenshot', 'Command+Option+A'], // macOS only
 
   // Paragraph menu

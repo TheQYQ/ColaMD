@@ -13,39 +13,36 @@ vi.hoisted(() => {
 
 import { getAllSideBarTabs, sideBarTabs } from '@/components/sideBar/help'
 
-// Commit f4f4a13 dropped the search tab from the sidebar while leaving the menu
-// item, the command palette entry, the keyboard shortcut and `search.vue` in
-// place. `search.vue` is the only listener of the `findInFolder` bus event, so
-// without the tab the whole "Find in Folder" feature resolved to a no-op. The
-// sidebar panel contract is 文件 / 目录 / 搜索 — history was retired, search
-// was not.
+// The sidebar panel contract is 文件 / 目录 — both history (#f4f4a13) and
+// search panels were retired, along with every "Find in Folder" entry point
+// (menu item, command palette, keyboard shortcut).
 describe('built-in sidebar tab set', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
   })
 
-  it('keeps the search tab so "Find in Folder" has a destination', () => {
+  it('offers only the files and toc tabs', () => {
     const ids = sideBarTabs.map((tab) => tab.id)
 
-    expect(ids).toContain('search')
     expect(ids).toContain('files')
     expect(ids).toContain('toc')
+    expect(ids).toHaveLength(2)
   })
 
-  it('exposes the search tab through the merged tab list', () => {
+  it('exposes the same two tabs through the merged tab list', () => {
     const ids = getAllSideBarTabs().map((tab) => tab.id)
 
-    expect(ids).toContain('search')
-  })
-
-  it('renders the search tab from its own translation key', () => {
-    const searchTab = sideBarTabs.find((tab) => tab.id === 'search')
-
-    expect(searchTab?.name()).toBe('Search')
+    expect(ids).toContain('files')
+    expect(ids).toContain('toc')
   })
 
   it('no longer offers a history tab', () => {
     expect(sideBarTabs.some((tab) => tab.id === 'history')).toBe(false)
     expect(getAllSideBarTabs().some((tab) => tab.id === 'history')).toBe(false)
+  })
+
+  it('no longer offers a search tab', () => {
+    expect(sideBarTabs.some((tab) => tab.id === 'search')).toBe(false)
+    expect(getAllSideBarTabs().some((tab) => tab.id === 'search')).toBe(false)
   })
 })

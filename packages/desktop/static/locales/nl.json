@@ -53,7 +53,6 @@
       "replace": "Vervangen",
       "findNext": "Volgende zoeken",
       "findPrevious": "Vorige zoeken",
-      "findInFolder": "Zoeken in map",
       "screenshot": "Schermafbeelding",
       "lineEnding": "Regeleinde",
       "lineEndingCrlf": "CRLF (Windows)",
@@ -227,19 +226,9 @@
     "replaceAll": "Alles vervangen",
     "replaceSingle": "Enkele vervanging",
     "invalidRegex": "Ongeldige reguliere expressie \"{pattern}\"",
-    "regexMatchEmpty": "Reguliere expressie matcht lege tekenreeks \"{pattern}\"",
-    "searchResultInfo": "{matchCount} resultaten in {fileCount} bestanden",
-    "searchLimited": "Zoeken beperkt tot eerste {count} resultaten"
+    "regexMatchEmpty": "Reguliere expressie matcht lege tekenreeks \"{pattern}\""
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "Zoeken in map...",
-      "noFolderOpen": "Geen map geopend",
-      "noResultsFound": "Geen resultaten gevonden.",
-      "cancel": "Annuleren",
-      "openFolder": "Map openen",
-      "showMoreMatches": "Meer resultaten tonen"
-    },
     "tree": {
       "emptyProject": "Leeg project",
       "createFile": "Bestand aanmaken",
@@ -247,7 +236,6 @@
     },
     "icons": {
       "files": "Bestanden",
-      "search": "Zoeken",
       "toc": "Inhoudsopgave"
     }
   },
@@ -800,7 +788,6 @@
       "findNext": "Volgende zoeken",
       "findPrevious": "Vorige zoeken",
       "replace": "Vervangen",
-      "findInFolder": "Zoeken in map",
       "screenshot": "Schermafbeelding"
     },
     "paragraph": {

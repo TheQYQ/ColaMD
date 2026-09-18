@@ -1,7 +1,6 @@
 // Thin renderer wrapper over the main-process ripgrep IPC bridge.
 // Returns a cancellable thenable with the same public shape as the legacy
-// in-renderer searcher (so call sites in search.vue and quickOpen don't need
-// to change).
+// in-renderer searcher (so call sites in quickOpen don't need to change).
 
 import { deepClone } from '../util'
 
