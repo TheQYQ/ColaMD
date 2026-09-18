@@ -23,7 +23,6 @@
           :project-tree="projectTree"
         />
         <toc v-else-if="activeColumn === 'toc'" />
-        <side-bar-search v-else-if="activeColumn === 'search'" />
         <component
           :is="getSidebarPanel(activeColumn)?.component"
           v-else-if="getSidebarPanel(activeColumn)"
@@ -44,7 +43,6 @@ import { useProjectStore } from '@/store/project'
 
 import { getAllSideBarTabs, getSidebarPanel } from './help'
 import Tree from './tree.vue'
-import SideBarSearch from './search.vue'
 import Toc from './toc.vue'
 import { storeToRefs } from 'pinia'
 

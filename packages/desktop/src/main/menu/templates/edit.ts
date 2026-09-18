@@ -140,16 +140,6 @@ export default function(keybindings: Keybindings): MenuItemConstructorOptions {
         type: 'separator'
       },
       {
-        label: t('menu.edit.findInFolder'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_FIND_IN_FOLDER) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.findInFolder(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
         label: t('menu.edit.screenshot'),
         id: 'screenshot',
         visible: isOsx,

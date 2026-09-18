@@ -249,13 +249,6 @@ const commands: CommandDescriptor[] = [
       bus.emit('replace', 'replace')
     }
   },
-  {
-    id: 'edit.find-in-folder',
-    execute: async() => {
-      await delay(150)
-      bus.emit('mt::editor-edit-action', 'findInFolder')
-    }
-  },
 
   // --------------------------------------------------------------------------
   // Paragraph

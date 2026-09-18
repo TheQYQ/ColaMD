@@ -8,10 +8,9 @@ export interface SideBarTabEntry {
 }
 
 /**
- * Built-in sidebar tabs, in Typora order (文件 目录 搜索): the two
- * navigation tabs (files + outline) come first, then the tools. Rendered as a
- * compact text tab row at the top of the panel (no icon strip, no settings
- * gear — preferences live in the 文件 > 偏好设置 menu).
+ * Built-in sidebar tabs: files + outline (目录). Rendered as a compact text
+ * tab row at the top of the panel (no icon strip, no settings gear —
+ * preferences live in the 文件 > 偏好设置 menu).
  */
 export const sideBarTabs: SideBarTabEntry[] = [
   {
@@ -21,10 +20,6 @@ export const sideBarTabs: SideBarTabEntry[] = [
   {
     id: 'toc',
     name: () => t('sideBar.icons.toc')
-  },
-  {
-    id: 'search',
-    name: () => t('sideBar.icons.search')
   }
 ]
 
@@ -59,7 +54,7 @@ export function getAllSideBarTabs(): SideBarTabEntry[] {
 /**
  * Look up a plugin-registered panel by id. Used by the sidebar to render the
  * selected panel's component. Returns undefined for built-in panels (files,
- * search, toc) which the sidebar handles natively.
+ * toc) which the sidebar handles natively.
  */
 export function getSidebarPanel(id: string): SidebarPanelRegistration | undefined {
   return getRegisteredSidebarPanels().find((p) => p.id === id)

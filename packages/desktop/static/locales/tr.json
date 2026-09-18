@@ -53,7 +53,6 @@
       "replace": "Değiştir",
       "findNext": "Sonrakini Bul",
       "findPrevious": "Öncekini Bul",
-      "findInFolder": "Klasörde Bul",
       "screenshot": "Ekran Görüntüsü",
       "lineEnding": "Satır Sonu",
       "lineEndingCrlf": "CRLF(Windows)",
@@ -227,19 +226,9 @@
     "replaceAll": "Tümünü Değiştir",
     "replaceSingle": "Tek Değiştir",
     "invalidRegex": "Geçersiz düzenli ifade \"{pattern}\"",
-    "regexMatchEmpty": "Düzenli ifade boş dizeyle eşleşiyor \"{pattern}\"",
-    "searchResultInfo": "{fileCount} dosyada {matchCount} eşleşme",
-    "searchLimited": "Arama ilk {count} sonuçla sınırlandırıldı"
+    "regexMatchEmpty": "Düzenli ifade boş dizeyle eşleşiyor \"{pattern}\""
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "Klasörde ara...",
-      "noFolderOpen": "Açık klasör yok",
-      "noResultsFound": "Sonuç bulunamadı.",
-      "cancel": "İptal",
-      "openFolder": "Klasör Aç",
-      "showMoreMatches": "Daha fazla eşleşme göster"
-    },
     "tree": {
       "emptyProject": "Boş proje",
       "createFile": "Dosya Oluştur",
@@ -247,7 +236,6 @@
     },
     "icons": {
       "files": "Dosyalar",
-      "search": "Ara",
       "toc": "İçindekiler"
     }
   },
@@ -800,7 +788,6 @@
       "findNext": "Sonrakini Bul",
       "findPrevious": "Öncekini Bul",
       "replace": "Değiştir",
-      "findInFolder": "Klasörde Bul",
       "screenshot": "Ekran Görüntüsü"
     },
     "paragraph": {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 
-// `listenForMain` pulls in the layout store, which transitively imports the
+// `listenForMain` pulls in the bus module, which transitively imports the
 // preferences store and `@/config` (the latter reads `window.path.sep` at
 // module load). Stub the contextBridge surfaces before the hoisted imports run
 // so the store graph can load.
@@ -12,14 +12,10 @@ vi.hoisted(() => {
 })
 
 import { useListenForMainStore } from '@/store/listenForMain'
-import { useLayoutStore } from '@/store/layout'
+import bus from '@/bus'
 
-// `EDITOR_EDIT_ACTION('findInFolder')` routes through `layoutStore.SET_LAYOUT`,
-// which (because `showSideBar` is defined) reads `window.colamd.env`,
-// fires `window.electron.ipcRenderer.send`, and persists the sidebar
-// visibility preference (another `ipcRenderer.send`). The renderer i18n module
-// (pulled in via the preferences store) also reads `window.electron.ipcRenderer`
-// at import time. Provide spies for all of it.
+// The renderer i18n module (pulled in via the preferences store) reads
+// `window.electron.ipcRenderer` at import time. Provide spies for it.
 const win = window as unknown as {
   electron?: { ipcRenderer: { on: Mock; send: Mock; invoke: Mock } }
   colamd?: { env: { windowId: number } }
@@ -44,24 +40,21 @@ describe('listenForMain store EDITOR_EDIT_ACTION', () => {
     vi.clearAllMocks()
   })
 
-  it("opens the search side panel for 'findInFolder'", () => {
-    const layoutStore = useLayoutStore()
-    expect(layoutStore.rightColumn).toBe('files')
-    expect(layoutStore.showSideBar).toBe(false)
-
-    useListenForMainStore().EDITOR_EDIT_ACTION('findInFolder')
-
-    expect(layoutStore.rightColumn).toBe('search')
-    expect(layoutStore.showSideBar).toBe(true)
-  })
-
-  it('does not mutate the layout for a non-findInFolder action', () => {
-    const layoutStore = useLayoutStore()
-    layoutStore.$patch({ rightColumn: 'files', showSideBar: false })
+  it('re-emits the edit action on the bus with the type as payload', () => {
+    const emitSpy = vi.spyOn(bus, 'emit')
 
     useListenForMainStore().EDITOR_EDIT_ACTION('insertParagraph')
 
-    expect(layoutStore.rightColumn).toBe('files')
-    expect(layoutStore.showSideBar).toBe(false)
+    expect(emitSpy).toHaveBeenCalledWith('insertParagraph', 'insertParagraph')
+  })
+
+  it('forwards every edit action type without filtering', () => {
+    const emitSpy = vi.spyOn(bus, 'emit')
+
+    useListenForMainStore().EDITOR_EDIT_ACTION('find')
+    useListenForMainStore().EDITOR_EDIT_ACTION('replace')
+
+    expect(emitSpy).toHaveBeenCalledWith('find', 'find')
+    expect(emitSpy).toHaveBeenCalledWith('replace', 'replace')
   })
 })

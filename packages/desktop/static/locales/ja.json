@@ -53,7 +53,6 @@
       "replace": "置換",
       "findNext": "次を検索",
       "findPrevious": "前を検索",
-      "findInFolder": "フォルダー内の検索",
       "screenshot": "スクリーンショット",
       "lineEnding": "改行コード",
       "lineEndingCrlf": "CRLF (Windows)",
@@ -227,19 +226,9 @@
     "replaceAll": "すべて置換",
     "replaceSingle": "単一置換",
     "invalidRegex": "無効な正規表現 \"{pattern}\"",
-    "regexMatchEmpty": "正規表現が空文字列 \"{pattern}\" にマッチ",
-    "searchResultInfo": "{fileCount} 個のファイルで {matchCount} 件一致",
-    "searchLimited": "最初の {count} 件まで表示しています"
+    "regexMatchEmpty": "正規表現が空文字列 \"{pattern}\" にマッチ"
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "フォルダー内の検索...",
-      "noFolderOpen": "フォルダーが開かれていません",
-      "noResultsFound": "一致するものがありません。",
-      "cancel": "キャンセル",
-      "openFolder": "フォルダーを開く",
-      "showMoreMatches": "さらに一致するものを表示"
-    },
     "tree": {
       "emptyProject": "空のプロジェクト",
       "createFile": "ファイルの作成",
@@ -247,7 +236,6 @@
     },
     "icons": {
       "files": "ファイル",
-      "search": "検索",
       "toc": "目次"
     }
   },
@@ -800,7 +788,6 @@
       "findNext": "次を検索",
       "findPrevious": "前を検索",
       "replace": "置換",
-      "findInFolder": "フォルダー内の検索",
       "screenshot": "スクリーンショット"
     },
     "paragraph": {
