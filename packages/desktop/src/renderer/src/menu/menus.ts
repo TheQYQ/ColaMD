@@ -76,13 +76,19 @@ const FALLBACK_HINTS: Record<string, string> = {
   'edit.paste': 'Ctrl+V'
 }
 
-const hintFor = (commandCenter: ReturnType<typeof useCommandCenterStore>, commandId: string): string | undefined => {
+const hintFor = (
+  commandCenter: ReturnType<typeof useCommandCenterStore>,
+  commandId: string
+): string | undefined => {
   const entry = commandCenter.rootCommand.subcommands.find((c) => c.id === commandId)
   if (entry?.shortcut?.length) return entry.shortcut.join('+')
   return FALLBACK_HINTS[commandId]
 }
 
-const executeCommand = (commandId: string): (() => void) => () => bus.emit('cmd::execute', commandId)
+const executeCommand =
+  (commandId: string): (() => void) =>
+    () =>
+      bus.emit('cmd::execute', commandId)
 
 // --- selection state resolution (mirrors updateSelectionMenus) --------------
 
@@ -235,10 +241,7 @@ const DARK_THEMES: ReadonlyArray<readonly [string, string]> = [
 
 // --- menu builders -----------------------------------------------------------
 
-const buildFileMenu = (
-  recentFiles: string[],
-  hasFile: boolean
-): MenuItemDef[] => {
+const buildFileMenu = (recentFiles: string[], hasFile: boolean): MenuItemDef[] => {
   const preferencesStore = usePreferencesStore()
 
   const recentChildren: MenuItemDef[] = recentFiles.map((filePath) =>
@@ -259,21 +262,43 @@ const buildFileMenu = (
   }
 
   return [
-    item(t('menu.file.newTab'), executeCommand('file.new-tab'), { hint: hintFor(useCommandCenterStore(), 'file.new-tab') }),
-    item(t('menu.file.newWindow'), executeCommand('file.new-window'), { hint: hintFor(useCommandCenterStore(), 'file.new-window') }),
-    sep(),
-    item(t('menu.file.openFile'), executeCommand('file.open-file'), { hint: hintFor(useCommandCenterStore(), 'file.open-file') }),
-    item(t('menu.file.openFolder'), executeCommand('file.open-folder'), { hint: hintFor(useCommandCenterStore(), 'file.open-folder') }),
-    item(t('menu.file.openRecent'), () => {}, { children: recentChildren }),
-    sep(),
-    item(t('menu.file.save'), executeCommand('file.save'), { enabled: hasFile, hint: hintFor(useCommandCenterStore(), 'file.save') }),
-    item(t('menu.file.saveAs'), executeCommand('file.save-as'), { enabled: hasFile, hint: hintFor(useCommandCenterStore(), 'file.save-as') }),
-    checkbox(t('menu.file.autoSave'), !!preferencesStore.autoSave, () => {
-      window.electron.ipcRenderer.send('mt::set-user-preference', { autoSave: !preferencesStore.autoSave })
+    item(t('menu.file.newTab'), executeCommand('file.new-tab'), {
+      hint: hintFor(useCommandCenterStore(), 'file.new-tab')
+    }),
+    item(t('menu.file.newWindow'), executeCommand('file.new-window'), {
+      hint: hintFor(useCommandCenterStore(), 'file.new-window')
     }),
     sep(),
-    item(t('menu.file.moveTo'), executeCommand('file.move-file'), { enabled: hasFile, hint: hintFor(useCommandCenterStore(), 'file.move-file') }),
-    item(t('menu.file.rename'), executeCommand('file.rename-file'), { enabled: hasFile, hint: hintFor(useCommandCenterStore(), 'file.rename-file') }),
+    item(t('menu.file.openFile'), executeCommand('file.open-file'), {
+      hint: hintFor(useCommandCenterStore(), 'file.open-file')
+    }),
+    item(t('menu.file.openFolder'), executeCommand('file.open-folder'), {
+      hint: hintFor(useCommandCenterStore(), 'file.open-folder')
+    }),
+    item(t('menu.file.openRecent'), () => {}, { children: recentChildren }),
+    sep(),
+    item(t('menu.file.save'), executeCommand('file.save'), {
+      enabled: hasFile,
+      hint: hintFor(useCommandCenterStore(), 'file.save')
+    }),
+    item(t('menu.file.saveAs'), executeCommand('file.save-as'), {
+      enabled: hasFile,
+      hint: hintFor(useCommandCenterStore(), 'file.save-as')
+    }),
+    checkbox(t('menu.file.autoSave'), !!preferencesStore.autoSave, () => {
+      window.electron.ipcRenderer.send('mt::set-user-preference', {
+        autoSave: !preferencesStore.autoSave
+      })
+    }),
+    sep(),
+    item(t('menu.file.moveTo'), executeCommand('file.move-file'), {
+      enabled: hasFile,
+      hint: hintFor(useCommandCenterStore(), 'file.move-file')
+    }),
+    item(t('menu.file.rename'), executeCommand('file.rename-file'), {
+      enabled: hasFile,
+      hint: hintFor(useCommandCenterStore(), 'file.rename-file')
+    }),
     sep(),
     item(t('menu.file.import'), executeCommand('file.import-file')),
     item(t('menu.file.export'), () => {}, {
@@ -290,19 +315,33 @@ const buildFileMenu = (
         item(t('menu.file.exportOpml'), () => bus.emit('showExportDialog', 'opml'))
       ]
     }),
-    item(t('menu.file.print'), executeCommand('file.print'), { enabled: hasFile, hint: hintFor(useCommandCenterStore(), 'file.print') }),
+    item(t('menu.file.print'), executeCommand('file.print'), {
+      enabled: hasFile,
+      hint: hintFor(useCommandCenterStore(), 'file.print')
+    }),
     sep(),
-    item(t('menu.file.preferences'), executeCommand('file.preferences'), { hint: hintFor(useCommandCenterStore(), 'file.preferences') }),
+    item(t('menu.file.preferences'), executeCommand('file.preferences'), {
+      hint: hintFor(useCommandCenterStore(), 'file.preferences')
+    }),
     sep(),
-    item(t('menu.file.closeTab'), executeCommand('file.close-tab'), { enabled: hasFile, hint: hintFor(useCommandCenterStore(), 'file.close-tab') }),
-    item(t('menu.file.closeWindow'), executeCommand('file.close-window'), { hint: hintFor(useCommandCenterStore(), 'file.close-window') }),
+    item(t('menu.file.closeTab'), executeCommand('file.close-tab'), {
+      enabled: hasFile,
+      hint: hintFor(useCommandCenterStore(), 'file.close-tab')
+    }),
+    item(t('menu.file.closeWindow'), executeCommand('file.close-window'), {
+      hint: hintFor(useCommandCenterStore(), 'file.close-window')
+    }),
     sep(),
     item(t('menu.file.quit'), executeCommand('file.quit'))
   ]
 }
 
 const editAction = (label: string, type: string, opts: ItemOptions = {}): MenuItemDef =>
-  item(label, focusThen(() => bus.emit('mt::editor-edit-action', type)), opts)
+  item(
+    label,
+    focusThen(() => bus.emit('mt::editor-edit-action', type)),
+    opts
+  )
 
 const buildEditMenu = (hasFile: boolean): MenuItemDef[] => {
   const commandCenter = useCommandCenterStore()
@@ -310,29 +349,56 @@ const buildEditMenu = (hasFile: boolean): MenuItemDef[] => {
   const lineEnding = (editorStore.currentFile?.lineEnding ?? 'lf') as string
 
   return [
-    editAction(t('menu.edit.undo'), 'undo', { enabled: hasFile, hint: hintFor(commandCenter, 'edit.undo') }),
-    editAction(t('menu.edit.redo'), 'redo', { enabled: hasFile, hint: hintFor(commandCenter, 'edit.redo') }),
+    editAction(t('menu.edit.undo'), 'undo', {
+      enabled: hasFile,
+      hint: hintFor(commandCenter, 'edit.undo')
+    }),
+    editAction(t('menu.edit.redo'), 'redo', {
+      enabled: hasFile,
+      hint: hintFor(commandCenter, 'edit.redo')
+    }),
     sep(),
     editAction(t('menu.edit.cut'), 'cut', { hint: hintFor(commandCenter, 'edit.cut') }),
     editAction(t('menu.edit.copy'), 'copy', { hint: hintFor(commandCenter, 'edit.copy') }),
     editAction(t('menu.edit.paste'), 'paste', { hint: hintFor(commandCenter, 'edit.paste') }),
     sep(),
     editAction(t('menu.edit.copyAsRich'), 'copyAsRich', { enabled: hasFile }),
-    editAction(t('menu.edit.copyAsHtml'), 'copyAsHtml', { enabled: hasFile, hint: hintFor(commandCenter, 'edit.copy-as-html') }),
-    editAction(t('menu.edit.pasteAsPlainText'), 'pasteAsPlainText', { hint: hintFor(commandCenter, 'edit.paste-as-plaintext') }),
+    editAction(t('menu.edit.copyAsHtml'), 'copyAsHtml', {
+      enabled: hasFile,
+      hint: hintFor(commandCenter, 'edit.copy-as-html')
+    }),
+    editAction(t('menu.edit.pasteAsPlainText'), 'pasteAsPlainText', {
+      hint: hintFor(commandCenter, 'edit.paste-as-plaintext')
+    }),
     sep(),
-    editAction(t('menu.edit.selectAll'), 'selectAll', { enabled: hasFile, hint: hintFor(commandCenter, 'edit.select-all') }),
+    editAction(t('menu.edit.selectAll'), 'selectAll', {
+      enabled: hasFile,
+      hint: hintFor(commandCenter, 'edit.select-all')
+    }),
     sep(),
-    editAction(t('menu.edit.duplicate'), 'duplicate', { enabled: hasFile, hint: hintFor(commandCenter, 'edit.duplicate') }),
-    editAction(t('menu.edit.createParagraph'), 'createParagraph', { enabled: hasFile, hint: hintFor(commandCenter, 'edit.create-paragraph') }),
-    editAction(t('menu.edit.deleteParagraph'), 'deleteParagraph', { enabled: hasFile, hint: hintFor(commandCenter, 'edit.delete-paragraph') }),
+    editAction(t('menu.edit.duplicate'), 'duplicate', {
+      enabled: hasFile,
+      hint: hintFor(commandCenter, 'edit.duplicate')
+    }),
+    editAction(t('menu.edit.createParagraph'), 'createParagraph', {
+      enabled: hasFile,
+      hint: hintFor(commandCenter, 'edit.create-paragraph')
+    }),
+    editAction(t('menu.edit.deleteParagraph'), 'deleteParagraph', {
+      enabled: hasFile,
+      hint: hintFor(commandCenter, 'edit.delete-paragraph')
+    }),
     sep(),
-    editAction(t('menu.edit.find'), 'find', { enabled: hasFile, hint: hintFor(commandCenter, 'edit.find') }),
+    editAction(t('menu.edit.find'), 'find', {
+      enabled: hasFile,
+      hint: hintFor(commandCenter, 'edit.find')
+    }),
     editAction(t('menu.edit.findNext'), 'findNext', { enabled: hasFile }),
     editAction(t('menu.edit.findPrevious'), 'findPrev', { enabled: hasFile }),
-    editAction(t('menu.edit.replace'), 'replace', { enabled: hasFile, hint: hintFor(commandCenter, 'edit.replace') }),
-    sep(),
-    editAction(t('menu.edit.findInFolder'), 'findInFolder', { hint: hintFor(commandCenter, 'edit.find-in-folder') }),
+    editAction(t('menu.edit.replace'), 'replace', {
+      enabled: hasFile,
+      hint: hintFor(commandCenter, 'edit.replace')
+    }),
     sep(),
     item(t('menu.edit.lineEnding'), () => {}, {
       enabled: hasFile,
@@ -364,10 +430,17 @@ const buildParagraphMenu = (): MenuItemDef[] => {
   // are greyed out (mirrors `mt::set-editor-format-menus-enabled`).
   const state = usePreferencesStore().sourceCode
     ? null
-    : editorStore.selectionMenuState ?? DEFAULT_SELECTION_STATE
+    : (editorStore.selectionMenuState ?? DEFAULT_SELECTION_STATE)
 
   const p = (itemId: string, labelKey: string, actionType: string): MenuItemDef =>
-    paragraphItem(state, hasFile, itemId, t(labelKey), actionType, hintFor(commandCenter, `paragraph.${itemId === 'code-fences' ? 'code-fence' : itemId}`))
+    paragraphItem(
+      state,
+      hasFile,
+      itemId,
+      t(labelKey),
+      actionType,
+      hintFor(commandCenter, `paragraph.${itemId === 'code-fences' ? 'code-fence' : itemId}`)
+    )
 
   const hint = (commandId: string): string | undefined => hintFor(commandCenter, commandId)
 
@@ -379,8 +452,16 @@ const buildParagraphMenu = (): MenuItemDef[] => {
     p('heading-5', 'menu.paragraph.heading5', 'heading 5'),
     p('heading-6', 'menu.paragraph.heading6', 'heading 6'),
     sep(),
-    item(t('menu.paragraph.promoteHeading'), focusThen(() => bus.emit('paragraph', 'upgrade heading')), { enabled: hasFile, hint: hint('paragraph.upgrade-heading') }),
-    item(t('menu.paragraph.demoteHeading'), focusThen(() => bus.emit('paragraph', 'degrade heading')), { enabled: hasFile, hint: hint('paragraph.degrade-heading') }),
+    item(
+      t('menu.paragraph.promoteHeading'),
+      focusThen(() => bus.emit('paragraph', 'upgrade heading')),
+      { enabled: hasFile, hint: hint('paragraph.upgrade-heading') }
+    ),
+    item(
+      t('menu.paragraph.demoteHeading'),
+      focusThen(() => bus.emit('paragraph', 'degrade heading')),
+      { enabled: hasFile, hint: hint('paragraph.degrade-heading') }
+    ),
     sep(),
     p('table', 'menu.paragraph.table', 'table'),
     p('code-fences', 'menu.paragraph.codeFences', 'pre'),
@@ -411,7 +492,8 @@ const buildFormatMenu = (): MenuItemDef[] => {
   // Mirrors `updateSelectionMenus`: all items enabled by default, everything
   // disabled inside code-like blocks, link/image off across a multi-block
   // selection, and the whole menu off in source-code mode.
-  const baseEnabled = hasFile && !preferencesStore.sourceCode && !!state && !state.isDisabled && !state.isCodeFences
+  const baseEnabled =
+    hasFile && !preferencesStore.sourceCode && !!state && !state.isDisabled && !state.isCodeFences
   const fmt = (labelKey: string, formatType: string, commandId?: string): MenuItemDef => {
     let enabled = baseEnabled
     if (enabled && state?.isMultiline && (formatType === 'link' || formatType === 'image')) {
@@ -443,10 +525,14 @@ const buildFormatMenu = (): MenuItemDef[] => {
     fmt('menu.format.hyperlink', 'link', 'format.hyperlink'),
     fmt('menu.format.image', 'image', 'format.image'),
     sep(),
-    item(t('menu.format.clearFormat'), focusThen(() => bus.emit('format', 'clear')), {
-      enabled: baseEnabled,
-      hint: hintFor(commandCenter, 'format.clear-format')
-    })
+    item(
+      t('menu.format.clearFormat'),
+      focusThen(() => bus.emit('format', 'clear')),
+      {
+        enabled: baseEnabled,
+        hint: hintFor(commandCenter, 'format.clear-format')
+      }
+    )
   ]
 }
 
@@ -458,18 +544,48 @@ const buildViewMenu = (): MenuItemDef[] => {
 
   const zoomStep = (delta: number): void => {
     const zoom = typeof preferencesStore.zoom === 'number' ? preferencesStore.zoom : 1.0
-    bus.emit('mt::window-zoom', Math.min(2.0, Math.max(0.5, Math.round((zoom + delta) * 1000) / 1000)))
+    bus.emit(
+      'mt::window-zoom',
+      Math.min(2.0, Math.max(0.5, Math.round((zoom + delta) * 1000) / 1000))
+    )
   }
 
   return [
-    item(t('menu.view.commandPalette'), () => bus.emit('show-command-palette'), { hint: hint('view.command-palette') }),
+    item(t('menu.view.commandPalette'), () => bus.emit('show-command-palette'), {
+      hint: hint('view.command-palette')
+    }),
     sep(),
-    checkbox(t('menu.view.sourceCodeMode'), !!preferencesStore.sourceCode, executeCommand('view.source-code-mode'), { hint: hint('view.source-code-mode') }),
-    checkbox(t('menu.view.typewriterMode'), !!preferencesStore.typewriter, executeCommand('view.typewriter-mode'), { hint: hint('view.typewriter-mode') }),
-    checkbox(t('menu.view.focusMode'), !!preferencesStore.focus, executeCommand('view.focus-mode'), { hint: hint('view.focus-mode') }),
+    checkbox(
+      t('menu.view.sourceCodeMode'),
+      !!preferencesStore.sourceCode,
+      executeCommand('view.source-code-mode'),
+      { hint: hint('view.source-code-mode') }
+    ),
+    checkbox(
+      t('menu.view.typewriterMode'),
+      !!preferencesStore.typewriter,
+      executeCommand('view.typewriter-mode'),
+      { hint: hint('view.typewriter-mode') }
+    ),
+    checkbox(
+      t('menu.view.focusMode'),
+      !!preferencesStore.focus,
+      executeCommand('view.focus-mode'),
+      { hint: hint('view.focus-mode') }
+    ),
     sep(),
-    checkbox(t('menu.view.toggleSidebar'), !!layoutStore.showSideBar, executeCommand('view.toggle-sidebar'), { hint: hint('view.toggle-sidebar') }),
-    checkbox(t('menu.view.toggleTabbar'), !!layoutStore.showTabBar, executeCommand('view.toggle-tabbar'), { hint: hint('view.toggle-tabbar') }),
+    checkbox(
+      t('menu.view.toggleSidebar'),
+      !!layoutStore.showSideBar,
+      executeCommand('view.toggle-sidebar'),
+      { hint: hint('view.toggle-sidebar') }
+    ),
+    checkbox(
+      t('menu.view.toggleTabbar'),
+      !!layoutStore.showTabBar,
+      executeCommand('view.toggle-tabbar'),
+      { hint: hint('view.toggle-tabbar') }
+    ),
     checkbox(
       t('menu.view.toggleTableOfContents'),
       layoutStore.rightColumn === 'toc' && !!layoutStore.showSideBar,
@@ -484,15 +600,23 @@ const buildViewMenu = (): MenuItemDef[] => {
       },
       { hint: hint('view.toggle-toc') }
     ),
-    item(t('menu.view.reloadImages'), () => {
-      bus.emit('invalidate-image-cache')
-    }, { hint: hint('view.reload-images') }),
+    item(
+      t('menu.view.reloadImages'),
+      () => {
+        bus.emit('invalidate-image-cache')
+      },
+      { hint: hint('view.reload-images') }
+    ),
     sep(),
-    item(t('menu.window.minimize'), executeCommand('window.minimize'), { hint: hint('window.minimize') }),
+    item(t('menu.window.minimize'), executeCommand('window.minimize'), {
+      hint: hint('window.minimize')
+    }),
     item(t('menu.window.zoomIn'), () => zoomStep(0.125)),
     item(t('menu.window.zoomOut'), () => zoomStep(-0.125)),
     item(t('menu.window.resetZoom'), () => bus.emit('mt::window-zoom', 1.0)),
-    item(t('menu.window.fullScreen'), executeCommand('window.toggle-full-screen'), { hint: hint('window.toggle-full-screen') })
+    item(t('menu.window.fullScreen'), executeCommand('window.toggle-full-screen'), {
+      hint: hint('window.toggle-full-screen')
+    })
   ]
 }
 
@@ -501,9 +625,11 @@ const buildThemeMenu = (): MenuItemDef[] => {
   const followSystem = !!preferencesStore.followSystemTheme
   const currentTheme = preferencesStore.theme as string
 
-  const selectTheme = (themeId: string): (() => void) => () => {
-    window.electron.ipcRenderer.send('mt::set-user-preference', { theme: themeId })
-  }
+  const selectTheme =
+    (themeId: string): (() => void) =>
+      () => {
+        window.electron.ipcRenderer.send('mt::set-user-preference', { theme: themeId })
+      }
 
   const themeRadio = ([labelKey, id]: readonly [string, string]): MenuItemDef => ({
     type: 'radio',
@@ -522,8 +648,12 @@ const buildThemeMenu = (): MenuItemDef[] => {
     sep(),
     // Locale values carry decorative dashes ("— 浅色主题 —") from the flat
     // native menu; strip them for the drawn submenu headers.
-    item(t('menu.theme.lightThemes').replace(/—/g, '').trim(), () => {}, { children: LIGHT_THEMES.map(themeRadio) }),
-    item(t('menu.theme.darkThemes').replace(/—/g, '').trim(), () => {}, { children: DARK_THEMES.map(themeRadio) })
+    item(t('menu.theme.lightThemes').replace(/—/g, '').trim(), () => {}, {
+      children: LIGHT_THEMES.map(themeRadio)
+    }),
+    item(t('menu.theme.darkThemes').replace(/—/g, '').trim(), () => {}, {
+      children: DARK_THEMES.map(themeRadio)
+    })
   ]
 }
 
@@ -533,7 +663,10 @@ const buildHelpMenu = (): MenuItemDef[] => {
   }
 
   const items: MenuItemDef[] = [
-    item(t('menu.help.markdownReference'), openExternal('https://github.com/TheQYQ/ColaMD/docs/markdown-syntax')),
+    item(
+      t('menu.help.markdownReference'),
+      openExternal('https://github.com/TheQYQ/ColaMD/docs/markdown-syntax')
+    ),
     item(t('menu.help.changelog'), openExternal('https://github.com/TheQYQ/ColaMD/releases')),
     sep(),
     item(t('menu.help.followUs'), openExternal('https://twitter.com/colamdapp')),
@@ -543,14 +676,20 @@ const buildHelpMenu = (): MenuItemDef[] => {
     item(t('menu.help.reportBug'), openExternal('https://github.com/TheQYQ/ColaMD/issues')),
     item(t('menu.help.viewSource'), openExternal('https://github.com/TheQYQ/ColaMD')),
     sep(),
-    item(t('menu.help.license'), openExternal('https://github.com/TheQYQ/ColaMD/blob/develop/LICENSE'))
+    item(
+      t('menu.help.license'),
+      openExternal('https://github.com/TheQYQ/ColaMD/blob/develop/LICENSE')
+    )
   ]
 
   if (window.electron?.isUpdatable) {
     items.push(sep(), item(t('menu.help.checkUpdates'), executeCommand('file.check-update')))
   }
 
-  items.push(sep(), item(t('menu.help.about'), () => bus.emit('aboutDialog')))
+  items.push(
+    sep(),
+    item(t('menu.help.about'), () => bus.emit('aboutDialog'))
+  )
   return items
 }
 
@@ -566,9 +705,17 @@ export const buildMenus = (recentFiles: string[]): MenuTopDef[] => {
     label.replace(/\(&[A-Za-z]\)/g, '').replace(/&/g, '')
 
   return [
-    { id: 'file', label: cleanLabel(t('menu.file.file')), items: () => buildFileMenu(recentFiles, hasFile) },
+    {
+      id: 'file',
+      label: cleanLabel(t('menu.file.file')),
+      items: () => buildFileMenu(recentFiles, hasFile)
+    },
     { id: 'edit', label: cleanLabel(t('menu.edit.edit')), items: () => buildEditMenu(hasFile) },
-    { id: 'paragraph', label: cleanLabel(t('menu.paragraph.title')), items: () => buildParagraphMenu() },
+    {
+      id: 'paragraph',
+      label: cleanLabel(t('menu.paragraph.title')),
+      items: () => buildParagraphMenu()
+    },
     { id: 'format', label: cleanLabel(t('menu.format.format')), items: () => buildFormatMenu() },
     { id: 'view', label: cleanLabel(t('menu.view.view')), items: () => buildViewMenu() },
     { id: 'theme', label: cleanLabel(t('menu.theme.theme')), items: () => buildThemeMenu() },

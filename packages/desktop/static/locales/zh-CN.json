@@ -53,7 +53,6 @@
       "replace": "替换",
       "findNext": "查找下一个",
       "findPrevious": "查找上一个",
-      "findInFolder": "在文件夹中查找",
       "screenshot": "截图",
       "lineEnding": "行结束符",
       "lineEndingCrlf": "CRLF (Windows)",
@@ -227,19 +226,9 @@
     "replaceAll": "全部替换",
     "replaceSingle": "单个替换",
     "invalidRegex": "无效的正则表达式 \"{pattern}\"",
-    "regexMatchEmpty": "正则表达式 \"{pattern}\" 匹配到了空字符串",
-    "searchResultInfo": "在 {fileCount} 个文件中找到 {matchCount} 个匹配项",
-    "searchLimited": "仅搜索前 {count} 个结果"
+    "regexMatchEmpty": "正则表达式 \"{pattern}\" 匹配到了空字符串"
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "在文件夹中搜索…",
-      "noFolderOpen": "没有打开的文件夹",
-      "noResultsFound": "未找到结果。",
-      "cancel": "取消",
-      "openFolder": "打开文件夹",
-      "showMoreMatches": "显示更多匹配"
-    },
     "tree": {
       "emptyProject": "空项目",
       "createFile": "创建文件",
@@ -247,7 +236,6 @@
     },
     "icons": {
       "files": "文件",
-      "search": "搜索",
       "toc": "目录"
     }
   },
@@ -800,7 +788,6 @@
       "findNext": "查找下一个",
       "findPrevious": "查找上一个",
       "replace": "替换",
-      "findInFolder": "在文件夹中查找",
       "screenshot": "截图"
     },
     "paragraph": {
@@ -943,8 +930,6 @@
       "errorLoadingTabTitle": "加载标签页出错",
       "errorLoadingTabMessage": "加载文件变更时发生错误，因为找不到该标签页。",
       "mixedLineEndingsNormalized": "“{name}” 含有混合换行符，已自动规范化为 {lineEnding}。",
-      "imageDeletionUrlTitle": "图片删除链接",
-      "imageDeletionUrlMessage": "点击将已上传图片的删除链接复制到剪贴板 ({url})。",
       "errorWhileSaving": "保存时发生错误：{msg}",
       "exportSuccessTitle": "导出成功",
       "exportSuccessMessage": "已成功导出“{name}”！",

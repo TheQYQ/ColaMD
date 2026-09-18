@@ -1,26 +1,8 @@
 import fs from 'fs-extra'
-import { statSync, constants, type Stats } from 'fs'
+import { statSync, constants } from 'fs'
 import { ipcMain } from 'electron'
 import { isFile as commonIsFile, isDirectory as commonIsDirectory } from 'common/filesystem'
 import { assertPathInScope } from '../security/pathScope'
-
-interface SerializedStat {
-  size: number
-  mtimeMs: number
-  ctimeMs: number
-  isFile: boolean
-  isDirectory: boolean
-  isSymbolicLink: boolean
-}
-
-const serializeStat = (stats: Stats): SerializedStat => ({
-  size: stats.size,
-  mtimeMs: stats.mtimeMs,
-  ctimeMs: stats.ctimeMs,
-  isFile: stats.isFile(),
-  isDirectory: stats.isDirectory(),
-  isSymbolicLink: stats.isSymbolicLink()
-})
 
 const toBuffer = (data: unknown): unknown => {
   if (data == null) return data
@@ -42,7 +24,6 @@ export const registerFsHandlers = (): void => {
   // Read-only channels — intentionally NOT scope-checked (see pathScope.ts).
   ipcMain.handle('mt::fs::is-file', (_e, p: string) => commonIsFile(p))
   ipcMain.handle('mt::fs::is-directory', (_e, p: string) => commonIsDirectory(p))
-  ipcMain.handle('mt::fs::stat', async(_e, p: string) => serializeStat(await fs.stat(p)))
   ipcMain.handle('mt::fs::read-file', async(_e, p: string, encoding?: BufferEncoding) => {
     const buf = await fs.readFile(p, encoding)
     return buf
@@ -51,10 +32,6 @@ export const registerFsHandlers = (): void => {
   ipcMain.handle('mt::fs::readdir', (_e, p: string) => fs.readdir(p))
 
   // Mutating channels — every path must resolve inside an allowed root.
-  ipcMain.handle('mt::fs::empty-dir', async(_e, p: string) => {
-    await assertPathInScope(p)
-    return fs.emptyDir(p)
-  })
   ipcMain.handle('mt::fs::copy', async(_e, src: string, dest: string) => {
     await assertPathInScope(src)
     await assertPathInScope(dest)

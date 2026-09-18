@@ -53,7 +53,6 @@
       "replace": "Remplacer",
       "findNext": "Rechercher suivant",
       "findPrevious": "Rechercher précédent",
-      "findInFolder": "Rechercher dans le dossier",
       "screenshot": "Capture d'écran",
       "lineEnding": "Fin de ligne",
       "lineEndingCrlf": "CRLF (Windows)",
@@ -227,19 +226,9 @@
     "replaceAll": "Remplacer tout",
     "replaceSingle": "Remplacer un",
     "invalidRegex": "Expression régulière invalide \"{pattern}\"",
-    "regexMatchEmpty": "L'expression régulière correspond à une chaîne vide \"{pattern}\"",
-    "searchResultInfo": "{matchCount} correspondances dans {fileCount} fichiers",
-    "searchLimited": "Recherche limitée aux {count} premiers résultats"
+    "regexMatchEmpty": "L'expression régulière correspond à une chaîne vide \"{pattern}\""
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "Rechercher dans le dossier...",
-      "noFolderOpen": "Aucun dossier ouvert",
-      "noResultsFound": "Aucun résultat trouvé.",
-      "cancel": "Annuler",
-      "openFolder": "Ouvrir un dossier",
-      "showMoreMatches": "Afficher plus de correspondances"
-    },
     "tree": {
       "emptyProject": "Projet vide",
       "createFile": "Créer un fichier",
@@ -247,7 +236,6 @@
     },
     "icons": {
       "files": "Fichiers",
-      "search": "Rechercher",
       "toc": "Table des matières"
     }
   },
@@ -800,7 +788,6 @@
       "findNext": "Rechercher suivant",
       "findPrevious": "Rechercher précédent",
       "replace": "Remplacer",
-      "findInFolder": "Rechercher dans le dossier",
       "screenshot": "Capture d'écran"
     },
     "paragraph": {
@@ -943,8 +930,6 @@
       "errorLoadingTabTitle": "Erreur lors du chargement de l’onglet",
       "errorLoadingTabMessage": "Une erreur s’est produite lors du chargement de la modification du fichier car l’onglet est introuvable.",
       "mixedLineEndingsNormalized": "« {name} » contient des fins de ligne mixtes qui ont été automatiquement normalisées en {lineEnding}.",
-      "imageDeletionUrlTitle": "URL de suppression de l’image",
-      "imageDeletionUrlMessage": "Cliquez pour copier dans le presse‑papiers l’URL de suppression de l’image téléversée ({url}).",
       "errorWhileSaving": "Une erreur s'est produite lors de l'enregistrement : {msg}",
       "exportSuccessTitle": "Exportation réussie",
       "exportSuccessMessage": "« {name} » a été exporté avec succès !",

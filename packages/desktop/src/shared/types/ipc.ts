@@ -25,7 +25,6 @@ import type {
   PageOptions,
   ExportType,
   SaveOptions,
-  SerializedStat,
   LineEnding,
   FileChangeDetail,
   UnsavedFile
@@ -60,14 +59,12 @@ export interface VersionSnapshot {
 
 export interface IpcInvokeChannels {
   'mt::ask-for-image-path': { args: []; ret: string[] }
-  'mt::boot-info-async': { args: []; ret: BootInfo }
   'mt::clipboard::guess-file-path': { args: []; ret: string | null }
   'mt::clipboard::read-text': { args: []; ret: string }
   'mt::cmd::exists': { args: [name: string]; ret: boolean }
   'mt::fonts::list': { args: []; ret: string[] }
   'mt::fs-trash-item': { args: [pathname: string]; ret: void }
   'mt::fs::copy': { args: [src: string, dest: string]; ret: void }
-  'mt::fs::empty-dir': { args: [path: string]; ret: void }
   'mt::fs::ensure-dir': { args: [path: string]; ret: void }
   'mt::fs::is-directory': { args: [path: string]; ret: boolean }
   'mt::fs::is-executable': { args: [path: string]; ret: boolean }
@@ -77,12 +74,9 @@ export interface IpcInvokeChannels {
   'mt::fs::path-exists': { args: [path: string]; ret: boolean }
   'mt::fs::read-file': { args: [path: string, encoding?: string]; ret: string | Uint8Array }
   'mt::fs::readdir': { args: [path: string]; ret: string[] }
-  'mt::fs::stat': { args: [path: string]; ret: SerializedStat }
   'mt::fs::unlink': { args: [path: string]; ret: void }
   'mt::fs::write-file': { args: [path: string, data: string | Uint8Array]; ret: void }
-  'mt::i18n::is-supported': { args: [lang: string]; ret: boolean }
   'mt::i18n::load': { args: [language: string]; ret: Record<string, unknown> }
-  'mt::i18n::supported': { args: []; ret: string[] }
   'mt::keybinding-get-keyboard-info': { args: []; ret: KeyboardInfo }
   'mt::keybinding-get-pref-keybindings': {
     args: []
@@ -100,13 +94,6 @@ export interface IpcInvokeChannels {
   'mt::spellchecker-set-enabled': { args: [enabled: boolean]; ret: void }
   'mt::spellchecker-switch-language': { args: [language: string]; ret: void }
   'mt::uploader::upload': { args: [req: unknown]; ret: unknown }
-  'mt::version-history:clear': { args: [pathname: string]; ret: boolean }
-  'mt::version-history:delete': { args: [pathname: string, id: string]; ret: boolean }
-  'mt::version-history:get': { args: [pathname: string]; ret: VersionSnapshot[] }
-  'mt::version-history:get-content': {
-    args: [pathname: string, id: string]
-    ret: string | null
-  }
   'mt::version-history:save': {
     args: [snapshot: VersionSnapshot]
     ret: VersionSnapshot | null
@@ -145,12 +132,10 @@ export interface IpcSendChannels {
   'menu-add-recently-used': [filePath: string]
   'menu-clear-recently-used': []
   'mt::NEED_UPDATE': [payload?: unknown]
-  'mt::add-recently-used-document': [filePath: string]
   'mt::app-try-quit': []
   'mt::ask-for-image-auto-path': [payload: unknown]
   'mt::ask-for-modify-image-folder-path': [imagePath?: string]
   'mt::ask-for-open-file-in-sidebar': []
-  'mt::ask-for-open-project-in-sidebar': []
   'mt::ask-for-user-data': []
   'mt::ask-for-user-preference': []
   'mt::check-for-update': []
@@ -170,14 +155,12 @@ export interface IpcSendChannels {
   'mt::keybinding-debug-dump-keyboard-info': []
   'mt::make-screenshot': []
   'mt::menu::popup': [template: MenuTemplate, position?: MenuPopupPosition]
-  'mt::menu::popup-application': [position?: MenuPopupPosition]
   // Frameless HTML menu bar (menuBar component) support channels.
   'mt::menu::native-clipboard': [op: 'cut' | 'copy' | 'paste']
   'mt::menu::open-path': [pathname: string]
   'mt::unsaved-dialog-response': [result: { needSave: boolean } | null]
   'mt::open-file': [filePath: string, options?: unknown]
   'mt::open-file-by-window-id': [windowId: number, filePath: string, options?: unknown]
-  'mt::open-keybindings-config': []
   'mt::open-setting-window': []
   'mt::rename': [
     payload: { id: string; pathname: string; newPathname: string; currentFile?: unknown }
@@ -233,9 +216,7 @@ export interface IpcSendChannels {
   'mt::win::minimize': []
   'mt::win::set-fullscreen': [flag: boolean]
   'mt::win::toggle-fullscreen': []
-  'mt::win::toggle-maximize': []
   'mt::win::unmaximize': []
-  'mt::window-add-file-path': [windowId: number, filePath: string]
   'mt::window-tab-closed': [pathname: string]
   'mt::window-toggle-always-on-top': []
   'mt::window::drop': [payload: unknown]
@@ -291,7 +272,6 @@ export interface IpcMainEventChannels {
   'mt::editor-rename-file': []
   'mt::execute-command-by-id': [commandId: string]
   'mt::export-success': [payload: { type: string; filePath: string }]
-  'mt::file-saved': [tabId: string]
   'mt::force-close-tabs-by-id': [tabIds: string[]]
   'mt::discard-unsaved-tabs-and-close': [tabIds: string[]]
   'mt::show-unsaved-dialog': []

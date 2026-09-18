@@ -26,22 +26,6 @@ export function asState(doc: unknown): TState[] {
 }
 
 class JSONState {
-    static invert(op: JSONOpList) {
-        return json1.type.invert(op);
-    }
-
-    static compose(op1: JSONOpList, op2: JSONOpList) {
-        return json1.type.compose(op1, op2);
-    }
-
-    static transform(
-        op: JSONOpList,
-        otherOp: JSONOpList,
-        type: 'left' | 'right',
-    ) {
-        return json1.type.transform(op, otherOp, type);
-    }
-
     private _operationCache: JSONOpList[] = [];
 
     // Handle of the scheduled deferred-op flush. Doubles as the "a flush is

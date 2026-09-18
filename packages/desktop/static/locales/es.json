@@ -53,7 +53,6 @@
       "replace": "Reemplazar",
       "findNext": "Buscar Siguiente",
       "findPrevious": "Buscar Anterior",
-      "findInFolder": "Buscar en Carpeta",
       "screenshot": "Captura de Pantalla",
       "lineEnding": "Final de Línea",
       "lineEndingCrlf": "CRLF(Windows)",
@@ -227,19 +226,9 @@
     "replaceAll": "Reemplazar",
     "replaceSingle": "Reemplazar Uno",
     "invalidRegex": "Expresión regular inválida \"{pattern}\"",
-    "regexMatchEmpty": "La expresión regular coincide con la cadena vacía \"{pattern}\"",
-    "searchResultInfo": "{matchCount} coincidencias en {fileCount} archivos",
-    "searchLimited": "Búsqueda limitada a los primeros {count} resultados"
+    "regexMatchEmpty": "La expresión regular coincide con la cadena vacía \"{pattern}\""
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "Buscar en carpeta...",
-      "noFolderOpen": "No hay carpeta abierta",
-      "noResultsFound": "No se encontraron resultados.",
-      "cancel": "Cancelar",
-      "openFolder": "Abrir Carpeta",
-      "showMoreMatches": "Mostrar más coincidencias"
-    },
     "tree": {
       "emptyProject": "Proyecto vacío",
       "createFile": "Crear Archivo",
@@ -247,7 +236,6 @@
     },
     "icons": {
       "files": "Archivos",
-      "search": "Buscar",
       "toc": "Tabla de Contenidos"
     }
   },
@@ -800,7 +788,6 @@
       "findNext": "Buscar Siguiente",
       "findPrevious": "Buscar Anterior",
       "replace": "Reemplazar",
-      "findInFolder": "Buscar en Carpeta",
       "screenshot": "Captura de Pantalla"
     },
     "paragraph": {
@@ -943,8 +930,6 @@
       "errorLoadingTabTitle": "Error al cargar la pestaña",
       "errorLoadingTabMessage": "Se produjo un error al cargar la modificación del archivo porque no se puede encontrar la pestaña.",
       "mixedLineEndingsNormalized": "«{name}» tiene finales de línea mixtos que se normalizaron automáticamente a {lineEnding}.",
-      "imageDeletionUrlTitle": "URL de eliminación de la imagen",
-      "imageDeletionUrlMessage": "Haz clic para copiar al portapapeles la URL de eliminación de la imagen subida ({url}).",
       "errorWhileSaving": "Se produjo un error al guardar: {msg}",
       "exportSuccessTitle": "Exportado correctamente",
       "exportSuccessMessage": "¡Se exportó «{name}» correctamente!",

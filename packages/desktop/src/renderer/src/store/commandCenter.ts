@@ -10,19 +10,12 @@ import staticCommands, {
   getCommandsWithDescriptions,
   type CommandDescriptor
 } from '../commands'
-import { getRegisteredCommands } from '../services/pluginRegistry'
 
 type Command = CommandDescriptor
 type Root = { subcommands: Command[] }
 
 export const useCommandCenterStore = defineStore('commandCenter', () => {
-  // Static commands come first; plugin-registered commands append after.
-  // Plugin commands are non-reactive in v1 — they load at startup before the
-  // store initializes, so a one-time snapshot at construction is sufficient.
-  const allCommands = [
-    ...(staticCommands as unknown as CommandDescriptor[]),
-    ...getRegisteredCommands()
-  ]
+  const allCommands = staticCommands as unknown as CommandDescriptor[]
 
   const rootCommand = ref<Root>(new RootCommand(allCommands) as Root)
 
@@ -38,18 +31,15 @@ export const useCommandCenterStore = defineStore('commandCenter', () => {
 
   async function LISTEN_COMMAND_CENTER_BUS(): Promise<void> {
     // Refresh i18n descriptions on the static commands (the source of truth
-    // for built-in commands), then re-append plugin-registered commands so
-    // the latter survive the refresh.
+    // for built-in commands).
     const refreshedStatic = await getCommandsWithDescriptions()
-    rootCommand.value.subcommands = [...refreshedStatic, ...getRegisteredCommands()]
+    rootCommand.value.subcommands = refreshedStatic
     SORT_COMMANDS()
 
     // Listen for language changes and update command descriptions.
     bus.on('language-changed', async() => {
-      // Re-append plugin-registered commands after refreshing i18n, same as
-      // the initial load above.
       const refreshedStatic = await getCommandsWithDescriptions()
-      rootCommand.value.subcommands = [...refreshedStatic, ...getRegisteredCommands()]
+      rootCommand.value.subcommands = refreshedStatic
       SORT_COMMANDS()
     })
 

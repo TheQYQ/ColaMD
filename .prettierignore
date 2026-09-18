@@ -10,3 +10,5 @@ coverage/
 test-results/
 playwright-report/
 *.log
+# Lockfile is machine-managed by pnpm; prettier reformatting churns thousands of lines.
+pnpm-lock.yaml

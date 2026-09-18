@@ -1,4 +1,4 @@
-import bus from '../bus'
+import bus, { listenBoth } from '../bus'
 import { getUniqueId, deepClone } from '../util'
 import listToTree, { type ListItem, type TreeNode } from '../util/listToTree'
 import {
@@ -21,7 +21,11 @@ import { useLayoutStore } from './layout'
 import { useMainStore } from '.'
 import { t } from '../i18n'
 import { debouncedSendBufferedState, sendBufferedState } from './bufferedState'
-import { isImageUnreferenced, resolveCleanupCandidate, type CleanupCandidate } from '../util/imageCleanup'
+import {
+  isImageUnreferenced,
+  resolveCleanupCandidate,
+  type CleanupCandidate
+} from '../util/imageCleanup'
 import type { VersionSnapshot } from '@shared/types/ipc'
 import type {
   IFileState,
@@ -63,11 +67,7 @@ type TocTreeNode = TreeNode<TocItem>
 // had. (Verified: getTOC() returned content "C2"/githubSlug "c2" while the
 // signature still read `2:mu-7`.)
 const tocSignature = (toc: TocItem[]): string =>
-  toc
-    .map(
-      (item) => `${item.lvl ?? ''}:${item.githubSlug ?? ''}:${item.content ?? ''}`
-    )
-    .join('|')
+  toc.map((item) => `${item.lvl ?? ''}:${item.githubSlug ?? ''}:${item.content ?? ''}`).join('|')
 
 // Renderer-safe UTF-8 byte length. `Buffer.byteLength()` must not be used here:
 // the renderer runs with `nodeIntegration: false` and context isolation on, so
@@ -536,19 +536,6 @@ export const useEditorStore = defineStore('editor', {
       this.currentFile.searchMatches = deepClone(value) // deep clone to trigger state changes
     },
 
-    SHOW_IMAGE_DELETION_URL(deletionUrl: string): void {
-      notice
-        .notify({
-          title: t('store.editor.imageDeletionUrlTitle'),
-          message: t('store.editor.imageDeletionUrlMessage', { url: deletionUrl }),
-          showConfirm: true,
-          time: 20000
-        })
-        .then(() => {
-          window.electron.clipboard.writeText(deletionUrl)
-        })
-    },
-
     // IMG.2: the engine removed the last markdown reference to an image.
     // Schedule a debounced cleanup — the reference check re-runs at fire time
     // so an undo restores cleanliness, and the file is only unlinked when it
@@ -560,10 +547,15 @@ export const useEditorStore = defineStore('editor', {
       if (!tab?.pathname) return
 
       const documentDir = window.path.dirname(tab.pathname)
-      const candidate = resolveCleanupCandidate(src, documentDir, preferencesStore.imageFolderPath, {
-        path: window.path,
-        isChildOfDirectory: window.fileUtils.isChildOfDirectory
-      })
+      const candidate = resolveCleanupCandidate(
+        src,
+        documentDir,
+        preferencesStore.imageFolderPath,
+        {
+          path: window.path,
+          isChildOfDirectory: window.fileUtils.isChildOfDirectory
+        }
+      )
       if (!candidate) return
 
       const existing = imageCleanupTimers.get(candidate.absolutePath)
@@ -648,10 +640,7 @@ export const useEditorStore = defineStore('editor', {
 
     // need pass some data to main process when `save` menu item clicked
     LISTEN_FOR_SAVE(): void {
-      window.electron.ipcRenderer.on('mt::editor-ask-file-save', () => {
-        this.FILE_SAVE()
-      })
-      bus.on('mt::editor-ask-file-save', () => {
+      listenBoth('mt::editor-ask-file-save', () => {
         this.FILE_SAVE()
       })
     },
@@ -680,10 +669,7 @@ export const useEditorStore = defineStore('editor', {
 
     // need pass some data to main process when `save as` menu item clicked
     LISTEN_FOR_SAVE_AS(): void {
-      window.electron.ipcRenderer.on('mt::editor-ask-file-save-as', () => {
-        this.FILE_SAVE_AS()
-      })
-      bus.on('mt::editor-ask-file-save-as', () => {
+      listenBoth('mt::editor-ask-file-save-as', () => {
         this.FILE_SAVE_AS()
       })
     },
@@ -879,19 +865,13 @@ export const useEditorStore = defineStore('editor', {
     },
 
     LISTEN_FOR_MOVE_TO(): void {
-      window.electron.ipcRenderer.on('mt::editor-move-file', () => {
-        this.MOVE_FILE_TO()
-      })
-      bus.on('mt::editor-move-file', () => {
+      listenBoth('mt::editor-move-file', () => {
         this.MOVE_FILE_TO()
       })
     },
 
     LISTEN_FOR_RENAME(): void {
-      window.electron.ipcRenderer.on('mt::editor-rename-file', () => {
-        this.RESPONSE_FOR_RENAME()
-      })
-      bus.on('mt::editor-rename-file', () => {
+      listenBoth('mt::editor-rename-file', () => {
         this.RESPONSE_FOR_RENAME()
       })
     },
@@ -1102,25 +1082,16 @@ export const useEditorStore = defineStore('editor', {
     },
 
     LISTEN_FOR_CLOSE_TAB(): void {
-      window.electron.ipcRenderer.on('mt::editor-close-tab', () => {
-        this.CLOSE_TAB()
-      })
-      bus.on('mt::editor-close-tab', () => {
+      listenBoth('mt::editor-close-tab', () => {
         this.CLOSE_TAB()
       })
     },
 
     LISTEN_FOR_TAB_CYCLE(): void {
-      window.electron.ipcRenderer.on('mt::tabs-cycle-left', () => {
+      listenBoth('mt::tabs-cycle-left', () => {
         this.CYCLE_TABS(false)
       })
-      window.electron.ipcRenderer.on('mt::tabs-cycle-right', () => {
-        this.CYCLE_TABS(true)
-      })
-      bus.on('mt::tabs-cycle-left', () => {
-        this.CYCLE_TABS(false)
-      })
-      bus.on('mt::tabs-cycle-right', () => {
+      listenBoth('mt::tabs-cycle-right', () => {
         this.CYCLE_TABS(true)
       })
     },
@@ -1742,11 +1713,7 @@ export const useEditorStore = defineStore('editor', {
       const menuState = createApplicationMenuState(changes)
       this.selectionMenuState = menuState
       const { windowId } = window.colamd?.env ?? { windowId: -1 }
-      window.electron.ipcRenderer.send(
-        'mt::editor-selection-changed',
-        windowId,
-        menuState
-      )
+      window.electron.ipcRenderer.send('mt::editor-selection-changed', windowId, menuState)
     },
 
     // Persist the caret for a tab without the heavy content-change pipeline. A
@@ -1768,11 +1735,7 @@ export const useEditorStore = defineStore('editor', {
       const formatState = createSelectionFormatState(formats)
       this.selectionFormatState = formatState
       const { windowId } = window.colamd?.env ?? { windowId: -1 }
-      window.electron.ipcRenderer.send(
-        'mt::update-format-menu',
-        windowId,
-        formatState
-      )
+      window.electron.ipcRenderer.send('mt::update-format-menu', windowId, formatState)
     },
 
     EXPORT({ type, content, bytes, markdown, pageOptions }: ExportPayload): void {
@@ -1846,10 +1809,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     LISTEN_FOR_SET_LINE_ENDING(): void {
-      window.electron.ipcRenderer.on('mt::set-line-ending', (_, lineEnding) => {
-        this.SET_LINE_ENDING(lineEnding)
-      })
-      bus.on('mt::set-line-ending', (lineEnding) => {
+      listenBoth('mt::set-line-ending', (lineEnding) => {
         this.SET_LINE_ENDING(lineEnding as LineEnding)
       })
     },
@@ -1970,10 +1930,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     LISTEN_WINDOW_ZOOM(): void {
-      window.electron.ipcRenderer.on('mt::window-zoom', (_, zoomFactor) => {
-        this.EDIT_ZOOM(zoomFactor)
-      })
-      bus.on('mt::window-zoom', (zoomFactor) => {
+      listenBoth('mt::window-zoom', (zoomFactor) => {
         this.EDIT_ZOOM(zoomFactor as number)
       })
     },

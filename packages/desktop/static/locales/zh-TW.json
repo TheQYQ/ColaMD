@@ -53,7 +53,6 @@
       "replace": "取代",
       "findNext": "尋找下一個",
       "findPrevious": "尋找上一個",
-      "findInFolder": "在資料夾中尋找",
       "screenshot": "螢幕截圖",
       "lineEnding": "行結束符",
       "lineEndingCrlf": "CRLF(Windows)",
@@ -227,19 +226,9 @@
     "replaceAll": "全部取代",
     "replaceSingle": "單一取代",
     "invalidRegex": "無效的正規表示式 \"{pattern}\"",
-    "regexMatchEmpty": "正規表示式 \"{pattern}\" 符合空字串",
-    "searchResultInfo": "在 {fileCount} 個檔案中找到 {matchCount} 個符合項目",
-    "searchLimited": "搜尋僅限前 {count} 個結果"
+    "regexMatchEmpty": "正規表示式 \"{pattern}\" 符合空字串"
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "在資料夾中搜尋…",
-      "noFolderOpen": "沒有開啟的資料夾",
-      "noResultsFound": "找不到結果。",
-      "cancel": "取消",
-      "openFolder": "開啟資料夾",
-      "showMoreMatches": "顯示更多符合項目"
-    },
     "tree": {
       "emptyProject": "空專案",
       "createFile": "建立檔案",
@@ -247,7 +236,6 @@
     },
     "icons": {
       "files": "檔案",
-      "search": "搜尋",
       "toc": "目錄"
     }
   },
@@ -800,7 +788,6 @@
       "findNext": "尋找下一個",
       "findPrevious": "尋找上一個",
       "replace": "取代",
-      "findInFolder": "在資料夾中尋找",
       "screenshot": "螢幕截圖"
     },
     "paragraph": {
@@ -943,8 +930,6 @@
       "errorLoadingTabTitle": "載入標籤頁發生錯誤",
       "errorLoadingTabMessage": "載入檔案變更時發生錯誤，因為找不到該標籤頁。",
       "mixedLineEndingsNormalized": "「{name}」含有混合換行字元，已自動正規化為 {lineEnding}。",
-      "imageDeletionUrlTitle": "圖片刪除連結",
-      "imageDeletionUrlMessage": "點擊將已上傳圖片的刪除連結複製到剪貼簿（{url}）。",
       "errorWhileSaving": "儲存時發生錯誤：{msg}",
       "exportSuccessTitle": "匯出成功",
       "exportSuccessMessage": "已成功匯出「{name}」！",

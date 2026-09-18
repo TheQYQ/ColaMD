@@ -672,21 +672,6 @@ ipcMain.on(
   }
 )
 
-ipcMain.on('mt::ask-for-open-project-in-sidebar', async(e) => {
-  const win = BrowserWindow.fromWebContents(e.sender)
-  if (!win) {
-    return
-  }
-  const { filePaths } = await dialog.showOpenDialog(win, {
-    properties: ['openDirectory', 'createDirectory']
-  })
-
-  if (filePaths && filePaths[0]) {
-    const resolvedPath = normalizeAndResolvePath(filePaths[0])
-    ipcMain.emit('app-open-directory-by-id', win.id, resolvedPath, true)
-  }
-})
-
 // Empty-state "Open File" button in the sidebar — picker filtered to markdown
 // and text files. Grants mutation scope for the file's parent directory.
 ipcMain.on('mt::ask-for-open-file-in-sidebar', async(e) => {

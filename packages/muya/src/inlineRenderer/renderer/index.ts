@@ -4,7 +4,7 @@ import type Format from '../../block/base/format';
 import type { Muya } from '../../index';
 import type { IRenderCursor } from '../../selection/types';
 import type InlineRenderer from '../index';
-import type { ISyntaxRenderOptions, Token } from '../types';
+import type { DelToken, ISyntaxRenderOptions, StrongEmToken, Token } from '../types';
 import { CLASS_NAMES } from '../../config';
 import { conflict, methodMixins, snakeToCamel } from '../../utils';
 import { h, toHTML } from '../../utils/snabbdom';
@@ -13,9 +13,7 @@ import autoLinkExtension from './autoLinkExtension';
 import backlash from './backlash';
 import backlashInToken from './backlashInToken';
 import codeFence from './codeFence';
-import del from './del';
 import delEmStrongFac from './delEmStrongFactory';
-import em from './em';
 import emoji from './emoji';
 import footnoteIdentifier from './footnoteIdentifier';
 import hardLineBreak from './hardLineBreak';
@@ -36,10 +34,26 @@ import referenceDefinition from './referenceDefinition';
 import referenceImage from './referenceImage';
 import referenceLink from './referenceLink';
 import softLineBreak from './softLineBreak';
-import strong from './strong';
 import superSubScript from './superSubScript';
 import tailHeader from './tailHeader';
 import text from './text';
+
+// `del`/`em`/`strong` share one shape: forward to `delEmStrongFac` with the
+// marker kind. One factory replaces three otherwise identical renderer files.
+function delEmStrong(type: 'del' | 'em' | 'strong') {
+    return function (
+        this: Renderer,
+        { h, cursor, block, token, outerClass }: ISyntaxRenderOptions & { token: StrongEmToken | DelToken },
+    ) {
+        return this.delEmStrongFac(type, {
+            h,
+            cursor,
+            block,
+            token,
+            outerClass,
+        });
+    };
+}
 
 const inlineSyntaxRenderer = {
     backlashInToken,
@@ -62,9 +76,9 @@ const inlineSyntaxRenderer = {
     emoji,
     inlineCode,
     text,
-    del,
-    em,
-    strong,
+    del: delEmStrong('del'),
+    em: delEmStrong('em'),
+    strong: delEmStrong('strong'),
     htmlEscape,
     multipleMath,
     referenceDefinition,

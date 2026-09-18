@@ -54,11 +54,7 @@ class AppMenu {
    * @param keybindings The keybindings instances.
    * @param userDataPath The user data path.
    */
-  constructor(
-    preferences: Preference,
-    keybindings: Keybindings,
-    userDataPath: string
-  ) {
+  constructor(preferences: Preference, keybindings: Keybindings, userDataPath: string) {
     this._preferences = preferences
     this._keybindings = keybindings
     this._userDataPath = userDataPath
@@ -470,9 +466,6 @@ class AppMenu {
   }
 
   _listenForIpcMain(): void {
-    ipcMain.on('mt::add-recently-used-document', (_e, pathname: string) => {
-      this.addRecentlyUsedDocument(pathname)
-    })
     ipcMain.on('mt::update-line-ending-menu', (_e, windowId: number, lineEnding: string) => {
       this.updateLineEndingMenu(windowId, lineEnding)
     })
