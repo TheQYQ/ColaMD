@@ -2,3 +2,6 @@ singleQuote: true
 semi: false
 printWidth: 100
 trailingComma: none
+# Git's core.autocrlf makes this checkout's working tree CRLF while the index
+# stores LF, so prettier's default (lf) reports every untouched file as misformatted.
+endOfLine: auto
