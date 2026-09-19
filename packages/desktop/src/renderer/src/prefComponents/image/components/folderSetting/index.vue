@@ -3,17 +3,17 @@
     <h6 class="title">
       {{ t('preferences.image.folderSetting.title') }}
     </h6>
-    <text-box
-      :description="t('preferences.image.folderSetting.globalFolder')"
-      :input="imageFolderPath"
-      :regex-validator="/^(?:$|([a-zA-Z]:)?[\/\\].*$)/"
-      :default-value="folderPathPlaceholder"
-      :on-change="(value) => modifyImageFolderPath(value)"
-    />
+    <div class="image-folder-path">
+      <span class="label">{{ t('preferences.image.folderSetting.globalFolder') }}:</span>
+      <span
+        class="value"
+        :title="imageFolderPath"
+      >{{ imageFolderPath }}</span>
+    </div>
     <div>
       <el-button
         size="mini"
-        @click="modifyImageFolderPath(undefined)"
+        @click="modifyImageFolderPath"
       >
         {{ t('preferences.image.folderSetting.open') }}
       </el-button>
@@ -80,7 +80,6 @@ const {
   imageRelativeDirectoryBase,
   imageRelativeDirectoryName
 } = storeToRefs(preferenceStore)
-const folderPathPlaceholder = computed<string>(() => preferenceStore.imageFolderPath || '')
 const imageRelativeDirectoryBaseOptions = computed<PrefSelectOption<string>[]>(() => [
   {
     label: t('preferences.image.folderSetting.copyRelativeToFile'),
@@ -100,10 +99,10 @@ const openImageFolder = (): void => {
   window.electron.shell.openPath(imageFolderPath.value)
 }
 
-const modifyImageFolderPath = (value: string | undefined): void => {
-  // Passing `undefined` is the documented way to ask the main process to
-  // open a folder picker (see `mt::ask-for-modify-image-folder-path`).
-  preferenceStore.SET_IMAGE_FOLDER_PATH(value)
+// Only the main-process folder dialog can assign this path: it is also a
+// write-scope root, so a typed-in value is not accepted (see O7(1)).
+const modifyImageFolderPath = (): void => {
+  preferenceStore.SET_IMAGE_FOLDER_PATH()
 }
 
 const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
@@ -112,6 +111,23 @@ const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
 </script>
 
 <style scoped>
+.image-folder-path {
+  margin-bottom: 8px;
+}
+
+.image-folder-path .label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.image-folder-path .value {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.75;
+}
+
 .image-folder .footnote {
   font-size: 13px;
   & code {

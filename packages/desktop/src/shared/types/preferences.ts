@@ -54,7 +54,8 @@ export interface IUserPreferences {
   spellcheckerLanguage?: string
   imageInsertAction?: 'upload' | 'folder' | 'path'
   imagePreferRelativePath?: boolean
-  imageFolderPath?: string
+  // `imageFolderPath` is deliberately absent: the folder is stored by DataCenter,
+  // whose dialog is the only writer, because it also grants write scope.
   deleteUnreferencedImages?: boolean
   screenshotFolderPath?: string
   imageBed?: { selected?: string; [key: string]: unknown }

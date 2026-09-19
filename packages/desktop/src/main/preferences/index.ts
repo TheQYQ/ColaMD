@@ -178,8 +178,18 @@ class Preference extends TypedEmitter<PreferenceEvents> {
         win.webContents.send('mt::user-preference', this.getAll())
       }
     })
+    // `imageFolderPath` doubles as a write-scope grant: App registers it with
+    // `addAllowedRoot`, so letting the renderer assign it would let a compromised
+    // renderer widen its own mutation scope. Only the folder dialog in DataCenter
+    // assigns that key, and the grant follows the user-data broadcast instead.
     ipcMain.on('mt::set-user-preference', (_e, settings: Record<string, unknown>) => {
-      this.setItems(settings)
+      const { imageFolderPath, ...rest } = settings || {}
+      if (imageFolderPath !== undefined) {
+        log.warn(
+          'Rejected a renderer-side write of imageFolderPath; it is assigned by the folder dialog only.'
+        )
+      }
+      this.setItems(rest)
     })
     ipcMain.on('mt::cmd-toggle-autosave', () => {
       this.setItem('autoSave', !this.getItem('autoSave'))

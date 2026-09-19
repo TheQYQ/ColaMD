@@ -64,6 +64,30 @@ test.describe('Path scope enforcement (M2 security package)', () => {
     expect(fs.existsSync(target)).toBe(false)
   })
 
+  test('a forged imageFolderPath preference grants nothing', async() => {
+    // O7(1): this key used to be writable through the generic preference channel,
+    // and App registered whatever arrived as an allowed root — so one XSS could
+    // pick its own write scope. It must now neither persist nor grant.
+    const otherDir = makeTempDir()
+    const target = path.join(otherDir, 'forged-scope.md')
+
+    await page.evaluate(
+      ([p]) =>
+        window.electron.ipcRenderer.send('mt::set-user-preference', { imageFolderPath: p }) as void,
+      [otherDir]
+    )
+    // Let the (rejected) write and any broadcast round-trip settle first.
+    await page.waitForTimeout(200)
+
+    await expect(
+      page.evaluate(
+        ([p, data]) => window.fileUtils.writeFile(p, data) as Promise<void>,
+        [target, 'must not land']
+      )
+    ).rejects.toThrow()
+    expect(fs.existsSync(target)).toBe(false)
+  })
+
   test('output-file OUTSIDE the allowed root is rejected', async() => {
     const otherDir = makeTempDir()
     const target = path.join(otherDir, 'nested', 'out.md')

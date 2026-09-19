@@ -134,7 +134,9 @@ export interface IpcSendChannels {
   'mt::NEED_UPDATE': [payload?: unknown]
   'mt::app-try-quit': []
   'mt::ask-for-image-auto-path': [payload: unknown]
-  'mt::ask-for-modify-image-folder-path': [imagePath?: string]
+  // No argument: main opens the picker and assigns the result itself, because
+  // this folder is also a write-scope root (see security/pathScope.ts).
+  'mt::ask-for-modify-image-folder-path': []
   'mt::ask-for-open-file-in-sidebar': []
   'mt::ask-for-user-data': []
   'mt::ask-for-user-preference': []
