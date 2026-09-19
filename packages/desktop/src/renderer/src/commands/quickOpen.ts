@@ -1,6 +1,6 @@
 import bus from '../bus'
 import { delay } from '@/util'
-import FileSearcher from '@/node/ripgrepSearcher'
+import { FileSearcher } from '@/node/ripgrepSearcher'
 import type { EditorState } from '@/store/editor'
 import getCommandDescriptionById from './descriptions'
 import { t } from '../i18n'
