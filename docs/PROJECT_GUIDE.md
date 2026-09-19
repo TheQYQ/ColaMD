@@ -287,14 +287,14 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 ### 11.1 代码缺陷（本文写作时实测）
 
-下列十条是初次实测时的原样描述，**其中 1/2/3/7 已在第一批修掉，4 与 8 的原判定被撤回或降级**——每条的当前状态、所在分支与提交见 `OPTIMIZATION_ROADMAP.md` §3 的"完成状态"行；本节保留的是缺陷成因描述，不再逐条维护状态。
+下列十条是初次实测时的原样描述，**其中 1/2/3/6/7 已修掉，4 与 8 的原判定被撤回或降级**——每条的当前状态、所在分支与提交见 `OPTIMIZATION_ROADMAP.md` §3 的"完成状态"行；本节保留的是缺陷成因描述，不再逐条维护状态。
 
 1. **快速打开 `Ctrl+P` 退化为全文搜索。** `commands/quickOpen.ts:3` 写的是默认导入 `import FileSearcher from '@/node/ripgrepSearcher'`，而该文件的默认导出是 `RipgrepDirectorySearcher`（`node/ripgrepSearcher.ts:129-142`，`mode: 'text'`）；真正做文件名检索的具名 `export class FileSearcher`（`:144`，`mode: 'files'`）反而无人引用。根因是清理提交 `409188a` 删掉了 `node/fileSearcher.ts` —— 那 4 行只是 `export { FileSearcher as default } from './ripgrepSearcher'` 的转发垫片，被误判为死代码。**修法：改成具名导入。**
 2. **拼写检查可用性判断恒真**：`main/spellchecker/index.ts:46` 写成 `if (!win.webContents.session.isSpellCheckerEnabled)`，缺 `()`，"不可用"告警永不触发。
 3. **`startUpAction` 枚举跨进程不一致**：渲染端类型是 `'restoreAll' | 'lastSession' | 'blank'`（`store/preferences.ts:10`），主进程实际比较 `'restoreAll' | 'folder' | 'openLastFolder'`（`main/app/index.ts:288-299`），`'lastState'` 靠迁移改写（`main/preferences/index.ts:49-50`）。因为字段声明为 `StartUpAction | string`，编译不报错，但 `'lastSession'` 是死值、`'folder'`/`'openLastFolder'` 未被类型覆盖。
 4. **偏好写入的同步广播**：`main/preferences/index.ts:135` 每次 `setItem` 都同步 `ipcMain.emit('broadcast-preferences-changed')`，`setItems` 逐键循环。**原判定"N×M 次原生菜单重建"不成立**：唯一的重建方 AppMenu 已在 `main/menu/index.ts:527-537` 按 key 判定（只有 `theme`/`followSystemTheme`/`language`/`autoSave` 才重建），而实测三处 `setItems` 调用方（`main/app/index.ts:521,842`、`main/windows/editor.ts:425`）每次只传一键。真正剩下的是批量写入时的广播条数与空对象也广播，见 O9。
 5. **无监听者的 IPC**：`main/dataCenter/index.ts:83,93` 广播 `broadcast-web-image-added/-removed`，全仓零监听且不在契约里。
-6. **空实现与未兑现开关**：`main/preferences/index.ts:166-172` 的 `exportJSON`/`importJSON` 是空 `// todo`；`--safe` / `global.COLAMD_SAFE_MODE` 在 `main/app/env.ts:101` 设了但无人消费。
+6. **空实现与名不副实的开关**：`main/preferences/index.ts` 的 `exportJSON`/`importJSON` 曾是空 `// todo`——**但全仓零调用方**（没有菜单项、没有 IPC、没有命令），所以不是"点了没反应"；`--safe`（`main/app/env.ts:101` 设 `global.COLAMD_SAFE_MODE`）也**并非无人消费**，`main/keyboard/shortcutHandler.ts:176-178` 会据此跳过用户键位文件，不实的是帮助文本"Disable plugins and other user configuration"（本仓无插件系统）。两条均已在 `fix/open-failure-visible`（`f3e13be`）按"摘掉入口"处理，见 O4。
 7. **重复实现**：最近文档读取逻辑在 `main/menu/index.ts:18-19` 与 `main/ipc/menu.ts:14-15` 各一份，含两份 `MAX_RECENTLY_USED_DOCUMENTS`。
 8. **同步 IPC 回落**：`preload/index.ts:141-157` 的 `isSamePathSync` 在 `a.length === b.length` 且 `a !== b` 但大小写相同（同一文件系统上的异体写法）时才回落 `sendSync`。**原判定"热路径每次比较都阻塞"不成立**：六个调用方（`sideBar/treeFile.vue:57`、`store/editor.ts:276,389,690,1425,1848`）全是点文件、保存、关标签这类离散用户动作，不在击键路径上，O10 已因此撤回。
 9. **遗留但无害**：`main/app/index.ts:465-485` 整段注释掉的截图/快捷键捕获；`renderer/src/assets/symbolIcon/index.js`（MarkText 图标雪碧图，被 `main.ts:5` 引入却无模板引用）；`commands/descriptions.ts:169-175` 列了 3 个没有对应命令的 id；`components/titleBar/index.vue:99` 按 `.js` 引入实为 `.ts` 的文件。
@@ -344,7 +344,7 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 | `docs/UI_REDESIGN_GUIDE.md`                                   | V1 设计系统、布局与微交互规范（已落地）                                                                                                                                                         |
 | `ColaMD_WORKPLAN.md`                                          | 工作计划与 Typora 对标进度（含 Windows 环境注意、验证命令速查）。**七个梯队的"已完成"自述须按 `OPTIMIZATION_ROADMAP.md` §7 复核结果读**：用例数是过期快照、"未提交"标注已失效、第四梯队三处失真 |
 | `CODE_REVIEW_AND_ROADMAP.md`                                  | 全仓代码审查（2026-09）：量化面板、Top10 修复清单、值得肯定的设计、路线图（**基线已过时**，判定见下一行）                                                                                       |
-| `docs/OPTIMIZATION_ROADMAP.md`                                | 当前基线的优化路线：实测面板、旧 Top-10 逐条复核、26 项优化清单、七梯队自述复核、分期 PR 路线                                                                                                   |
+| `docs/OPTIMIZATION_ROADMAP.md`                                | 当前基线的优化路线：实测面板、旧 Top-10 逐条复核、27 项优化清单、七梯队自述复核、分期 PR 路线                                                                                                   |
 | `BUGLIST.md`                                                  | 2026-09-15 审计的实锤 bug 清单，已全部修复                                                                                                                                                      |
 | `.github/CONTRIBUTING.md`、`.github/COMMENTING-GUIDELINES.md` | 贡献流程与注释规范                                                                                                                                                                              |
 

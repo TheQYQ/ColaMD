@@ -46,7 +46,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | 9    | 会话持久化每秒全标签快照 + 主线程同步写盘          | ✅ 已修 | M1.4（PR #32）：5s debounce / 30s maxWait、O(tabs) 签名门控跳过无变化写盘、fsync 改异步链式；实测见 `store/bufferedState.ts`                                                                                                                                                                                                                 |
 | 10   | 图片路径自动补全模块级无界缓存                     | ⚠️ 部分 | **原判定"缓存不重建"实测为假**：`main/utils/imagePathAutoComplement.ts:67-91` 的 `watchDirectory` 已在 `'rename'` 事件上调 `rebuild()`（`:57-65`），当初挂在 :16 的 `// TODO: rebuild cache @jocs` 是过期注释（本轮已换成说明性注释）；剩下的只是 `IMAGE_PATH`/`watchers` 按目录只增不减（`:19-20`，仅 watcher 出错时才 `delete`） → O6 降级 |
 
-**结论**：旧报告的"高危三件套"与"性能四件套"已经关闭。当前真正欠着的不是同一批问题——下面 26 项是这一轮实测出的。`ColaMD_WORKPLAN.md` 七个梯队的"已完成"自述同样逐条核对过，见 §7。
+**结论**：旧报告的"高危三件套"与"性能四件套"已经关闭。当前真正欠着的不是同一批问题——下面 27 项是这一轮实测出的（O1–O26 于 2026-09-19，O27 于次日实施 O18 时补）。`ColaMD_WORKPLAN.md` 七个梯队的"已完成"自述同样逐条核对过，见 §7。
 
 ## 3. 优化清单
 
@@ -63,6 +63,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | `cleanup/redundant-exports`            | `cab7cb8`、`48e4b1d`                       | O20（49 处 export）、O23 |
 | `perf/preference-broadcast`            | `2d56e65`、`300d03c`                       | O9                       |
 | `fix/markdown-extension-single-source` | `76e5a92`                                  | O22                      |
+| `fix/open-failure-visible`             | `7bbedb5`、`f3e13be`                       | O18、O4                  |
 
 遗留事项：O17 的像素效果待实机确认；O20 余下 29 项真死代码移交 O13；O3 与 O20 都改渲染端偏好类型，合并须 O3 在前（冲突已在临时分支预演，`typecheck` 0 错、单测 868+1 通过）；O6 与 O10 经复核分别降级与撤下，理由见各自条目。
 
@@ -86,10 +87,13 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法：值域移到 `src/shared/types/preferences.ts` 单一声明，两进程共读；去掉 `| string`；迁移表也引用同一常量。
 - 验收：`pnpm typecheck` 通过即为门；再加一个纯函数测试覆盖"每个合法枚举值在主进程分支上都有归属"。
 
-**O4 · 两处空实现与一个未兑现开关** — 成本 S，影响 中
-`main/preferences/index.ts:166-172` 的 `exportJSON`/`importJSON` 是空 `// todo`（菜单里存在入口即静默无效果）；`--safe` / `global.COLAMD_SAFE_MODE` 在 `main/app/env.ts:101` 设了但无人消费。
+**O4 · 两处空实现与一个名不副实的开关** — 成本 S，影响 低（原为"中"）— **已完成 `f3e13be`（分支 `fix/open-failure-visible`）**
 
-- 改法：要么实现，要么摘掉菜单项与 flag 声明——不留"看起来能用"的入口。
+> **前提更正（两处）**：① `exportJSON`/`importJSON` 不是"菜单里的入口"——全仓零调用方（无菜单项、无 IPC、无命令、无测试），所以它们是"看起来迟早会补实现"的空方法，而不是"点了没反应"的入口；② `--safe` 也**有**消费者：`main/keyboard/shortcutHandler.ts:176-178` 在 safe mode 下跳过用户键位文件，原判"设了但无人消费"不实。不实的是帮助文本 `Disable plugins and other user configuration`（本仓没有插件系统，`grep -i plugin src/main` 只有这一行）与构造函数上那句"safe mode 不该加载偏好"的 TODO。
+
+- 改法（已实施，走"摘掉入口"这一支）：删除两个空方法；`--safe` 的帮助文本改成它实际做的事（忽略用户键位覆盖）；构造函数 TODO 换成"为什么不能照 TODO 直接做"——`init()` 会写盘（首启 `store.set(defaultSettings)`、过期键 `store.delete`），没有只读 store 之前"不加载"等于把用户设置覆盖一遍。
+- 验收：`pnpm typecheck` 通过 + 单测全绿；knip 未用导出基数 −2。
+- 遗留：`--safe` 若要真覆盖"other user configuration"，前置条件是给 `electron-store` 加只读模式（原 `TODO(fxha)` 注释也指向同一处），本轮不做。
 
 **O5 · 最近文档逻辑两份实现** — 成本 XS
 `main/menu/index.ts:18-19` 与 `main/ipc/menu.ts:14-15` 各有一份读取逻辑与一份 `MAX_RECENTLY_USED_DOCUMENTS`，改一处会漏另一处（原生菜单 vs 自绘菜单）。
@@ -191,12 +195,12 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 修法拉齐到行约定：缩进走 `padding-left: depth * 6 + 10`，宽度 `100%` + `box-sizing: border-box`。`.rename` 输入框本就在带 padding 的行内，未动。
 - 验收：`grep -rn "45px" src/renderer` 只剩 notification 与 `layout.ts:57` 注释；`depth * 5 + 15` 全仓归零。**像素效果仍需实机看**（多层 + 折叠文件夹里触发"新建文件"，左边缘与同层文件行对齐、右侧不溢出）——lint/typecheck/单测只能证明没改坏，测不了几何。
 
-**O18 · 最近文档打不开时静默失败** — 成本 S，影响 中
-`open-path` 有两条语义重叠的通道：`mt::shell::open-path`（invoke，`main/ipc/shell.ts:37`，经 `preload/index.ts:73` 暴露为 `shell.openPath`，**有返回值**）与 `mt::menu::open-path`（send，`main/ipc/menu.ts:35`，被 `menu/menus.ts:249` 的最近文档点击使用）。后者 `if (!win || typeof pathname !== 'string' || !pathname) return` 直接静默返回，`openFileOrFolder` 失败也不回传——菜单里留着一条已失效的最近路径，用户点了没有任何反应。
+**O18 · 最近文档打不开时静默失败** — 成本 S，影响 中 — **已完成 `7bbedb5`（分支 `fix/open-failure-visible`）**
 
-- 改法：自绘菜单改调有返回值的 invoke 版；失败经 `notification` store 提示（与 `mt::tab-save-failure` 同模式）。合并后契约里只留一条 open-path。
-- 关联：这与 `CODE_REVIEW_AND_ROADMAP.md` 的旧 S4「重命名/移动失败无通知」同族，可并成一条"失败必须可见"的横切验收。
-- 验收：E2E 点一条指向已删除文件的最近文档，应出现通知条而非无声失败。
+> **前提更正（两处）**：① 两条 open-path 通道**不是语义重叠**：`mt::menu::open-path`（send，`main/ipc/menu.ts:35`）经 `openFileOrFolder` 在 **ColaMD 内**打开（原生菜单、自绘菜单 `menu/menus.ts:249`、打开对话框共用同一函数），`mt::shell::open-path`（invoke，`main/ipc/shell.ts:37`）交**系统默认程序**，唯一调用方是图片目录设置里的"打开"按钮（`prefComponents/image/components/folderSetting/index.vue:100`）。按原改法"合并成一条"会把最近文档改成用外部程序打开。② "菜单里留着一条已失效的最近路径"不成立：两份 reader（`main/menu/index.ts:121-123`、`main/ipc/menu.ts:19-27`）读取时就过滤不存在的路径。真实剩下的只有"菜单构建之后、点击之前被删除"这一窗口的静默失败。
+
+- 改法（已实施）：`openFileOrFolder` 的兜底分支由 `console.error` 改为经 `mt::show-notification` 报给该窗口（与 rename/move 失败同模式）；契约里给两条通道各补一行语义注释，免得下一轮又被判成重复。文案只新增标题 `dialog.openFailure`（11 份语言，值已各自翻译），消息复用既有的 `store.editor.fileRemovedOnDisk`，不新增长句翻译。
+- 验收（更正后）：原写的"E2E 点一条指向已删除文件的最近文档"**做不到**——reader 会把它过滤掉，构造不出该菜单项。改为单测 `open-path-failure-notification.spec.ts` 锁通知载荷，并用既有 `rename-failure-notification.spec.ts`（E2E，本地真窗口通过）证明这条通道真能渲染出通知条。
 
 **O19 · 11 个偏好键只活在渲染端** — 成本 S，影响 中
 实测：渲染端 store 默认态有 87 个键，其中 **10 个既不在主进程 `main/preferences/schema.json`、也不在 `static/preference.json`**——`installedThemes`、`typewriter`、`focus`、`sourceCode`、`imageFolderPath`、`deleteUnreferencedImages`、`webImages`、`cloudImages`、`currentUploader`、`cliScript`；另有 `treePathExcludePatterns` 只在 static 有、schema 没有。其中 `webImages`/`cloudImages` 由 dataCenter 单独存，属设计如此；但 **`imageFolderPath` 连 schema 声明都没有，正是 O7 那个扩权漏洞的根因**——`mt::set-user-preference` 对它没有任何类型或路径校验。
@@ -251,6 +255,13 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 后果：若把 `prettier --check` 接进 CI，会对全仓历史文件 100% 假红；本轮 WORKPLAN 与两个源文件被重排数百行也是同一成因。
 - 改法：`.prettierrc.yaml` 加一行 `endOfLine: auto`，之后再谈把 `--check` 纳入门禁；不要全仓 `--write` 刷一遍。
 
+**O27 · 四条本地化键在 10 份语言里仍是英文** — 成本 XS，影响 低—中（2026-09-20 实施 O18 时实测）
+`dialog.renameFailure`、`dialog.moveFailure`、`store.editor.errorWhileRenaming`、`store.editor.errorWhileMoving` 的值在 **11 份语言里全部与英文逐字相同**（同一对照下 `dialog.saveFailure`、`store.editor.errorWhileSaving` 都已翻译，我本轮新增的 `dialog.openFailure` 也逐语言写了译名）。也就是说重命名/移动失败弹窗在非英文界面下是英文串。
+
+- 为什么门禁没拦住：`test/unit/specs/locale-validation.spec.ts` 查的是键齐、占位符齐、非空、术语拼写——**不查值是否等于英文**。
+- 改法：补这 4 条的译名（10 语言 × 4 串），并把"值与 en.json 逐字相同"作为**告警**（非阻断）加进该 spec；告警而非阻断，是因为专有名词类的确可能合法同值。
+- 验收：告警数从 4 降到 0（或每条有豁免理由）。
+
 ## 4. 分期 PR 路线
 
 **第一批 · 一天内可全清（零架构风险，先把实锤 bug 和噪音关掉）**
@@ -263,19 +274,20 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | PR-4  | O16 工具小坏点（`check-md-links.py` 接入 CI、eslint 插件显式化、`dev-app-update.yml`）                                | 无         |
 | PR-5  | 本文与 `docs/PROJECT_GUIDE.md` 的口径校准；旧两份文档顶部加指引                                                       | 前四条合完 |
 | PR-21 | O26 `.prettierrc.yaml` 设 `endOfLine: auto`                                                                           | 无         |
+| PR-23 | O27 四条英文残留译名 + locale 同值告警（2026-09-20 补进第一批）                                                       | 无         |
 
 **第二批 · 一到两周（信任边界与响应性，需要设计确认）**
 
-| PR        | 内容                                                                                                    | 依赖                         |
-| --------- | ------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| PR-6      | O8 IPC 契约双向化（先 41 个 handle 通道）                                                               | 建议 PR-1 先合，作为回归样例 |
-| PR-7      | O7① `imageFolderPath` 收进原生对话框 + O19 补 schema 声明（同族：先声明再约束）                         | O8 的通道类型收窄先落        |
-| PR-8      | O7② 读通道路径域                                                                                        | PR-7                         |
-| PR-9      | O9 批量写入合并广播 —— **已实现** `perf/preference-broadcast`（`2d56e65`+`300d03c`）                    | 无                           |
-| PR-22     | O22 Markdown 扩展名单一来源 —— **已实现** `fix/markdown-extension-single-source`（`76e5a92`）           | 无                           |
-| PR-11     | O4 空实现取舍（实现或摘入口）+ O18 最近文档失败可见性（同族：入口必须给出结果）                         | 无                           |
-| ~~PR-10~~ | ~~O6 图片补全缓存失效 + 有界~~ — **取消**：缓存本来就会重建（见 O6 前提更正），残余是有界性且未测出量级 | —                            |
-| ~~PR-12~~ | ~~O10 `isSamePathSync` 去阻塞~~ — **取消**：不在热路径（见 O10 撤下说明）                               | —                            |
+| PR        | 内容                                                                                                                  | 依赖                         |
+| --------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| PR-6      | O8 IPC 契约双向化（先 41 个 handle 通道）                                                                             | 建议 PR-1 先合，作为回归样例 |
+| PR-7      | O7① `imageFolderPath` 收进原生对话框 + O19 补 schema 声明（同族：先声明再约束）                                       | O8 的通道类型收窄先落        |
+| PR-8      | O7② 读通道路径域                                                                                                      | PR-7                         |
+| PR-9      | O9 批量写入合并广播 —— **已实现** `perf/preference-broadcast`（`2d56e65`+`300d03c`）                                  | 无                           |
+| PR-22     | O22 Markdown 扩展名单一来源 —— **已实现** `fix/markdown-extension-single-source`（`76e5a92`）                         | 无                           |
+| PR-11     | O4 空实现取舍（实现或摘入口）+ O18 最近文档失败可见性 —— **已实现** `fix/open-failure-visible`（`7bbedb5`+`f3e13be`） | 无                           |
+| ~~PR-10~~ | ~~O6 图片补全缓存失效 + 有界~~ — **取消**：缓存本来就会重建（见 O6 前提更正），残余是有界性且未测出量级               | —                            |
+| ~~PR-12~~ | ~~O10 `isSamePathSync` 去阻塞~~ — **取消**：不在热路径（见 O10 撤下说明）                                             | —                            |
 
 > 第二批补记：O22 原本漏在 §4 表外（只在 §3 有条目），本轮以 PR-22 编号补进表内。O6/O10 从第二批移出，移出理由写在各自条目的更正段里，不另开"已删除"章节。
 
