@@ -33,7 +33,10 @@ class Preference extends TypedEmitter<PreferenceEvents> {
    * NOTE: This throws an exception when validation fails.
    */
   constructor(paths: AppPaths) {
-    // TODO: Preferences should not loaded if global.COLAMD_SAFE_MODE is set.
+    // NOTE: `--safe` does not skip this file. `init` below writes (defaults for a
+    // first run, `store.delete` for outdated keys), so ignoring user settings
+    // needs a read-only store mode first — otherwise safe mode would rewrite the
+    // user's preferences instead of only shadowing them.
     super()
 
     const { preferencesPath } = paths
@@ -161,14 +164,6 @@ class Preference extends TypedEmitter<PreferenceEvents> {
       return 'lf'
     }
     return endOfLine === 'crlf' || isWindows ? 'crlf' : 'lf'
-  }
-
-  exportJSON(): void {
-    // todo
-  }
-
-  importJSON(): void {
-    // todo
   }
 
   _listenForIpcMain(): void {
