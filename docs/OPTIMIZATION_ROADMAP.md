@@ -64,8 +64,19 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | `perf/preference-broadcast`            | `2d56e65`、`300d03c`                       | O9                       |
 | `fix/markdown-extension-single-source` | `76e5a92`                                  | O22                      |
 | `fix/open-failure-visible`             | `7bbedb5`、`f3e13be`                       | O18、O4                  |
+| `refactor/typed-ipc-handle`            | `cba0836`                                  | O8①                      |
 
-遗留事项：O17 的像素效果待实机确认；O20 余下 29 项真死代码移交 O13；O3 与 O20 都改渲染端偏好类型，合并须 O3 在前（冲突已在临时分支预演，`typecheck` 0 错、单测 868+1 通过）；O6 与 O10 经复核分别降级与撤下，理由见各自条目。
+遗留事项：O17 的像素效果待实机确认；O20 余下 29 项真死代码移交 O13；O6 与 O10 经复核分别降级与撤下，理由见各自条目。
+
+**合并顺序（用 `git merge-tree` 对 9 个分支两两预演，非破坏性）**：只有 3 对会冲突，其余两两可自动合。
+
+| 冲突对                                                                      | 冲突文件                                           | 处置                                                                                                |
+| --------------------------------------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `fix/startup-action-enum`（O3）×`cleanup/redundant-exports`（O20）          | `renderer/src/store/preferences.ts`                | 已知项：O3 先合，O20 再跑一次 export 清扫（预演结论 typecheck 0 错、868+1 通过）                    |
+| `fix/batch1-small-correctness`（O2/O5/O11/O17）×`cleanup/redundant-exports` | `main/menu/index.ts`、`main/spellchecker/index.ts` | batch1 先合：O5 换了 reader、O2 补了 `()`，O20 只删 `export` 关键字，保留前者内容再套后者意图       |
+| `fix/batch1-small-correctness`×`refactor/typed-ipc-handle`（O8）            | `main/ipc/menu.ts`                                 | batch1 先合：O5 把 reader 抽进 `utils/recentDocuments`，O8 只是把该文件的 handle 换成 `typedHandle` |
+
+`fix/open-failure-visible`（O4/O18）与 `perf/preference-broadcast`（O9）同改 `main/preferences/index.ts` 与 `main/dataCenter/index.ts` 但**区块不相干，可自动合**；九分支一次性合入 `develop` 后的完整门禁预演留到第二批收尾再做，届时把结果并回本段。
 
 ### A 组·正确性回归（有实锤 bug，优先）
 
@@ -115,15 +126,31 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 **O7 · 路径域只护写不护读，且渲染端可自扩** — 成本 M，影响 高（信任边界）
 `security/pathScope.ts:28-31` 明示读通道不设限；`:36-42` 记录 `imageFolderPath` 由渲染端经 `mt::set-user-preference` 设置，等于被攻破的渲染进程能自己扩大可写范围。
 
-- 改法（两步，按序）：① `imageFolderPath` 改为**只能经原生目录选择对话框**赋值（选完即入域），拒收自由字符串；② 读通道按"当前文档所在目录 + 已打开项目根 + 工作区目录"三源收敛，超域读走原生授权对话框。
+- 改法（两步，按序）：① `imageFolderPath` 改为**只能经原生目录选择对话框**赋值（选完即入域），拒收自由字符串；② 读通道按"当前文档所在目录 + 已打开项目根 + 工作区目录"三源收敛，超域读走原生授权对话框。**②的范围自 O8 并入一项**：先定 `mt::rg::start`/`mt::uploader::upload` 的载荷归属（渲染端发的是自家选项的 JSON 克隆、主进程按命名字段读，形状无人认领），归属定了才能谈校验，也才能把那两处 `ipcMain.handle` 豁免收进 `typedHandle`。
 - 验收：新增契约测试枚举所有 `mt::fs::*`，断言每条都有域归属；E2E 断言给 `imageFolderPath` 塞 `/etc` 被拒。
 - 回滚点：偏好迁移需保留旧值读取一次以兼容，标 `deprecated` 后分版删除。
 
-**O8 · IPC 契约是单向的** — 成本 M，影响 中
-`shared/types/ipc.ts` 约束了 preload 侧（泛型 `keyof`），但主进程 `ipcMain.handle('mt::fs::write-file', …)` 与契约**无类型关联**，且契约自身载荷写的是 `unknown[]`/`unknown`（`ipc.ts:10-12`）。改载荷结构编译期发现不了——这正是 `docs/PROJECT_GUIDE.md` §11.1-1 那类回归能活下来的土壤。
+**O8 · IPC 契约是单向的** — 成本 M，影响 中 — **① handle 半边已完成 `cba0836`（分支 `refactor/typed-ipc-handle`）**
+`shared/types/ipc.ts` 约束了 preload 侧（泛型 `keyof`），但主进程 `ipcMain.handle('mt::fs::write-file', …)` 与契约**无类型关联**（Electron 给 listener 的是 `any[]`）。改载荷结构编译期发现不了——这正是 `docs/PROJECT_GUIDE.md` §11.1-1 那类回归能活下来的土壤。
 
-- 改法：加一个 `typedHandle<T extends keyof IpcInvokeChannels>(contract, fn)` 辅助，把 main 侧注册接到契约上；先把 41 个 handle 通道迁完，`on` 通道随后。同时收窄 `unknown` 为真实载荷类型。
-- 验收：`pnpm typecheck` 即门；故意改一个载荷形状应产生编译错误（加一条 CI 步骤用 `tsc --noEmit` 跑负例）。
+- 改法（①已实施）：新增 `src/main/ipc/typedHandle.ts`，把 41 个 handle 通道的注册绑到契约上；配平 lint 门：根 `eslint.config.js` 第 11 节在 `src/main/**` 禁 `ipcMain.handle`，只剩两处带理由的豁免（见下）。
+- **实测产出（这才是本项的价值证明）**：接上 41 个通道立刻出 10 个不匹配，其中 1 条是 `mt::spellchecker-switch-language` 多余的 `return null`（三个调用方都 await 后丢弃），其余 8 条是**契约自己本来就写错了**（下表），另 1 条是 `mt::rg::start` 的载荷归属问题（见"剩余"）。
+- 连带收益：`KeybindingConfigurator.ts:93-99` 那段 `as unknown as boolean` 连同它"契约写的是 void"的过期注释一起删掉——§13 的 `as unknown as` 基数 64 → 63（该分支未合入前 develop 仍是 64）。
+- 剩余（②未完成）：`mt::rg::start` 与 `mt::uploader::upload` 的载荷仍是 `unknown`，两处各自留着 `ipcMain.handle` + 行内理由。不是类型问题：渲染端发的是自家选项的 JSON 克隆，主进程按命名字段读，**载荷形状无人认领**，收窄要先决定归属，已并入 O7② 的校验活。`on`/`send` 通道（82 条）同理尚未绑契约，本项未做。
+- 验收（已达成）：负例探针——把 `mt::cmd::exists` 的参数标注改成 `number`，`pnpm typecheck` 立刻 TS2345 失败（改前不会）；改回后 typecheck 0 错、`pnpm lint` 回到 149 warnings/0 errors 基线（转换过程中我自己造出 8 条 unused-import 告警，已清）、单测 61 文件 863 通过 + 1 跳过、`launch`+`context-isolation`+`ripgrep-search` E2E 4 例真窗口通过。**未采纳**原写的"CI 跑 tsc 负例夹具"，因为 lint 禁令已在 `pnpm lint` 门内阻断绕行，夹具只会多养一套测试基建。
+
+契约写错的 8 条（全部为编译期发现，运行时此前看不出差别）：
+
+| 通道                                   | 契约原写                       | 实际                                                                                                             |
+| -------------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `mt::ask-for-image-path`               | `ret: string[]`                | 处理函数答**单个路径字符串**；`store/editor.ts` 的 `ASK_FOR_IMAGE_PATH` 同样写错，而引擎选项要 `Promise<string>` |
+| `mt::rg::start`                        | `ret: { searchId: string }`    | 返回 `true` 且调用方丢弃 → 改 `ret: void`，多余的 `return true` 删除                                             |
+| `mt::shell::open-external`             | `ret: void`                    | 返回"是否打开"的布尔                                                                                             |
+| `mt::spellchecker-set-enabled`         | `ret: void`                    | 三条路径全返回布尔                                                                                               |
+| `update-buffer-state`                  | `ret: void`                    | 返回布尔，`sendBufferedState` 一路带给调用方                                                                     |
+| `mt::i18n::load`                       | `ret: Record<string, unknown>` | 语言缺失时答 `null`                                                                                              |
+| `mt::fs::read-file`                    | `encoding?: string`            | 处理函数要 `BufferEncoding`（preload 与 `global.d.ts` 同步收窄）                                                 |
+| `mt::keybinding-save-user-keybindings` | `args: [bindings: unknown]`    | 渲染端发 `Map<string, string>`                                                                                   |
 
 ### C 组·性能与响应残余
 
@@ -280,7 +307,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 | PR        | 内容                                                                                                                  | 依赖                         |
 | --------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| PR-6      | O8 IPC 契约双向化（先 41 个 handle 通道）                                                                             | 建议 PR-1 先合，作为回归样例 |
+| PR-6      | O8 契约双向化 —— **①已实现** `cba0836`；②载荷归属并入 O7②                                                             | 建议 PR-1 先合，作为回归样例 |
 | PR-7      | O7① `imageFolderPath` 收进原生对话框 + O19 补 schema 声明（同族：先声明再约束）                                       | O8 的通道类型收窄先落        |
 | PR-8      | O7② 读通道路径域                                                                                                      | PR-7                         |
 | PR-9      | O9 批量写入合并广播 —— **已实现** `perf/preference-broadcast`（`2d56e65`+`300d03c`）                                  | 无                           |

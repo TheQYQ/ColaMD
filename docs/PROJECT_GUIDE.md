@@ -128,11 +128,11 @@ ColaMD/
 
 - 命名：`mt::` 是主流但不彻底（handle 40/41、on 58/63）。例外包括 `update-buffer-state`、`app-create-editor-window`、`menu-clear-recently-used`、`settings::change-tab`、`language-changed`，以及约 22 个用 `ipcMain.emit` 派发的 **进程内通道**（`broadcast-preferences-changed`、`window-close-by-id`、`watcher-watch-file`…）。
 - `mt::` 内部层级也不统一：`mt::fs::read-file`（双冒号）vs `mt::fs-trash-item` vs `mt::version-history:save`。
-- 类型强度是 **单向** 的：preload 侧泛型以 `keyof` 约束通道名（真安全）；主进程 `ipcMain.handle('mt::fs::write-file', …)` 与契约 **没有类型关联**，且契约自身承认载荷是 `unknown[]`/`unknown`（`ipc.ts:10-12`）。改载荷结构不会被编译发现。
+- 类型强度：preload 侧泛型以 `keyof` 约束通道名（真安全）；但主进程 `ipcMain.handle('mt::fs::write-file', …)` 与契约 **没有类型关联**（Electron 给 listener 的是 `any[]`），且契约自身把部分载荷写成 `unknown`（`ipc.ts:10-12`）。改载荷结构不会被编译发现。分支 `refactor/typed-ipc-handle`（`cba0836`）用 `src/main/ipc/typedHandle.ts` 把 41 个 handle 通道绑回契约，并用根 `eslint.config.js` 第 11 节禁止绕行；接线当场暴露 8 条**本来就写错**的契约声明（最实的一条：`mt::ask-for-image-path` 声明 `string[]`，实际答单个路径），清单见 `OPTIMIZATION_ROADMAP.md` O8。
 
 ### 6.2 preload 与沙箱（当前真实状态）
 
-`src/preload/index.ts:297-308` 暴露 11 个全局，约 80 个成员：`electron`（`ipcRenderer` 6 个函数、`shell` 3、`clipboard` 3、`webFrame` 1、`webUtils` 1、`windowControl` 9、`dialog` 4、`process`/`paths`/`isUpdatable`）、`process`（shim 7 键）、`rgPath`、`fileUtils` 14、`path` 12（`pathe` 支撑）、`commandExists`、`i18nUtils`、`ripgrep` 6、`uploader`、`versionHistory`、`fonts`。启动时一次阻塞的 `ipcRenderer.sendSync('mt::boot-info')`（`:36`）。
+`src/preload/index.ts:297-308` 暴露 11 个全局，约 80 个成员：`electron`（`ipcRenderer` 6 个函数、`shell` 3、`clipboard` 3、`webFrame` 1、`webUtils` 1、`windowControl` 9、`dialog` 4、`process`/`paths`/`isUpdatable`）、`process`（shim 7 键）、`rgPath`、`fileUtils` 14、`path` 12（`pathe` 支撑）、`commandExists`、`i18nUtils`、`ripgrep` 6、`uploader`、`versionHistory`、`fonts`。启动时一次阻塞的 `ipcRenderer.sendSync('mt::boot-info')`（`:36`）。该握手原先还捎带 Markdown 扩展名清单（O22）：清单改由零依赖模块 `common/filesystem/markdownExtensions.ts` 直接进包后，`BootInfo` 少了一个字段、`fileUtils` 的 14 个成员里有 2 个不再依赖握手结果。
 
 三类窗口全部 **`contextIsolation: true` + `sandbox: true` + `nodeIntegration: false`**（`src/main/config.ts`，编辑器窗 L12/13/18，偏好窗 L40/41/44，离屏导出窗 `utils/imageExport.ts:32-34`）。开发态放宽 `webSecurity` 以便 Vite dev server 加载 `file://` 图片，生产恢复全量同源策略。`app/index.ts:133-143` 拒绝 `will-attach-webview`、`will-navigate`、`setWindowOpenHandler`。
 
