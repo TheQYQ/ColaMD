@@ -13,7 +13,9 @@ interface DirOrImageEntry {
   type: string
 }
 
-// TODO: rebuild cache @jocs
+// Both maps are per-directory and live for the process: `watchDirectory` refreshes
+// the cache in place via `rebuild`, and neither map evicts. Bounded by how many
+// distinct image folders a session touches, which is why there is no LRU here.
 const IMAGE_PATH: Map<string, DirOrImageEntry[]> = new Map()
 export const watchers: Map<string, fs.FSWatcher> = new Map()
 

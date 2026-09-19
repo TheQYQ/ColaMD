@@ -27,24 +27,24 @@ node node_modules/knip/bin/knip.js --workspace packages/desktop --dependencies  
 pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.bench.spec.ts --testTimeout 420000   # 性能（2-10 分钟）
 ```
 
-> 本机 `pnpm` 不在 Git Bash 的 PATH 上（`/c/Users/lyg/AppData/Local/pnpm` 里只有 `.cmd`），脚本类命令需从 cmd/PowerShell 跑，或用 `node node_modules/...` 直调。
+> 本机 `pnpm` 不在 Git Bash 的 PATH 上（`/c/Users/lyg/AppData/Local/pnpm` 里没有可执行文件）。本轮做法：`corepack prepare pnpm@10.33.4 --activate` 装钉定版本，再放两个垫片到 PATH 前面——`pnpm`（`exec corepack pnpm "$@"`）与 `pnpm.cmd`（后者必需，因为 `pnpm --filter` 会派生 cmd.exe，而 cmd 认不了无后缀脚本）。**不用 `--no-verify` 绕门禁。**
 
-## 2. 旧 Top-10 复核：7 已修、2 部分、1 遗留
+## 2. 旧 Top-10 复核：7 已修、3 部分、0 遗留
 
 判定基于代码，不基于 `ColaMD_WORKPLAN.md` 的自述。
 
-| 旧 # | 问题（`CODE_REVIEW_AND_ROADMAP.md:42-58`）         | 判定    | 证据                                                                                                                                                                                                                                                   |
-| ---- | -------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1    | `webSecurity: false` 可读任意本地文件              | ✅ 已修 | `main/config.ts:24` `webSecurity: process.env.NODE_ENV !== 'development'`，dev 例外有明确注释理由；`:12,13,18` isolation+sandbox+无 nodeIntegration                                                                                                    |
-| 2    | `mt::fs::*` 接受任意未校验路径                     | ⚠️ 部分 | `main/security/pathScope.ts` 已建立写/删/移的根白名单并 realpath 解析；但 `:28-31` 声明**读通道刻意不设限**，`:36-42` 记录 `imageFolderPath` 可由渲染端 `mt::set-user-preference` 自行扩大可写域 → O7                                                  |
-| 3    | `shell.openExternal` 无协议白名单                  | ✅ 已修 | `main/ipc/shell.ts:9` `OPEN_EXTERNAL_RE = /^https?:\/\//i`，拒绝 `file://`/`smb://`/自定义 scheme 并记日志                                                                                                                                             |
-| 4    | 每击键 5 遍全文扫描                                | ✅ 已修 | M1.2/M1.2b：脏标记 + 120ms 停顿层 + flush-on-read，`test/unit/specs/lazy-markdown-pipeline.spec.ts`（desktop 侧，实现在 `renderer/src/components/editorWithTabs/lazyMarkdownPipeline.ts`；WORKPLAN 把实现名误写成 spec 名）锁"击键连发 0 次全文序列化" |
-| 5    | ~19 个零引用依赖                                   | ✅ 已修 | 现 35 个依赖，实测零引用 0；`409188a`/`57e0e65` 两轮清理                                                                                                                                                                                               |
-| 6    | `validate-licenses` 引用已删除的 `packages/muyajs` | ✅ 已修 | `scripts/thirdPartyChecker.ts:15` `workspaceExclusions = ['packages/desktop', 'packages/muya']`                                                                                                                                                        |
-| 7    | 测试/lint 仅 Linux                                 | ⚠️ 部分 | `test.yml` 已含 windows；但 `lint.yml`、`e2e.yml`、全部 `muya-*.yml` 仍只有 ubuntu，`build.yml`/`release.yml` 的 5 腿矩阵**不跑任何测试** → O14                                                                                                        |
-| 8    | BigInt FNV-1a 全文哈希                             | ✅ 已修 | `components/editorWithTabs/syntheticHistory.ts:50` 改用双 32 位 Number 通道（并注释了为何仍保 64 位强度）；M1.2b 又把它移出击键路径                                                                                                                    |
-| 9    | 会话持久化每秒全标签快照 + 主线程同步写盘          | ✅ 已修 | M1.4（PR #32）：5s debounce / 30s maxWait、O(tabs) 签名门控跳过无变化写盘、fsync 改异步链式；实测见 `store/bufferedState.ts`                                                                                                                           |
-| 10   | 图片路径自动补全模块级无界缓存                     | ❌ 遗留 | `main/utils/imagePathAutoComplement.ts:16-17` 仍是模块级 `IMAGE_PATH: Map`，挂着 MarkText 期的 `// TODO: rebuild cache @jocs`；目录变更后缓存不重建 → O6                                                                                               |
+| 旧 # | 问题（`CODE_REVIEW_AND_ROADMAP.md:42-58`）         | 判定    | 证据                                                                                                                                                                                                                                                                                                                                         |
+| ---- | -------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | `webSecurity: false` 可读任意本地文件              | ✅ 已修 | `main/config.ts:24` `webSecurity: process.env.NODE_ENV !== 'development'`，dev 例外有明确注释理由；`:12,13,18` isolation+sandbox+无 nodeIntegration                                                                                                                                                                                          |
+| 2    | `mt::fs::*` 接受任意未校验路径                     | ⚠️ 部分 | `main/security/pathScope.ts` 已建立写/删/移的根白名单并 realpath 解析；但 `:28-31` 声明**读通道刻意不设限**，`:36-42` 记录 `imageFolderPath` 可由渲染端 `mt::set-user-preference` 自行扩大可写域 → O7                                                                                                                                        |
+| 3    | `shell.openExternal` 无协议白名单                  | ✅ 已修 | `main/ipc/shell.ts:9` `OPEN_EXTERNAL_RE = /^https?:\/\//i`，拒绝 `file://`/`smb://`/自定义 scheme 并记日志                                                                                                                                                                                                                                   |
+| 4    | 每击键 5 遍全文扫描                                | ✅ 已修 | M1.2/M1.2b：脏标记 + 120ms 停顿层 + flush-on-read，`test/unit/specs/lazy-markdown-pipeline.spec.ts`（desktop 侧，实现在 `renderer/src/components/editorWithTabs/lazyMarkdownPipeline.ts`；WORKPLAN 把实现名误写成 spec 名）锁"击键连发 0 次全文序列化"                                                                                       |
+| 5    | ~19 个零引用依赖                                   | ✅ 已修 | 现 35 个依赖，实测零引用 0；`409188a`/`57e0e65` 两轮清理                                                                                                                                                                                                                                                                                     |
+| 6    | `validate-licenses` 引用已删除的 `packages/muyajs` | ✅ 已修 | `scripts/thirdPartyChecker.ts:15` `workspaceExclusions = ['packages/desktop', 'packages/muya']`                                                                                                                                                                                                                                              |
+| 7    | 测试/lint 仅 Linux                                 | ⚠️ 部分 | `test.yml` 已含 windows；但 `lint.yml`、`e2e.yml`、全部 `muya-*.yml` 仍只有 ubuntu，`build.yml`/`release.yml` 的 5 腿矩阵**不跑任何测试** → O14                                                                                                                                                                                              |
+| 8    | BigInt FNV-1a 全文哈希                             | ✅ 已修 | `components/editorWithTabs/syntheticHistory.ts:50` 改用双 32 位 Number 通道（并注释了为何仍保 64 位强度）；M1.2b 又把它移出击键路径                                                                                                                                                                                                          |
+| 9    | 会话持久化每秒全标签快照 + 主线程同步写盘          | ✅ 已修 | M1.4（PR #32）：5s debounce / 30s maxWait、O(tabs) 签名门控跳过无变化写盘、fsync 改异步链式；实测见 `store/bufferedState.ts`                                                                                                                                                                                                                 |
+| 10   | 图片路径自动补全模块级无界缓存                     | ⚠️ 部分 | **原判定"缓存不重建"实测为假**：`main/utils/imagePathAutoComplement.ts:67-91` 的 `watchDirectory` 已在 `'rename'` 事件上调 `rebuild()`（`:57-65`），当初挂在 :16 的 `// TODO: rebuild cache @jocs` 是过期注释（本轮已换成说明性注释）；剩下的只是 `IMAGE_PATH`/`watchers` 按目录只增不减（`:19-20`，仅 watcher 出错时才 `delete`） → O6 降级 |
 
 **结论**：旧报告的"高危三件套"与"性能四件套"已经关闭。当前真正欠着的不是同一批问题——下面 26 项是这一轮实测出的。`ColaMD_WORKPLAN.md` 七个梯队的"已完成"自述同样逐条核对过，见 §7。
 
@@ -52,7 +52,19 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 成本档：XS < 0.5 天，S < 2 天，M < 1 周，L > 1 周。
 
-**完成状态只在本段记一次**：O1 `f7ff937`（分支 `fix/quick-open-file-name-search`）、O2 `b0174f6`、O5 `83e69a0`、O11 `a8ad0b0`、O17 `50bc907`（分支 `fix/batch1-small-correctness`）、O20 部分 `cab7cb8`（分支 `cleanup/redundant-exports`）。O17 的像素效果待实机确认；O20 余下 29 项死代码在 O13。
+**完成状态只在本段记一次**（下列提交都在各自的本地分支上，**`develop` 尚未合并任何一个**，验收后按分支逐个合）：
+
+| 分支                                   | 提交                                       | 覆盖项                   |
+| -------------------------------------- | ------------------------------------------ | ------------------------ |
+| `fix/quick-open-file-name-search`      | `1ef4822`                                  | O1                       |
+| `fix/batch1-small-correctness`         | `b0174f6`、`83e69a0`、`a8ad0b0`、`50bc907` | O2、O5、O11、O17         |
+| `fix/startup-action-enum`              | `6b771d5`                                  | O3                       |
+| `chore/tooling-gates`                  | `9f47e41`、`5b338e2`                       | O16                      |
+| `cleanup/redundant-exports`            | `cab7cb8`、`48e4b1d`                       | O20（49 处 export）、O23 |
+| `perf/preference-broadcast`            | `2d56e65`、`300d03c`                       | O9                       |
+| `fix/markdown-extension-single-source` | `76e5a92`                                  | O22                      |
+
+遗留事项：O17 的像素效果待实机确认；O20 余下 29 项真死代码移交 O13；O3 与 O20 都改渲染端偏好类型，合并须 O3 在前（冲突已在临时分支预演，`typecheck` 0 错、单测 868+1 通过）；O6 与 O10 经复核分别降级与撤下，理由见各自条目。
 
 ### A 组·正确性回归（有实锤 bug，优先）
 
@@ -86,11 +98,15 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 ### B 组·安全与契约强度
 
-**O6 · 图片路径补缓存不失效** — 成本 S，影响 中
-见 §2 第 10 行。目录新增/删除图片后补全结果陈旧，且模块级 `Map` 无上限。
+**O6 · 图片补全的缓存与 watcher 按目录只增不减** — 成本 S，影响 **低**（原判定已降级）
 
-- 改法：复用已有的 `watchers: Map`（`:18`，`:79` 已有 delete）在变更时清对应键；给 Map 加 LRU 上限或按窗口清理。
-- 验收：新增图片后 3s 内补全可见；跑 200 次不同目录后 `IMAGE_PATH.size` 有界。
+> **前提更正**：本项最初写作"补缓存不失效、目录变更后结果陈旧"，实测**不成立**——`imagePathAutoComplement.ts:67-91` 的 `watchDirectory` 在 `'rename'` 上就调 `rebuild()`（`:57-65`），当时挂在 :16 的 `// TODO: rebuild cache @jocs` 是过期注释。所以"新增图片后 3s 内补全可见"这条验收测的是已经存在的行为。
+
+剩下的只有一件事：`IMAGE_PATH`（`:19`）与 `watchers`（`:20`）按目录累积，只有 watcher 出错时才 `watchers.delete`（`:81`），进程内不主动释放。量级是"本次会话里补全过多少个不同目录"，每目录一个小数组 + 一个 OS 句柄。
+
+- 改法：不做。若将来出现"一次会话切几十个工作区"的真实反馈，再按窗口/项目关闭清理；单加 LRU 是给一个还没有度量的高估问题加机制。
+- 附带的真修（已做）：`IMAGE_PATH` 上方那句过期 `// TODO: rebuild cache` 换成了说明"为什么不淘汰"的注释，避免下一轮审计再把它读成缺陷。
+- 完成状态：**降级后不排 PR**（原 PR-10 从第二批移除）。
 
 **O7 · 路径域只护写不护读，且渲染端可自扩** — 成本 M，影响 高（信任边界）
 `security/pathScope.ts:28-31` 明示读通道不设限；`:36-42` 记录 `imageFolderPath` 由渲染端经 `mt::set-user-preference` 设置，等于被攻破的渲染进程能自己扩大可写范围。
@@ -107,16 +123,21 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 ### C 组·性能与响应残余
 
-**O9 · 偏好写入触发 N×M 次原生菜单重建** — 成本 M，影响 中
-`main/preferences/index.ts:135` 每次 `setItem` 都同步 `ipcMain.emit('broadcast-preferences-changed')`；监听方 App（`app/index.ts:320`）、AppMenu（`menu/index.ts:526`）、WindowManager/DataCenter 各自可能重建全部原生菜单；`setItems` 逐键循环 → N 键 × M 方。偏好页每改一个开关都吃一次同步广播。
+**O9 · 偏好/用户数据批量写入的广播条数** — 成本 M，影响 低—中（原判定已更正）
 
-- 改法：微任务合并（同一 tick 内多次变更只广播一次，带变更键集合），订阅方按 key 判定相关性再决定是否重建。
-- 验收：给 `broadcast-preferences-changed` 加计数器，`setItems(5 keys)` 后应为 1 次而非 5 次；菜单重建次数进入断言。
+> **前提更正**：原标题写的是"触发 N×M 次原生菜单重建"，实测**高估**：唯一会重建菜单的订阅方 AppMenu 早已按 key 判定（`main/menu/index.ts:527-537`，只有 `theme`/`followSystemTheme`/`language`/`autoSave` 才重建），另外两个订阅方（`main/app/index.ts:320` 设 `nativeTheme` 与图片目录域、`main/windowManager.ts:463` 转发给各窗口）不重建菜单；而 `setItems` 的三处调用方（`main/app/index.ts:521,842`、`main/windows/editor.ts:425`）每次只传一键，DataCenter 唯一渲染端发送方也只发 `{ [type]: value }`（`store/preferences.ts:311`）。所以"每次改开关吃一次全菜单重建"不成立。
 
-**O10 · 热路径上的阻塞 `sendSync`** — 成本 S
-`preload/index.ts:141-157` 的 `isSamePathSync` 会在 `tabs.find(...)` 内回落 `sendSync`，每次比较都阻塞渲染主线程。
+真实剩下的两点：批量写入时广播条数随键数增长（订阅方每条都要重排一次载荷），以及 `DataCenter.setItem` **先发广播再写盘**（`main/dataCenter/index.ts:105-106`），订阅方回头读值会读到旧值。
 
-- 改法：启动时把必要的路径规范化结果一次性缓存进 `window.colamd.paths`（已有 `mt::boot-info` 同步通道，`:36`），比较改纯字符串规范化（`pathe` 已在 preload 里）。
+- 改法：批量写完后一次合并广播（带变更键集合），并把广播移到写入之后。
+- 验收：`setItems(5 keys)` 后广播 1 次而非 5 次；`setItems(null/空对象)` 不广播。
+- 完成状态：**PR-9 已实现**，分支 `perf/preference-broadcast`（`2d56e65` 偏好侧、`300d03c` DataCenter 侧），新增 `test/unit/specs/preference-broadcast.spec.ts` 4 例。**收益按上面的更正重估为低—中**，不是原来说的菜单重建收敛。
+
+**O10 · `isSamePathSync` 的阻塞回落** — **已撤下（判定高估）**
+原判："每次比较都阻塞渲染主线程"。实测两条都不成立：① `preload/index.ts:141-157` 只在 `a.length === b.length` 且 `a !== b` 而小写相同（同一文件的大小写异体写法）时才走 `sendSync`，常规不等的路径长度先就被排掉了；② 六个调用方（`sideBar/treeFile.vue:57`、`store/editor.ts:276,389,690,1425,1848`）全是点文件、保存、关标签这类离散动作，不在击键路径上。
+
+- 撤下理由：原改法（把规范化结果缓存进 `window.colamd.paths`）要给一个非热点加一层路径缓存与其失效逻辑，属于用复杂度换一个测不到的收益；`docs/PROJECT_GUIDE.md` §11.1-8 已同步改写为"离散动作的同步回落"。
+- 若将来真有证据（PERF_TESTING 采样里出现阻塞计数）再重开，判据是"同一秒内 `mt::paths::is-same-sync` 调用次数"，不是读代码猜。
 
 **O11 · 设置页语言轮询** — 成本 XS
 `prefComponents/sideBar/config.ts:269` 每秒轮询 `window.__VUE_I18N__` 取 locale，只在下次 setup 时清（`:267`），组件卸载后仍常驻。已有事件通道 `language-changed`（`src/main/i18n.ts:23`，且已在契约 `shared/types/ipc.ts:252`）可替掉它。
@@ -200,11 +221,13 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法：在根 `eslint.config.js` 的桌面包块加 `complexity` 与 `max-lines-per-function`，阈值按现存最大值定、先只 warn；O12 每分解一步就下调一档。
 - 验收：新阈值下 warning 数量可解释；后续 PR 不得新增超线函数。
 
-**O22 · Markdown 扩展名清单两处会漂移** — 成本 S，影响 中
-`common/filesystem/paths.ts:7-20` 的权威清单与 `preload/index.ts:~112-120` 各维护一份同样的扩展名列表。**不能简单合并**：preload 刻意只依赖 `electron` + `pathe`（`electron.vite.config.ts` 的 preload 段为此把 `pathe` 排除外链），import `common/` 会破坏该约束。
+**O22 · Markdown 扩展名清单两处会漂移** — 成本 S，影响 中 — **已完成 `76e5a92`（分支 `fix/markdown-extension-single-source`）**
+`common/filesystem/paths.ts` 的权威清单与 `preload/index.ts` 内联的十一项副本各一份：两份只要有一处改动，某个扩展名就会在渲染端静默失效，而当时没有任何测试比较过它们。
 
-- 改法：主进程从 `common/filesystem/paths.ts` 取值，经 `mt::boot-info`（`preload/index.ts:36` 已有的同步通道）下发，preload 只转发；删掉内联副本。
-- 验收：一条单测断言 preload 暴露的 `MARKDOWN_INCLUSIONS` 与权威清单逐项相等；全仓 `mdown` 字面量只剩一处。
+> **前提更正**：本项原写"不能简单合并，preload 刻意只依赖 `electron`+`pathe`，import `common/` 会破坏该约束"。实测该约束针对的是 **Node 内置模块**（`paths.ts:1` 确实 `import fs`），而 `electron.vite.config.ts` 的 preload 段本来就配了 `common` 别名。因此不必按原计划"经 `mt::boot-info` 下发"（那会让一个编译期常量依赖同步握手：握手为空时 `hasMarkdownExtension` 会全部返回 false），改成把清单挪进零 import 的叶子模块。
+
+- 改法（已实施）：新增 `common/filesystem/markdownExtensions.ts`（无任何 import，含 `MARKDOWN_EXTENSIONS`/`MARKDOWN_INCLUSIONS`/`hasMarkdownExtension`），`paths.ts` 原样再导出以免改动调用方，preload 直接 import 该叶子模块并删掉内联副本；清单不再走 IPC，`BootInfo.MARKDOWN_INCLUSIONS` 字段与主进程侧的填充一并删除。
+- 验收（已达成）：`test/unit/specs/markdown-extension-single-source.spec.ts` 用空 boot 握手加载真实 preload，断言暴露的 `MARKDOWN_INCLUSIONS` 与权威清单逐项相等、且 `hasMarkdownExtension` **就是**权威那个函数；全仓 `mdown` 字面量生产代码只剩一处（另一处在该 spec 的夹具里）。构建产物核对：`out/preload/index.js` 内联该数组、`out/main/index.js` 已无此常量；`launch`+`context-isolation`+`security-path-scope` E2E 8 例在真窗口下通过。
 
 **O23 · 文件名拼写错误** — 成本 XS，**已完成 `48e4b1d`**
 `renderer/src/codeMirror/mltiplexMode.ts`（`mltiplex` 应为 `multipl`）。导入方 `codeMirror/index.ts:11` 沿用同一个错名，符号本身 `multiplexMode` 是对的。改法：`git mv` + 改一处 import，与 O20 同批。
@@ -243,15 +266,18 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 **第二批 · 一到两周（信任边界与响应性，需要设计确认）**
 
-| PR    | 内容                                                                            | 依赖                         |
-| ----- | ------------------------------------------------------------------------------- | ---------------------------- |
-| PR-6  | O8 IPC 契约双向化（先 41 个 handle 通道）                                       | 建议 PR-1 先合，作为回归样例 |
-| PR-7  | O7① `imageFolderPath` 收进原生对话框 + O19 补 schema 声明（同族：先声明再约束） | O8 的通道类型收窄先落        |
-| PR-8  | O7② 读通道路径域                                                                | PR-7                         |
-| PR-9  | O9 偏好广播微任务合并 + 计数断言                                                | 无                           |
-| PR-10 | O6 图片补全缓存失效 + 有界                                                      | 无                           |
-| PR-11 | O4 空实现取舍（实现或摘入口）+ O18 最近文档失败可见性（同族：入口必须给出结果） | 无                           |
-| PR-12 | O10 `isSamePathSync` 去阻塞                                                     | 无                           |
+| PR        | 内容                                                                                                    | 依赖                         |
+| --------- | ------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| PR-6      | O8 IPC 契约双向化（先 41 个 handle 通道）                                                               | 建议 PR-1 先合，作为回归样例 |
+| PR-7      | O7① `imageFolderPath` 收进原生对话框 + O19 补 schema 声明（同族：先声明再约束）                         | O8 的通道类型收窄先落        |
+| PR-8      | O7② 读通道路径域                                                                                        | PR-7                         |
+| PR-9      | O9 批量写入合并广播 —— **已实现** `perf/preference-broadcast`（`2d56e65`+`300d03c`）                    | 无                           |
+| PR-22     | O22 Markdown 扩展名单一来源 —— **已实现** `fix/markdown-extension-single-source`（`76e5a92`）           | 无                           |
+| PR-11     | O4 空实现取舍（实现或摘入口）+ O18 最近文档失败可见性（同族：入口必须给出结果）                         | 无                           |
+| ~~PR-10~~ | ~~O6 图片补全缓存失效 + 有界~~ — **取消**：缓存本来就会重建（见 O6 前提更正），残余是有界性且未测出量级 | —                            |
+| ~~PR-12~~ | ~~O10 `isSamePathSync` 去阻塞~~ — **取消**：不在热路径（见 O10 撤下说明）                               | —                            |
+
+> 第二批补记：O22 原本漏在 §4 表外（只在 §3 有条目），本轮以 PR-22 编号补进表内。O6/O10 从第二批移出，移出理由写在各自条目的更正段里，不另开"已删除"章节。
 
 **第三批 · 持续投入（结构性，不设截止）**
 
@@ -275,13 +301,15 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 ## 5. 明确不做
 
-| 项                                                  | 理由                                                                                                                |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| 渲染分片 / 虚拟滚动优先于其它                       | M1.3 已用剖析证明 `setContent` 瓶颈在解析管线（已修到 28.2ms），WORKPLAN 记"渲染分片暂不需要"。无新证据不重开       |
-| 把 E2E 铺到 5 平台                                  | 只做 mac（O14②）。Windows E2E 的无头与原生模块成本高于收益，先靠 `test.yml` 的 windows 单测腿兜                     |
-| 统一两包 ESLint/Vite 大版本                         | 引擎侧 antfu + ESLint 10 自成体系且根 ESLint 明确忽略 `packages/muya/**`；强行对齐的收益 < 回归风险（O16 只做记录） |
-| 给 `getClipboardHtml` / `getHighlightHtml` 去 O(n²) | `perf-baseline.md` M1.3 判读：只处理选区/剪贴板级内容，不在文档级热路径                                             |
-| 裁定功能路线图                                      | 按本文定位排除，见开头声明                                                                                          |
+| 项                                                  | 理由                                                                                                                                 |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 渲染分片 / 虚拟滚动优先于其它                       | M1.3 已用剖析证明 `setContent` 瓶颈在解析管线（已修到 28.2ms），WORKPLAN 记"渲染分片暂不需要"。无新证据不重开                        |
+| 把 E2E 铺到 5 平台                                  | 只做 mac（O14②）。Windows E2E 的无头与原生模块成本高于收益，先靠 `test.yml` 的 windows 单测腿兜                                      |
+| 统一两包 ESLint/Vite 大版本                         | 引擎侧 antfu + ESLint 10 自成体系且根 ESLint 明确忽略 `packages/muya/**`；强行对齐的收益 < 回归风险（O16 只做记录）                  |
+| 给 `getClipboardHtml` / `getHighlightHtml` 去 O(n²) | `perf-baseline.md` M1.3 判读：只处理选区/剪贴板级内容，不在文档级热路径                                                              |
+| 给图片补全缓存加失效或 LRU（O6）                    | 缓存本来就随 `'rename'` 重建（`imagePathAutoComplement.ts:67-91`）；残余只是按目录只增不减，量级未测出，加淘汰机制是先写成本后写需求 |
+| 去掉 `isSamePathSync` 的同步回落（O10）             | 只在大小写异体路径上触发，调用方全是离散用户动作（见 O10 撤下说明）；缓存规范化结果要给非热点加一层失效逻辑                          |
+| 裁定功能路线图                                      | 按本文定位排除，见开头声明                                                                                                           |
 
 ## 6. 与既有文档的关系
 
