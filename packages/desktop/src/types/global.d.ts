@@ -132,7 +132,7 @@ declare global {
     outputFile(p: string, data: string | Uint8Array): Promise<void>
     move(src: string, dest: string): Promise<void>
     writeFile(p: string, data: string | Uint8Array): Promise<void>
-    readFile(p: string, encoding?: string): Promise<string | Uint8Array>
+    readFile(p: string, encoding?: BufferEncoding): Promise<string | Uint8Array>
     pathExists(p: string): Promise<boolean>
     unlink(p: string): Promise<void>
     readdir(p: string): Promise<string[]>

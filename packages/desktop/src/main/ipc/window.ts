@@ -8,6 +8,7 @@ import {
 } from 'electron'
 import log from 'electron-log'
 import type { MenuTemplate, MenuTemplateItem, MenuPopupPosition } from '@shared/types/menu'
+import { typedHandle } from './typedHandle'
 
 const windowFromEvent = (event: IpcMainEvent): BrowserWindow | null =>
   BrowserWindow.fromWebContents(event.sender)
@@ -72,11 +73,11 @@ export const registerWindowHandlers = (): void => {
     const win = windowFromEvent(event)
     if (win) win.setFullScreen(!win.isFullScreen())
   })
-  ipcMain.handle('mt::win::is-maximized', (event) => {
+  typedHandle('mt::win::is-maximized', (event) => {
     const win = windowFromEvent(event as unknown as IpcMainEvent)
     return !!win && win.isMaximized()
   })
-  ipcMain.handle('mt::win::is-fullscreen', (event) => {
+  typedHandle('mt::win::is-fullscreen', (event) => {
     const win = windowFromEvent(event as unknown as IpcMainEvent)
     return !!win && win.isFullScreen()
   })

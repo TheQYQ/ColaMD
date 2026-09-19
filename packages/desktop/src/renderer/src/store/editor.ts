@@ -1915,7 +1915,7 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
-    ASK_FOR_IMAGE_PATH(): Promise<string[]> {
+    ASK_FOR_IMAGE_PATH(): Promise<string> {
       return window.electron.ipcRenderer.invoke('mt::ask-for-image-path')
     },
 

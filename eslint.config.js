@@ -236,5 +236,32 @@ export default [
         }
       ]
     }
+  },
+
+  // 11. Main-process `invoke` handlers go through the shared contract.
+  //
+  // `shared/types/ipc.ts` types the preload side of every channel, but a bare
+  // `ipcMain.handle('mt::…', …)` was unchecked: Electron hands the listener
+  // `any[]`, so name, argument tuple and return type could drift and only fail
+  // at run time. Wrapping registration in `typedHandle` (src/main/ipc/typedHandle.ts)
+  // makes the contract load-bearing; this rule stops new bypasses.
+  //
+  // Converting all 41 channels surfaced eight declarations that were already
+  // wrong — e.g. `mt::ask-for-image-path` was typed `string[]` while the handler
+  // answers a single path — so the two remaining exemptions below are payload
+  // ownership questions, not type errors. See docs/OPTIMIZATION_ROADMAP.md O8.
+  {
+    files: ['packages/desktop/src/main/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "CallExpression[callee.object.name='ipcMain'][callee.property.name='handle']",
+          message:
+            'Register invoke handlers through typedHandle() from src/main/ipc/typedHandle.ts so the channel stays checked against shared/types/ipc.ts.'
+        }
+      ]
+    }
   }
 ]

@@ -2,9 +2,9 @@ import path from 'path'
 import { tmpdir } from 'os'
 import { execFile } from 'child_process'
 import fs from 'fs-extra'
-import { ipcMain } from 'electron'
 import commandExists from 'command-exists'
 import { isImageFile } from 'common/filesystem/paths'
+import { typedHandle } from './typedHandle'
 
 const buildPreferredPathEnv = (): string => {
   const extras =
@@ -177,8 +177,10 @@ interface UploadRequest {
 }
 
 export const registerUploaderHandlers = (): void => {
-  ipcMain.handle('mt::uploader::upload', async(_event, req: UploadRequest) => {
-    const { pathname, image, isPath, preferences } = req
+  typedHandle('mt::uploader::upload', async(_event, req) => {
+    // The contract can only promise `req: unknown` (the renderer builds this payload
+    // from its own image settings); who owns the shape is O7② validation work.
+    const { pathname, image, isPath, preferences } = req as UploadRequest
     if (isPath) {
       const dir = path.dirname(pathname)
       const imagePath = path.resolve(dir, image as string)

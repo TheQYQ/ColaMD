@@ -7,6 +7,7 @@ import log from 'electron-log'
 import { ensureDirSync } from 'common/filesystem'
 import { IMAGE_EXTENSIONS } from 'common/filesystem/paths'
 import { TypedEmitter } from '@shared/types/typedEmitter'
+import { typedHandle } from '../ipc/typedHandle'
 
 const DATA_CENTER_NAME = 'dataCenter'
 
@@ -164,7 +165,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
       this.setItems(userData)
     })
 
-    ipcMain.handle('mt::ask-for-image-path', async(e) => {
+    typedHandle('mt::ask-for-image-path', async(e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return ''
       const { filePaths } = await dialog.showOpenDialog(win, {

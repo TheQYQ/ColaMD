@@ -1,6 +1,7 @@
 import path from 'path'
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { openFileOrFolder } from '../menu/actions/file'
+import { typedHandle } from './typedHandle'
 import {
   readRecentlyUsedDocuments,
   RECENTLY_USED_DOCUMENTS_FILE_NAME
@@ -16,7 +17,7 @@ const recentsPath = (): string =>
   path.join(app.getPath('userData'), RECENTLY_USED_DOCUMENTS_FILE_NAME)
 
 export const registerMenuHandlers = (): void => {
-  ipcMain.handle('mt::menu::get-recent-documents', () => readRecentlyUsedDocuments(recentsPath()))
+  typedHandle('mt::menu::get-recent-documents', () => readRecentlyUsedDocuments(recentsPath()))
 
   ipcMain.on('mt::menu::open-path', (event, pathname: string) => {
     const win = BrowserWindow.fromWebContents(event.sender)
