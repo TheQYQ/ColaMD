@@ -66,18 +66,21 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | `fix/open-failure-visible`             | `7bbedb5`、`f3e13be`                       | O18、O4                    |
 | `refactor/typed-ipc-handle`            | `cba0836`                                  | O8①                        |
 | `security/image-folder-dialog-only`    | `6007c0a`、`b4776b9`                       | O7①、O19（主进程可见部分） |
+| `chore/prettier-eol`                   | `ff7d72b`                                  | O26                        |
+| `fix/locale-failure-strings`           | `962baa0`                                  | O27                        |
 
-遗留事项：O17 的像素效果待实机确认；O20 余下 29 项真死代码移交 O13；O6 与 O10 经复核分别降级与撤下，理由见各自条目。
+遗留事项：O17 的像素效果待实机确认；O20 余下 29 项真死代码移交 O13；O6 与 O10 经复核分别降级与撤下，理由见各自条目。**三条"要人拍板、不该顺手清"的**：O26 的 prettier↔ESLint 冲突（要不要全仓 `--write` + 废一条 stylistic 规则）、O19 剩余的 6 处默认值不一致（挑哪边）、O7② 的读通道域与两处载荷归属。
 
-**合并顺序（用 `git merge-tree` 对 10 个分支两两预演，非破坏性）**：4 对会冲突，其余两两可自动合。
+**合并顺序（用 `git merge-tree` 对 12 个分支两两预演，非破坏性）**：5 对会冲突，其余两两可自动合。
 
-| 冲突对                                                                      | 冲突文件                                           | 处置                                                                                                                                                                                                              |
-| --------------------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fix/startup-action-enum`（O3）×`cleanup/redundant-exports`（O20）          | `renderer/src/store/preferences.ts`                | 已知项：O3 先合，O20 再跑一次 export 清扫（预演结论 typecheck 0 错、868+1 通过）                                                                                                                                  |
-| `fix/batch1-small-correctness`（O2/O5/O11/O17）×`cleanup/redundant-exports` | `main/menu/index.ts`、`main/spellchecker/index.ts` | batch1 先合：O5 换了 reader、O2 补了 `()`，O20 只删 `export` 关键字，保留前者内容再套后者意图                                                                                                                     |
-| `fix/batch1-small-correctness`×`refactor/typed-ipc-handle`（O8）            | `main/ipc/menu.ts`                                 | batch1 先合：O5 把 reader 抽进 `utils/recentDocuments`，O8 只是把该文件的 handle 换成 `typedHandle`。`security/image-folder-dialog-only`（O7①，叠加在 O8 分支上）与 batch1 同处冲突、同一处解，先解 O8 即顺带解决 |
+| 冲突对                                                                      | 冲突文件                                           | 处置                                                                                                                                                                                                                                                                                           |
+| --------------------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fix/startup-action-enum`（O3）×`cleanup/redundant-exports`（O20）          | `renderer/src/store/preferences.ts`                | 已知项：O3 先合，O20 再跑一次 export 清扫（预演结论 typecheck 0 错、868+1 通过）                                                                                                                                                                                                               |
+| `fix/batch1-small-correctness`（O2/O5/O11/O17）×`cleanup/redundant-exports` | `main/menu/index.ts`、`main/spellchecker/index.ts` | batch1 先合：O5 换了 reader、O2 补了 `()`，O20 只删 `export` 关键字，保留前者内容再套后者意图                                                                                                                                                                                                  |
+| `fix/batch1-small-correctness`×`refactor/typed-ipc-handle`（O8）            | `main/ipc/menu.ts`                                 | batch1 先合：O5 把 reader 抽进 `utils/recentDocuments`，O8 只是把该文件的 handle 换成 `typedHandle`。`security/image-folder-dialog-only`（O7①，叠加在 O8 分支上）与 batch1 同处冲突、同一处解，先解 O8 即顺带解决                                                                              |
+| `fix/locale-failure-strings`（O27）×`fix/open-failure-visible`（O18）       | 10 份 `static/locales/*.json`（各 1 处相邻行）     | 两者都要留：O27 改的是 `renameFailure`/`moveFailure`/两条 `errorWhile*` 的**值**，O18 是在 `moveFailure` 后面**新增** `openFailure` 键。合并结果 = 译过的四个值 + 新的 `openFailure`（它本身也已逐语言翻译）。合并后跑 `vitest run test/unit/specs/locale-validation.spec.ts`（45 例）即可验证 |
 
-`fix/open-failure-visible`（O4/O18）与 `perf/preference-broadcast`（O9）同改 `main/preferences/index.ts` 与 `main/dataCenter/index.ts` 但**区块不相干，可自动合**；十个分支一次性合入 `develop` 后的完整门禁预演留到第二批收尾再做，届时把结果并回本段。
+`fix/open-failure-visible`（O4/O18）与 `perf/preference-broadcast`（O9）同改 `main/preferences/index.ts` 与 `main/dataCenter/index.ts` 但**区块不相干，可自动合**；十二个分支一次性合入 `develop` 后的完整门禁预演仍未跑（`pnpm check` + 两包单测 + E2E），跑完把结果并回本段。
 
 ### A 组·正确性回归（有实锤 bug，优先）
 
@@ -279,18 +282,21 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法（两步，各自可 revert）：① 能构造期填写的字段改成必填，让类型系统承担；② 真可能为空的路径在函数开头一次性窄化（`if (!win) return`），后续不再逐行 `!`。
 - 验收：`pnpm lint` 的 144 基数降到 ≤100，**且不得靠新增 `eslint-disable` 达成**；每条消除要能说出运行时为何非空。
 
-**O26 · `prettier --check` 在本 checkout 里对任何文件都报警** — 成本 XS，影响 中（会误导后续门禁）
+**O26 · `prettier --check` 在本 checkout 里对任何文件都报警** — 成本 XS，影响 中 — **已完成 `ff7d72b`（分支 `chore/prettier-eol`），但原计划的"再谈门禁"要撤**
 根 `.prettierrc.yaml` 没设 `endOfLine`（默认 `lf`），而 git 的 `core.autocrlf` 使工作副本为 CRLF：`git ls-files --eol` 显示 `i/lf w/crlf`。实测完全未改动的 `codeMirror/modes.ts`、`codeMirror/overlayMode.ts`、`util/pdf.ts` 一并报 warn，而 index 中存的是 LF。
 
-- 后果：若把 `prettier --check` 接进 CI，会对全仓历史文件 100% 假红；本轮 WORKPLAN 与两个源文件被重排数百行也是同一成因。
-- 改法：`.prettierrc.yaml` 加一行 `endOfLine: auto`，之后再谈把 `--check` 纳入门禁；不要全仓 `--write` 刷一遍。
+- 改法（已实施）：`.prettierrc.yaml` 加一行 `endOfLine: auto`。全仓 `--check` 的告警数从 **533 → 266**（`prettier --check . --end-of-line lf` 对照同一命令），即一半以上是纯粹的换行假红。
+- **原判定要修两点**：① "100% 假红"不准确——是被 CRLF 假红放大的混合状态；② 本条点名的 3 个文件里 2 个（`modes.ts`、`overlayMode.ts`）确实只因为换行，加上 `auto` 后就干净了；`util/pdf.ts` 还留着 1 行**真实**风格差异（`async(` vs prettier 要的 `async (`）。
+- **撤掉"之后再谈把 `--check` 纳入门禁"**：数完才知道那不是一个开关。173 个仍被标记的 `.ts` 里，**84 个的全部差异只有 `async(` 这一处**——仓库自己的 ESLint（neostandard 的 `space-before-function-paren: never`）要求 `async(`，prettier 永远要 `async (`；另 **89 个**还带 printWidth 换行差异（这些文件从来没被 prettier 格式化过，ESLint 不管换行）。也就是说 `--check` 变绿的前提是一次全仓 `prettier --write` + 废掉那条与它对立的 stylistic 规则；而 lint-staged 现在是 prettier 先写、eslint --fix 后改，两者已经在每次提交上打架。**这是决策，不是清理**，本条不做，留在这里免得下一轮又把它当成"顺手能加的门禁"。
+- 顺带：本轮 WORKPLAN 与两个源文件被重排数百行，成因就是这行缺失。
 
-**O27 · 四条本地化键在 10 份语言里仍是英文** — 成本 XS，影响 低—中（2026-09-20 实施 O18 时实测）
-`dialog.renameFailure`、`dialog.moveFailure`、`store.editor.errorWhileRenaming`、`store.editor.errorWhileMoving` 的值在 **11 份语言里全部与英文逐字相同**（同一对照下 `dialog.saveFailure`、`store.editor.errorWhileSaving` 都已翻译，我本轮新增的 `dialog.openFailure` 也逐语言写了译名）。也就是说重命名/移动失败弹窗在非英文界面下是英文串。
+**O27 · 四条本地化键在 10 份语言里仍是英文** — 成本 XS，影响 低—中 — **已完成 `962baa0`（分支 `fix/locale-failure-strings`）**
+`dialog.renameFailure`、`dialog.moveFailure`、`store.editor.errorWhileRenaming`、`store.editor.errorWhileMoving` 的值在 **11 份语言里全部与英文逐字相同**（同一对照下 `dialog.saveFailure`、`store.editor.errorWhileSaving` 都已翻译，本轮 O18 新增的 `dialog.openFailure` 也逐语言写了译名）。也就是说重命名/移动失败弹窗在非英文界面下是英文串。
 
 - 为什么门禁没拦住：`test/unit/specs/locale-validation.spec.ts` 查的是键齐、占位符齐、非空、术语拼写——**不查值是否等于英文**。
-- 改法：补这 4 条的译名（10 语言 × 4 串），并把"值与 en.json 逐字相同"作为**告警**（非阻断）加进该 spec；告警而非阻断，是因为专有名词类的确可能合法同值。
-- 验收：告警数从 4 降到 0（或每条有豁免理由）。
+- 改法（已实施）：这 4 条按同族 `errorWhileSaving`/`saveFailure` 的既有译法逐语言补齐（10 语言 × 4 串 = 40 处），占位符 `{msg}` 全部保留。
+- 门禁（**改成了棘轮，不是告警**）：实测全仓"值与英文逐字相同"共 **839 处**（每语言 66–113 处），绝大多数是正当的——主题名 `dracula`/`catppuccinMocha`、格式名 `EPUB`/`LaTeX`/`RTF`、`CRLF`/`LF`。逐字相同即报错会把它们一起淹掉，所以 spec 改成按语言记数、**只准降不准升**：修复前 72/66/86/93/87/72/70/113/84/96，修复后 68/62/82/89/83/68/66/109/80/92；探针验证过把某个语言的基线调低 1 就只有那条用例红。新增确属同词的键，要在提交说明里写明理由再抬数字。
+- 验收：`locale-validation.spec.ts` 45 例通过（新增 10 例），`pnpm lint` 回到 149 warnings/0 errors 基线，desktop 单测 61 文件 873 通过 + 1 跳过。
 
 ## 4. 分期 PR 路线
 
@@ -303,8 +309,8 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | PR-3  | O3 `startUpAction` 值域下沉 `shared/types`，并去掉宽松的 `string` 兜底类型                                            | 无         |
 | PR-4  | O16 工具小坏点（`check-md-links.py` 接入 CI、eslint 插件显式化、`dev-app-update.yml`）                                | 无         |
 | PR-5  | 本文与 `docs/PROJECT_GUIDE.md` 的口径校准；旧两份文档顶部加指引                                                       | 前四条合完 |
-| PR-21 | O26 `.prettierrc.yaml` 设 `endOfLine: auto`                                                                           | 无         |
-| PR-23 | O27 四条英文残留译名 + locale 同值告警（2026-09-20 补进第一批）                                                       | 无         |
+| PR-21 | O26 `.prettierrc.yaml` 设 `endOfLine: auto` —— **已实现** `ff7d72b`；`--check` 入门禁已撤销（见 O26）                 | 无         |
+| PR-23 | O27 四条英文残留译名 + locale 同值棘轮 —— **已实现** `962baa0`                                                        | 无         |
 
 **第二批 · 一到两周（信任边界与响应性，需要设计确认）**
 

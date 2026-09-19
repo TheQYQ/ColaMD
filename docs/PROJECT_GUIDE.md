@@ -314,6 +314,9 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 ### 11.3 工具链偏差
 
+状态同 §11.1：逐条处置记在 `OPTIMIZATION_ROADMAP.md` §3（O16 一轮已修掉其中 5 条，分支 `chore/tooling-gates`）。
+
+- `prettier --check` **不能当门禁**：`.prettierrc.yaml` 已设 `endOfLine: auto`（`chore/prettier-eol`），全仓告警从 533 降到 266；剩下的不是换行假红，而是 173 个 `.ts` 里 **84 个只差 `async(` vs prettier 的 `async (`**（根 ESLint 的 `space-before-function-paren: never` 与 prettier 直接对立），另 89 个带从未格式化过的换行差异。`pnpm format` 与 lint-staged 的 `prettier --write` → `eslint --fix` 顺序，本质是后改的赢。
 - `patch-package` 走 `scripts/postinstall.ts` 手工调用而非 pnpm `patchedDependencies`（**不存在该键**），而多数 CI 安装带 `--ignore-scripts`，所以 `lint.yml`/`test.yml`/`validate-licenses.yml` 环境里没有打过补丁；`knip.json:5` 的 `ignoreDependencies: ["patch-package"]` 正是为了让 knip 别报这个。
 - `pnpm-workspace.yaml:17` 的 `allowBuilds.keytar` 是残留：两个 package.json 与全部 `src/` 都没有 `keytar`（`sharp`/`workerd` 大概率也只剩传递依赖）。
 - `electron-builder.yml:11` 排除了 `eslint.config.mjs` 与 `dev-app-update.yml`，两者都不存在（根文件是 `eslint.config.js`，已在 `:31` 排除；`dev-app-update.yml` 是真的缺，而 `electron-updater` 已接在 `main/menu/actions/colamd.ts`）。
