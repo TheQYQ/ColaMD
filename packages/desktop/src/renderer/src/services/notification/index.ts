@@ -3,7 +3,7 @@ import { getUniqueId } from '../../util'
 import { sanitize, EXPORT_DOMPURIFY_CONFIG } from '../../util/dompurify'
 import './index.css'
 
-export type NotificationType = 'primary' | 'error' | 'warning' | 'info'
+type NotificationType = 'primary' | 'error' | 'warning' | 'info'
 
 const INON_HASH: Record<NotificationType, string> = {
   primary: 'icon-message',

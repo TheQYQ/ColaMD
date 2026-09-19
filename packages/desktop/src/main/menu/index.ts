@@ -20,13 +20,13 @@ import type Preference from '../preferences'
 import type Keybindings from '../keyboard/shortcutHandler'
 import type { IUserPreferences } from '@shared/types/preferences'
 
-export const MenuType = {
+const MenuType = {
   DEFAULT: 0,
   EDITOR: 1,
   SETTINGS: 2
 } as const
 
-export type MenuTypeValue = (typeof MenuType)[keyof typeof MenuType]
+type MenuTypeValue = (typeof MenuType)[keyof typeof MenuType]
 
 interface WindowMenuEntry {
   menu: Menu | null

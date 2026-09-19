@@ -24,7 +24,7 @@ export const IMAGE_EXTENSIONS: readonly string[] = Object.freeze([
 // pointing at a co-located script/executable must be confirmed first (#3575).
 // The vulnerable path is cross-platform, so the list covers Windows, macOS and
 // Linux launchers — not just Windows.
-export const DANGEROUS_EXECUTABLE_EXTENSIONS: readonly string[] = Object.freeze([
+const DANGEROUS_EXECUTABLE_EXTENSIONS: readonly string[] = Object.freeze([
   // Windows — native executables, installers and control-panel items
   'exe',
   'com',

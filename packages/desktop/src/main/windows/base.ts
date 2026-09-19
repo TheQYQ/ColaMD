@@ -28,13 +28,13 @@ export const WindowLifecycle = {
   QUITTED: 3
 } as const
 
-export type WindowLifecycleValue = (typeof WindowLifecycle)[keyof typeof WindowLifecycle]
+type WindowLifecycleValue = (typeof WindowLifecycle)[keyof typeof WindowLifecycle]
 
 /**
  * Event payload map for `BaseWindow` and its subclasses (editor/setting).
  * Listeners are subscribed by `WindowManager` and other main-process code.
  */
-export interface BaseWindowEvents {
+interface BaseWindowEvents {
   'window-ready': []
   'window-focus': []
   'window-blur': []

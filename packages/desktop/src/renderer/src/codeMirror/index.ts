@@ -8,7 +8,7 @@ import type CodeMirror from 'codemirror'
 
 import loadmode from './loadmode'
 import overlayMode from './overlayMode'
-import multiplexMode from './mltiplexMode'
+import multiplexMode from './multiplexMode'
 import registerMarkdownMathMode from './markdownMathMode'
 import languages from './modes'
 import 'codemirror/lib/codemirror.css'

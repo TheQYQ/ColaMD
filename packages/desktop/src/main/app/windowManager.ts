@@ -63,7 +63,7 @@ class WindowActivityList {
  * dispatched whenever the focused (or otherwise active) window switches; the
  * payload is the new active window id (or `null` when no windows remain).
  */
-export interface WindowManagerEvents {
+interface WindowManagerEvents {
   activeWindowChanged: [windowId: number | null]
 }
 

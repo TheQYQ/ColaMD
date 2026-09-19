@@ -5,7 +5,7 @@
  * renderer never imports from `electron` (it can't; it's sandboxed).
  */
 
-export interface FileFilter {
+interface FileFilter {
   name: string
   extensions: string[]
 }

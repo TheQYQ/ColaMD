@@ -1,4 +1,4 @@
-export interface LanguageDescriptor {
+interface LanguageDescriptor {
   name: string
   mode: string
   mime: string

@@ -12,21 +12,21 @@ export const addToDictionary = (win: BrowserWindow, word: string): boolean => {
 /**
  * Remove the given word from the spellchecker dictionary.
  */
-export const removeFromDictionary = (win: BrowserWindow, word: string): boolean => {
+const removeFromDictionary = (win: BrowserWindow, word: string): boolean => {
   return win.webContents.session.removeWordFromSpellCheckerDictionary(word)
 }
 
 /**
  * Returns a list of all words in the custom dictionary.
  */
-export const getCustomDictionaryWords = async(win: BrowserWindow): Promise<string[]> => {
+const getCustomDictionaryWords = async(win: BrowserWindow): Promise<string[]> => {
   return win.webContents.session.listWordsInSpellCheckerDictionary()
 }
 
 /**
  * Sets whether to enable the builtin spell checker.
  */
-export const setSpellCheckerEnabled = (win: BrowserWindow, enabled: boolean): boolean => {
+const setSpellCheckerEnabled = (win: BrowserWindow, enabled: boolean): boolean => {
   win.webContents.session.setSpellCheckerEnabled(enabled)
   return win.webContents.session.isSpellCheckerEnabled() === enabled
 }
@@ -41,6 +41,9 @@ export const switchLanguage = (win: BrowserWindow, lang: string): void => {
 /**
  * Returns the list of available spellchecker languages, or empty on macOS
  * where the OS spellchecker is used and language is auto-detected.
+ *
+ * Exported for the availability spec; production callers reach it through the
+ * `mt::spellchecker-get-available-dictionaries` handler.
  */
 export const getAvailableDictionaries = (win: BrowserWindow): string[] => {
   if (!win.webContents.session.isSpellCheckerEnabled()) {

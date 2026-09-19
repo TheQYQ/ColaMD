@@ -9,10 +9,10 @@ import { sanitize, PREVIEW_DOMPURIFY_CONFIG } from './dompurify'
  * without unpacking or executing any code.
  */
 
-export type ThemeType = 'light' | 'dark'
+type ThemeType = 'light' | 'dark'
 
 /** Maximum allowed size (bytes) for an imported theme's CSS fields. */
-export const MAX_CSS_BYTES = 256 * 1024 // 256 KiB per CSS field
+const MAX_CSS_BYTES = 256 * 1024 // 256 KiB per CSS field
 
 /** Reserved IDs that collide with built-in themes or system use. */
 const RESERVED_IDS = new Set(['light', 'dark', 'graphite', 'material-dark', 'ulysses', 'one-dark'])
@@ -54,7 +54,7 @@ export interface InstalledTheme {
 }
 
 /** Thrown when theme validation fails. Carries a i18n key for the UI. */
-export class ThemeValidationError extends Error {
+class ThemeValidationError extends Error {
   constructor(
     message: string,
     public readonly i18nKey: string
@@ -105,7 +105,7 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> => {
  *    CSS constructs (see dangerousCssPatterns).
  * 6. Optional `codeCss` same constraints as editorCss.
  */
-export const validateTheme = (raw: unknown): ColaMDThemeManifest => {
+const validateTheme = (raw: unknown): ColaMDThemeManifest => {
   if (!isPlainObject(raw)) {
     throw new ThemeValidationError('Theme file is not a JSON object', 'themeMarket.error.notObject')
   }

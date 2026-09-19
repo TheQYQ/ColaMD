@@ -335,7 +335,7 @@ export interface IpcMainEventChannels {
  * `mt::keybinding-get-keyboard-info`. Mirrors the runtime shape produced
  * by `native-keymap` (see `src/main/keyboard/index.ts#getKeyboardInfo`).
  */
-export interface KeyboardInfo {
+interface KeyboardInfo {
   layout: IKeyboardLayoutInfo
   keymap: IKeyboardMapping
 }

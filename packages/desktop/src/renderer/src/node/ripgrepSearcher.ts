@@ -4,15 +4,15 @@
 
 import { deepClone } from '../util'
 
-export type RipgrepMode = 'text' | 'files'
+type RipgrepMode = 'text' | 'files'
 
-export interface RipgrepSearchOptions {
+interface RipgrepSearchOptions {
   didMatch?: (payload: unknown) => void
   didSearchPaths?: (num: unknown) => void
   [key: string]: unknown
 }
 
-export interface CancellableSearch extends Promise<void> {
+interface CancellableSearch extends Promise<void> {
   cancel: () => void
 }
 
