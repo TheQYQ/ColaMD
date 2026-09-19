@@ -2,21 +2,23 @@ import fs from 'fs'
 import path from 'path'
 import { app, Menu, ipcMain, type BrowserWindow } from 'electron'
 import log from 'electron-log'
-import { ensureDirSync, isDirectory2, isFile2 } from 'common/filesystem'
+import { ensureDirSync } from 'common/filesystem'
 import { isLinux, isOsx, isWindows } from '../config'
 import { updateSidebarMenu } from '../menu/actions/edit'
 import { updateFormatMenu } from '../menu/actions/format'
 import { updateSelectionMenus, type SelectionState } from '../menu/actions/paragraph'
 import { onInternalChannel } from '../utils/internalIpc'
+import {
+  MAX_RECENTLY_USED_DOCUMENTS,
+  readRecentlyUsedDocuments,
+  RECENTLY_USED_DOCUMENTS_FILE_NAME
+} from '../utils/recentDocuments'
 import { viewLayoutChanged } from '../menu/actions/view'
 import configureMenu, { configSettingMenu } from '../menu/templates'
 import { setLanguage } from '../i18n.js'
 import type Preference from '../preferences'
 import type Keybindings from '../keyboard/shortcutHandler'
 import type { IUserPreferences } from '@shared/types/preferences'
-
-const RECENTLY_USED_DOCUMENTS_FILE_NAME = 'recently-used-documents.json'
-const MAX_RECENTLY_USED_DOCUMENTS = 12
 
 export const MenuType = {
   DEFAULT: 0,
@@ -112,27 +114,7 @@ class AppMenu {
    * Returns a list of all recently used documents and folders.
    */
   getRecentlyUsedDocuments(): string[] {
-    const { RECENTS_PATH } = this
-    if (!isFile2(RECENTS_PATH)) {
-      return []
-    }
-
-    try {
-      const recentDocuments: string[] = JSON.parse(fs.readFileSync(RECENTS_PATH, 'utf-8')).filter(
-        (f: string) => f && (isFile2(f) || isDirectory2(f))
-      )
-
-      if (recentDocuments.length > MAX_RECENTLY_USED_DOCUMENTS) {
-        recentDocuments.splice(
-          MAX_RECENTLY_USED_DOCUMENTS,
-          recentDocuments.length - MAX_RECENTLY_USED_DOCUMENTS
-        )
-      }
-      return recentDocuments
-    } catch (err) {
-      log.error('Error while read recently used documents:', err)
-      return []
-    }
+    return readRecentlyUsedDocuments(this.RECENTS_PATH)
   }
 
   /**
