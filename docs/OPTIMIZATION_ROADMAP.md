@@ -157,7 +157,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法：迁到 pnpm 原生 `patchedDependencies`（当前 `pnpm-workspace.yaml` **没有这个键**），删掉 `knip.json` 里那条 ignore，让工具重新看得见。
 
 **O16 · 工具脚本自身的小坏点** — 成本 S
-`scripts/check-md-links.py:9` 的 `ROOT = dirname(abspath(__file__))` 指向 `scripts/` 而非仓库根，一跑即 `FileNotFoundError`（且只覆盖 README 与 `docs/i18n`，这解释了为何无工作流引用它）；`scripts/generateThirdPartyLicense.ts:7` 与 `validateLicenses.ts:6` `require('./thirdPartyChecker.js')` 而实文件是 `.ts`，全靠 tsx 后缀改写才没炸；`eslint.config.js:1-8` 直接 import 未声明在 `devDependencies` 的 `@eslint/js` 与 `globals`，靠 `shamefully-hoist` 兜住；`electron-builder.yml:11` 排除了两个不存在的文件（`eslint.config.mjs`、`dev-app-update.yml`）；根 ESLint ^9.39.4 与引擎 ^10.5.0、desktop Vite ^7.3.5 与引擎 ^8.0.16 大版本分裂。
+`scripts/check-md-links.py:10` 的 `ROOT = dirname(abspath(__file__))` 指向 `scripts/` 而非仓库根，一跑即 `FileNotFoundError`（且只覆盖 README 与 `docs/i18n`，这解释了为何无工作流引用它）；`scripts/generateThirdPartyLicense.ts:7` 与 `validateLicenses.ts:6` `require('./thirdPartyChecker.js')` 而实文件是 `.ts`，全靠 tsx 后缀改写才没炸；`eslint.config.js:1-8` 直接 import 未声明在 `devDependencies` 的 `@eslint/js` 与 `globals`，靠 `shamefully-hoist` 兜住；`electron-builder.yml:11` 排除了两个不存在的文件（`eslint.config.mjs`、`dev-app-update.yml`）；根 ESLint ^9.39.4 与引擎 ^10.5.0、desktop Vite ^7.3.5 与引擎 ^8.0.16 大版本分裂。
 
 - 改法：`check-md-links.py` 的 ROOT 改仓库根并接进 `lint.yml`；显式声明 eslint 插件依赖；补 `dev-app-update.yml`（`electron-updater` 已接在 `main/menu/actions/colamd.ts`，缺它无法本地验证更新流）；版本分裂先只做"记录 + 对齐计划"，不强行升。
 

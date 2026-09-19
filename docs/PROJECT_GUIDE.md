@@ -318,7 +318,7 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 - `scripts/generateThirdPartyLicense.ts:7` 与 `validateLicenses.ts:6` `require('./thirdPartyChecker.js')`，实际只有 `.ts` —— 全靠 tsx 的后缀改写才没炸。
 - `eslint.config.js:1-8` 直接 import `@eslint/js` 与 `globals`，两者都不在根 `devDependencies`，靠 `shamefully-hoist` 才解析得到。
 - 大版本分裂：根 ESLint ^9.39.4 vs 引擎 ^10.5.0；desktop Vite ^7.3.5 vs 引擎 ^8.0.16。
-- `scripts/check-md-links.py:9` 的 `ROOT = dirname(abspath(__file__))` 指向 `scripts/` 而非仓库根，脚本一跑就 `FileNotFoundError`；加上它只覆盖 `README.md` 与 `docs/i18n/*.md`，这解释了为什么没有任何工作流引用它。
+- `scripts/check-md-links.py:10` 的 `ROOT = dirname(abspath(__file__))` 指向 `scripts/` 而非仓库根，脚本一跑就 `FileNotFoundError`；加上它只覆盖 `README.md` 与 `docs/i18n/*.md`，这解释了为什么没有任何工作流引用它。
 - 根目录 `count-lines.cjs`（未跟踪）同样未被任何脚本或工作流引用。
 
 ## 12. 上手路径与文档索引
