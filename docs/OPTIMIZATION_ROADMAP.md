@@ -46,7 +46,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | 9    | 会话持久化每秒全标签快照 + 主线程同步写盘          | ✅ 已修 | M1.4（PR #32）：5s debounce / 30s maxWait、O(tabs) 签名门控跳过无变化写盘、fsync 改异步链式；实测见 `store/bufferedState.ts`                                                                                                                           |
 | 10   | 图片路径自动补全模块级无界缓存                     | ❌ 遗留 | `main/utils/imagePathAutoComplement.ts:16-17` 仍是模块级 `IMAGE_PATH: Map`，挂着 MarkText 期的 `// TODO: rebuild cache @jocs`；目录变更后缓存不重建 → O6                                                                                               |
 
-**结论**：旧报告的"高危三件套"与"性能四件套"已经关闭。当前真正欠着的不是同一批问题——下面 19 项是这一轮实测出的。`ColaMD_WORKPLAN.md` 七个梯队的"已完成"自述同样逐条核对过，见 §7。
+**结论**：旧报告的"高危三件套"与"性能四件套"已经关闭。当前真正欠着的不是同一批问题——下面 25 项是这一轮实测出的。`ColaMD_WORKPLAN.md` 七个梯队的"已完成"自述同样逐条核对过，见 §7。
 
 ## 3. 优化清单
 
@@ -175,6 +175,42 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法：把确实需要主进程可见的键（`imageFolderPath`、`deleteUnreferencedImages`、`treePathExcludePatterns`）补进 schema 并加约束；纯渲染端瞬态键（`typewriter`/`focus`/`sourceCode`/`installedThemes`）单列一处声明，写明刻意不进 schema，别让下一轮审计再猜一遍。
 - 验收：一个小脚本比对三处键集，差集必须落在显式白名单内；`imageFolderPath` 有 schema 约束后，O7① 的对话框收敛才算拿到类型层背书。
 
+### F 组·全仓体检新增（2026-09-19，测量方法见 `docs/PROJECT_GUIDE.md` §13）
+
+**O20 · 收敛多余的 export 关键字** — 成本 S，影响 低（可维护性）
+`knip --workspace packages/desktop` 全量报 **47 个未被其他文件 import 的导出** + **48 个未被引用的导出类型**。典型：`contextMenu/sideBar/menuItems.ts:76-83` 的 `NEW_FILE`/`NEW_DIRECTORY`/`DELETE`…、`contextMenu/tabs/menuItems.ts:71-77` 的 `CLOSE_THIS`…`SHOW_IN_FOLDER`、`main/contextMenu/editor/menuItems.ts:76-83`，以及 `shared/types/ipc.ts` 的 6 个 `*Args`/`*Ret` 辅助类型。
+
+- **这不是死代码**：它们都在本文件内被使用（用于构建菜单项），只是不该带 `export`。误删会重演 `409188a` 的坑。
+- 改法：只去掉 `export` 关键字，不动实现；按目录分批（contextMenu 一批、shared/types 一批、util 一批）。
+- 验收：`knip` 两个计数归零或落到显式忽略清单；`pnpm test` 与 `pnpm typecheck` 全绿即行为未变的证据。
+
+**O21 · 桌面包补长度与复杂度门** — 成本 S，影响 中（防止再长回上帝文件）
+实测 >100 行的函数：`store/project.ts:82`（setup，313）、`editor.vue:1864`（onMounted，279）、`main/app/index.ts:247`（ready，240）、`editor.vue:1358`（handleExport，158）、`main/ipc/ripgrep.ts:181`（158）、`util/theme.ts:61`（addThemeStyle，153）、`lazyMarkdownPipeline.ts:66`（144）、引擎 `blockTransforms.ts:20`（297）。引擎侧有 `max-lines-per-function ≤ 200` 与 `complexity ≤ 20` 警告，**桌面包一条都没有**，所以这些永不报修。
+
+- 改法：在根 `eslint.config.js` 的桌面包块加 `complexity` 与 `max-lines-per-function`，阈值按现存最大值定、先只 warn；O12 每分解一步就下调一档。
+- 验收：新阈值下 warning 数量可解释；后续 PR 不得新增超线函数。
+
+**O22 · Markdown 扩展名清单两处会漂移** — 成本 S，影响 中
+`common/filesystem/paths.ts:7-20` 的权威清单与 `preload/index.ts:~112-120` 各维护一份同样的扩展名列表。**不能简单合并**：preload 刻意只依赖 `electron` + `pathe`（`electron.vite.config.ts` 的 preload 段为此把 `pathe` 排除外链），import `common/` 会破坏该约束。
+
+- 改法：主进程从 `common/filesystem/paths.ts` 取值，经 `mt::boot-info`（`preload/index.ts:36` 已有的同步通道）下发，preload 只转发；删掉内联副本。
+- 验收：一条单测断言 preload 暴露的 `MARKDOWN_INCLUSIONS` 与权威清单逐项相等；全仓 `mdown` 字面量只剩一处。
+
+**O23 · 文件名拼写错误** — 成本 XS
+`renderer/src/codeMirror/mltiplexMode.ts`（`mltiplex` 应为 `multipl`）。导入方 `codeMirror/index.ts:11` 沿用同一个错名，符号本身 `multiplexMode` 是对的。改法：`git mv` + 改一处 import，与 O20 同批。
+
+**O24 · knip 只看依赖，其余全在盲区** — 成本 S，影响 中（工程门禁）
+`pnpm knip` = `knip --workspace packages/desktop --dependencies`，只报未使用依赖；文件级、导出级、类型级都不看——O20 那 95 项是本轮手工跑全量才浮出的。
+
+- 改法：去掉 `--dependencies` 限制，全量结果先进 `lint.yml` 以报告形式产出（不卡），稳定后再改为阻断。
+- 验收：CI 日志里能看到未用文件/导出/类型三段；`knip.json` 的忽略项逐条有理由注释。
+
+**O25 · `main/windows/editor.ts` 独占 31% 的非空断言** — 成本 M，影响 中
+144 处 `no-non-null-assertion` 里该文件占 44 处，且模式高度单一：`win!`、`this.id!`、`this.bufferStoreInfo!`、`this._markdownToOpen!`——都是"构造后必定非空"的字段。
+
+- 改法（两步，各自可 revert）：① 能构造期填写的字段改成必填，让类型系统承担；② 真可能为空的路径在函数开头一次性窄化（`if (!win) return`），后续不再逐行 `!`。
+- 验收：`pnpm lint` 的 144 基数降到 ≤100，**且不得靠新增 `eslint-disable` 达成**；每条消除要能说出运行时为何非空。
+
 ## 4. 分期 PR 路线
 
 **第一批 · 一天内可全清（零架构风险，先把实锤 bug 和噪音关掉）**
@@ -201,12 +237,15 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 **第三批 · 持续投入（结构性，不设截止）**
 
-| PR     | 内容                                                                 | 说明                                                |
-| ------ | -------------------------------------------------------------------- | --------------------------------------------------- |
-| PR-13… | O12 上帝文件分解（store 提 services → 拆 composable，每步 E2E 全绿） | 每步可独立 revert，禁止与功能改动混提               |
-| PR-14  | O14 CI 矩阵与覆盖率报告                                              | 依赖 O15 先解决补丁，否则加平台腿会因未打补丁而假红 |
-| PR-15  | O15 补丁迁到 `patchedDependencies`                                   | PR-14 的前置                                        |
-| PR-16  | O13 死代码清理                                                       | 放在最后做：前面几批会改变引用关系，早期判定不稳    |
+| PR     | 内容                                                                 | 说明                                                 |
+| ------ | -------------------------------------------------------------------- | ---------------------------------------------------- |
+| PR-13… | O12 上帝文件分解（store 提 services → 拆 composable，每步 E2E 全绿） | 每步可独立 revert，禁止与功能改动混提                |
+| PR-14  | O14 CI 矩阵与覆盖率报告                                              | 依赖 O15 先解决补丁，否则加平台腿会因未打补丁而假红  |
+| PR-15  | O15 补丁迁到 `patchedDependencies`                                   | PR-14 的前置                                         |
+| PR-16  | O13 死代码清理                                                       | 放在最后做：前面几批会改变引用关系，早期判定不稳     |
+| PR-18  | O20 去多余 export + O23 `mltiplexMode.ts` 改名                       | 先跑 knip 全量取基线；只删 `export` 关键字，不删实现 |
+| PR-19  | O21 长度/复杂度 warn 门 + O24 knip 全量进 CI                         | O24 的基线要在 O20 清完后重取，否则忽略清单会膨胀    |
+| PR-20  | O25 `main/windows/editor.ts` 非空断言收敛（144 → ≤100）              | 独立于分解工作，但要在 O12 之前做，避免同一文件双改  |
 
 **推进纪律**
 
