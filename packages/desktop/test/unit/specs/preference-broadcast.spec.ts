@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import Preference from '../../../src/main/preferences'
+import DataCenter from '../../../src/main/dataCenter'
 
 // Listeners merge the broadcast payload over `preferences.getAll()`, so a bulk
 // update does not need one event per key — but `setItems` used to loop over
@@ -49,13 +50,18 @@ vi.mock('fs', () => ({
 }))
 vi.mock('electron-log', () => ({ default: { error: vi.fn(), info: vi.fn() } }))
 vi.mock('../../../src/main/config', () => ({ isWindows: false, isOsx: false, isLinux: true }))
+vi.mock('common/filesystem', () => ({
+  ensureDirSync: vi.fn(),
+  isFile2: () => true,
+  isDirectory2: () => true
+}))
 
 // Set by main/globalSetting.ts in the app; the constructor needs it for staticPath.
 ;(globalThis as unknown as { __static: string }).__static = '/tmp/colamd-static/'
 
-const broadcasts = (): Array<Record<string, unknown>> =>
+const broadcasts = (channel = 'broadcast-preferences-changed'): Array<Record<string, unknown>> =>
   emitted
-    .filter(([channel]) => channel === 'broadcast-preferences-changed')
+    .filter(([name]) => name === channel)
     .map(([, payload]) => payload as Record<string, unknown>)
 
 describe('preference change broadcast', () => {
@@ -83,5 +89,28 @@ describe('preference change broadcast', () => {
     preference.setItems(null)
 
     expect(broadcasts()).toEqual([])
+  })
+})
+
+// Same loop, same fix, second store: this one forwards the payload straight to
+// every window, so a merged object is what the renderer ends up needing.
+describe('data center change broadcast', () => {
+  let dataCenter: DataCenter
+
+  beforeEach(() => {
+    emitted.length = 0
+    dataCenter = new DataCenter({
+      dataCenterPath: '/tmp/colamd-datacenter',
+      userDataPath: '/tmp/colamd-user'
+    })
+    emitted.length = 0
+  })
+
+  it('sends one merged event for a bulk update', () => {
+    dataCenter.setItems({ imageFolderPath: '/tmp/colamd-user/images', currentUploader: 'picgo' })
+
+    expect(broadcasts('broadcast-user-data-changed')).toEqual([
+      { imageFolderPath: '/tmp/colamd-user/images', currentUploader: 'picgo' }
+    ])
   })
 })
