@@ -43,7 +43,7 @@ export const switchLanguage = (win: BrowserWindow, lang: string): void => {
  * where the OS spellchecker is used and language is auto-detected.
  */
 export const getAvailableDictionaries = (win: BrowserWindow): string[] => {
-  if (!win.webContents.session.isSpellCheckerEnabled) {
+  if (!win.webContents.session.isSpellCheckerEnabled()) {
     console.warn('Spell Checker not available but dictionaries requested.')
     return []
   } else if (isOsx) {
