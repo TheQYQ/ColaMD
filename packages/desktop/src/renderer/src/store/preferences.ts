@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia'
 import bus from '../bus'
 import { setLanguage } from '../i18n'
+import type { StartUpAction } from '@shared/types/preferences'
 
 // Finite-value unions where the runtime currently constrains the field.
 // We keep these as plain strings everywhere else to avoid forcing prematurely
 // narrow casts on consumers that read raw values from disk.
 export type EndOfLine = 'default' | 'lf' | 'crlf'
 export type TitleBarStyle = 'custom' | 'native'
-export type StartUpAction = 'restoreAll' | 'lastSession' | 'blank'
 export type TextDirection = 'ltr' | 'rtl'
 export type BulletListMarker = '*' | '+' | '-'
 export type OrderListDelimiter = '.' | ')'
@@ -31,7 +31,7 @@ export interface PreferencesState {
   wordWrapInToc: boolean
   fileSortBy: FileSortBy | string
   fileSortOrder: FileSortOrder | string
-  startUpAction: StartUpAction | string
+  startUpAction: StartUpAction
   restoreLayoutState: boolean
   defaultDirectoryToOpen: string
   lastOpenedFolder: string

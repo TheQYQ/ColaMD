@@ -18,6 +18,7 @@ import { dockMenu } from '../menu/templates'
 import registerSpellcheckerListeners from '../spellchecker'
 import { watchers } from '../utils/imagePathAutoComplement'
 import { onInternalChannel } from '../utils/internalIpc'
+import { resolveStartupPlan } from '../utils/startupPlan'
 import { WindowType } from '../windows/base'
 import EditorWindow from '../windows/editor'
 import SettingWindow from '../windows/setting'
@@ -287,16 +288,12 @@ class App {
     // We should NOT restore the previous buffer or open a folder if the user just wants to double click to open a file
     let isRestorePathway = false
     if (_openFilesCache.length === 0) {
-      if (startUpAction === 'restoreAll') {
+      const plan = resolveStartupPlan(startUpAction, { defaultDirectoryToOpen, lastOpenedFolder })
+      if (plan.kind === 'restore') {
         // Restore based off the previous buffer
         isRestorePathway = true
-      } else if (startUpAction === 'folder' && defaultDirectoryToOpen) {
-        const info = normalizeMarkdownPath(defaultDirectoryToOpen)
-        if (info) {
-          _openFilesCache.unshift(info as PathInfo)
-        }
-      } else if (startUpAction === 'openLastFolder' && lastOpenedFolder) {
-        const info = normalizeMarkdownPath(lastOpenedFolder)
+      } else if (plan.kind === 'open') {
+        const info = normalizeMarkdownPath(plan.path)
         if (info) {
           _openFilesCache.unshift(info as PathInfo)
         }
