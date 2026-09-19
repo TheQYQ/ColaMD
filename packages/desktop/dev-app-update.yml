@@ -1,0 +1,7 @@
+# Read by electron-updater only when running unpacked (`pnpm start`, `pnpm dev`),
+# where no packaged update config exists. Points at the same GitHub releases the
+# real feed uses so the update flow can be exercised locally; packaging ignores
+# this file (see electron-builder.yml `files`).
+provider: github
+owner: TheQYQ
+repo: ColaMD

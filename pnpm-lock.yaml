@@ -15,6 +15,9 @@ importers:
       '@babel/eslint-parser':
         specifier: ^7.29.7
         version: 7.29.7(@babel/core@7.29.6)(eslint@9.39.4(jiti@2.7.0))
+      '@eslint/js':
+        specifier: 9.39.4
+        version: 9.39.4
       electron:
         specifier: ~42.1.0
         version: 42.1.0
@@ -27,6 +30,9 @@ importers:
       eslint-plugin-vue:
         specifier: ^10.9.2
         version: 10.9.2(@stylistic/eslint-plugin@5.10.0(eslint@9.39.4(jiti@2.7.0)))(@typescript-eslint/parser@8.61.1(eslint@9.39.4(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.4(jiti@2.7.0))(vue-eslint-parser@10.4.1(eslint@9.39.4(jiti@2.7.0)))
+      globals:
+        specifier: 17.6.0
+        version: 17.6.0
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -4390,7 +4396,7 @@ packages:
     engines: {node: '>=16.0.0'}
 
   file-icons@https://codeload.github.com/file-icons/atom/tar.gz/de1643106d3ad7db491114538bf48d2ed214d60c:
-    resolution: {gitHosted: true, integrity: sha512-0ySMdNRCBnEyNZEuMD8B1WBphqXPnThZ3cPVEMnfHsA8vWefVeNI+Whd5zUn1y1lMnNRQXdodVCfCaAKjoq5Tg==, tarball: https://codeload.github.com/file-icons/atom/tar.gz/de1643106d3ad7db491114538bf48d2ed214d60c}
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/file-icons/atom/tar.gz/de1643106d3ad7db491114538bf48d2ed214d60c}
     version: 2.1.47
     engines: {atom: '>=1.25.0'}
 

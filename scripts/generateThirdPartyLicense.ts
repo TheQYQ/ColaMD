@@ -4,7 +4,7 @@
 
 const path = require('path')
 const fs = require('fs')
-const thirdPartyChecker = require('./thirdPartyChecker.js')
+const thirdPartyChecker = require('./thirdPartyChecker')
 const desktopRoot = path.resolve(__dirname, '..', 'packages/desktop')
 
 thirdPartyChecker.getLicenses(desktopRoot, (err, packages) => {
