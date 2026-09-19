@@ -98,12 +98,20 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
     return this.store.get(key)
   }
 
-  setItem(key: string, value: unknown): void {
+  /**
+   * Persist one entry, including the folder side effect it owns. Shared by the
+   * single and bulk paths so the rule lives in exactly one place.
+   */
+  _writeEntry(key: string, value: unknown): void {
     if (key === 'screenshotFolderPath') {
       ensureDirSync(value as string)
     }
+    this.store.set(key, value)
+  }
+
+  setItem(key: string, value: unknown): void {
+    this._writeEntry(key, value)
     ipcMain.emit('broadcast-user-data-changed', { [key]: value })
-    return this.store.set(key, value)
   }
 
   /**
@@ -115,9 +123,17 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
       return
     }
 
-    Object.keys(settings).forEach((key) => {
-      this.setItem(key, settings[key])
-    })
+    const keys = Object.keys(settings)
+    for (const key of keys) {
+      this._writeEntry(key, settings[key])
+    }
+
+    // One merged event per bulk update: the payload is forwarded to every window
+    // unchanged, so N keys used to mean N round trips. Emitting after the writes
+    // also means a window that reads back sees the new values.
+    if (keys.length > 0) {
+      ipcMain.emit('broadcast-user-data-changed', { ...settings })
+    }
   }
 
   _listenForIpcMain(): void {
