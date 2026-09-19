@@ -903,8 +903,8 @@
     "unsafeFileMessage": "このリンクはコードを実行できるファイルを開きます",
     "unsafeFileDetail": "「{name}」は実行可能ファイルまたはスクリプトファイルです。開くとコンピューター上でプログラムが実行される可能性があります。この文書を信頼できる場合のみ続行してください。",
     "openAnyway": "それでも開く",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "名前の変更に失敗",
+    "moveFailure": "移動に失敗"
   },
   "error": {
     "configSchemaViolation": "設定スキーマ違反",
@@ -935,8 +935,8 @@
       "exportSuccessMessage": "「{name}」を正常にエクスポートしました！",
       "fileRemovedOnDisk": "「{name}」はディスク上で削除されました。",
       "fileChangedOnDisk": "「{name}」はディスク上で変更されました。再読み込みしますか？",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "名前の変更中にエラーが発生しました : {msg}",
+      "errorWhileMoving": "移動中にエラーが発生しました : {msg}",
       "imageCleanupTitle": "画像ファイルを削除しました",
       "imageCleanupMessage": "未参照のファイルを削除しました：{name}"
     }

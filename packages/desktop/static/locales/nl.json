@@ -903,8 +903,8 @@
     "unsafeFileMessage": "Deze link opent een bestand dat code kan uitvoeren",
     "unsafeFileDetail": "\"{name}\" is een uitvoerbaar bestand of script. Het openen kan programma's op je computer uitvoeren. Ga alleen door als je dit document vertrouwt.",
     "openAnyway": "Toch openen",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "Naam wijzigen mislukt",
+    "moveFailure": "Verplaatsen mislukt"
   },
   "error": {
     "configSchemaViolation": "Configuratieschemaovertreding",
@@ -935,8 +935,8 @@
       "exportSuccessMessage": "\"{name}\" is succesvol geëxporteerd!",
       "fileRemovedOnDisk": "\"{name}\" is verwijderd van schijf.",
       "fileChangedOnDisk": "\"{name}\" is gewijzigd op schijf. Wil je het opnieuw laden?",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "Er is een fout opgetreden bij het hernoemen: {msg}",
+      "errorWhileMoving": "Er is een fout opgetreden bij het verplaatsen: {msg}",
       "imageCleanupTitle": "Afbeeldingsbestand verwijderd",
       "imageCleanupMessage": "Niet-referentieerden bestand verwijderd: {name}"
     }

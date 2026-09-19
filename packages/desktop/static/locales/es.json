@@ -903,8 +903,8 @@
     "unsafeFileMessage": "Este enlace abre un archivo que puede ejecutar código",
     "unsafeFileDetail": "«{name}» es un archivo ejecutable o de script. Abrirlo podría ejecutar programas en tu equipo. Continúa solo si confías en este documento.",
     "openAnyway": "Abrir de todos modos",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "Error al renombrar",
+    "moveFailure": "Error al mover"
   },
   "error": {
     "configSchemaViolation": "Violación del esquema de configuración",
@@ -935,8 +935,8 @@
       "exportSuccessMessage": "¡Se exportó «{name}» correctamente!",
       "fileRemovedOnDisk": "«{name}» ha sido eliminado del disco.",
       "fileChangedOnDisk": "«{name}» ha cambiado en el disco. ¿Deseas recargarlo?",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "Se produjo un error al renombrar: {msg}",
+      "errorWhileMoving": "Se produjo un error al mover: {msg}",
       "imageCleanupTitle": "Archivo de imagen eliminado",
       "imageCleanupMessage": "Archivo sin referencia eliminado: {name}"
     }

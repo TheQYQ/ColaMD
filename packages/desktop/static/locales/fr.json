@@ -903,8 +903,8 @@
     "unsafeFileMessage": "Ce lien ouvre un fichier pouvant exécuter du code",
     "unsafeFileDetail": "« {name} » est un fichier exécutable ou un script. L’ouvrir pourrait exécuter des programmes sur votre ordinateur. Ne continuez que si vous faites confiance à ce document.",
     "openAnyway": "Ouvrir quand même",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "Échec du renommage",
+    "moveFailure": "Échec du déplacement"
   },
   "error": {
     "configSchemaViolation": "Violation du schéma de configuration",
@@ -935,8 +935,8 @@
       "exportSuccessMessage": "« {name} » a été exporté avec succès !",
       "fileRemovedOnDisk": "« {name} » a été supprimé du disque.",
       "fileChangedOnDisk": "« {name} » a été modifié sur le disque. Voulez-vous le recharger ?",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "Une erreur s'est produite lors du renommage : {msg}",
+      "errorWhileMoving": "Une erreur s'est produite lors du déplacement : {msg}",
       "imageCleanupTitle": "Fichier image supprimé",
       "imageCleanupMessage": "Fichier non référencé supprimé : {name}"
     }

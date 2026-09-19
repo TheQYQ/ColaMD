@@ -903,8 +903,8 @@
     "unsafeFileMessage": "이 링크는 코드를 실행할 수 있는 파일을 엽니다",
     "unsafeFileDetail": "\"{name}\"은(는) 실행 파일 또는 스크립트 파일입니다. 열면 컴퓨터에서 프로그램이 실행될 수 있습니다. 이 문서를 신뢰하는 경우에만 계속하세요.",
     "openAnyway": "그래도 열기",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "이름 변경 실패",
+    "moveFailure": "이동 실패"
   },
   "error": {
     "configSchemaViolation": "구성 스키마 위반",
@@ -935,8 +935,8 @@
       "exportSuccessMessage": "“{name}”을(를) 성공적으로 내보냈습니다!",
       "fileRemovedOnDisk": "“{name}”이(가) 디스크에서 삭제되었습니다.",
       "fileChangedOnDisk": "“{name}”이(가) 디스크에서 변경되었습니다. 다시 로드하시겠습니까?",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "이름 변경 중 오류가 발생했습니다: {msg}",
+      "errorWhileMoving": "이동 중 오류가 발생했습니다: {msg}",
       "imageCleanupTitle": "이미지 파일이 삭제됨",
       "imageCleanupMessage": "참조되지 않은 파일이 삭제됨: {name}"
     }
