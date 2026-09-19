@@ -399,6 +399,14 @@
     "type": "boolean",
     "default": false
   },
+  "treePathExcludePatterns": {
+    "description": "General--List of glob patterns of paths the file tree hides.--internal",
+    "type": "array",
+    "items": {
+      "type": "string"
+    },
+    "default": []
+  },
   "searchExclusions": {
     "description": "Searcher--List of glob patterns to exclude from search.--internal",
     "type": "array",

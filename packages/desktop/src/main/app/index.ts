@@ -252,11 +252,10 @@ class App {
     await this._initializeLanguage()
 
     const { _args: args, _openFilesCache } = this
-    const { preferences, editorBufferStore } = this._accessor
+    const { preferences, editorBufferStore, dataCenter } = this._accessor
 
     // Initialize language settings
-    const { startUpAction, defaultDirectoryToOpen, theme, language, imageFolderPath } =
-      preferences.getAll()
+    const { startUpAction, defaultDirectoryToOpen, theme, language } = preferences.getAll()
     const followSystemTheme = preferences.getItem<boolean>('followSystemTheme')
     const lastOpenedFolder = preferences.getItem<string>('lastOpenedFolder')
     const lightModeTheme = preferences.getItem<string>('lightModeTheme')
@@ -268,7 +267,9 @@ class App {
 
     // Grant mutation scope for app-managed locations: the user data dir is
     // always allowed (it is the app's own config/storage area); the configured
-    // image folder when set (renderer may write uploaded images there).
+    // image folder when set (renderer may write uploaded images there). The
+    // folder lives in DataCenter because only its dialog may assign it.
+    const imageFolderPath = dataCenter.getItem('imageFolderPath') as string | undefined
     addAllowedRoot(app.getPath('userData'))
     if (imageFolderPath) addAllowedRoot(imageFolderPath)
 
@@ -322,11 +323,6 @@ class App {
       }
       nativeTheme.themeSource = getNativeThemeSource(nextPreferences)
 
-      // Keep the image-folder write scope in sync with the preference.
-      if (typeof change.imageFolderPath === 'string' && change.imageFolderPath) {
-        addAllowedRoot(change.imageFolderPath)
-      }
-
       // When followSystemTheme is enabled, immediately switch to match system
       if (change.followSystemTheme === true) {
         const systemIsDark = nativeTheme.shouldUseDarkColors
@@ -365,6 +361,13 @@ class App {
         selectTheme(newTheme)
         preferences.setItem('theme', newTheme)
       }
+    })
+
+    // The image folder is stored by DataCenter (only its dialog assigns it) and
+    // it doubles as a write-scope root, so the grant follows this broadcast.
+    onInternalChannel('broadcast-user-data-changed', (userData: Record<string, unknown>) => {
+      const folder = userData.imageFolderPath
+      if (typeof folder === 'string' && folder) addAllowedRoot(folder)
     })
 
     // Listen for system theme changes and auto-switch if enabled

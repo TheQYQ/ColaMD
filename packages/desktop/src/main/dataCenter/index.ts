@@ -145,19 +145,16 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
       win.webContents.send('mt::user-preference', userData)
     })
 
-    ipcMain.on('mt::ask-for-modify-image-folder-path', async(e, imagePath?: string) => {
-      if (!imagePath) {
-        const win = BrowserWindow.fromWebContents(e.sender)
-        if (!win) return
-        const { filePaths } = await dialog.showOpenDialog(win, {
-          properties: ['openDirectory', 'createDirectory']
-        })
-        if (filePaths && filePaths[0]) {
-          imagePath = filePaths[0]
-        }
-      }
-      if (imagePath) {
-        this.setItem('imageFolderPath', imagePath)
+    // The caller may ask for the picker but may not supply the result: this
+    // folder is registered as a write-scope root for the guarded fs channels.
+    ipcMain.on('mt::ask-for-modify-image-folder-path', async(e) => {
+      const win = BrowserWindow.fromWebContents(e.sender)
+      if (!win) return
+      const { filePaths } = await dialog.showOpenDialog(win, {
+        properties: ['openDirectory', 'createDirectory']
+      })
+      if (filePaths && filePaths[0]) {
+        this.setItem('imageFolderPath', filePaths[0])
       }
     })
 

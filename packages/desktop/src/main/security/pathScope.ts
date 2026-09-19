@@ -34,12 +34,12 @@ import { realpath } from 'fs/promises'
 // flows). Channels a compromised renderer can forge directly (e.g.
 // mt::open-file-by-window-id) do NOT grant roots; they only open tabs. This
 // prevents a renderer from widening its own mutation scope by "opening" an
-// arbitrary file. Documented residual risk: the image-folder preference is
-// renderer-settable via the generic set-user-preference IPC channel, so a
-// compromised renderer could in principle widen its write scope by flipping
-// that preference. That is materially smaller than the status quo (write
-// anywhere with NO scope) and is accepted for this batch — future hardening
-// should route folder picks through a dedicated dialog-verified channel.
+// arbitrary file. The image-folder preference used to be the documented hole —
+// it was renderer-settable through the generic preference channel while also
+// granting a root. That is closed: DataCenter assigns the key from its folder
+// dialog only (ignoring any path a caller sends), and `mt::set-user-preference`
+// drops it. What remains is the risk above — mutating files inside a root the
+// user already opened.
 // =============================================================================
 
 export class PathScopeError extends Error {
