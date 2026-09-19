@@ -52,7 +52,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 成本档：XS < 0.5 天，S < 2 天，M < 1 周，L > 1 周。
 
-**完成状态只在本段记一次**：O1 `f7ff937`（分支 `fix/quick-open-file-name-search`）、O2 `cd300ca`、O5 `ab55157`、O11 `a1e761c`、O17 `8f4bb66`（分支 `fix/batch1-small-correctness`）、O20 部分 `1a6098f`（分支 `cleanup/redundant-exports`）。O17 的像素效果待实机确认；O20 余下 29 项死代码在 O13。
+**完成状态只在本段记一次**：O1 `f7ff937`（分支 `fix/quick-open-file-name-search`）、O2 `b0174f6`、O5 `83e69a0`、O11 `a8ad0b0`、O17 `50bc907`（分支 `fix/batch1-small-correctness`）、O20 部分 `cab7cb8`（分支 `cleanup/redundant-exports`）。O17 的像素效果待实机确认；O20 余下 29 项死代码在 O13。
 
 ### A 组·正确性回归（有实锤 bug，优先）
 
@@ -185,7 +185,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 ### F 组·全仓体检新增（2026-09-19，测量方法见 `docs/PROJECT_GUIDE.md` §13）
 
-**O20 · 收敛多余的 export 关键字** — 成本 S，影响 低（可维护性），**部分完成 `1a6098f`（分支 `cleanup/redundant-exports`）**
+**O20 · 收敛多余的 export 关键字** — 成本 S，影响 低（可维护性），**部分完成 `cab7cb8`（分支 `cleanup/redundant-exports`）**
 `knip --workspace packages/desktop` 全量报未使用导出与未引用类型（在 `develop` 上重跑为 48 + 46；早前一次快照记作 47 + 48，差一个 `FileSearcher` 的归属）。实测必须分成三类，处置完全不同：
 
 - **49 处确属"export 多余"**——去掉关键字后符号仍被本文件使用（如 `main/contextMenu/editor/menuItems.ts:76-83` 的 `CUT`…`INSERT_AFTER` 在本文件构建菜单、`shared/types/preferences.ts` 的 13 个字面量类型）。**已全部处理**：21 文件、49 行成对增删。
@@ -206,7 +206,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法：主进程从 `common/filesystem/paths.ts` 取值，经 `mt::boot-info`（`preload/index.ts:36` 已有的同步通道）下发，preload 只转发；删掉内联副本。
 - 验收：一条单测断言 preload 暴露的 `MARKDOWN_INCLUSIONS` 与权威清单逐项相等；全仓 `mdown` 字面量只剩一处。
 
-**O23 · 文件名拼写错误** — 成本 XS，**已完成 `baf1558`**
+**O23 · 文件名拼写错误** — 成本 XS，**已完成 `48e4b1d`**
 `renderer/src/codeMirror/mltiplexMode.ts`（`mltiplex` 应为 `multipl`）。导入方 `codeMirror/index.ts:11` 沿用同一个错名，符号本身 `multiplexMode` 是对的。改法：`git mv` + 改一处 import，与 O20 同批。
 
 **O24 · knip 只看依赖，其余全在盲区** — 成本 S，影响 中（工程门禁）
