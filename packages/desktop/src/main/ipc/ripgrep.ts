@@ -440,12 +440,15 @@ interface RipgrepRequest {
 }
 
 export const registerRipgrepHandlers = (): void => {
+  // Not `typedHandle` yet: the contract can only promise `req: unknown` here, because
+  // the renderer ships a JSON clone of its own options and main reads named fields.
+  // Deciding who owns that payload shape is validation work, tracked as O7②.
+  // eslint-disable-next-line no-restricted-syntax -- payload shape owned by neither side yet
   ipcMain.handle('mt::rg::start', (event, req: RipgrepRequest) => {
     const { searchId, mode, directories, pattern, options } = req
     cleanupAtSenderDestroy(event.sender)
     if (mode === 'files') startFileSearch(event.sender, searchId, directories, options || {})
     else startTextSearch(event.sender, searchId, directories, pattern, options || {})
-    return true
   })
   ipcMain.on('mt::rg::cancel', (_event, searchId: string) => {
     const entry = activeSearches.get(searchId)

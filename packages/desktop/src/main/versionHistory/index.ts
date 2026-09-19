@@ -4,6 +4,7 @@ import path from 'path'
 import writeFileAtomic from 'write-file-atomic'
 import { ipcMain } from 'electron'
 import type { VersionSnapshot } from '@shared/types/ipc'
+import { typedHandle } from '../ipc/typedHandle'
 
 export type { VersionSnapshot }
 
@@ -56,7 +57,7 @@ class VersionHistoryStore {
     // Only `save` is wired to the renderer today — the renderer's version
     // history UI is read-side disabled. The storage methods (getSnapshots,
     // deleteSnapshot, …) remain as a tested public API on this class.
-    ipcMain.handle('mt::version-history:save', (_e, snapshot: VersionSnapshot) => {
+    typedHandle('mt::version-history:save', (_e, snapshot: VersionSnapshot) => {
       return this.saveSnapshot(snapshot)
     })
   }

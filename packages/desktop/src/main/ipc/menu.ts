@@ -4,6 +4,7 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { isDirectory2, isFile2 } from 'common/filesystem'
 import log from 'electron-log'
 import { openFileOrFolder } from '../menu/actions/file'
+import { typedHandle } from './typedHandle'
 
 // Frameless windows render their menu bar in the renderer (menuBar component).
 // These channels back the pieces of that menu the renderer cannot reach on its
@@ -30,7 +31,7 @@ const readRecentlyUsedDocuments = (): string[] => {
 }
 
 export const registerMenuHandlers = (): void => {
-  ipcMain.handle('mt::menu::get-recent-documents', () => readRecentlyUsedDocuments())
+  typedHandle('mt::menu::get-recent-documents', () => readRecentlyUsedDocuments())
 
   ipcMain.on('mt::menu::open-path', (event, pathname: string) => {
     const win = BrowserWindow.fromWebContents(event.sender)

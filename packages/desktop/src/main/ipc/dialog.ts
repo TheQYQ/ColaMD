@@ -1,9 +1,10 @@
-import { dialog, ipcMain, BrowserWindow } from 'electron'
+import { dialog, BrowserWindow } from 'electron'
 import type {
   ElectronOpenDialogOptions,
   ElectronSaveDialogOptions,
   ElectronMessageBoxOptions
 } from '@shared/types/dialog'
+import { typedHandle } from './typedHandle'
 
 /**
  * `registerDialogHandlers` wires the `mt::dialog::*` invoke channels. The
@@ -17,22 +18,22 @@ const windowFromEvent = (sender: Electron.WebContents): BrowserWindow | null =>
   BrowserWindow.fromWebContents(sender)
 
 export const registerDialogHandlers = (): void => {
-  ipcMain.handle('mt::dialog::open', async(event, options: ElectronOpenDialogOptions) => {
+  typedHandle('mt::dialog::open', async(event, options: ElectronOpenDialogOptions) => {
     const win = windowFromEvent(event.sender)
     return dialog.showOpenDialog(win!, options)
   })
 
-  ipcMain.handle('mt::dialog::save', async(event, options: ElectronSaveDialogOptions) => {
+  typedHandle('mt::dialog::save', async(event, options: ElectronSaveDialogOptions) => {
     const win = windowFromEvent(event.sender)
     return dialog.showSaveDialog(win!, options)
   })
 
-  ipcMain.handle('mt::dialog::message-box', async(event, options: ElectronMessageBoxOptions) => {
+  typedHandle('mt::dialog::message-box', async(event, options: ElectronMessageBoxOptions) => {
     const win = windowFromEvent(event.sender)
     return dialog.showMessageBox(win!, options)
   })
 
-  ipcMain.handle('mt::dialog::error-box', (_event, title: string, content: string) => {
+  typedHandle('mt::dialog::error-box', (_event, title: string, content: string) => {
     dialog.showErrorBox(title, content)
   })
 }

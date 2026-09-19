@@ -58,7 +58,7 @@ export interface VersionSnapshot {
 // =================================================================
 
 export interface IpcInvokeChannels {
-  'mt::ask-for-image-path': { args: []; ret: string[] }
+  'mt::ask-for-image-path': { args: []; ret: string }
   'mt::clipboard::guess-file-path': { args: []; ret: string | null }
   'mt::clipboard::read-text': { args: []; ret: string }
   'mt::cmd::exists': { args: [name: string]; ret: boolean }
@@ -72,26 +72,26 @@ export interface IpcInvokeChannels {
   'mt::fs::move': { args: [src: string, dest: string]; ret: void }
   'mt::fs::output-file': { args: [path: string, data: string | Uint8Array]; ret: void }
   'mt::fs::path-exists': { args: [path: string]; ret: boolean }
-  'mt::fs::read-file': { args: [path: string, encoding?: string]; ret: string | Uint8Array }
+  'mt::fs::read-file': { args: [path: string, encoding?: BufferEncoding]; ret: string | Uint8Array }
   'mt::fs::readdir': { args: [path: string]; ret: string[] }
   'mt::fs::unlink': { args: [path: string]; ret: void }
   'mt::fs::write-file': { args: [path: string, data: string | Uint8Array]; ret: void }
-  'mt::i18n::load': { args: [language: string]; ret: Record<string, unknown> }
+  'mt::i18n::load': { args: [language: string]; ret: Record<string, unknown> | null }
   'mt::keybinding-get-keyboard-info': { args: []; ret: KeyboardInfo }
   'mt::keybinding-get-pref-keybindings': {
     args: []
     ret: { defaultKeybindings: Map<string, string>; userKeybindings: Map<string, string> }
   }
-  'mt::keybinding-save-user-keybindings': { args: [bindings: unknown]; ret: boolean }
+  'mt::keybinding-save-user-keybindings': { args: [bindings: Map<string, string>]; ret: boolean }
   'mt::menu::get-recent-documents': { args: []; ret: string[] }
   'mt::paths::is-image': { args: [path: string]; ret: boolean }
-  'mt::rg::start': { args: [req: unknown]; ret: { searchId: string } }
-  'mt::shell::open-external': { args: [url: string]; ret: void }
+  'mt::rg::start': { args: [req: unknown]; ret: void }
+  'mt::shell::open-external': { args: [url: string]; ret: boolean }
   'mt::shell::open-path': { args: [fullPath: string]; ret: string }
   'mt::spellchecker-get-available-dictionaries': { args: []; ret: string[] }
   'mt::spellchecker-get-custom-dictionary-words': { args: []; ret: string[] }
   'mt::spellchecker-remove-word': { args: [word: string]; ret: boolean }
-  'mt::spellchecker-set-enabled': { args: [enabled: boolean]; ret: void }
+  'mt::spellchecker-set-enabled': { args: [enabled: boolean]; ret: boolean }
   'mt::spellchecker-switch-language': { args: [language: string]; ret: void }
   'mt::uploader::upload': { args: [req: unknown]; ret: unknown }
   'mt::version-history:save': {
@@ -113,7 +113,7 @@ export interface IpcInvokeChannels {
   'mt::dialog::error-box': { args: [title: string, content: string]; ret: void }
   // Main derives the BrowserWindow via BrowserWindow.fromWebContents(e.sender);
   // no need to pass windowId. Payload is the editor+project+layout snapshot.
-  'update-buffer-state': { args: [payload: unknown]; ret: void }
+  'update-buffer-state': { args: [payload: unknown]; ret: boolean }
 }
 
 // =================================================================

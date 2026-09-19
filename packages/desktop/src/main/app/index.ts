@@ -25,6 +25,7 @@ import { setLanguage } from '../i18n'
 import { getNativeThemeSource, isDarkApplicationTheme } from './nativeTheme'
 import type Accessor from './accessor'
 import type WindowManager from './windowManager'
+import { typedHandle } from '../ipc/typedHandle'
 
 interface CliArgs {
   _: string[]
@@ -860,14 +861,14 @@ class App {
       win.webContents.send('mt::keybindings-response', Object.fromEntries(keybindings.keys))
     })
 
-    ipcMain.handle('mt::keybinding-get-pref-keybindings', () => {
+    typedHandle('mt::keybinding-get-pref-keybindings', () => {
       const { keybindings } = this._accessor
       const defaultKeybindings = keybindings.getDefaultKeybindings()
       const userKeybindings = keybindings.getUserKeybindings()
       return { defaultKeybindings, userKeybindings }
     })
 
-    ipcMain.handle('mt::keybinding-save-user-keybindings', async(_event, userKeybindings) => {
+    typedHandle('mt::keybinding-save-user-keybindings', async(_event, userKeybindings) => {
       const { keybindings, menu } = this._accessor
       const editorWindows = this._windowManager
         .getWindowsByType(WindowType.EDITOR)
@@ -884,7 +885,7 @@ class App {
       return saved
     })
 
-    ipcMain.handle('mt::fs-trash-item', async(_event, fullPath: string) => {
+    typedHandle('mt::fs-trash-item', async(_event, fullPath: string) => {
       await assertPathInScope(fullPath)
       return shell.trashItem(fullPath)
     })

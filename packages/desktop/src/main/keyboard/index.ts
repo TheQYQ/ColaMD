@@ -1,4 +1,5 @@
 import { shell, ipcMain } from 'electron'
+import { typedHandle } from '../ipc/typedHandle'
 import log from 'electron-log'
 import EventEmitter from 'events'
 import fsPromises from 'fs/promises'
@@ -87,7 +88,7 @@ class KeyboardLayoutMonitor extends EventEmitter {
 export const keyboardLayoutMonitor = new KeyboardLayoutMonitor()
 
 export const registerKeyboardListeners = (): void => {
-  ipcMain.handle('mt::keybinding-get-keyboard-info', async() => {
+  typedHandle('mt::keybinding-get-keyboard-info', async() => {
     return getKeyboardInfo()
   })
   ipcMain.on('mt::keybinding-debug-dump-keyboard-info', async() => {
