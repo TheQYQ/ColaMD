@@ -9,6 +9,7 @@ import {
 } from '@element-plus/icons-vue'
 
 import preferences from '../../../../main/preferences/schema.json'
+import bus from '../../bus'
 import { t } from '../../i18n'
 
 interface PrefCategory {
@@ -56,13 +57,10 @@ declare global {
   }
 }
 
-// Function-attached cache shared between getTranslatedSearchContent and
-// setupLanguageChangeListener.
+// Translated search entries are rebuilt on demand from the schema; the
+// language-change broadcast only tells consumers to rebuild them.
 interface CachedTranslator {
   (): TranslatedSearchEntry[]
-  lastLanguage?: string
-  /** Language-polling fallback timer; cleared before a new one is set. */
-  pollTimer?: ReturnType<typeof setInterval> | null
 }
 
 const preferencesSchema = preferences as unknown as Record<string, PreferenceSchemaEntry>
@@ -248,48 +246,11 @@ const setupLanguageChangeListener = (): void => {
     }
   }
 
-  // Listen for locale changes in the i18n instance
-  if (window.__VUE_I18N__) {
-    try {
-      const g = resolveGlobal(window.__VUE_I18N__)
-      if (g && g.locale && typeof g.locale !== 'string' && g.locale.value !== undefined) {
-        // Use Vue's reactive system to listen for language changes
-      }
-    } catch (e) {
-      console.warn('⚠️ Failed to set up language change listener:', e)
-    }
-  }
-
-  // Add a polling fallback mechanism as a backup. The settings page can be
-  // mounted repeatedly, so tear down the previous timer first (it used to
-  // leak on every mount).
-  if (getTranslatedSearchContent.pollTimer) {
-    clearInterval(getTranslatedSearchContent.pollTimer)
-  }
-  getTranslatedSearchContent.pollTimer = setInterval(() => {
-    try {
-      if (window.__VUE_I18N__) {
-        const g = resolveGlobal(window.__VUE_I18N__)
-        const currentLanguage = resolveLocale(g)
-        if (currentLanguage !== getTranslatedSearchContent.lastLanguage) {
-          getTranslatedSearchContent.lastLanguage = currentLanguage
-          handleLanguageChange()
-        }
-      }
-    } catch {
-      // Ignore errors and continue checking
-    }
-  }, 1000) // Check once per second
-
-  // Record the initial language
-  try {
-    if (window.__VUE_I18N__) {
-      const g = resolveGlobal(window.__VUE_I18N__)
-      getTranslatedSearchContent.lastLanguage = resolveLocale(g)
-    }
-  } catch {
-    getTranslatedSearchContent.lastLanguage = 'en'
-  }
+  // src/i18n already owns the `language-changed` IPC subscription and re-emits
+  // it on the bus after resolving the new locale, so listen there — same as the
+  // command palette, export settings and editor do. This replaces a
+  // once-per-second poll of window.__VUE_I18N__ that ran for the window's life.
+  bus.on('language-changed', handleLanguageChange)
 }
 
 // Initialize the language change listener

@@ -41,7 +41,7 @@
           placeholder="Enter .md file name"
           type="text"
           class="new-input"
-          :style="{ 'margin-left': `${depth * 5 + 15}px` }"
+          :style="{ 'padding-left': `${depth * 6 + 10}px` }"
           @keydown.enter="handleInputEnter"
         >
         <file
@@ -318,7 +318,9 @@ onMounted(() => {
   color: var(--sideBarColor);
   border: 1px solid var(--border-strong);
   background: var(--inputBgColor);
-  width: calc(100% - 45px);
+  /* Indent comes from padding here, so the box can fill the row. */
+  width: 100%;
+  box-sizing: border-box;
   border-radius: 4px;
 }
 .tree-wrapper {
