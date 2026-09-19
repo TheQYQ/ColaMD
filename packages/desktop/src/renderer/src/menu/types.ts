@@ -1,4 +1,4 @@
-export type MenuItemType = 'separator' | 'item' | 'checkbox' | 'radio'
+type MenuItemType = 'separator' | 'item' | 'checkbox' | 'radio'
 
 /**
  * A resolved menu item ready to render. The frameless HTML menu bar resolves

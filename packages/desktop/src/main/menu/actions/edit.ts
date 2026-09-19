@@ -93,7 +93,7 @@ export const editorReplace = (win: Win): void => {
   edit(win, 'replace')
 }
 
-export const edit = (win: Win, type: string): void => {
+const edit = (win: Win, type: string): void => {
   if (win && win.webContents) {
     win.webContents.send('mt::editor-edit-action', type)
   }

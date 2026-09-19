@@ -5,19 +5,19 @@ import { setLanguage } from '../i18n'
 // Finite-value unions where the runtime currently constrains the field.
 // We keep these as plain strings everywhere else to avoid forcing prematurely
 // narrow casts on consumers that read raw values from disk.
-export type EndOfLine = 'default' | 'lf' | 'crlf'
-export type TitleBarStyle = 'custom' | 'native'
-export type StartUpAction = 'restoreAll' | 'lastSession' | 'blank'
-export type TextDirection = 'ltr' | 'rtl'
-export type BulletListMarker = '*' | '+' | '-'
-export type OrderListDelimiter = '.' | ')'
-export type PreferHeadingStyle = 'atx' | 'setext'
-export type FrontmatterType = '-' | ';' | '{' | '+'
-export type SequenceTheme = 'hand' | 'simple'
-export type ImageInsertAction = 'folder' | 'path' | 'upload'
-export type ImageRelativeDirectoryBase = 'file' | 'root'
-export type FileSortBy = 'created' | 'modified' | 'title'
-export type FileSortOrder = 'asc' | 'desc'
+type EndOfLine = 'default' | 'lf' | 'crlf'
+type TitleBarStyle = 'custom' | 'native'
+type StartUpAction = 'restoreAll' | 'lastSession' | 'blank'
+type TextDirection = 'ltr' | 'rtl'
+type BulletListMarker = '*' | '+' | '-'
+type OrderListDelimiter = '.' | ')'
+type PreferHeadingStyle = 'atx' | 'setext'
+type FrontmatterType = '-' | ';' | '{' | '+'
+type SequenceTheme = 'hand' | 'simple'
+type ImageInsertAction = 'folder' | 'path' | 'upload'
+type ImageRelativeDirectoryBase = 'file' | 'root'
+type FileSortBy = 'created' | 'modified' | 'title'
+type FileSortOrder = 'asc' | 'desc'
 
 export interface PreferencesState {
   // ----- General -----

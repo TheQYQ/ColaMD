@@ -17,7 +17,7 @@ const getTempPath = (suffix = ''): string => {
   return path.join(os.tmpdir(), name)
 }
 
-export const getElectronPath = (): string => {
+const getElectronPath = (): string => {
   if (process.platform === 'win32') {
     return path.resolve(path.join('node_modules', '.bin', 'electron.cmd'))
   }
@@ -106,7 +106,7 @@ const installRendererErrorCounter = async(app: ElectronApplication): Promise<voi
   })
 }
 
-export const getRendererErrors = async(
+const getRendererErrors = async(
   app: ElectronApplication
 ): Promise<Array<{ message?: string; name?: string; stack?: string }>> => {
   return await app.evaluate(() => {

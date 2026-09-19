@@ -17,7 +17,7 @@ export interface MarkdownDocument {
   isMixedLineEndings?: boolean
 }
 
-export interface FileHistory {
+interface FileHistory {
   stack: HistoryStackEntry[]
   index: number
   // Tracked by Muya to know which history frame represents the last edit
@@ -28,12 +28,12 @@ export interface FileHistory {
 
 // Individual frames pushed by Muya's history. Shape is opaque to the
 // renderer store; we only key off the id for the saved-snapshot check.
-export interface HistoryStackEntry {
+interface HistoryStackEntry {
   id: number | string
   [key: string]: unknown
 }
 
-export interface FileEncoding {
+interface FileEncoding {
   encoding: string
   isBom: boolean
 }
@@ -45,7 +45,7 @@ export interface FileWordCount {
   all: number
 }
 
-export interface FileSearchMatches {
+interface FileSearchMatches {
   index: number
   matches: unknown[]
   value: string

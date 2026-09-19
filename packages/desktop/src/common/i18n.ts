@@ -1,9 +1,21 @@
 import fs from 'fs'
 import path from 'path'
 
-export type Translations = Record<string, unknown>
+type Translations = Record<string, unknown>
 
-const SUPPORTED_LANGUAGES = ['en', 'zh-CN', 'zh-TW', 'es', 'fr', 'de', 'ja', 'ko', 'nl', 'pt', 'tr'] as const
+const SUPPORTED_LANGUAGES = [
+  'en',
+  'zh-CN',
+  'zh-TW',
+  'es',
+  'fr',
+  'de',
+  'ja',
+  'ko',
+  'nl',
+  'pt',
+  'tr'
+] as const
 
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
 
@@ -97,9 +109,4 @@ function isLanguageSupported(language: string): boolean {
   return (SUPPORTED_LANGUAGES as readonly string[]).includes(language)
 }
 
-export {
-  getTranslation,
-  getSupportedLanguages,
-  isLanguageSupported,
-  loadTranslations
-}
+export { getTranslation, getSupportedLanguages, isLanguageSupported, loadTranslations }

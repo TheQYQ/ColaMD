@@ -920,7 +920,7 @@ export const saveAs = (win: Win): void => {
   }
 }
 
-export const exportPDF = (win: Win): void => {
+const exportPDF = (win: Win): void => {
   if (win && win.webContents) {
     exportFile(win, 'pdf')
   }

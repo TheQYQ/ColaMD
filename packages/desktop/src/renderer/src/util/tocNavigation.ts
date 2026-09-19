@@ -16,7 +16,7 @@
 // or `<h1>`-`<h6>` inside raw-HTML blocks, are NOT direct children of
 // `.mu-container`; an unscoped `querySelectorAll('h1..h6')` would count them and
 // shift every later index, scrolling to the wrong heading.
-export const TOP_LEVEL_HEADINGS_SELECTOR =
+const TOP_LEVEL_HEADINGS_SELECTOR =
   '.mu-container > h1, .mu-container > h2, .mu-container > h3, .mu-container > h4, .mu-container > h5, .mu-container > h6'
 
 export const resolveTocHeadingElement = (

@@ -18,13 +18,13 @@ import type { IUserPreferences } from '@shared/types/preferences'
 const RECENTLY_USED_DOCUMENTS_FILE_NAME = 'recently-used-documents.json'
 const MAX_RECENTLY_USED_DOCUMENTS = 12
 
-export const MenuType = {
+const MenuType = {
   DEFAULT: 0,
   EDITOR: 1,
   SETTINGS: 2
 } as const
 
-export type MenuTypeValue = (typeof MenuType)[keyof typeof MenuType]
+type MenuTypeValue = (typeof MenuType)[keyof typeof MenuType]
 
 interface WindowMenuEntry {
   menu: Menu | null
