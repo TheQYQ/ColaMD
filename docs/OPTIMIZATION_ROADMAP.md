@@ -52,6 +52,8 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 成本档：XS < 0.5 天，S < 2 天，M < 1 周，L > 1 周。
 
+**完成状态只在本段记一次**：O1 `f7ff937`（分支 `fix/quick-open-file-name-search`）、O2 `cd300ca`、O5 `ab55157`、O11 `a1e761c`、O17 `8f4bb66`（分支 `fix/batch1-small-correctness`）。O17 的像素效果待实机确认。
+
 ### A 组·正确性回归（有实锤 bug，优先）
 
 **O1 · 快速打开退化为全文搜索** — 成本 XS，影响 高
@@ -153,11 +155,12 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 ### E 组·梯队复核新增（来自 §7）
 
-**O17 · 侧栏重命名框仍按 45px 图标条算宽** — 成本 XS，影响 低（视觉）
-`store/layout.ts:57` 已注明"legacy 45px collapsed-strip state no longer exists"，但 `components/sideBar/tree.vue:321` 的重命名输入框仍写 `width: calc(100% - 45px)`——那 45px 是给已删除的图标条留的，现在凭空缩一截。
+**O17 · 新建文件行的缩进与兄弟行不一致** — 成本 XS，影响 低（视觉）
+原判"45px 是已删除的侧栏图标条残留"——**误判**。真实成因：`.folder-name`（`treeFolder.vue:6`）与 `.side-bar-file`（`treeFile.vue:6`）都用 `padding-left: depth * 6 + 10` 缩进，唯独新建输入框自己用 `margin-left: depth * 5 + 15`——**属性和公式都不同**，于是必须再配一个魔数宽度去吸收 margin：`tree.vue` 用 `calc(100% - 45px)`（该处 `const depth = 0`，实际只吃 15px），`treeFolder.vue` 用 `70%`。
 
-- 已排除的假阳性：`services/notification/index.css:152` 的 `calc(100% - 45px)` **不是**残留，它属于 `.mt-confirm` 对话框，45px 是紧邻的 `.confirm` 按钮区预留。全仓 `45px` 仅三处命中，第三处即 `layout.ts:57` 的说明注释。
-- 验收：侧栏内重命名输入框铺满可用宽度；在文件树与确认对话框两处各截图留档，避免后人再把 notification 那处当残留清掉。
+- 已排除的假阳性：`services/notification/index.css:152` 的 `calc(100% - 45px)` 与侧栏无关，属于 `.mt-confirm` 对话框，45px 是紧邻 `.confirm` 按钮区的预留。
+- 修法拉齐到行约定：缩进走 `padding-left: depth * 6 + 10`，宽度 `100%` + `box-sizing: border-box`。`.rename` 输入框本就在带 padding 的行内，未动。
+- 验收：`grep -rn "45px" src/renderer` 只剩 notification 与 `layout.ts:57` 注释；`depth * 5 + 15` 全仓归零。**像素效果仍需实机看**（多层 + 折叠文件夹里触发"新建文件"，左边缘与同层文件行对齐、右侧不溢出）——lint/typecheck/单测只能证明没改坏，测不了几何。
 
 **O18 · 最近文档打不开时静默失败** — 成本 S，影响 中
 `open-path` 有两条语义重叠的通道：`mt::shell::open-path`（invoke，`main/ipc/shell.ts:37`，经 `preload/index.ts:73` 暴露为 `shell.openPath`，**有返回值**）与 `mt::menu::open-path`（send，`main/ipc/menu.ts:35`，被 `menu/menus.ts:249` 的最近文档点击使用）。后者 `if (!win || typeof pathname !== 'string' || !pathname) return` 直接静默返回，`openFileOrFolder` 失败也不回传——菜单里留着一条已失效的最近路径，用户点了没有任何反应。
@@ -241,7 +244,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | 一 · 性能专项 M1      | M1.0–M1.4 已合并，1MB 击键管线 P95 < 16ms 达成 | ✅ 成立         | `packages/muya/docs/perf-baseline.md` M1.2b/M1.3 两轮（1MB `edit+flush` p50 2.9 / p95 4.0ms；`setContent` 8489.9→28.2ms）；bench 在 `src/state/__tests__/keystrokePipeline.bench.spec.ts`；节流常量在 `store/bufferedState.ts:18-19`                                                                                                                                                                                                                                                                                                  |
 | 二 · DOCX 导出 M4     | M4.1–M4.3 完成，零新依赖                       | ✅ 成立         | `util/exportDocx.ts` + `util/docx/{document.ts,zip.ts}` 均在；主进程落盘分支见 `docs/PROJECT_GUIDE.md` §9                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | 三 · 图片引用清理     | IMG.1–IMG.3 完成，默认关                       | ✅ 成立         | `util/imageCleanup.ts`、`store/editor.ts:545`（开关判定）+ `:543-596`（5s 延迟 unlink）；⚠️ 但该开关键不在主进程 schema，见 O19                                                                                                                                                                                                                                                                                                                                                                                                       |
-| 四 · 界面 Typora 化   | UI.1–UI.5 全部 ✅                              | ⚠️ **三处失真** | ① UI.1 声称"标题栏去面包屑"，实际 `components/titleBar/index.vue:27-31` 现渲染 `crumb-project` + `crumb-sep` + `filename` 面包屑——被后来的 V1 提交 `2987c99` 覆盖，WORKPLAN 未回写；② UI.3b 声称"去 45px 图标条"，`store/layout.ts:57` 也这么注释了，但 `sideBar/tree.vue:321` 仍按 45px 算宽 → O17；③ UI.4/UI.5 的"亮色 + Dracula 实机走查通过""偏好入口确认可用"属人工验收，无产物不可复核                                                                                                                                          |
+| 四 · 界面 Typora 化   | UI.1–UI.5 全部 ✅                              | ⚠️ **三处失真** | ① UI.1 声称"标题栏去面包屑"，实际 `components/titleBar/index.vue:27-31` 现渲染 `crumb-project` + `crumb-sep` + `filename` 面包屑——被后来的 V1 提交 `2987c99` 覆盖，WORKPLAN 未回写；② UI.3b 声称"去 45px 图标条"，注释与代码一致（`store/layout.ts:57`），但新建输入框留下一套与兄弟行不同的缩进算法 → O17（原判"45px 是图标条残留"是误判）；③ UI.4/UI.5 的"亮色 + Dracula 实机走查通过""偏好入口确认可用"属人工验收，无产物不可复核                                                                                                  |
 | 五 · Phase 1 快赢包   | P1.1–P1.7 完成                                 | ✅ 七条全中     | P1.1 `static/preference.json:56` `footnote: true`；P1.2 `muya/src/inlineRenderer/{rules,lexer}.ts` 有 `inline_math_latex`，桌面 `codeMirror/markdownMathMode.ts:86-87` 一次注册 `markdown-math` 与 `markdown-math-latex`（`:36` 的 early-return 不构成缺陷，两模式同批定义）；P1.3 `codeMirror/index.ts:4` searchcursor；P1.4 `muya/src/clipboard/__tests__/pasteUrlOverSelection.spec.ts` 在；P1.5 `util/sourceModeToc.ts:92` + `sourceCode.vue:309`；P1.6 `statusBar/index.vue:67`；P1.7 `editor.vue:1267` 且 560/849/1626 三处调用 |
 | 六 · Phase 2 语法扩展 | P2.1–P2.5 完成                                 | ✅ 四条成立     | `block/commonMark/blockQuote/alert.ts`、`block/extra/defList/`、`block/extra/toc/`、`inlineRenderer` 的 `inline_comment` 均在；P2.5 自述"核实为已有能力，无需开发"——与 PROJECT_GUIDE §9 的链接点击路径一致。其自述遗留（alert 段落菜单转换入口、def-list Enter 续行）确为遗留，非虚假完成                                                                                                                                                                                                                                             |
 | 七 · Phase 3 导出补全 | P3.1–P3.3 完成                                 | ✅ 三条成立     | `main/utils/pandoc.ts:81` `exportViaPandoc` 接 `main/menu/actions/file.ts:206`；`main/utils/imageExport.ts::exportDocumentImage` 接 `:213`；P3.3 的 PDF 主题路径 `util/pdf.ts:30` `getCssForOptions` + `actions/file.ts:185` `printBackground: true`。其自述"长图与 pandoc 真实转换需实机走查"仍未闭合                                                                                                                                                                                                                                |
