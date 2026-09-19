@@ -904,7 +904,8 @@
     "unsafeFileDetail": "「{name}」是可執行檔或指令碼檔案。開啟它可能會在你的電腦上執行程式。請僅在信任此文件時繼續。",
     "openAnyway": "仍要開啟",
     "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "moveFailure": "Move failure",
+    "openFailure": "開啟失敗"
   },
   "error": {
     "configSchemaViolation": "設定結構違規",

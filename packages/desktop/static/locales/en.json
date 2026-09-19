@@ -904,7 +904,8 @@
     "unsafeFileDetail": "\"{name}\" is an executable or script file. Opening it may run programs on your computer. Only continue if you trust this document.",
     "openAnyway": "Open Anyway",
     "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "moveFailure": "Move failure",
+    "openFailure": "Open failure"
   },
   "error": {
     "configSchemaViolation": "Configuration schema violation",
