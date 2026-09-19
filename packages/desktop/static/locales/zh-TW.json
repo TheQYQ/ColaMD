@@ -903,8 +903,8 @@
     "unsafeFileMessage": "此連結將開啟一個可執行程式碼的檔案",
     "unsafeFileDetail": "「{name}」是可執行檔或指令碼檔案。開啟它可能會在你的電腦上執行程式。請僅在信任此文件時繼續。",
     "openAnyway": "仍要開啟",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "重新命名失敗",
+    "moveFailure": "移動失敗"
   },
   "error": {
     "configSchemaViolation": "設定結構違規",
@@ -935,8 +935,8 @@
       "exportSuccessMessage": "已成功匯出「{name}」！",
       "fileRemovedOnDisk": "「{name}」已在磁碟上被刪除。",
       "fileChangedOnDisk": "「{name}」已在磁碟上發生變更。是否重新載入？",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "重新命名時發生錯誤：{msg}",
+      "errorWhileMoving": "移動時發生錯誤：{msg}",
       "imageCleanupTitle": "圖片檔案已刪除",
       "imageCleanupMessage": "已刪除未引用的檔案：{name}"
     }

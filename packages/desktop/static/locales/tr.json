@@ -903,8 +903,8 @@
     "unsafeFileMessage": "Bu bağlantı, kod çalıştırabilen bir dosyayı açar",
     "unsafeFileDetail": "\"{name}\" bir yürütülebilir veya betik dosyasıdır. Açmak, bilgisayarınızda program çalıştırabilir. Yalnızca bu belgeye güveniyorsanız devam edin.",
     "openAnyway": "Yine de aç",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "Yeniden adlandırma hatası",
+    "moveFailure": "Taşıma hatası"
   },
   "error": {
     "configSchemaViolation": "Yapılandırma şeması ihlali",
@@ -935,8 +935,8 @@
       "exportSuccessMessage": "\"{name}\" başarıyla dışa aktarıldı!",
       "fileRemovedOnDisk": "\"{name}\" diskten kaldırıldı.",
       "fileChangedOnDisk": "\"{name}\" dosyasında değişiklikler var, yeniden yüklensin mi?",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "Yeniden adlandırılırken bir hata oluştu: {msg}",
+      "errorWhileMoving": "Taşınırken bir hata oluştu: {msg}",
       "imageCleanupTitle": "Görüntü dosyası silindi",
       "imageCleanupMessage": "Başvurulmayan dosya silindi: {name}"
     }

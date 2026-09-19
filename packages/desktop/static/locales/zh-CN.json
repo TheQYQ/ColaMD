@@ -903,8 +903,8 @@
     "unsafeFileMessage": "此链接将打开一个可执行代码的文件",
     "unsafeFileDetail": "“{name}”是可执行文件或脚本文件。打开它可能会在你的计算机上运行程序。请仅在信任此文档时继续。",
     "openAnyway": "仍然打开",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "重命名失败",
+    "moveFailure": "移动失败"
   },
   "error": {
     "configSchemaViolation": "配置架构违规",
@@ -935,8 +935,8 @@
       "exportSuccessMessage": "已成功导出“{name}”！",
       "fileRemovedOnDisk": "“{name}” 已在磁盘上被删除。",
       "fileChangedOnDisk": "“{name}” 已在磁盘上发生变更。是否重新加载？",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "重命名时发生错误：{msg}",
+      "errorWhileMoving": "移动时发生错误：{msg}",
       "imageCleanupTitle": "图片文件已删除",
       "imageCleanupMessage": "已删除未引用的文件：{name}"
     }

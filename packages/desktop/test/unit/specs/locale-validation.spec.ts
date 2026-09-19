@@ -74,15 +74,16 @@ const TECHNICAL_TERMS: Array<{ path: string; mustContain: string }> = [
   { path: 'quickInsert.frontMatter.title', mustContain: 'Front Matter' },
   { path: 'quickInsert.mermaid.title', mustContain: 'Mermaid' },
   { path: 'quickInsert.plantUMLChart.title', mustContain: 'PlantUML' },
-  { path: 'quickInsert.vegaChart.title', mustContain: 'Vega' },
+  { path: 'quickInsert.vegaChart.title', mustContain: 'Vega' }
 ]
 
 const LATIN_SCRIPT_LOCALES = ['de', 'es', 'fr', 'nl', 'pt']
 
 const getAvailableLocales = (): string[] =>
-  fs.readdirSync(LOCALES_DIR)
-    .filter(f => f.endsWith('.json') && !f.endsWith('.min.json') && f !== 'en.json')
-    .map(f => f.replace('.json', ''))
+  fs
+    .readdirSync(LOCALES_DIR)
+    .filter((f) => f.endsWith('.json') && !f.endsWith('.min.json') && f !== 'en.json')
+    .map((f) => f.replace('.json', ''))
 
 describe('desktop locale validation', () => {
   const en = loadLocale('en')
@@ -94,27 +95,24 @@ describe('desktop locale validation', () => {
       it(`${lang}.json has the same keys as en.json`, () => {
         const locale = loadLocale(lang)
         const localeKeys = new Set(collectKeys(locale))
-        const missing = enKeys.filter(k => !localeKeys.has(k))
-        const extra = [...localeKeys].filter(k => !enKeys.includes(k))
+        const missing = enKeys.filter((k) => !localeKeys.has(k))
+        const extra = [...localeKeys].filter((k) => !enKeys.includes(k))
 
         const hints: string[] = []
         if (missing.length) {
           hints.push(
             `\n  MISSING (${missing.length}) — copy these from en.json into ${lang}.json and translate:`,
-            ...missing.map(k => `    "${k}": ${JSON.stringify(getByPath(en, k))}`)
+            ...missing.map((k) => `    "${k}": ${JSON.stringify(getByPath(en, k))}`)
           )
         }
         if (extra.length) {
           hints.push(
             `\n  EXTRA (${extra.length}) — remove these from ${lang}.json (not in en.json):`,
-            ...extra.map(k => `    "${k}"`)
+            ...extra.map((k) => `    "${k}"`)
           )
         }
 
-        expect(
-          missing.length + extra.length,
-          hints.join('\n')
-        ).toBe(0)
+        expect(missing.length + extra.length, hints.join('\n')).toBe(0)
       })
     }
   })
@@ -137,22 +135,25 @@ describe('desktop locale validation', () => {
           if (enPh.length > 0 && JSON.stringify(enPh) !== JSON.stringify(localePh)) {
             issues.push(
               `  "${key}":` +
-              `\n    en.json:       ${JSON.stringify(enValue)}` +
-              `\n    ${lang}.json:  ${JSON.stringify(localeValue)}` +
-              `\n    expected placeholders: ${enPh.join(' ')}` +
-              `\n    found placeholders:    ${localePh.join(' ') || '(none)'}` +
-              `\n    → Add the missing {variables} to the ${lang} translation.\n`
+                `\n    en.json:       ${JSON.stringify(enValue)}` +
+                `\n    ${lang}.json:  ${JSON.stringify(localeValue)}` +
+                `\n    expected placeholders: ${enPh.join(' ')}` +
+                `\n    found placeholders:    ${localePh.join(' ') || '(none)'}` +
+                `\n    → Add the missing {variables} to the ${lang} translation.\n`
             )
           }
         }
 
-        expect(issues.length, `\n  Placeholder issues in ${lang}.json:\n\n${issues.join('\n')}`).toBe(0)
+        expect(
+          issues.length,
+          `\n  Placeholder issues in ${lang}.json:\n\n${issues.join('\n')}`
+        ).toBe(0)
       })
     }
   })
 
   describe('technical terms stay in English (Latin-script locales)', () => {
-    const latinLocales = locales.filter(l => LATIN_SCRIPT_LOCALES.includes(l))
+    const latinLocales = locales.filter((l) => LATIN_SCRIPT_LOCALES.includes(l))
     for (const lang of latinLocales) {
       it(`${lang}.json keeps product names untranslated`, () => {
         const locale = loadLocale(lang)
@@ -163,7 +164,7 @@ describe('desktop locale validation', () => {
           if (typeof value === 'string' && !value.includes(mustContain)) {
             violations.push(
               `  "${keyPath}": "${value}"` +
-              `\n    → Must contain "${mustContain}" (it's a product name, not a translatable word).`
+                `\n    → Must contain "${mustContain}" (it's a product name, not a translatable word).`
             )
           }
         }
@@ -176,12 +177,58 @@ describe('desktop locale validation', () => {
     }
   })
 
+  describe('values copied from English (ratchet, may only go down)', () => {
+    // Identical-to-English values are usually deliberate: theme names ("Dracula"),
+    // formats ("EPUB", "LaTeX", "RTF"), "CRLF"/"LF". So this cannot be a clean-room
+    // rule — it is a ratchet. The numbers are per locale and measured; four of them
+    // were real defects (rename/move failure strings sat untranslated in all ten)
+    // and are listed in O27 of docs/OPTIMIZATION_ROADMAP.md.
+    //
+    // If this fails, either translate the value, or — when the English word really
+    // is the correct term — raise that locale's number and say why in the commit
+    // message. Never raise a number to make a mistake disappear.
+    const IDENTICAL_TO_ENGLISH_BASELINE: Record<string, number> = {
+      'zh-CN': 68,
+      'zh-TW': 62,
+      es: 82,
+      fr: 89,
+      de: 83,
+      ja: 68,
+      ko: 66,
+      nl: 109,
+      pt: 80,
+      tr: 92
+    }
+
+    for (const lang of locales) {
+      it(`${lang}.json does not add untranslated values`, () => {
+        const locale = loadLocale(lang)
+        const identical = collectKeys(en).filter((key) => {
+          const value = getByPath(locale, key)
+          return typeof value === 'string' && value !== '' && value === getByPath(en, key)
+        })
+
+        const baseline = IDENTICAL_TO_ENGLISH_BASELINE[lang]
+        expect(
+          identical.length <= baseline,
+          `\n  ${lang}.json now copies ${identical.length} value(s) from en.json; the recorded ` +
+            `figure is ${baseline}. Translate the new ones (mirroring the wording of their\n  ` +
+            'siblings), or raise the number deliberately:\n\n' +
+            identical
+              .slice(0, 12)
+              .map((k) => `    "${k}"`)
+              .join('\n')
+        ).toBe(true)
+      })
+    }
+  })
+
   describe('no empty values', () => {
     for (const lang of locales) {
       it(`${lang}.json has no empty strings`, () => {
         const locale = loadLocale(lang)
         const allKeys = collectKeys(locale)
-        const empty = allKeys.filter(k => {
+        const empty = allKeys.filter((k) => {
           const val = getByPath(locale, k)
           return typeof val === 'string' && val.trim() === ''
         })
@@ -189,7 +236,7 @@ describe('desktop locale validation', () => {
         expect(
           empty.length,
           `\n  Empty values in ${lang}.json (add a translation or copy from en.json):\n` +
-          empty.map(k => `    "${k}": ${JSON.stringify(getByPath(en, k))}`).join('\n')
+            empty.map((k) => `    "${k}": ${JSON.stringify(getByPath(en, k))}`).join('\n')
         ).toBe(0)
       })
     }
