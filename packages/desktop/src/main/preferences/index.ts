@@ -150,9 +150,18 @@ class Preference extends TypedEmitter<PreferenceEvents> {
       return
     }
 
-    Object.keys(settings).forEach((key) => {
-      this.setItem(key, settings[key])
-    })
+    // Storage keeps writing per key, exactly as before; only the notification
+    // is merged. Subscribers fold the payload over getAll(), so looping the
+    // emit woke each of them N times — a { theme, autoSave } pair rebuilt the
+    // native menu twice.
+    const keys = Object.keys(settings)
+    for (const key of keys) {
+      this.store.set(key, settings[key])
+    }
+
+    if (keys.length > 0) {
+      ipcMain.emit('broadcast-preferences-changed', { ...settings })
+    }
   }
 
   getPreferredEol(): 'lf' | 'crlf' {
