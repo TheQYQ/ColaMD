@@ -8,14 +8,14 @@
 
 | 维度         | 实测值                                                                                                                                    | 测量方法                                                                                                                              |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 桌面端规模   | 236 个 ts/vue 文件、40,346 行                                                                                                             | `find packages/desktop/src … \| wc -l`                                                                                                |
+| 桌面端规模   | 236 个 ts/vue 文件、40,346 行                                                                                                             | `find packages/desktop/src … \→ wc -l`                                                                                                |
 | 引擎规模     | 220 个 ts 文件（不含 `__tests__`）、48,485 行                                                                                             | 同上，`packages/muya/src`                                                                                                             |
 | 最大文件     | `store/editor.ts` 2347、`editor.vue` 2321、`prefComponents/image/…/uploader/index.vue` 1193、`commands/index.ts` 766、`menu/menus.ts` 724 | `wc -l`                                                                                                                               |
 | runtime 依赖 | 桌面 35 个，**零引用 0 个**                                                                                                               | 纯 Node 扫描 477 个源/配置/测试文件；`node node_modules/knip/bin/knip.js --workspace packages/desktop --dependencies` 退出 0 且无输出 |
 | IPC 面       | 主进程 41 `ipcMain.handle` + 64 `ipcMain.on`、约 94 `webContents.send`；契约 41 invoke + 82 send + 2 sync + 69 内部                       | `grep -c` 于 `src/main`，契约计数于 `src/shared/types/ipc.ts`                                                                         |
-| 测试面       | 5 套共 422 个 spec 文件：desktop 单测 61、desktop E2E 63、muya 单测 223、muya 一致性 4、muya E2E 71                                       | `find … -name '*.spec.ts' \| wc -l`                                                                                                   |
+| 测试面       | 5 套共 422 个 spec 文件：desktop 单测 61、desktop E2E 63、muya 单测 223、muya 一致性 4、muya E2E 71                                       | `find … -name '*.spec.ts' \→ wc -l`                                                                                                   |
 | 一致性       | CommonMark 87.7% / GFM 86.3%，钉死在 `test/spec/expected-failures.json`（78 + 90 条）                                                     | `packages/muya/CLAUDE.md`、`test/spec/conformance.md`                                                                                 |
-| CI           | 13 个工作流；仅 `test.yml` 有双平台腿（ubuntu + windows）                                                                                 | `ls .github/workflows \| wc -l` + 逐文件读                                                                                            |
+| CI           | 13 个工作流；仅 `test.yml` 有双平台腿（ubuntu + windows）                                                                                 | `ls .github/workflows \→ wc -l` + 逐文件读                                                                                            |
 | 击键热路径   | 1MB `edit+flush` p50 2.9 / p95 4.0 ms（验收线 P95 < 16 ms，余量 4×）                                                                      | `packages/muya/docs/perf-baseline.md`（M1.2b 轮，2026-09-12）                                                                         |
 | 入口路径     | 1MB `setContent` p50 28.2 ms（基线 8,489.9 ms，−99.7%），增长已线性                                                                       | 同上（M1.3 轮，PR #27）                                                                                                               |
 | 注释密度     | `TODO`/`FIXME` 52 处                                                                                                                      | `grep -rn` 于两包 `src`                                                                                                               |
@@ -52,7 +52,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 成本档：XS < 0.5 天，S < 2 天，M < 1 周，L > 1 周。
 
-**完成状态只在本段记一次**：O1 `f7ff937`（分支 `fix/quick-open-file-name-search`）、O2 `cd300ca`、O5 `ab55157`、O11 `a1e761c`、O17 `8f4bb66`（分支 `fix/batch1-small-correctness`）。O17 的像素效果待实机确认。
+**完成状态只在本段记一次**：O1 `f7ff937`（分支 `fix/quick-open-file-name-search`）、O2 `cd300ca`、O5 `ab55157`、O11 `a1e761c`、O17 `8f4bb66`（分支 `fix/batch1-small-correctness`）、O20 部分 `1a6098f`（分支 `cleanup/redundant-exports`）。O17 的像素效果待实机确认；O20 余下 29 项死代码在 O13。
 
 ### A 组·正确性回归（有实锤 bug，优先）
 
@@ -135,6 +135,14 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 本会话实测到的：具名 `FileSearcher` 在 O1 修完前无人用；`main/dataCenter/index.ts:83,93` 广播 `broadcast-web-image-added/-removed` 全仓零监听且不在契约；`main/app/index.ts:465-485` 整段注释掉的截图/快捷键捕获；`renderer/src/assets/symbolIcon/index.js`（`main.ts:5` 引入、无模板引用）；`commands/descriptions.ts:169-175` 三个无对应命令的 id；`components/titleBar/index.vue:99` 按 `.js` 引入实为 `.ts`。
 
 - 注意：`409188a` 已经证明"审计扫出来的死代码可能是承重垫片"。本组每条**必须先确认它是被引用还是被契约/动态字符串引用**（`listenBoth()` 的 bus 名、菜单 id、`getMenuItemById` 都可能跨文件引用），再删。
+- **O20 移交的 29 个精确清单**（判据：无任何 import ＋去掉 `export` 后 eslint 立刻报 unused-vars，即连本文件都不引用）：
+  - `common/i18n.ts` — 类型 `SupportedLanguage`、函数 `getSupportedLanguages`、`isLanguageSupported`（后两者只在文件末尾的 `export {}` 列表里出现，全仓无人 import）
+  - `main/contextMenu/editor/menuItems.ts` — `CUT`、`COPY`、`PASTE`、`COPY_AS_RICH`、`COPY_AS_HTML`、`PASTE_AS_PLAIN_TEXT`、`INSERT_BEFORE`、`INSERT_AFTER`
+  - `renderer/src/contextMenu/tabs/menuItems.ts` — `CLOSE_THIS`、`CLOSE_OTHERS`、`CLOSE_SAVED`、`CLOSE_ALL`、`RENAME`、`COPY_PATH`、`SHOW_IN_FOLDER`
+  - `shared/types/ipc.ts` — `InvokeArgs`、`InvokeRet`、`SyncArgs`、`SyncRet`、`SendArgs`、`EventArgs`
+  - `shared/types/files.ts` — `ITab`；`shared/types/preferences.ts` — `LayoutState`；`renderer/src/components/sideBar/types.ts` — `TabDescriptor`；`main/menu/index.ts` — `getMenuItemById`；`renderer/src/util/themeMarket.ts` — `sanitizeThemeText`
+  - develop 就已报 unused-vars 的两个（**基线存量，不是 O20 造成**）：`main/versionHistory/index.ts` 的 `SnapshotLabel`、`renderer/src/codeMirror/index.ts` 的 `getModeFromName`
+- 这 29 项删除后，`pnpm lint` 的 `no-unused-vars` 应从 5 降到 3、knip 的两段计数同步下降——**这是删除动作的验收线**，不能靠重新加 `export` 让告警闭嘴。
 
 **O14 · CI 矩阵与交付平台不匹配** — 成本 M
 `build.yml`/`release.yml` 跑 5 平台腿但**不跑任何测试**；`e2e.yml`/`lint.yml`/`muya-*.yml` 只 ubuntu；`test.yml` 双平台。产品交付三平台，Windows/macOS 专属缺陷（路径分隔符、原生模块、`screencapture` 之类）在 CI 里不可见。
@@ -177,12 +185,14 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 ### F 组·全仓体检新增（2026-09-19，测量方法见 `docs/PROJECT_GUIDE.md` §13）
 
-**O20 · 收敛多余的 export 关键字** — 成本 S，影响 低（可维护性）
-`knip --workspace packages/desktop` 全量报 **47 个未被其他文件 import 的导出** + **48 个未被引用的导出类型**。典型：`contextMenu/sideBar/menuItems.ts:76-83` 的 `NEW_FILE`/`NEW_DIRECTORY`/`DELETE`…、`contextMenu/tabs/menuItems.ts:71-77` 的 `CLOSE_THIS`…`SHOW_IN_FOLDER`、`main/contextMenu/editor/menuItems.ts:76-83`，以及 `shared/types/ipc.ts` 的 6 个 `*Args`/`*Ret` 辅助类型。
+**O20 · 收敛多余的 export 关键字** — 成本 S，影响 低（可维护性），**部分完成 `1a6098f`（分支 `cleanup/redundant-exports`）**
+`knip --workspace packages/desktop` 全量报未使用导出与未引用类型（在 `develop` 上重跑为 48 + 46；早前一次快照记作 47 + 48，差一个 `FileSearcher` 的归属）。实测必须分成三类，处置完全不同：
 
-- **这不是死代码**：它们都在本文件内被使用（用于构建菜单项），只是不该带 `export`。误删会重演 `409188a` 的坑。
-- 改法：只去掉 `export` 关键字，不动实现；按目录分批（contextMenu 一批、shared/types 一批、util 一批）。
-- 验收：`knip` 两个计数归零或落到显式忽略清单；`pnpm test` 与 `pnpm typecheck` 全绿即行为未变的证据。
+- **49 处确属"export 多余"**——去掉关键字后符号仍被本文件使用（如 `main/contextMenu/editor/menuItems.ts:76-83` 的 `CUT`…`INSERT_AFTER` 在本文件构建菜单、`shared/types/preferences.ts` 的 13 个字面量类型）。**已全部处理**：21 文件、49 行成对增删。
+- **29 处是"去掉 export 后连本文件都不引用"的真死代码**——原样保留并移交 O13（清单见该条）。它们不是多余关键字，是实现本身没人用。
+- **1 处跨分支冲突**：`node/ripgrepSearcher.ts:144` 的 `FileSearcher`，quick-open 分支要 `import { FileSearcher }`，在此去掉 `export` 会在合并时编译失败，已显式排除。
+- 验收与证据：`pnpm typecheck` 0 错、`pnpm test` 61 文件 / 863 通过 + 1 跳过（与 develop 基线逐项相同）、`pnpm lint` **149 warnings / 0 errors 不变**。等价性用"develop 版与提交版各剥 `export`、抹平空白后逐字符比对"证明；2 个文件（`common/filesystem/paths.ts`、`common/i18n.ts`）另带钩子 prettier 对 develop 既有超长行的重排，token 内容一致。
+- **教训**：warning 数"变好"和"变差"一样要解释。本轮曾因还原脚本给 2 个 develop 里本就无 `export` 的符号（`versionHistory` 的 `SnapshotLabel`、`codeMirror/index.ts` 的 `getModeFromName`）加上 `export` 而短暂得到 147，等于悄悄扩大模块 API 并掩盖 2 条既有告警，已在提交前撤回。
 
 **O21 · 桌面包补长度与复杂度门** — 成本 S，影响 中（防止再长回上帝文件）
 实测 >100 行的函数：`store/project.ts:82`（setup，313）、`editor.vue:1864`（onMounted，279）、`main/app/index.ts:247`（ready，240）、`editor.vue:1358`（handleExport，158）、`main/ipc/ripgrep.ts:181`（158）、`util/theme.ts:61`（addThemeStyle，153）、`lazyMarkdownPipeline.ts:66`（144）、引擎 `blockTransforms.ts:20`（297）。引擎侧有 `max-lines-per-function ≤ 200` 与 `complexity ≤ 20` 警告，**桌面包一条都没有**，所以这些永不报修。
