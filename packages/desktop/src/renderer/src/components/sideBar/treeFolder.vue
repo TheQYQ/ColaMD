@@ -45,7 +45,7 @@
         v-model="createName"
         type="text"
         class="new-input"
-        :style="{ 'margin-left': `${depth * 5 + 15}px` }"
+        :style="{ 'padding-left': `${depth * 6 + 10}px` }"
         @keydown.enter="handleInputEnter"
       >
       <File
@@ -180,7 +180,14 @@ input.rename {
   color: var(--sideBarColor);
   border: 1px solid var(--themeColor);
   background: var(--inputBgColor);
-  width: 70%;
   border-radius: 4px;
+}
+/* Indent comes from padding here, so the box can fill the row. */
+.new-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+input.rename {
+  width: 70%;
 }
 </style>
