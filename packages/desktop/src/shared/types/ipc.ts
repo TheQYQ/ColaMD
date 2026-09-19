@@ -352,7 +352,6 @@ export interface BootInfo {
     ripgrepBinary: string
   }
   isUpdatable: boolean
-  MARKDOWN_INCLUSIONS: string[]
 }
 
 // =================================================================

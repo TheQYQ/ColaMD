@@ -2,7 +2,6 @@ import path from 'path'
 import fs from 'fs-extra'
 import { app, ipcMain } from 'electron'
 import { rgPath } from '@vscode/ripgrep'
-import { MARKDOWN_INCLUSIONS } from 'common/filesystem/paths'
 import type { BootInfo } from '@shared/types/ipc'
 
 const ENV_ALLOWLIST = [
@@ -66,8 +65,7 @@ const buildBootInfo = (): BootInfo => ({
     userData: app.getPath('userData'),
     cwd: process.cwd()
   },
-  isUpdatable: computeIsUpdatable(),
-  MARKDOWN_INCLUSIONS: [...MARKDOWN_INCLUSIONS]
+  isUpdatable: computeIsUpdatable()
 })
 
 let cached: BootInfo | null = null

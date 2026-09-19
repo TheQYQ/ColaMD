@@ -9,6 +9,7 @@
 import { contextBridge, ipcRenderer, webFrame, webUtils } from 'electron'
 import type { IpcRendererEvent } from 'electron'
 import pathe from 'pathe'
+import { MARKDOWN_INCLUSIONS, hasMarkdownExtension } from 'common/filesystem/markdownExtensions'
 
 import type {
   IpcInvokeChannels,
@@ -109,29 +110,12 @@ const windowControlAPI = {
     send('mt::menu::popup', template as never, position)
 }
 
-// These three predicates are pure path-string operations: implementing them
-// in the preload keeps them synchronous so existing call sites like
-// `tabs.find(t => isSamePathSync(t.pathname, ...))` keep returning the right
-// item instead of a truthy Promise.
-const MARKDOWN_EXTENSIONS = [
-  'markdown',
-  'mdown',
-  'mkdn',
-  'md',
-  'mkd',
-  'mdwn',
-  'mdtxt',
-  'mdtext',
-  'mdx',
-  'text',
-  'txt'
-] as const
-
-const hasMarkdownExtension = (filename: string): boolean => {
-  if (!filename || typeof filename !== 'string') return false
-  return MARKDOWN_EXTENSIONS.some((ext) => filename.toLowerCase().endsWith(`.${ext}`))
-}
-
+// These predicates are pure path-string operations: implementing them locally
+// (or in a dependency-free shared module) keeps them synchronous so existing
+// call sites like `tabs.find(t => isSamePathSync(t.pathname, ...))` keep
+// returning the right item instead of a truthy Promise. The markdown extension
+// list comes from `common/filesystem/markdownExtensions`, which imports nothing,
+// so main / preload / renderer share one definition instead of racing copies.
 const isChildOfDirectory = (dir: string, child: string): boolean => {
   if (!dir || !child) return false
   const relative = pathe.relative(dir, child)
@@ -175,7 +159,7 @@ const fileUtilsAPI = {
   isSamePathSync,
   // isImageFile needs an fs.statSync; keep it async via IPC.
   isImageFile: (p: string) => invoke('mt::paths::is-image', p),
-  MARKDOWN_INCLUSIONS: bootInfo?.MARKDOWN_INCLUSIONS || []
+  MARKDOWN_INCLUSIONS
 }
 
 const commandAPI = {
