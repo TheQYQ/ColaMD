@@ -198,6 +198,7 @@ import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { usePreferencesStore } from '@/store/preferences'
 import type { PreferencesState } from '@/store/preferences'
+import type { StartUpAction } from '@shared/types/preferences'
 import Compound from '../common/compound/index.vue'
 import Range from '../common/range/index.vue'
 import CurSelect from '../common/select/index.vue'
@@ -235,7 +236,7 @@ const {
   treeShowHiddenFiles
 } = storeToRefs(preferenceStore)
 
-const startUpAction = computed<string>({
+const startUpAction = computed<StartUpAction>({
   get: () => preferenceStore.startUpAction,
   set: (value: string) => {
     const type = 'startUpAction'

@@ -10,6 +10,9 @@ import { TypedEmitter } from '@shared/types/typedEmitter'
 import type { IUserPreferences } from '@shared/types/preferences'
 import schema from './schema.json'
 
+// Retired value, accepted only to be rewritten by the 0.18.6 migration below.
+const LEGACY_LAST_STATE = 'lastState'
+
 const PREFERENCES_FILE_NAME = 'preferences'
 
 // The Preference class extends EventEmitter but does not currently emit any
@@ -46,7 +49,7 @@ class Preference extends TypedEmitter<PreferenceEvents> {
       name: PREFERENCES_FILE_NAME,
       migrations: {
         '0.18.6': (store) => {
-          if (store.get('startUpAction') === 'lastState') {
+          if ((store.get('startUpAction') as string) === LEGACY_LAST_STATE) {
             store.set('startUpAction', 'openLastFolder')
           }
         }
