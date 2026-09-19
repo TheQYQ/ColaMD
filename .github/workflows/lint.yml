@@ -24,6 +24,9 @@ jobs:
       - name: Run ESLint
         run: pnpm lint
 
+      - name: Check markdown links
+        run: python3 scripts/check-md-links.py
+
       - name: Check dependency hygiene (knip)
         run: pnpm knip
 

@@ -7,10 +7,13 @@ import re
 import sys
 import unicodedata
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOCS_I18N_DIR = os.path.join(ROOT, 'docs', 'i18n')
+DOCS_DIR = os.path.join(ROOT, 'docs')
 FILES = ['README.md'] + sorted(
-    os.path.join('docs', 'i18n', f) for f in os.listdir(os.path.join(ROOT, 'docs', 'i18n'))
-    if f.endswith('.md'))
+    os.path.join('docs', 'i18n', f) for f in os.listdir(DOCS_I18N_DIR)
+    if f.endswith('.md')) + sorted(
+    os.path.join('docs', f) for f in os.listdir(DOCS_DIR) if f.endswith('.md'))
 
 
 def github_slug(text):
