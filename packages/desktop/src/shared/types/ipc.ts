@@ -157,6 +157,8 @@ export interface IpcSendChannels {
   'mt::menu::popup': [template: MenuTemplate, position?: MenuPopupPosition]
   // Frameless HTML menu bar (menuBar component) support channels.
   'mt::menu::native-clipboard': [op: 'cut' | 'copy' | 'paste']
+  // Opens in ColaMD (a recently-used entry), unlike `mt::shell::open-path`,
+  // which asks the OS handler and answers with an error string.
   'mt::menu::open-path': [pathname: string]
   'mt::unsaved-dialog-response': [result: { needSave: boolean } | null]
   'mt::open-file': [filePath: string, options?: unknown]

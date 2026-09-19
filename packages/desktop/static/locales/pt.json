@@ -904,7 +904,8 @@
     "unsafeFileDetail": "\"{name}\" é um arquivo executável ou de script. Abri-lo pode executar programas no seu computador. Continue apenas se confiar neste documento.",
     "openAnyway": "Abrir mesmo assim",
     "renameFailure": "Falha ao renomear",
-    "moveFailure": "Falha ao mover"
+    "moveFailure": "Falha ao mover",
+    "openFailure": "Falha ao abrir"
   },
   "error": {
     "configSchemaViolation": "Violação do esquema de configuração",

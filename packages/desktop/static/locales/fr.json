@@ -904,7 +904,8 @@
     "unsafeFileDetail": "« {name} » est un fichier exécutable ou un script. L’ouvrir pourrait exécuter des programmes sur votre ordinateur. Ne continuez que si vous faites confiance à ce document.",
     "openAnyway": "Ouvrir quand même",
     "renameFailure": "Échec du renommage",
-    "moveFailure": "Échec du déplacement"
+    "moveFailure": "Échec du déplacement",
+    "openFailure": "Échec d’ouverture"
   },
   "error": {
     "configSchemaViolation": "Violation du schéma de configuration",

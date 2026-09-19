@@ -881,7 +881,16 @@ export const openFileOrFolder = (win: BrowserWindow, pathname: string): void => 
     addAllowedRoot(resolvedPath)
     ipcMain.emit('app-open-directory-by-id', win.id, resolvedPath)
   } else {
-    console.error(`[ERROR] Cannot open unknown file: "${resolvedPath}"`)
+    // A recently-used entry can only go missing between building the menu and
+    // clicking it, because the readers filter paths that no longer exist. Log
+    // and tell the window — rename and move failures already report through
+    // this channel, so a dead click here was the only silent case.
+    log.error(`Cannot open unknown file: "${resolvedPath}"`)
+    win.webContents.send('mt::show-notification', {
+      title: t('dialog.openFailure'),
+      type: 'error',
+      message: t('store.editor.fileRemovedOnDisk', { name: path.basename(resolvedPath) })
+    })
   }
 }
 

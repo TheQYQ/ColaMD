@@ -904,7 +904,8 @@
     "unsafeFileDetail": "\"{name}\" is een uitvoerbaar bestand of script. Het openen kan programma's op je computer uitvoeren. Ga alleen door als je dit document vertrouwt.",
     "openAnyway": "Toch openen",
     "renameFailure": "Naam wijzigen mislukt",
-    "moveFailure": "Verplaatsen mislukt"
+    "moveFailure": "Verplaatsen mislukt",
+    "openFailure": "Fout bij openen"
   },
   "error": {
     "configSchemaViolation": "Configuratieschemaovertreding",

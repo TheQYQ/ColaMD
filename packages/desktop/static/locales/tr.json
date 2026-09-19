@@ -904,7 +904,8 @@
     "unsafeFileDetail": "\"{name}\" bir yürütülebilir veya betik dosyasıdır. Açmak, bilgisayarınızda program çalıştırabilir. Yalnızca bu belgeye güveniyorsanız devam edin.",
     "openAnyway": "Yine de aç",
     "renameFailure": "Yeniden adlandırma hatası",
-    "moveFailure": "Taşıma hatası"
+    "moveFailure": "Taşıma hatası",
+    "openFailure": "Açma hatası"
   },
   "error": {
     "configSchemaViolation": "Yapılandırma şeması ihlali",

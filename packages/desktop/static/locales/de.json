@@ -904,7 +904,8 @@
     "unsafeFileDetail": "„{name}“ ist eine ausführbare Datei oder ein Skript. Das Öffnen kann Programme auf Ihrem Computer ausführen. Fahren Sie nur fort, wenn Sie diesem Dokument vertrauen.",
     "openAnyway": "Trotzdem öffnen",
     "renameFailure": "Umbenennen fehlgeschlagen",
-    "moveFailure": "Verschieben fehlgeschlagen"
+    "moveFailure": "Verschieben fehlgeschlagen",
+    "openFailure": "Fehler beim Öffnen"
   },
   "error": {
     "configSchemaViolation": "Konfigurationsschema-Verletzung",
