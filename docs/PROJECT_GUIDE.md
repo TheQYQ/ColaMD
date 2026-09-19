@@ -287,7 +287,7 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 ### 11.1 代码缺陷（本文写作时实测）
 
-下列十条是初次实测时的原样描述，**其中 1/2/3/6/7 已修掉，4 与 8 的原判定被撤回或降级**——每条的当前状态、所在分支与提交见 `OPTIMIZATION_ROADMAP.md` §3 的"完成状态"行；本节保留的是缺陷成因描述，不再逐条维护状态。
+下列十条是初次实测时的原样描述，**其中 1/2/3/6/7 已修掉，4 与 8 的原判定被撤回或降级，10 的写域自扩一半已闭、读域一半仍开**——每条的当前状态、所在分支与提交见 `OPTIMIZATION_ROADMAP.md` §3 的"完成状态"行；本节保留的是缺陷成因描述，不再逐条维护状态。
 
 1. **快速打开 `Ctrl+P` 退化为全文搜索。** `commands/quickOpen.ts:3` 写的是默认导入 `import FileSearcher from '@/node/ripgrepSearcher'`，而该文件的默认导出是 `RipgrepDirectorySearcher`（`node/ripgrepSearcher.ts:129-142`，`mode: 'text'`）；真正做文件名检索的具名 `export class FileSearcher`（`:144`，`mode: 'files'`）反而无人引用。根因是清理提交 `409188a` 删掉了 `node/fileSearcher.ts` —— 那 4 行只是 `export { FileSearcher as default } from './ripgrepSearcher'` 的转发垫片，被误判为死代码。**修法：改成具名导入。**
 2. **拼写检查可用性判断恒真**：`main/spellchecker/index.ts:46` 写成 `if (!win.webContents.session.isSpellCheckerEnabled)`，缺 `()`，"不可用"告警永不触发。
@@ -298,7 +298,7 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 7. **重复实现**：最近文档读取逻辑在 `main/menu/index.ts:18-19` 与 `main/ipc/menu.ts:14-15` 各一份，含两份 `MAX_RECENTLY_USED_DOCUMENTS`。
 8. **同步 IPC 回落**：`preload/index.ts:141-157` 的 `isSamePathSync` 在 `a.length === b.length` 且 `a !== b` 但大小写相同（同一文件系统上的异体写法）时才回落 `sendSync`。**原判定"热路径每次比较都阻塞"不成立**：六个调用方（`sideBar/treeFile.vue:57`、`store/editor.ts:276,389,690,1425,1848`）全是点文件、保存、关标签这类离散用户动作，不在击键路径上，O10 已因此撤回。
 9. **遗留但无害**：`main/app/index.ts:465-485` 整段注释掉的截图/快捷键捕获；`renderer/src/assets/symbolIcon/index.js`（MarkText 图标雪碧图，被 `main.ts:5` 引入却无模板引用）；`commands/descriptions.ts:169-175` 列了 3 个没有对应命令的 id；`components/titleBar/index.vue:99` 按 `.js` 引入实为 `.ts` 的文件。
-10. **安全面残余**：`main/security/pathScope.ts:36-42` 记录在案——`imageFolderPath` 可由渲染端经 `mt::set-user-preference` 设置，等于被攻破的渲染进程能自行扩写可写范围。
+10. **安全面残余（①已闭，②仍开）**：`main/security/pathScope.ts` 曾把"`imageFolderPath` 可由渲染端经 `mt::set-user-preference` 设置"记为已接受风险——该键同时是**写域授权根**，等于让被攻破的渲染进程自选可写范围，而且它在 preferences 与 dataCenter 各有一份、授权读的是可伪造的那份。分支 `security/image-folder-dialog-only`（`6007c0a`）收为单一归属：只有对话框能赋值、泛型偏好通道丢弃该键、授权改随 user-data 广播。**仍未解决**的是读通道不设限（`pathScope.ts:27-31`），前置与量法见 O7②。
 
 ### 11.2 README / CLAUDE.md 与代码不符
 

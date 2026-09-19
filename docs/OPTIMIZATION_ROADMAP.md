@@ -54,29 +54,30 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 **完成状态只在本段记一次**（下列提交都在各自的本地分支上，**`develop` 尚未合并任何一个**，验收后按分支逐个合）：
 
-| 分支                                   | 提交                                       | 覆盖项                   |
-| -------------------------------------- | ------------------------------------------ | ------------------------ |
-| `fix/quick-open-file-name-search`      | `1ef4822`                                  | O1                       |
-| `fix/batch1-small-correctness`         | `b0174f6`、`83e69a0`、`a8ad0b0`、`50bc907` | O2、O5、O11、O17         |
-| `fix/startup-action-enum`              | `6b771d5`                                  | O3                       |
-| `chore/tooling-gates`                  | `9f47e41`、`5b338e2`                       | O16                      |
-| `cleanup/redundant-exports`            | `cab7cb8`、`48e4b1d`                       | O20（49 处 export）、O23 |
-| `perf/preference-broadcast`            | `2d56e65`、`300d03c`                       | O9                       |
-| `fix/markdown-extension-single-source` | `76e5a92`                                  | O22                      |
-| `fix/open-failure-visible`             | `7bbedb5`、`f3e13be`                       | O18、O4                  |
-| `refactor/typed-ipc-handle`            | `cba0836`                                  | O8①                      |
+| 分支                                   | 提交                                       | 覆盖项                     |
+| -------------------------------------- | ------------------------------------------ | -------------------------- |
+| `fix/quick-open-file-name-search`      | `1ef4822`                                  | O1                         |
+| `fix/batch1-small-correctness`         | `b0174f6`、`83e69a0`、`a8ad0b0`、`50bc907` | O2、O5、O11、O17           |
+| `fix/startup-action-enum`              | `6b771d5`                                  | O3                         |
+| `chore/tooling-gates`                  | `9f47e41`、`5b338e2`                       | O16                        |
+| `cleanup/redundant-exports`            | `cab7cb8`、`48e4b1d`                       | O20（49 处 export）、O23   |
+| `perf/preference-broadcast`            | `2d56e65`、`300d03c`                       | O9                         |
+| `fix/markdown-extension-single-source` | `76e5a92`                                  | O22                        |
+| `fix/open-failure-visible`             | `7bbedb5`、`f3e13be`                       | O18、O4                    |
+| `refactor/typed-ipc-handle`            | `cba0836`                                  | O8①                        |
+| `security/image-folder-dialog-only`    | `6007c0a`、`b4776b9`                       | O7①、O19（主进程可见部分） |
 
 遗留事项：O17 的像素效果待实机确认；O20 余下 29 项真死代码移交 O13；O6 与 O10 经复核分别降级与撤下，理由见各自条目。
 
-**合并顺序（用 `git merge-tree` 对 9 个分支两两预演，非破坏性）**：只有 3 对会冲突，其余两两可自动合。
+**合并顺序（用 `git merge-tree` 对 10 个分支两两预演，非破坏性）**：4 对会冲突，其余两两可自动合。
 
-| 冲突对                                                                      | 冲突文件                                           | 处置                                                                                                |
-| --------------------------------------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `fix/startup-action-enum`（O3）×`cleanup/redundant-exports`（O20）          | `renderer/src/store/preferences.ts`                | 已知项：O3 先合，O20 再跑一次 export 清扫（预演结论 typecheck 0 错、868+1 通过）                    |
-| `fix/batch1-small-correctness`（O2/O5/O11/O17）×`cleanup/redundant-exports` | `main/menu/index.ts`、`main/spellchecker/index.ts` | batch1 先合：O5 换了 reader、O2 补了 `()`，O20 只删 `export` 关键字，保留前者内容再套后者意图       |
-| `fix/batch1-small-correctness`×`refactor/typed-ipc-handle`（O8）            | `main/ipc/menu.ts`                                 | batch1 先合：O5 把 reader 抽进 `utils/recentDocuments`，O8 只是把该文件的 handle 换成 `typedHandle` |
+| 冲突对                                                                      | 冲突文件                                           | 处置                                                                                                                                                                                                              |
+| --------------------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fix/startup-action-enum`（O3）×`cleanup/redundant-exports`（O20）          | `renderer/src/store/preferences.ts`                | 已知项：O3 先合，O20 再跑一次 export 清扫（预演结论 typecheck 0 错、868+1 通过）                                                                                                                                  |
+| `fix/batch1-small-correctness`（O2/O5/O11/O17）×`cleanup/redundant-exports` | `main/menu/index.ts`、`main/spellchecker/index.ts` | batch1 先合：O5 换了 reader、O2 补了 `()`，O20 只删 `export` 关键字，保留前者内容再套后者意图                                                                                                                     |
+| `fix/batch1-small-correctness`×`refactor/typed-ipc-handle`（O8）            | `main/ipc/menu.ts`                                 | batch1 先合：O5 把 reader 抽进 `utils/recentDocuments`，O8 只是把该文件的 handle 换成 `typedHandle`。`security/image-folder-dialog-only`（O7①，叠加在 O8 分支上）与 batch1 同处冲突、同一处解，先解 O8 即顺带解决 |
 
-`fix/open-failure-visible`（O4/O18）与 `perf/preference-broadcast`（O9）同改 `main/preferences/index.ts` 与 `main/dataCenter/index.ts` 但**区块不相干，可自动合**；九分支一次性合入 `develop` 后的完整门禁预演留到第二批收尾再做，届时把结果并回本段。
+`fix/open-failure-visible`（O4/O18）与 `perf/preference-broadcast`（O9）同改 `main/preferences/index.ts` 与 `main/dataCenter/index.ts` 但**区块不相干，可自动合**；十个分支一次性合入 `develop` 后的完整门禁预演留到第二批收尾再做，届时把结果并回本段。
 
 ### A 组·正确性回归（有实锤 bug，优先）
 
@@ -123,12 +124,13 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 附带的真修（已做）：`IMAGE_PATH` 上方那句过期 `// TODO: rebuild cache` 换成了说明"为什么不淘汰"的注释，避免下一轮审计再把它读成缺陷。
 - 完成状态：**降级后不排 PR**（原 PR-10 从第二批移除）。
 
-**O7 · 路径域只护写不护读，且渲染端可自扩** — 成本 M，影响 高（信任边界）
-`security/pathScope.ts:28-31` 明示读通道不设限；`:36-42` 记录 `imageFolderPath` 由渲染端经 `mt::set-user-preference` 设置，等于被攻破的渲染进程能自己扩大可写范围。
+**O7 · 路径域只护写不护读，且渲染端可自扩** — 成本 M，影响 高（信任边界）— **①已完成 `6007c0a`（分支 `security/image-folder-dialog-only`，基于 PR-6）**
+`security/pathScope.ts:28-31` 明示读通道不设限；`:36-42` 曾把"`imageFolderPath` 可由渲染端经 `mt::set-user-preference` 设置"记为**已接受的残余风险**——即被攻破的渲染进程能自己扩大可写范围。
 
-- 改法（两步，按序）：① `imageFolderPath` 改为**只能经原生目录选择对话框**赋值（选完即入域），拒收自由字符串；② 读通道按"当前文档所在目录 + 已打开项目根 + 工作区目录"三源收敛，超域读走原生授权对话框。**②的范围自 O8 并入一项**：先定 `mt::rg::start`/`mt::uploader::upload` 的载荷归属（渲染端发的是自家选项的 JSON 克隆、主进程按命名字段读，形状无人认领），归属定了才能谈校验，也才能把那两处 `ipcMain.handle` 豁免收进 `typedHandle`。
-- 验收：新增契约测试枚举所有 `mt::fs::*`，断言每条都有域归属；E2E 断言给 `imageFolderPath` 塞 `/etc` 被拒。
-- 回滚点：偏好迁移需保留旧值读取一次以兼容，标 `deprecated` 后分版删除。
+- ①（已实施）：这个键此前**有两个家**——dataCenter（对话框写、有 schema）与 preferences（渲染端可写、**没有任何 schema 声明**），而 `addAllowedRoot` 读的正是可伪造的那一份。现在收敛为单一家：`mt::set-user-preference` 丢弃该键并告警，选择器忽略调用方传来的路径（只能"要一次对话框"），授权跟随 user-data 广播，`IUserPreferences` 不再声明它，设置页那行输入框改成只读文本（可写但必被主进程丢弃的输入框比没有输入框更糟）。
+- ①的验收（已达成，含"先红后绿"）：把两处防护临时还原并重新构建后，新增的 E2E 用例**确实失败**（伪造的 `imageFolderPath` 让越界写盘成功）；换回本分支实现后 `security-path-scope.spec.ts` 7 例全绿；另有 3 条单测钉住两处拒收与"取消对话框保持原值"。**待实机看**：设置页图片目录那行的观感（与 O17 同一类：lint/typecheck/单测证明不了几何）。
+- ②（**未做，且量出的前置比原计划多一步**）：读通道要收域，绕不开"对话框选中的路径没有归属"这一事实——`mt::dialog::open` 不 `addAllowedRoot`（全仓 8 个授权点里没有它，见 `app/index.ts:272,373,575-576` 与 `menu/actions/file.ts:693,878,881`），而渲染端确实用 `fileUtils.readFile` 读用户在对话框里选中的主题/设置文件（`prefComponents/theme/index.vue:216`、`components/exportSettings/index.vue:542`）。所以 ② 的第一步应是"**选择器结果即授权**"（与 `openFileOrFolder:878` 同形），之后才能谈读通道的三源收敛。顺带把 O8 留下的两处载荷归属（`mt::rg::start`、`mt::uploader::upload`）一并定 owned-by。
+- 回滚点：偏好迁移需保留旧值读取一次以兼容，标 `deprecated` 后分版删除（①未做迁移：老 settings 文件里残留的 `imageFolderPath` 现在只是没人读的冗余键，不再被授权，因此不影响行为）。
 
 **O8 · IPC 契约是单向的** — 成本 M，影响 中 — **① handle 半边已完成 `cba0836`（分支 `refactor/typed-ipc-handle`）**
 `shared/types/ipc.ts` 约束了 preload 侧（泛型 `keyof`），但主进程 `ipcMain.handle('mt::fs::write-file', …)` 与契约**无类型关联**（Electron 给 listener 的是 `any[]`）。改载荷结构编译期发现不了——这正是 `docs/PROJECT_GUIDE.md` §11.1-1 那类回归能活下来的土壤。
@@ -229,11 +231,12 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法（已实施）：`openFileOrFolder` 的兜底分支由 `console.error` 改为经 `mt::show-notification` 报给该窗口（与 rename/move 失败同模式）；契约里给两条通道各补一行语义注释，免得下一轮又被判成重复。文案只新增标题 `dialog.openFailure`（11 份语言，值已各自翻译），消息复用既有的 `store.editor.fileRemovedOnDisk`，不新增长句翻译。
 - 验收（更正后）：原写的"E2E 点一条指向已删除文件的最近文档"**做不到**——reader 会把它过滤掉，构造不出该菜单项。改为单测 `open-path-failure-notification.spec.ts` 锁通知载荷，并用既有 `rename-failure-notification.spec.ts`（E2E，本地真窗口通过）证明这条通道真能渲染出通知条。
 
-**O19 · 11 个偏好键只活在渲染端** — 成本 S，影响 中
-实测：渲染端 store 默认态有 87 个键，其中 **10 个既不在主进程 `main/preferences/schema.json`、也不在 `static/preference.json`**——`installedThemes`、`typewriter`、`focus`、`sourceCode`、`imageFolderPath`、`deleteUnreferencedImages`、`webImages`、`cloudImages`、`currentUploader`、`cliScript`；另有 `treePathExcludePatterns` 只在 static 有、schema 没有。其中 `webImages`/`cloudImages` 由 dataCenter 单独存，属设计如此；但 **`imageFolderPath` 连 schema 声明都没有，正是 O7 那个扩权漏洞的根因**——`mt::set-user-preference` 对它没有任何类型或路径校验。
+**O19 · 偏好键的三处声明** — 成本 S，影响 中 — **主进程可见部分已完成 `b4776b9`（分支 `security/image-folder-dialog-only`）**
 
-- 改法：把确实需要主进程可见的键（`imageFolderPath`、`deleteUnreferencedImages`、`treePathExcludePatterns`）补进 schema 并加约束；纯渲染端瞬态键（`typewriter`/`focus`/`sourceCode`/`installedThemes`）单列一处声明，写明刻意不进 schema，别让下一轮审计再猜一遍。
-- 验收：一个小脚本比对三处键集，差集必须落在显式白名单内；`imageFolderPath` 有 schema 约束后，O7① 的对话框收敛才算拿到类型层背书。
+> **测量更正**：本条原写"11 个偏好键只活在渲染端"。逐项定位后，那 10 个键**没有一个需要进 preferences schema**：`webImages`/`cloudImages`/`currentUploader`/`cliScript` 是 dataCenter 的键（`dataCenter/schema.json` 已声明 imageFolderPath 一族），`installedThemes`/`typewriter`/`focus`/`sourceCode`/`deleteUnreferencedImages` 是渲染端自己的状态（编辑模式注释即写明 not persisted），`imageFolderPath` 由 O7① 归给 dataCenter。真正的 schema 缺口只有 **1 个**：`treePathExcludePatterns`——它在 `static/preference.json` 有默认值、且被主进程读（`filesystem/watcher.ts:59`、`app/windowManager.ts:469`），却是 77 个键里唯一没有 schema 条目的。
+
+- 改法（已实施）：给 `schema.json` 补 `treePathExcludePatterns`（`array` of `string`，默认 `[]`，紧邻同族的 `searchExclusions` 写法）；新增 `test/unit/specs/preference-schema-parity.spec.ts` 把两处可机检的声明双向钉住，并检查"出厂默认值被自家 enum 允许"。
+- 剩余（**本条不修，需单独决策**）：`schema.json` 与 `static/preference.json` 有 **6 处默认值不一致**——`fileSortBy`（`modified` vs `created`）、`codeBlockLineNumbers`（true vs false）、`wrapCodeBlocks`（true vs false）、`followSystemTheme`（false vs true），另 2 个键 schema 无 `default`。谁生效取决于用户是否已有 settings 文件（`preferences/index.ts:88-93` 用 static 值补齐/落盘），所以挑一侧改是**行为变更**，不在声明齐套这一步里做。parity spec 因此刻意不比对 default。
 
 ### F 组·全仓体检新增（2026-09-19，测量方法见 `docs/PROJECT_GUIDE.md` §13）
 
@@ -305,16 +308,16 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 **第二批 · 一到两周（信任边界与响应性，需要设计确认）**
 
-| PR        | 内容                                                                                                                  | 依赖                         |
-| --------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| PR-6      | O8 契约双向化 —— **①已实现** `cba0836`；②载荷归属并入 O7②                                                             | 建议 PR-1 先合，作为回归样例 |
-| PR-7      | O7① `imageFolderPath` 收进原生对话框 + O19 补 schema 声明（同族：先声明再约束）                                       | O8 的通道类型收窄先落        |
-| PR-8      | O7② 读通道路径域                                                                                                      | PR-7                         |
-| PR-9      | O9 批量写入合并广播 —— **已实现** `perf/preference-broadcast`（`2d56e65`+`300d03c`）                                  | 无                           |
-| PR-22     | O22 Markdown 扩展名单一来源 —— **已实现** `fix/markdown-extension-single-source`（`76e5a92`）                         | 无                           |
-| PR-11     | O4 空实现取舍（实现或摘入口）+ O18 最近文档失败可见性 —— **已实现** `fix/open-failure-visible`（`7bbedb5`+`f3e13be`） | 无                           |
-| ~~PR-10~~ | ~~O6 图片补全缓存失效 + 有界~~ — **取消**：缓存本来就会重建（见 O6 前提更正），残余是有界性且未测出量级               | —                            |
-| ~~PR-12~~ | ~~O10 `isSamePathSync` 去阻塞~~ — **取消**：不在热路径（见 O10 撤下说明）                                             | —                            |
+| PR        | 内容                                                                                                                                   | 依赖                         |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| PR-6      | O8 契约双向化 —— **①已实现** `cba0836`；②载荷归属并入 O7②                                                                              | 建议 PR-1 先合，作为回归样例 |
+| PR-7      | O7① 图片目录只经对话框 + O19 主进程可见键进 schema —— **已实现** `security/image-folder-dialog-only`（`6007c0a`+`b4776b9`，基于 PR-6） | PR-6（叠加其上）             |
+| PR-8      | O7② 读通道路径域 —— **未做**；前置改为"选择器结果即授权"（见 O7②），并顺带定 `mt::rg::start`/`mt::uploader::upload` 的载荷归属         | PR-7                         |
+| PR-9      | O9 批量写入合并广播 —— **已实现** `perf/preference-broadcast`（`2d56e65`+`300d03c`）                                                   | 无                           |
+| PR-22     | O22 Markdown 扩展名单一来源 —— **已实现** `fix/markdown-extension-single-source`（`76e5a92`）                                          | 无                           |
+| PR-11     | O4 空实现取舍（实现或摘入口）+ O18 最近文档失败可见性 —— **已实现** `fix/open-failure-visible`（`7bbedb5`+`f3e13be`）                  | 无                           |
+| ~~PR-10~~ | ~~O6 图片补全缓存失效 + 有界~~ — **取消**：缓存本来就会重建（见 O6 前提更正），残余是有界性且未测出量级                                | —                            |
+| ~~PR-12~~ | ~~O10 `isSamePathSync` 去阻塞~~ — **取消**：不在热路径（见 O10 撤下说明）                                                              | —                            |
 
 > 第二批补记：O22 原本漏在 §4 表外（只在 §3 有条目），本轮以 PR-22 编号补进表内。O6/O10 从第二批移出，移出理由写在各自条目的更正段里，不另开"已删除"章节。
 
