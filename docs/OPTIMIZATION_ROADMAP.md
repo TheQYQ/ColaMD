@@ -6,19 +6,19 @@
 
 ## 1. 实测基线面板
 
-| 维度         | 实测值                                                                                                                                    | 测量方法                                                                                                                              |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 桌面端规模   | 236 个 ts/vue 文件、40,346 行                                                                                                             | `find packages/desktop/src … \→ wc -l`                                                                                                |
-| 引擎规模     | 220 个 ts 文件（不含 `__tests__`）、48,485 行                                                                                             | 同上，`packages/muya/src`                                                                                                             |
-| 最大文件     | `store/editor.ts` 2347、`editor.vue` 2321、`prefComponents/image/…/uploader/index.vue` 1193、`commands/index.ts` 766、`menu/menus.ts` 724 | `wc -l`                                                                                                                               |
-| runtime 依赖 | 桌面 35 个，**零引用 0 个**                                                                                                               | 纯 Node 扫描 477 个源/配置/测试文件；`node node_modules/knip/bin/knip.js --workspace packages/desktop --dependencies` 退出 0 且无输出 |
-| IPC 面       | 主进程 41 `ipcMain.handle` + 64 `ipcMain.on`、约 94 `webContents.send`；契约 41 invoke + 82 send + 2 sync + 69 内部                       | `grep -c` 于 `src/main`，契约计数于 `src/shared/types/ipc.ts`                                                                         |
-| 测试面       | 5 套共 422 个 spec 文件：desktop 单测 61、desktop E2E 63、muya 单测 223、muya 一致性 4、muya E2E 71                                       | `find … -name '*.spec.ts' \→ wc -l`                                                                                                   |
-| 一致性       | CommonMark 87.7% / GFM 86.3%，钉死在 `test/spec/expected-failures.json`（78 + 90 条）                                                     | `packages/muya/CLAUDE.md`、`test/spec/conformance.md`                                                                                 |
-| CI           | 13 个工作流；仅 `test.yml` 有双平台腿（ubuntu + windows）                                                                                 | `ls .github/workflows \→ wc -l` + 逐文件读                                                                                            |
-| 击键热路径   | 1MB `edit+flush` p50 2.9 / p95 4.0 ms（验收线 P95 < 16 ms，余量 4×）                                                                      | `packages/muya/docs/perf-baseline.md`（M1.2b 轮，2026-09-12）                                                                         |
-| 入口路径     | 1MB `setContent` p50 28.2 ms（基线 8,489.9 ms，−99.7%），增长已线性                                                                       | 同上（M1.3 轮，PR #27）                                                                                                               |
-| 注释密度     | `TODO`/`FIXME` 52 处                                                                                                                      | `grep -rn` 于两包 `src`                                                                                                               |
+| 维度         | 实测值                                                                                                                                                                                            | 测量方法                                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 桌面端规模   | 240 个 ts/vue 文件、40,472 行（2026-09-20 合入 12 分支后重测；原为 236 / 40,346，新增的是 `markdownExtensions.ts`、`typedHandle.ts`、`recentDocuments.ts`、`startupPlan.ts`）                     | `find packages/desktop/src … \→ wc -l`                                                                                                |
+| 引擎规模     | 220 个 ts 文件（不含 `__tests__`）、48,485 行                                                                                                                                                     | 同上，`packages/muya/src`                                                                                                             |
+| 最大文件     | `store/editor.ts` 2347、`editor.vue` 2321、`prefComponents/image/…/uploader/index.vue` 1193、`commands/index.ts` 766、`menu/menus.ts` 724                                                         | `wc -l`                                                                                                                               |
+| runtime 依赖 | 桌面 35 个，**零引用 0 个**                                                                                                                                                                       | 纯 Node 扫描 477 个源/配置/测试文件；`node node_modules/knip/bin/knip.js --workspace packages/desktop --dependencies` 退出 0 且无输出 |
+| IPC 面       | 主进程 41 个 invoke 通道：**40 个走 `typedHandle`、1 个（`mt::rg::start`）带理由豁免**；64 `ipcMain.on`、95 处 `webContents.send`；契约 41 invoke + 82 send + 2 sync + 69 内部（2026-09-20 重测） | `grep -c` 于 `src/main`，契约计数于 `src/shared/types/ipc.ts`                                                                         |
+| 测试面       | 5 套共 432 个 spec 文件：desktop 单测 **71**（原 61，本轮新增 10 份）、desktop E2E 63、muya 单测 223、muya 一致性 4、muya E2E 71（2026-09-20 重测）                                               | `find … -name '*.spec.ts' \→ wc -l`                                                                                                   |
+| 一致性       | CommonMark 87.7% / GFM 86.3%，钉死在 `test/spec/expected-failures.json`（78 + 90 条）                                                                                                             | `packages/muya/CLAUDE.md`、`test/spec/conformance.md`                                                                                 |
+| CI           | 13 个工作流；仅 `test.yml` 有双平台腿（ubuntu + windows）                                                                                                                                         | `ls .github/workflows \→ wc -l` + 逐文件读                                                                                            |
+| 击键热路径   | 1MB `edit+flush` p50 2.9 / p95 4.0 ms（验收线 P95 < 16 ms，余量 4×）                                                                                                                              | `packages/muya/docs/perf-baseline.md`（M1.2b 轮，2026-09-12）                                                                         |
+| 入口路径     | 1MB `setContent` p50 28.2 ms（基线 8,489.9 ms，−99.7%），增长已线性                                                                                                                               | 同上（M1.3 轮，PR #27）                                                                                                               |
+| 注释密度     | `TODO`/`FIXME` 52 处                                                                                                                                                                              | `grep -rn` 于两包 `src`                                                                                                               |
 
 复现基线：
 
@@ -52,7 +52,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 成本档：XS < 0.5 天，S < 2 天，M < 1 周，L > 1 周。
 
-**完成状态只在本段记一次**（下列提交都在各自的本地分支上，**`develop` 尚未合并任何一个**，验收后按分支逐个合）：
+**完成状态只在本段记一次**（**2026-09-20 已按 §4.1 的顺序逐个合入 `develop`**，共 12 个 merge commit；下表保留每个 PR 的分支与原始提交，便于追溯。分支本身仍留在本地未删）：
 
 | 分支                                   | 提交                                       | 覆盖项                     |
 | -------------------------------------- | ------------------------------------------ | -------------------------- |
@@ -69,7 +69,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | `chore/prettier-eol`                   | `ff7d72b`                                  | O26                        |
 | `fix/locale-failure-strings`           | `962baa0`                                  | O27                        |
 
-遗留事项：O17 的像素效果待实机确认；O20 余下 29 项真死代码移交 O13；O6 与 O10 经复核分别降级与撤下，理由见各自条目。**三条"要人拍板、不该顺手清"的**：O26 的 prettier↔ESLint 冲突（要不要全仓 `--write` + 废一条 stylistic 规则）、O19 剩余的 6 处默认值不一致（挑哪边）、O7② 的读通道域与两处载荷归属。
+遗留事项：**全部 12 个分支已合入 `develop`，但仍未 push**（远端还没有这些提交）。等实机确认的：O17 侧栏新建行、O7① 设置页图片目录那行（改成了只读文本）。等拍板的三条：O26 的 prettier↔ESLint 冲突、O19 剩余的 6 处默认值不一致、O7② 的读通道域与两处载荷归属。O20 余下 29 项真死代码移交 O13；O6 与 O10 经复核分别降级与撤下，理由见各自条目。
 
 **合并顺序（用 `git merge-tree` 对 12 个分支两两预演，非破坏性）**：5 对会冲突，其余两两可自动合。
 
@@ -352,21 +352,22 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 按上表依赖顺序把 12 个分支逐个 `git merge --no-ff` 进 `develop`，然后在合入后的树上跑全套门禁（不是分支上的自测）。
 
-| 门禁                                                | 结果                                                                                                           |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `pnpm check`（lint + typecheck）                    | 退出 **0**；149 warnings / **0 errors**，与 develop 基线逐项相同                                               |
-| desktop 单测                                        | 退出 **0**；71 文件、904 通过 + 1 跳过                                                                         |
-| muya 单测                                           | 退出 **0**；222 文件、1495 通过                                                                                |
-| `pnpm build`                                        | 退出 0                                                                                                         |
-| muya 一致性 `pnpm --filter @muyajs/core test:spec`  | **3 条失败**（`test/spec/roundTrip.spec.ts`：`common / Links`、`common / Lists` 等 md→state→md 不收敛）        |
-| desktop E2E `pnpm test:e2e`（Windows 本机，真窗口） | 首轮 222 通过 / **5 失败** / 4 跳过；修掉自己那条后复跑 **223 通过 / 4 失败** / 4 跳过（7.4 分钟），退出码仍 1 |
+| 门禁                                                | 结果                                                                                                                                                                                                                 |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm check`（lint + typecheck）                    | 退出 **0**；149 warnings / **0 errors**，与 develop 基线逐项相同                                                                                                                                                     |
+| desktop 单测                                        | 退出 **0**；71 文件、904 通过 + 1 跳过                                                                                                                                                                               |
+| muya 单测                                           | 退出 **0**；222 文件、1495 通过                                                                                                                                                                                      |
+| `pnpm build`                                        | 退出 0                                                                                                                                                                                                               |
+| muya 一致性 `pnpm --filter @muyajs/core test:spec`  | **3 条失败**（`test/spec/roundTrip.spec.ts`：`common / Links`、`common / Lists` 等 md→state→md 不收敛）                                                                                                              |
+| desktop E2E `pnpm test:e2e`（Windows 本机，真窗口） | 预演首轮 222 通过 / **5 失败**；修掉自己那条后 223 / **4 失败**；逐个合入后的 `develop`（与预演树逐字节相同）222 / **5 失败** —— 多出的那条是 `tab-switch-cursor.spec.ts`，单独连跑 3 次全绿，属全量并发下的偶发超时 |
 
-**5 条 E2E 失败的归属**（逐条查过，不是一锅端）：
+**E2E 红的逐条归属**（三次全量的红不是一锅端）：
 
 - 1 条 `rename-failure-notification.spec.ts` 是**本轮自己造成的**：它把标题硬编码成英文 `'Rename failure'`，O27 把该键译成中文后，在非英文机器上必红（本机为 `重命名失败`）。已在 `fix/locale-failure-strings`（`064fa0c`）改为"接受任一份已发布译名"，重建后该 spec 通过。**分支上当时没发现**：O27 只跑了 lint/typecheck/单测，没跑 E2E。
 - 4 条 `all-blocks-roundtrip.spec.ts`（item 39 字节稳定性）**实测为既有**，不是推断：同一 spec 单独跑，在预演分支上是 4 失败 / 1 通过（19.5s），切到 `develop` 重新构建后跑**同样是 4 失败 / 1 通过**（19.7s）。所以合入集与它无关；根因没查（差异集中在 front matter 行的行尾空格，而 `git show HEAD:.../data/all-blocks.md` 显示入库版本行尾**没有**空格，说明"期望值"来自运行时而不是仓库文件），留给 O14/E2E 稳定性一起处理。**本地无法判断 ubuntu CI 腿的红绿**（`e2e.yml:50` 只在 ubuntu 跑），这一点不下结论。
 - 同理，muya 一致性的 3 条 `roundTrip.spec.ts` 失败也归为既有：`git diff develop..预演分支 -- packages/muya` 是 **0 个文件**，输入与代码完全一致；`muya-spec.yml:31` 在 ubuntu 上跑同一命令，本地同样无法核对那条腿。
-- 这 7 条既有红给 O14 补了反向证据：**"E2E 只有 ubuntu 一条腿"不只意味着漏掉 Windows 缺陷，也意味着 Windows 上跑全量能跑出 4 条本地红**（`all-blocks-roundtrip`）——加腿之前得先把这类平台相关断言理顺，否则新腿一上线就是红的。
+- **另有 1 条是偶发**：`develop` 上全量跑到 `tab-switch-cursor.spec.ts:153`（每标签撤销栈恢复）红了一次，而同一棵树在预演分支的两次全量里都是绿的，单独连跑 3 次全绿（8.5/8.7/8.7s）。所以它是全量并发下的时序抖动，不是回归；但也说明**这套 E2E 本身有抖动率**——O14 加腿、或把 E2E 当回归门禁之前，得先给这类用例加重试或拆并发，否则红绿不可解释。
+- 合计：**7 条既有红 + 1 条偶发**给 O14 补了反向证据——**"E2E 只有 ubuntu 一条腿"不只意味着漏掉 Windows 缺陷，也意味着 Windows 上跑全量就会见到 4 条本地红 + 偶发抖动**，加腿之前得先把断言与抖动理顺，否则新腿一上线就是红的。
 
 **只有真合才暴露的两件事**（两两 `merge-tree` 预演看不见）：
 
@@ -375,7 +376,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 其余冲突：O20 × batch1（`main/menu/index.ts`、`main/spellchecker/index.ts`）、O20 × O3（`store/preferences.ts`）、O8 × batch1（`main/ipc/menu.ts`）——按 §3 预写的处置逐条落地，无一处需要改变任何分支的原意。`security/image-folder-dialog-only`（O7①）因叠加在 O8 之上，自动合入无冲突。
 
-**预演结论**：12 个分支可以合入 `develop`，合入后 lint/typecheck/两包单测全绿；剩下的红全部有归属（1 条已修、7 条为既有平台/引擎状态）。实跑顺序（每步 `--no-ff`，冲突都在预期文件上）：
+**预演结论**：12 个分支可以合入 `develop`，合入后 lint/typecheck/两包单测全绿；剩下的红全部有归属（1 条已修、7 条为既有平台/引擎状态）。**已照此逐个合入 `develop`（12 个 merge commit）**，合完核对过：`git diff --stat tmp/integration-rehearsal develop -- . ':(exclude)docs'` 输出为空，即最终 develop 与被门禁的预演树在 docs 之外逐字节相同。实跑顺序（每步 `--no-ff`，冲突都在预期文件上）：
 `fix/quick-open-file-name-search` → `fix/batch1-small-correctness` → `chore/tooling-gates` → `fix/startup-action-enum` → `chore/prettier-eol` → `fix/locale-failure-strings` → `fix/open-failure-visible`（locale 冲突）→ `fix/markdown-extension-single-source` → `perf/preference-broadcast` → `cleanup/redundant-exports`（3 文件冲突）→ `refactor/typed-ipc-handle`（`main/ipc/menu.ts` 冲突）→ `security/image-folder-dialog-only`（无冲突）。
 
 ## 5. 明确不做
