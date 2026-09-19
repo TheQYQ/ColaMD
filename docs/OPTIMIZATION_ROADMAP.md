@@ -225,13 +225,13 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 **第一批 · 一天内可全清（零架构风险，先把实锤 bug 和噪音关掉）**
 
-| PR   | 内容                                                                                                    | 依赖       |
-| ---- | ------------------------------------------------------------------------------------------------------- | ---------- |
-| PR-1 | O1 quickOpen 具名导入 + 一条文件名检索 E2E（同时补上 `FileSearcher` 的引用，让 O13 的"孤儿"判定变干净） | 无         |
-| PR-2 | O2 + O5 + O11 + O17（四个 XS 小修，一 PR 收）                                                           | 无         |
-| PR-3 | O3 `startUpAction` 值域下沉 `shared/types`，并去掉宽松的 `string` 兜底类型                              | 无         |
-| PR-4 | O16 工具小坏点（`check-md-links.py` 接入 CI、eslint 插件显式化、`dev-app-update.yml`）                  | 无         |
-| PR-5 | 本文与 `docs/PROJECT_GUIDE.md` 的口径校准；旧两份文档顶部加指引                                         | 前四条合完 |
+| PR   | 内容                                                                                                                  | 依赖       |
+| ---- | --------------------------------------------------------------------------------------------------------------------- | ---------- |
+| PR-1 | O1 quickOpen 具名导入 + 单测锁住发出的检索载荷（`mode: files`）；顺带让 `FileSearcher` 有引用，O13 的"孤儿"判定变干净 | 无         |
+| PR-2 | O2 + O5 + O11 + O17（四个 XS 小修，一 PR 收）                                                                         | 无         |
+| PR-3 | O3 `startUpAction` 值域下沉 `shared/types`，并去掉宽松的 `string` 兜底类型                                            | 无         |
+| PR-4 | O16 工具小坏点（`check-md-links.py` 接入 CI、eslint 插件显式化、`dev-app-update.yml`）                                | 无         |
+| PR-5 | 本文与 `docs/PROJECT_GUIDE.md` 的口径校准；旧两份文档顶部加指引                                                       | 前四条合完 |
 
 **第二批 · 一到两周（信任边界与响应性，需要设计确认）**
 
@@ -263,6 +263,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 2. 每个 PR 的验收命令写进描述，并至少包含 `pnpm lint && pnpm typecheck`；触及渲染进程的加 `pnpm test:unit`，触及跨进程行为的加相关 `test/e2e` spec。
 3. O12/O13 这类"不改行为"的清理，PR 描述必须显式列出**它验证过不是跨文件动态引用**的方法（`listenBoth()` bus 名、菜单 id、`getMenuItemById`）。
 4. 动 O7/O8 之前先跑 §1 的两条基线命令，把改动前面板数字抄进 PR，避免优化完发现退化。
+5. 能在单测层锁住的契约优先用单测：`test.yml` 跑 ubuntu + windows 两腿，`e2e.yml` 只有 ubuntu，而 E2E 覆盖不到的平台恰是缺陷高发的平台；E2E 留给必须真窗口、真进程的行为。
 
 ## 5. 明确不做
 
