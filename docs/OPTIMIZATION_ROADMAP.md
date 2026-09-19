@@ -80,7 +80,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | `fix/batch1-small-correctness`×`refactor/typed-ipc-handle`（O8）            | `main/ipc/menu.ts`                                 | batch1 先合：O5 把 reader 抽进 `utils/recentDocuments`，O8 只是把该文件的 handle 换成 `typedHandle`。`security/image-folder-dialog-only`（O7①，叠加在 O8 分支上）与 batch1 同处冲突、同一处解，先解 O8 即顺带解决                                                                              |
 | `fix/locale-failure-strings`（O27）×`fix/open-failure-visible`（O18）       | 10 份 `static/locales/*.json`（各 1 处相邻行）     | 两者都要留：O27 改的是 `renameFailure`/`moveFailure`/两条 `errorWhile*` 的**值**，O18 是在 `moveFailure` 后面**新增** `openFailure` 键。合并结果 = 译过的四个值 + 新的 `openFailure`（它本身也已逐语言翻译）。合并后跑 `vitest run test/unit/specs/locale-validation.spec.ts`（45 例）即可验证 |
 
-`fix/open-failure-visible`（O4/O18）与 `perf/preference-broadcast`（O9）同改 `main/preferences/index.ts` 与 `main/dataCenter/index.ts` 但**区块不相干，可自动合**；十二个分支一次性合入 `develop` 后的完整门禁预演仍未跑（`pnpm check` + 两包单测 + E2E），跑完把结果并回本段。
+`fix/open-failure-visible`（O4/O18）与 `perf/preference-broadcast`（O9）同改 `main/preferences/index.ts` 与 `main/dataCenter/index.ts` 但**区块不相干，可自动合**。两两预演只是纸面推演——**十二分支的真合与全量门禁已在 §4.1 跑完**，其中一对冲突（O18×O27）是两两预演之后才新增的，另有一处 O20 假阳性只有真合才会显形。
 
 ### A 组·正确性回归（有实锤 bug，优先）
 
@@ -251,6 +251,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - **1 处跨分支冲突**：`node/ripgrepSearcher.ts:144` 的 `FileSearcher`，quick-open 分支要 `import { FileSearcher }`，在此去掉 `export` 会在合并时编译失败，已显式排除。
 - 验收与证据：`pnpm typecheck` 0 错、`pnpm test` 61 文件 / 863 通过 + 1 跳过（与 develop 基线逐项相同）、`pnpm lint` **149 warnings / 0 errors 不变**。等价性用"develop 版与提交版各剥 `export`、抹平空白后逐字符比对"证明；2 个文件（`common/filesystem/paths.ts`、`common/i18n.ts`）另带钩子 prettier 对 develop 既有超长行的重排，token 内容一致。
 - **教训**：warning 数"变好"和"变差"一样要解释。本轮曾因还原脚本给 2 个 develop 里本就无 `export` 的符号（`versionHistory` 的 `SnapshotLabel`、`codeMirror/index.ts` 的 `getModeFromName`）加上 `export` 而短暂得到 147，等于悄悄扩大模块 API 并掩盖 2 条既有告警，已在提交前撤回。
+- **合入预演补正（2026-09-20）**：上面"49 处确属 export 多余"里有 **1 处是假阳性**——`main/spellchecker/index.ts` 的 `getAvailableDictionaries`。合入 batch1/O2 的新测试后 typecheck 立刻 TS2614，因为它的读者正是 `spellchecker-availability.spec.ts`，而 knip 跑在还没有那份测试的基线上。已在合入树保留 `export`（见 §4.1）。⇒ 本项的清扫结论**只能在全部合入后重取**，分支上的 knip 结果不能当终局。
 
 **O21 · 桌面包补长度与复杂度门** — 成本 S，影响 中（防止再长回上帝文件）
 实测 >100 行的函数：`store/project.ts:82`（setup，313）、`editor.vue:1864`（onMounted，279）、`main/app/index.ts:247`（ready，240）、`editor.vue:1358`（handleExport，158）、`main/ipc/ripgrep.ts:181`（158）、`util/theme.ts:61`（addThemeStyle，153）、`lazyMarkdownPipeline.ts:66`（144）、引擎 `blockTransforms.ts:20`（297）。引擎侧有 `max-lines-per-function ≤ 200` 与 `complexity ≤ 20` 警告，**桌面包一条都没有**，所以这些永不报修。
@@ -345,7 +346,37 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 2. 每个 PR 的验收命令写进描述，并至少包含 `pnpm lint && pnpm typecheck`；触及渲染进程的加 `pnpm test:unit`，触及跨进程行为的加相关 `test/e2e` spec。
 3. O12/O13 这类"不改行为"的清理，PR 描述必须显式列出**它验证过不是跨文件动态引用**的方法（`listenBoth()` bus 名、菜单 id、`getMenuItemById`）。
 4. 动 O7/O8 之前先跑 §1 的两条基线命令，把改动前面板数字抄进 PR，避免优化完发现退化。
-5. 能在单测层锁住的契约优先用单测：`test.yml` 跑 ubuntu + windows 两腿，`e2e.yml` 只有 ubuntu，而 E2E 覆盖不到的平台恰是缺陷高发的平台；E2E 留给必须真窗口、真进程的行为。
+5. 能在单测层锁住的契约优先用单测：`test.yml` 跑 ubuntu + windows 两腿，`e2e.yml` 只有 ubuntu，而 E2E 覆盖不到的平台恰是缺陷高发的平台；E2E 留给必须真窗口、真进程的行为。**第 5 条已被下面的预演实证**：本轮两个真缺陷都只在 Windows 上红（locale 断言、round-trip 字节断言），ubuntu 腿看不见。
+
+### 4.1 十二分支全量合入门禁预演（2026-09-20，分支 `tmp/integration-rehearsal`）
+
+按上表依赖顺序把 12 个分支逐个 `git merge --no-ff` 进 `develop`，然后在合入后的树上跑全套门禁（不是分支上的自测）。
+
+| 门禁                                                | 结果                                                                                                           |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `pnpm check`（lint + typecheck）                    | 退出 **0**；149 warnings / **0 errors**，与 develop 基线逐项相同                                               |
+| desktop 单测                                        | 退出 **0**；71 文件、904 通过 + 1 跳过                                                                         |
+| muya 单测                                           | 退出 **0**；222 文件、1495 通过                                                                                |
+| `pnpm build`                                        | 退出 0                                                                                                         |
+| muya 一致性 `pnpm --filter @muyajs/core test:spec`  | **3 条失败**（`test/spec/roundTrip.spec.ts`：`common / Links`、`common / Lists` 等 md→state→md 不收敛）        |
+| desktop E2E `pnpm test:e2e`（Windows 本机，真窗口） | 首轮 222 通过 / **5 失败** / 4 跳过；修掉自己那条后复跑 **223 通过 / 4 失败** / 4 跳过（7.4 分钟），退出码仍 1 |
+
+**5 条 E2E 失败的归属**（逐条查过，不是一锅端）：
+
+- 1 条 `rename-failure-notification.spec.ts` 是**本轮自己造成的**：它把标题硬编码成英文 `'Rename failure'`，O27 把该键译成中文后，在非英文机器上必红（本机为 `重命名失败`）。已在 `fix/locale-failure-strings`（`064fa0c`）改为"接受任一份已发布译名"，重建后该 spec 通过。**分支上当时没发现**：O27 只跑了 lint/typecheck/单测，没跑 E2E。
+- 4 条 `all-blocks-roundtrip.spec.ts`（item 39 字节稳定性）**实测为既有**，不是推断：同一 spec 单独跑，在预演分支上是 4 失败 / 1 通过（19.5s），切到 `develop` 重新构建后跑**同样是 4 失败 / 1 通过**（19.7s）。所以合入集与它无关；根因没查（差异集中在 front matter 行的行尾空格，而 `git show HEAD:.../data/all-blocks.md` 显示入库版本行尾**没有**空格，说明"期望值"来自运行时而不是仓库文件），留给 O14/E2E 稳定性一起处理。**本地无法判断 ubuntu CI 腿的红绿**（`e2e.yml:50` 只在 ubuntu 跑），这一点不下结论。
+- 同理，muya 一致性的 3 条 `roundTrip.spec.ts` 失败也归为既有：`git diff develop..预演分支 -- packages/muya` 是 **0 个文件**，输入与代码完全一致；`muya-spec.yml:31` 在 ubuntu 上跑同一命令，本地同样无法核对那条腿。
+- 这 7 条既有红给 O14 补了反向证据：**"E2E 只有 ubuntu 一条腿"不只意味着漏掉 Windows 缺陷，也意味着 Windows 上跑全量能跑出 4 条本地红**（`all-blocks-roundtrip`）——加腿之前得先把这类平台相关断言理顺，否则新腿一上线就是红的。
+
+**只有真合才暴露的两件事**（两两 `merge-tree` 预演看不见）：
+
+1. **O20 有 1 处假阳性**：按它的意图去掉 `main/spellchecker/index.ts` 里 `getAvailableDictionaries` 的 `export` 后，合入树 `pnpm typecheck` 立刻 TS2614——读者正是 batch1/O2 新增的 `spellchecker-availability.spec.ts`。knip 当时看不见，是因为它跑在没有那份测试的基线上。解法：保留 `export` 并注明"唯一读者是测试"。⇒ O20 的清扫结论**只能在合入后重取**。
+2. **冲突实为 5 对**（比两两预演的 4 对多一对，且解法各不同）：`fix/open-failure-visible`（O18）× `fix/locale-failure-strings`（O27）在 10 份 locale 的同一个 `dialog` 块里撞车。解法是"两边都留"（译过的 rename/move 值 + 新增的 `openFailure`），脚本化后逐份 `JSON.parse` 并断言三个键都在、且没退回英文。
+
+其余冲突：O20 × batch1（`main/menu/index.ts`、`main/spellchecker/index.ts`）、O20 × O3（`store/preferences.ts`）、O8 × batch1（`main/ipc/menu.ts`）——按 §3 预写的处置逐条落地，无一处需要改变任何分支的原意。`security/image-folder-dialog-only`（O7①）因叠加在 O8 之上，自动合入无冲突。
+
+**预演结论**：12 个分支可以合入 `develop`，合入后 lint/typecheck/两包单测全绿；剩下的红全部有归属（1 条已修、7 条为既有平台/引擎状态）。实跑顺序（每步 `--no-ff`，冲突都在预期文件上）：
+`fix/quick-open-file-name-search` → `fix/batch1-small-correctness` → `chore/tooling-gates` → `fix/startup-action-enum` → `chore/prettier-eol` → `fix/locale-failure-strings` → `fix/open-failure-visible`（locale 冲突）→ `fix/markdown-extension-single-source` → `perf/preference-broadcast` → `cleanup/redundant-exports`（3 文件冲突）→ `refactor/typed-ipc-handle`（`main/ipc/menu.ts` 冲突）→ `security/image-folder-dialog-only`（无冲突）。
 
 ## 5. 明确不做
 
