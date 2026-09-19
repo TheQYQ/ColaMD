@@ -46,7 +46,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | 9    | 会话持久化每秒全标签快照 + 主线程同步写盘          | ✅ 已修 | M1.4（PR #32）：5s debounce / 30s maxWait、O(tabs) 签名门控跳过无变化写盘、fsync 改异步链式；实测见 `store/bufferedState.ts`                                                                                                                           |
 | 10   | 图片路径自动补全模块级无界缓存                     | ❌ 遗留 | `main/utils/imagePathAutoComplement.ts:16-17` 仍是模块级 `IMAGE_PATH: Map`，挂着 MarkText 期的 `// TODO: rebuild cache @jocs`；目录变更后缓存不重建 → O6                                                                                               |
 
-**结论**：旧报告的"高危三件套"与"性能四件套"已经关闭。当前真正欠着的不是同一批问题——下面 25 项是这一轮实测出的。`ColaMD_WORKPLAN.md` 七个梯队的"已完成"自述同样逐条核对过，见 §7。
+**结论**：旧报告的"高危三件套"与"性能四件套"已经关闭。当前真正欠着的不是同一批问题——下面 26 项是这一轮实测出的。`ColaMD_WORKPLAN.md` 七个梯队的"已完成"自述同样逐条核对过，见 §7。
 
 ## 3. 优化清单
 
@@ -206,10 +206,11 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法：主进程从 `common/filesystem/paths.ts` 取值，经 `mt::boot-info`（`preload/index.ts:36` 已有的同步通道）下发，preload 只转发；删掉内联副本。
 - 验收：一条单测断言 preload 暴露的 `MARKDOWN_INCLUSIONS` 与权威清单逐项相等；全仓 `mdown` 字面量只剩一处。
 
-**O23 · 文件名拼写错误** — 成本 XS
+**O23 · 文件名拼写错误** — 成本 XS，**已完成 `baf1558`**
 `renderer/src/codeMirror/mltiplexMode.ts`（`mltiplex` 应为 `multipl`）。导入方 `codeMirror/index.ts:11` 沿用同一个错名，符号本身 `multiplexMode` 是对的。改法：`git mv` + 改一处 import，与 O20 同批。
 
 **O24 · knip 只看依赖，其余全在盲区** — 成本 S，影响 中（工程门禁）
+
 `pnpm knip` = `knip --workspace packages/desktop --dependencies`，只报未使用依赖；文件级、导出级、类型级都不看——O20 那 95 项是本轮手工跑全量才浮出的。
 
 - 改法：去掉 `--dependencies` 限制，全量结果先进 `lint.yml` 以报告形式产出（不卡），稳定后再改为阻断。
@@ -221,17 +222,24 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法（两步，各自可 revert）：① 能构造期填写的字段改成必填，让类型系统承担；② 真可能为空的路径在函数开头一次性窄化（`if (!win) return`），后续不再逐行 `!`。
 - 验收：`pnpm lint` 的 144 基数降到 ≤100，**且不得靠新增 `eslint-disable` 达成**；每条消除要能说出运行时为何非空。
 
+**O26 · `prettier --check` 在本 checkout 里对任何文件都报警** — 成本 XS，影响 中（会误导后续门禁）
+根 `.prettierrc.yaml` 没设 `endOfLine`（默认 `lf`），而 git 的 `core.autocrlf` 使工作副本为 CRLF：`git ls-files --eol` 显示 `i/lf w/crlf`。实测完全未改动的 `codeMirror/modes.ts`、`codeMirror/overlayMode.ts`、`util/pdf.ts` 一并报 warn，而 index 中存的是 LF。
+
+- 后果：若把 `prettier --check` 接进 CI，会对全仓历史文件 100% 假红；本轮 WORKPLAN 与两个源文件被重排数百行也是同一成因。
+- 改法：`.prettierrc.yaml` 加一行 `endOfLine: auto`，之后再谈把 `--check` 纳入门禁；不要全仓 `--write` 刷一遍。
+
 ## 4. 分期 PR 路线
 
 **第一批 · 一天内可全清（零架构风险，先把实锤 bug 和噪音关掉）**
 
-| PR   | 内容                                                                                                                  | 依赖       |
-| ---- | --------------------------------------------------------------------------------------------------------------------- | ---------- |
-| PR-1 | O1 quickOpen 具名导入 + 单测锁住发出的检索载荷（`mode: files`）；顺带让 `FileSearcher` 有引用，O13 的"孤儿"判定变干净 | 无         |
-| PR-2 | O2 + O5 + O11 + O17（四个 XS 小修，一 PR 收）                                                                         | 无         |
-| PR-3 | O3 `startUpAction` 值域下沉 `shared/types`，并去掉宽松的 `string` 兜底类型                                            | 无         |
-| PR-4 | O16 工具小坏点（`check-md-links.py` 接入 CI、eslint 插件显式化、`dev-app-update.yml`）                                | 无         |
-| PR-5 | 本文与 `docs/PROJECT_GUIDE.md` 的口径校准；旧两份文档顶部加指引                                                       | 前四条合完 |
+| PR    | 内容                                                                                                                  | 依赖       |
+| ----- | --------------------------------------------------------------------------------------------------------------------- | ---------- |
+| PR-1  | O1 quickOpen 具名导入 + 单测锁住发出的检索载荷（`mode: files`）；顺带让 `FileSearcher` 有引用，O13 的"孤儿"判定变干净 | 无         |
+| PR-2  | O2 + O5 + O11 + O17（四个 XS 小修，一 PR 收）                                                                         | 无         |
+| PR-3  | O3 `startUpAction` 值域下沉 `shared/types`，并去掉宽松的 `string` 兜底类型                                            | 无         |
+| PR-4  | O16 工具小坏点（`check-md-links.py` 接入 CI、eslint 插件显式化、`dev-app-update.yml`）                                | 无         |
+| PR-5  | 本文与 `docs/PROJECT_GUIDE.md` 的口径校准；旧两份文档顶部加指引                                                       | 前四条合完 |
+| PR-21 | O26 `.prettierrc.yaml` 设 `endOfLine: auto`                                                                           | 无         |
 
 **第二批 · 一到两周（信任边界与响应性，需要设计确认）**
 
