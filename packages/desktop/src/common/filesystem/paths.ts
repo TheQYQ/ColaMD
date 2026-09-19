@@ -2,24 +2,13 @@ import fs from 'fs'
 import path from 'path'
 import { isFile, isFile2, isSymbolicLink } from './index'
 import { minimatch } from 'minimatch'
+import {
+  MARKDOWN_EXTENSIONS,
+  MARKDOWN_INCLUSIONS,
+  hasMarkdownExtension
+} from './markdownExtensions'
 
-export const MARKDOWN_EXTENSIONS: readonly string[] = Object.freeze([
-  'markdown',
-  'mdown',
-  'mkdn',
-  'md',
-  'mkd',
-  'mdwn',
-  'mdtxt',
-  'mdtext',
-  'mdx',
-  'text',
-  'txt'
-])
-
-export const MARKDOWN_INCLUSIONS: readonly string[] = Object.freeze(
-  MARKDOWN_EXTENSIONS.map((x) => '*.' + x)
-)
+export { MARKDOWN_EXTENSIONS, MARKDOWN_INCLUSIONS, hasMarkdownExtension }
 
 export const IMAGE_EXTENSIONS: readonly string[] = Object.freeze([
   'jpeg',
@@ -94,16 +83,11 @@ export const isDangerousExecutableFile = (filepath: string): boolean => {
   // Windows strips trailing dots/spaces during ShellExecute canonicalization,
   // so `update.js.` / `<./update.js >` still run `update.js` — strip them
   // before reading the extension or the guard is trivially bypassed.
-  const ext = path.extname(filepath.replace(/[ .]+$/, '')).slice(1).toLowerCase()
+  const ext = path
+    .extname(filepath.replace(/[ .]+$/, ''))
+    .slice(1)
+    .toLowerCase()
   return !!ext && DANGEROUS_EXECUTABLE_EXTENSIONS.includes(ext)
-}
-
-/**
- * Returns true if the filename matches one of the markdown extensions.
- */
-export const hasMarkdownExtension = (filename: string): boolean => {
-  if (!filename || typeof filename !== 'string') return false
-  return MARKDOWN_EXTENSIONS.some((ext) => filename.toLowerCase().endsWith(`.${ext}`))
 }
 
 /**
