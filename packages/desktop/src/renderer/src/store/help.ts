@@ -2,7 +2,9 @@ import type { IFileState } from '@shared/types/files'
 import { getUniqueId, deepClone } from '../util'
 
 // Helper module (NOT a Pinia store): defaults and factories for the editor
-// document state objects.
+// document state objects, plus the two pure helpers lifted out of `store/editor.ts`
+// by O12 — the trailing-newline normalizer the save path runs and the
+// crash-buffer format (see the section at the bottom of this file).
 
 // Re-export the cross-process shape for convenience so renderer code can
 // continue to import these from `./help`.
@@ -150,3 +152,186 @@ export const createDocumentState = (
 export const getFileStateFromData = (
   data: Partial<IFileState> | Record<string, unknown> | null | undefined
 ): IFileState => createDocumentState(data)
+
+// ---------------------------------------------------------------------------
+// O12(2): lifted out of store/editor.ts verbatim. Two families: the trailing-
+// newline normalizer the save path runs, and the crash-buffer format - the
+// scalar/fallback shaping that turns live editor state into the snapshot
+// that update-buffer-state persists and the restore path reads back.
+// ---------------------------------------------------------------------------
+interface RestoreWarning {
+  tabId?: string | null
+  pathname?: string
+  msg: string
+  showConfirm?: boolean
+  style?: string
+  exclusiveType?: string
+}
+
+/**
+ * Trim the final newlines according `trimTrailingNewlineOption`.
+ *
+ * @param markdown The text to trim.
+ * @param trimTrailingNewlineOption The option how we should trim the final newlines.
+ */
+export const adjustTrailingNewlines = (
+  markdown: string,
+  trimTrailingNewlineOption: number
+): string => {
+  if (!markdown) {
+    return ''
+  }
+
+  switch (trimTrailingNewlineOption) {
+    // Trim trailing newlines.
+    case 0: {
+      return trimTrailingNewlines(markdown)
+    }
+    // Ensure single trailing newline.
+    case 1: {
+      // Muya will always add a final new line to the markdown text. Check first whether
+      // only one newline exist to prevent copying the string.
+      const lastIndex = markdown.length - 1
+      if (markdown[lastIndex] === '\n') {
+        if (markdown.length === 1) {
+          // Just return nothing because adding a final new line makes no sense.
+          return ''
+        } else if (markdown[lastIndex - 1] !== '\n') {
+          return markdown
+        }
+      }
+
+      // Otherwise trim trailing newlines and add one.
+      markdown = trimTrailingNewlines(markdown)
+      if (markdown.length === 0) {
+        // Just return nothing because adding a final new line makes no sense.
+        return ''
+      }
+      return markdown + '\n'
+    }
+    // Disabled, use text as it is.
+    default:
+      return markdown
+  }
+}
+
+/**
+ * Trim trailing newlines from `text`.
+ *
+ * @param {string} text The text to trim.
+ */
+const trimTrailingNewlines = (text: string): string => {
+  return text.replace(/[\r?\n]+$/, '')
+}
+
+/*
+ * Convert a Pinia Proxy Object to a serializable value by applying JSON stringify and parse.
+ */
+function toSerializableValue<T>(value: T | null | undefined, fallback: T): T
+function toSerializableValue<T>(value: T | null | undefined, fallback: null): T | null
+function toSerializableValue<T>(value: T | null | undefined, fallback: T | null = null): T | null {
+  if (value == null) return fallback
+
+  try {
+    return deepClone(value) as T
+  } catch (err) {
+    console.warn('Unable to serialize editor buffer value:', err)
+    return fallback
+  }
+}
+
+interface BufferedTabState {
+  id: string
+  pathname: string
+  filename: string
+  markdown: string
+  isSaved: boolean
+  encoding: IFileState['encoding']
+  lineEnding: IFileState['lineEnding']
+  trimTrailingNewline: number
+  adjustLineEndingOnSave: boolean
+  cursor: unknown
+  wordCount: IFileState['wordCount']
+  muyaIndexCursor: unknown
+  scrollTop: number
+}
+
+const createBufferedTabState = (tab: Partial<IFileState> & { id: string }): BufferedTabState => {
+  return {
+    id: tab.id,
+    pathname: tab.pathname ?? defaultFileState.pathname,
+    filename: tab.filename ?? defaultFileState.filename,
+    markdown: typeof tab.markdown === 'string' ? tab.markdown : defaultFileState.markdown,
+    isSaved: tab.isSaved ?? defaultFileState.isSaved,
+    encoding: toSerializableValue(tab.encoding, defaultFileState.encoding),
+    lineEnding: tab.lineEnding ?? defaultFileState.lineEnding,
+    trimTrailingNewline:
+      typeof tab.trimTrailingNewline === 'number'
+        ? tab.trimTrailingNewline
+        : defaultFileState.trimTrailingNewline,
+    adjustLineEndingOnSave: tab.adjustLineEndingOnSave ?? defaultFileState.adjustLineEndingOnSave,
+    cursor: toSerializableValue(tab.cursor, defaultFileState.cursor),
+    wordCount: toSerializableValue(tab.wordCount, defaultFileState.wordCount),
+    muyaIndexCursor: toSerializableValue(tab.muyaIndexCursor, defaultFileState.muyaIndexCursor),
+    scrollTop: tab.scrollTop ?? defaultFileState.scrollTop
+  }
+}
+
+interface BufferedRestoreWarning {
+  tabId: string | null
+  pathname: string
+  msg: string
+  showConfirm: boolean
+  style: string
+  exclusiveType: string
+}
+
+const createBufferedRestoreWarning = (
+  warning: RestoreWarning | null | undefined
+): BufferedRestoreWarning | null => {
+  if (!warning) return null
+
+  const { tabId, pathname, msg, showConfirm, style, exclusiveType } = warning
+  if (!tabId && !pathname) return null
+  if (!msg) return null
+
+  return {
+    tabId: tabId || null,
+    pathname: pathname || '',
+    msg,
+    showConfirm: !!showConfirm,
+    style: style || 'info',
+    exclusiveType: exclusiveType || ''
+  }
+}
+
+interface BufferedEditorState {
+  currentFileId: string | null
+  tabs: BufferedTabState[]
+  restoreWarnings: BufferedRestoreWarning[]
+}
+
+export const createBufferedEditorState = (state: unknown): BufferedEditorState | null => {
+  const s = state as
+    | {
+      tabs?: unknown
+      currentFileId?: string
+      currentFile?: { id?: string } | null
+      restoreWarnings?: unknown
+    }
+    | null
+    | undefined
+  if (!s || !Array.isArray(s.tabs)) {
+    return null
+  }
+
+  return {
+    currentFileId: s.currentFileId || s.currentFile?.id || null,
+    tabs: (s.tabs as Array<Partial<IFileState> & { id: string }>).map(createBufferedTabState),
+    restoreWarnings: Array.isArray(s.restoreWarnings)
+      ? (s.restoreWarnings as RestoreWarning[])
+        .map(createBufferedRestoreWarning)
+        .filter((w): w is BufferedRestoreWarning => w !== null)
+      : []
+  }
+}
