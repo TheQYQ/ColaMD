@@ -534,16 +534,4 @@ const updateMenuItem = (oldMenus: Menu, newMenus: Menu, id: string): void => {
 // HACKY: We have one application menu per window and switch the menu when
 // switching windows, so we can access and change the menu items via Electron.
 
-/**
- * Return the menu from the application menu.
- *
- * @param menuId Menu ID
- * @returns Returns the menu or null.
- */
-export const getMenuItemById = (menuId: string): Electron.MenuItem | null => {
-  const menus = Menu.getApplicationMenu()
-  if (!menus) return null
-  return menus.getMenuItemById(menuId)
-}
-
 export default AppMenu

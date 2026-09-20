@@ -126,21 +126,6 @@ const startSearch = ({ mode, directories, pattern, options }: StartArgs): Cancel
   return promise
 }
 
-class RipgrepDirectorySearcher {
-  rgPath: string
-
-  constructor() {
-    const colamd = window.colamd
-    this.rgPath = colamd?.paths?.ripgrepBinaryPath || window.rgPath || ''
-  }
-
-  search(directories: string[], pattern: string, options: RipgrepSearchOptions): CancellableSearch {
-    return startSearch({ mode: 'text', directories, pattern, options })
-  }
-}
-
-export default RipgrepDirectorySearcher
-
 export class FileSearcher {
   search(
     directories: string[],

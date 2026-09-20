@@ -1,7 +1,7 @@
 // TODO: Remove information from other vue source files into this file.
 import { t } from '../../../../i18n'
 
-export interface UploaderService {
+interface UploaderService {
   name: string
   isGdprCompliant: boolean
   privacyUrl: string
@@ -29,5 +29,4 @@ const getServices = (): Record<UploaderServiceId, UploaderService> => ({
   }
 })
 
-export { getServices }
 export default getServices

@@ -47,21 +47,6 @@ export const getHeaderFooterTypes = (): PrefSelectOption<number>[] => [
   }
 ]
 
-export const getHeaderFooterStyles = (): PrefSelectOption<number>[] => [
-  {
-    label: t('exportSettings.options.headerFooterStyles.default'),
-    value: 0
-  },
-  {
-    label: t('exportSettings.options.headerFooterStyles.simple'),
-    value: 1
-  },
-  {
-    label: t('exportSettings.options.headerFooterStyles.styled'),
-    value: 2
-  }
-]
-
 export const getExportThemeList = (): PrefSelectOption<string>[] => [
   {
     label: t('exportSettings.options.themes.academic'),
@@ -76,9 +61,3 @@ export const getExportThemeList = (): PrefSelectOption<string>[] => [
     value: 'liber'
   }
 ]
-
-// Retained for backward compatibility
-export const pageSizeList = getPageSizeList()
-export const headerFooterTypes = getHeaderFooterTypes()
-export const headerFooterStyles = getHeaderFooterStyles()
-export const exportThemeList = getExportThemeList()

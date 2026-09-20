@@ -6,8 +6,6 @@ import { ipcMain } from 'electron'
 import type { VersionSnapshot } from '@shared/types/ipc'
 import { typedHandle } from '../ipc/typedHandle'
 
-export type { VersionSnapshot }
-
 interface VersionHistoryFile {
   pathname: string
   snapshots: VersionSnapshot[]
