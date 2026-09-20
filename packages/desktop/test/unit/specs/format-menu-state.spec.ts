@@ -21,7 +21,7 @@ vi.mock('electron', () => ({
 vi.mock('electron-log', () => ({ default: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }))
 vi.mock('main_renderer/i18n', () => ({ t: (key: string) => key }))
 
-import { createSelectionFormatState } from '@/store/editor'
+import { createSelectionFormatState } from '@/services/applicationMenuState'
 import { updateFormatMenu } from 'main_renderer/menu/actions/format'
 import { inlineFormatIcons } from '@muyajs/core'
 import keybindingsWindows from 'main_renderer/keyboard/keybindingsWindows'
