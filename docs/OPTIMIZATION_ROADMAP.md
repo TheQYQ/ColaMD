@@ -69,7 +69,9 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | `chore/prettier-eol`                   | `ff7d72b`                                  | O26                        |
 | `fix/locale-failure-strings`           | `962baa0`                                  | O27                        |
 
-遗留事项：**全部 12 个分支已合入 `develop`，但仍未 push**（远端还没有这些提交）。等实机确认的：O17 侧栏新建行、O7① 设置页图片目录那行（改成了只读文本）。等拍板的三条：O26 的 prettier↔ESLint 冲突、O19 剩余的 6 处默认值不一致、O7② 的读通道域与两处载荷归属。O20 余下 29 项真死代码移交 O13；O6 与 O10 经复核分别降级与撤下，理由见各自条目。
+**表外两条尚未合入**（本段写完之后才落的分支，与已合入的 `develop` 无文件重叠，可直接逐个 `--no-ff` 合）：`chore/desktop-size-gates`（`be4e173` O21 + `ca8eaed` O24）、`cleanup/dead-symbols`（`09e1a2b` + `80cc31b`，O13 与 O20 复核）。
+
+遗留事项：**分支仍未 push**（远端还没有这些提交）。等实机确认的：O17 侧栏新建行、O7① 设置页图片目录那行（改成了只读文本）。等拍板的三条：O26 的 prettier↔ESLint 冲突、O19 剩余的 6 处默认值不一致、O7② 的读通道域与两处载荷归属。O6 与 O10 经复核分别降级与撤下，理由见各自条目；O20 移交 O13 的死代码已随 `cleanup/dead-symbols` 清完（见 O13 的完成状态）。
 
 **合并顺序（用 `git merge-tree` 对 12 个分支两两预演，非破坏性）**：5 对会冲突，其余两两可自动合。
 
@@ -200,6 +202,10 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
   - `shared/types/files.ts` — `ITab`；`shared/types/preferences.ts` — `LayoutState`；`renderer/src/components/sideBar/types.ts` — `TabDescriptor`；`main/menu/index.ts` — `getMenuItemById`；`renderer/src/util/themeMarket.ts` — `sanitizeThemeText`
   - develop 就已报 unused-vars 的两个（**基线存量，不是 O20 造成**）：`main/versionHistory/index.ts` 的 `SnapshotLabel`、`renderer/src/codeMirror/index.ts` 的 `getModeFromName`
 - 这 29 项删除后，`pnpm lint` 的 `no-unused-vars` 应从 5 降到 3、knip 的两段计数同步下降——**这是删除动作的验收线**，不能靠重新加 `export` 让告警闭嘴。
+- **完成状态：`cleanup/dead-symbols`（`09e1a2b` + `80cc31b`）**，但**清单按合入后的实测重取**——本分支基线上 knip 全量报的是 **47 项**（34 未用导出 + 13 未用导出类型），不是 29：O20 移交的那 29 项之外，还有 `exportSettings/exportOptions.ts` 的 4 个 legacy 别名与只被它们用的 `getHeaderFooterStyles`、`components/sideBar/menuItems` 一族、`versionHistory` 的 `VersionSnapshot` 再导出、`node/ripgrepSearcher.ts` 的默认导出类 `RipgrepDirectorySearcher`（O1 之后只剩具名 `FileSearcher` 有人用）。
+- 逐条分类结果（每条都查过 import、本文件内二次引用、字符串/总线/菜单 id 动态引用、`.d.ts` 类型使用、Vue 模板绑定）：**44 项是实现真的没人用**（删实现，不是只删 `export`）、**3 项只多写了 `export`**（`PipelineDispatchPayload`、`UploaderService`、具名 `getServices`——它仍经 `export default` 被 `uploader/index.vue` 使用）、**0 项是 knip 误报**。
+- 两项刻意保留并写明理由：`sanitizeThemeText` 是 `.colamd-theme` 纯文本兜底的消毒函数，"暂时没人调"与"不需要"不是一回事，删安全网不是清理死代码（knip 现在唯一报的就是它）；`SnapshotLabel` 与 `getModeFromName` 这两个 **develop 既有 unused-vars** 也没动——`getModeFromName` 删掉会连着 `languages`/`modes` 一起做链式判定，本项不在预算里半做。⇒ 验收线修正为：**knip 两段 47 → 1**（已达成，实测），`no-unused-vars` 仍是 5（差 2 项，理由如上）。
+- 门禁：typecheck 0 错、`pnpm lint` 149 warnings/0 errors（未新增任何告警）、单测 71 文件 904 通过、`menu-sanity`+`parity-pg1-menu-state`+`source-mode-menu-disabled-3531`+`export-pdf`+`themes`+`ripgrep-search`+`context-isolation`+`quick-insert-accelerators` 共 **31 例真窗口 E2E 通过**。
 
 **O14 · CI 矩阵与交付平台不匹配** — 成本 M
 `build.yml`/`release.yml` 跑 5 平台腿但**不跑任何测试**；`e2e.yml`/`lint.yml`/`muya-*.yml` 只 ubuntu；`test.yml` 双平台。产品交付三平台，Windows/macOS 专属缺陷（路径分隔符、原生模块、`screencapture` 之类）在 CI 里不可见。
@@ -252,12 +258,14 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 验收与证据：`pnpm typecheck` 0 错、`pnpm test` 61 文件 / 863 通过 + 1 跳过（与 develop 基线逐项相同）、`pnpm lint` **149 warnings / 0 errors 不变**。等价性用"develop 版与提交版各剥 `export`、抹平空白后逐字符比对"证明；2 个文件（`common/filesystem/paths.ts`、`common/i18n.ts`）另带钩子 prettier 对 develop 既有超长行的重排，token 内容一致。
 - **教训**：warning 数"变好"和"变差"一样要解释。本轮曾因还原脚本给 2 个 develop 里本就无 `export` 的符号（`versionHistory` 的 `SnapshotLabel`、`codeMirror/index.ts` 的 `getModeFromName`）加上 `export` 而短暂得到 147，等于悄悄扩大模块 API 并掩盖 2 条既有告警，已在提交前撤回。
 - **合入预演补正（2026-09-20）**：上面"49 处确属 export 多余"里有 **1 处是假阳性**——`main/spellchecker/index.ts` 的 `getAvailableDictionaries`。合入 batch1/O2 的新测试后 typecheck 立刻 TS2614，因为它的读者正是 `spellchecker-availability.spec.ts`，而 knip 跑在还没有那份测试的基线上。已在合入树保留 `export`（见 §4.1）。⇒ 本项的清扫结论**只能在全部合入后重取**，分支上的 knip 结果不能当终局。
+- **重取已完成（`cleanup/dead-symbols`，见 O13）**：合入后全量 knip 报 47 项，逐条分类为 44 删实现 / 3 只删关键字 / 0 误报，现只剩 1 项刻意保留。**本条当时举的例子有一处是错的**：它说 `main/contextMenu/editor/menuItems.ts:76-83` 的 `CUT`…`INSERT_AFTER` "去掉 export 后仍被本文件使用"——实际那 8 个常量在文件内只有声明处一次引用，消费者全走 `getCUT()` 一类工厂函数，已随 O13 删除。判据（"去 export 后 eslint 是否立刻报 unused-vars"）本身是对的，是那次举例没回到文件里复核。
 
 **O21 · 桌面包补长度与复杂度门** — 成本 S，影响 中（防止再长回上帝文件）
 实测 >100 行的函数：`store/project.ts:82`（setup，313）、`editor.vue:1864`（onMounted，279）、`main/app/index.ts:247`（ready，240）、`editor.vue:1358`（handleExport，158）、`main/ipc/ripgrep.ts:181`（158）、`util/theme.ts:61`（addThemeStyle，153）、`lazyMarkdownPipeline.ts:66`（144）、引擎 `blockTransforms.ts:20`（297）。引擎侧有 `max-lines-per-function ≤ 200` 与 `complexity ≤ 20` 警告，**桌面包一条都没有**，所以这些永不报修。
 
 - 改法：在根 `eslint.config.js` 的桌面包块加 `complexity` 与 `max-lines-per-function`，阈值按现存最大值定、先只 warn；O12 每分解一步就下调一档。
 - 验收：新阈值下 warning 数量可解释；后续 PR 不得新增超线函数。
+- **完成状态 `be4e173`（分支 `chore/desktop-size-gates`）**：阈值取**合入后实测的当前最大值**——`complexity 44`（`store/editor.ts:1525`）、`max-lines-per-function 277`（`store/project.ts:82`，`skipBlankLines + skipComments`），所以今天在 `packages/desktop/src/**`（含 `.vue`）上报 **0 条**，只有超出既有最差者才响。会咬人已验证：把上限改成 276，那条 277 行的 setup 立刻告警；`.vue` 也在作用域内（探针在 `editor.vue:1358` 测到 complexity 35）。O12 每步下调一档即可，无需再动配置结构。
 
 **O22 · Markdown 扩展名清单两处会漂移** — 成本 S，影响 中 — **已完成 `76e5a92`（分支 `fix/markdown-extension-single-source`）**
 `common/filesystem/paths.ts` 的权威清单与 `preload/index.ts` 内联的十一项副本各一份：两份只要有一处改动，某个扩展名就会在渲染端静默失效，而当时没有任何测试比较过它们。
@@ -276,6 +284,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 - 改法：去掉 `--dependencies` 限制，全量结果先进 `lint.yml` 以报告形式产出（不卡），稳定后再改为阻断。
 - 验收：CI 日志里能看到未用文件/导出/类型三段；`knip.json` 的忽略项逐条有理由注释。
+- **完成状态 `ca8eaed`（分支 `chore/desktop-size-gates`）——走法与计划不同**：原写"去掉 `--dependencies` 限制"，但 `lint.yml` 里那条 knip 步骤是**阻断**的，直接把脚本换成全量会让依赖门禁被顺手废掉（今天全量退出码 1）。所以保留 `pnpm knip`（依赖，阻断）不动，新增 `pnpm knip:full` 与**第二条 `continue-on-error: true` 的 CI 步骤**"Report unused files, exports and types"。已核：`pnpm knip` 仍退出 0、`pnpm knip:full` 退出 1（如期），工作流解析后只有新步骤是非阻断。`knip.json` 两条忽略项本就各带理由注释（`patch-package`、`screencapture`）；试过的第三条（给 `sanitizeThemeText` 加 `ignoreExports`）被 knip 6 判为非法键，改为**在函数上写明保留理由**、让报告如实列出它。基线：合入后 47 项 → O13 清完剩 1 项。
 
 **O25 · `main/windows/editor.ts` 独占 31% 的非空断言** — 成本 M，影响 中
 144 处 `no-non-null-assertion` 里该文件占 44 处，且模式高度单一：`win!`、`this.id!`、`this.bufferStoreInfo!`、`this._markdownToOpen!`——都是"构造后必定非空"的字段。
