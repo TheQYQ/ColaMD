@@ -263,5 +263,25 @@ export default [
         }
       ]
     }
+  },
+
+  // 12. Desktop size gates (O21).
+  //
+  // The engine package has always warned on `complexity` and
+  // `max-lines-per-function`; the desktop package had neither, which is why the
+  // oversized functions counted in docs/PROJECT_GUIDE.md §13 — a 313-line Pinia
+  // setup, a 279-line onMounted, a 240-line app-ready handler — were never
+  // reported by the tooling that should have noticed them. Thresholds sit just
+  // above the worst offender that exists today, so the pair warns on nothing
+  // until the tree grows past it again; each step of O12 lowers them a notch.
+  {
+    files: ['packages/desktop/src/**/*.ts', 'packages/desktop/src/**/*.vue'],
+    rules: {
+      complexity: ['warn', 44],
+      'max-lines-per-function': [
+        'warn',
+        { max: 277, skipBlankLines: true, skipComments: true }
+      ]
+    }
   }
 ]

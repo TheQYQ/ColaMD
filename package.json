@@ -14,6 +14,7 @@
     "format": "prettier --write .",
     "lint": "eslint --cache .",
     "knip": "knip --workspace packages/desktop --dependencies",
+    "knip:full": "knip --workspace packages/desktop",
     "minify-locales": "tsx scripts/minify-locales.ts",
     "rebuild-native": "pnpm --filter colamd rebuild-native",
     "start": "pnpm --filter colamd start",

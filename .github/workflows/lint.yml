@@ -30,6 +30,14 @@ jobs:
       - name: Check dependency hygiene (knip)
         run: pnpm knip
 
+      # O24: the dependency-only sweep above is all `pnpm knip` ever looked at,
+      # so unused files/exports/types were invisible to CI while being the bulk of
+      # the debt. Reported here, not enforced, until the ignore list is reviewed
+      # (docs/OPTIMIZATION_ROADMAP.md O24) — the dependency gate stays blocking.
+      - name: Report unused files, exports and types (knip)
+        continue-on-error: true
+        run: pnpm knip:full
+
       # @muyajs/core points its `types` condition at packages/muya/lib/types,
       # which is git-ignored and therefore absent on CI. Without it vue-tsc
       # falls through to the `import` condition and type-checks muya's TS
