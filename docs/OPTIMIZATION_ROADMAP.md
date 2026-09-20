@@ -8,7 +8,7 @@
 
 | 维度         | 实测值                                                                                                                                                                                            | 测量方法                                                                                                                              |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 桌面端规模   | 240 个 ts/vue 文件、40,472 行（2026-09-20 合入 12 分支后重测；原为 236 / 40,346，新增的是 `markdownExtensions.ts`、`typedHandle.ts`、`recentDocuments.ts`、`startupPlan.ts`）                     | `find packages/desktop/src … \→ wc -l`                                                                                                |
+| 桌面端规模   | 240 个 ts/vue 文件、40,341 行（2026-09-20 合入 14 分支后重测；四个新模块 +4 文件/+126 行，O13 的死代码清扫 −131 行）                                                                              | `find packages/desktop/src … \→ wc -l`                                                                                                |
 | 引擎规模     | 220 个 ts 文件（不含 `__tests__`）、48,485 行                                                                                                                                                     | 同上，`packages/muya/src`                                                                                                             |
 | 最大文件     | `store/editor.ts` 2347、`editor.vue` 2321、`prefComponents/image/…/uploader/index.vue` 1193、`commands/index.ts` 766、`menu/menus.ts` 724                                                         | `wc -l`                                                                                                                               |
 | runtime 依赖 | 桌面 35 个，**零引用 0 个**                                                                                                                                                                       | 纯 Node 扫描 477 个源/配置/测试文件；`node node_modules/knip/bin/knip.js --workspace packages/desktop --dependencies` 退出 0 且无输出 |
@@ -69,7 +69,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | `chore/prettier-eol`                   | `ff7d72b`                                  | O26                        |
 | `fix/locale-failure-strings`           | `962baa0`                                  | O27                        |
 
-**表外两条尚未合入**（本段写完之后才落的分支，与已合入的 `develop` 无文件重叠，可直接逐个 `--no-ff` 合）：`chore/desktop-size-gates`（`be4e173` O21 + `ca8eaed` O24）、`cleanup/dead-symbols`（`09e1a2b` + `80cc31b`，O13 与 O20 复核）。
+其后又逐个合入两条：`chore/desktop-size-gates`（`be4e173` O21 + `ca8eaed` O24）、`cleanup/dead-symbols`（`09e1a2b` + `80cc31b` O13、O20 复核）。合入后在 `develop` 上复跑：`pnpm check` 退出 0（149 warnings / 0 errors）、`pnpm knip`（依赖）退出 0、`pnpm knip:full` 只剩 1 项、desktop 单测 71 文件 904 通过 + 1 跳过。
 
 遗留事项：**分支仍未 push**（远端还没有这些提交）。等实机确认的：O17 侧栏新建行、O7① 设置页图片目录那行（改成了只读文本）。等拍板的三条：O26 的 prettier↔ESLint 冲突、O19 剩余的 6 处默认值不一致、O7② 的读通道域与两处载荷归属。O6 与 O10 经复核分别降级与撤下，理由见各自条目；O20 移交 O13 的死代码已随 `cleanup/dead-symbols` 清完（见 O13 的完成状态）。
 
@@ -339,15 +339,15 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 **第三批 · 持续投入（结构性，不设截止）**
 
-| PR     | 内容                                                                 | 说明                                                 |
-| ------ | -------------------------------------------------------------------- | ---------------------------------------------------- |
-| PR-13… | O12 上帝文件分解（store 提 services → 拆 composable，每步 E2E 全绿） | 每步可独立 revert，禁止与功能改动混提                |
-| PR-14  | O14 CI 矩阵与覆盖率报告                                              | 依赖 O15 先解决补丁，否则加平台腿会因未打补丁而假红  |
-| PR-15  | O15 补丁迁到 `patchedDependencies`                                   | PR-14 的前置                                         |
-| PR-16  | O13 死代码清理                                                       | 放在最后做：前面几批会改变引用关系，早期判定不稳     |
-| PR-18  | O20 去多余 export + O23 `mltiplexMode.ts` 改名                       | 先跑 knip 全量取基线；只删 `export` 关键字，不删实现 |
-| PR-19  | O21 长度/复杂度 warn 门 + O24 knip 全量进 CI                         | O24 的基线要在 O20 清完后重取，否则忽略清单会膨胀    |
-| PR-20  | O25 `main/windows/editor.ts` 非空断言收敛（144 → ≤100）              | 独立于分解工作，但要在 O12 之前做，避免同一文件双改  |
+| PR     | 内容                                                                                                      | 说明                                                 |
+| ------ | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| PR-13… | O12 上帝文件分解（store 提 services → 拆 composable，每步 E2E 全绿）                                      | 每步可独立 revert，禁止与功能改动混提                |
+| PR-14  | O14 CI 矩阵与覆盖率报告                                                                                   | 依赖 O15 先解决补丁，否则加平台腿会因未打补丁而假红  |
+| PR-15  | O15 补丁迁到 `patchedDependencies`                                                                        | PR-14 的前置                                         |
+| PR-16  | O13 死代码清理 —— **已实现** `cleanup/dead-symbols`（`09e1a2b`+`80cc31b`）                                | 放在最后做：前面几批会改变引用关系，早期判定不稳     |
+| PR-18  | O20 去多余 export + O23 `mltiplexMode.ts` 改名                                                            | 先跑 knip 全量取基线；只删 `export` 关键字，不删实现 |
+| PR-19  | O21 warn 门 + O24 knip 全量进 CI（非阻断）—— **已实现** `chore/desktop-size-gates`（`be4e173`+`ca8eaed`） | O24 的基线要在 O20 清完后重取，否则忽略清单会膨胀    |
+| PR-20  | O25 `main/windows/editor.ts` 非空断言收敛（144 → ≤100）                                                   | 独立于分解工作，但要在 O12 之前做，避免同一文件双改  |
 
 **推进纪律**
 
