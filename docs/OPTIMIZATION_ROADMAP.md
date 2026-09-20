@@ -345,7 +345,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | PR-14  | O14 CI 矩阵与覆盖率报告                                                                                   | 依赖 O15 先解决补丁，否则加平台腿会因未打补丁而假红  |
 | PR-15  | O15 补丁迁到 `patchedDependencies`                                                                        | PR-14 的前置                                         |
 | PR-16  | O13 死代码清理 —— **已实现** `cleanup/dead-symbols`（`09e1a2b`+`80cc31b`）                                | 放在最后做：前面几批会改变引用关系，早期判定不稳     |
-| PR-18  | O20 去多余 export + O23 `mltiplexMode.ts` 改名                                                            | 先跑 knip 全量取基线；只删 `export` 关键字，不删实现 |
+| PR-18  | O20 去多余 export + O23 `mltiplexMode.ts` 改名 —— **已实现**（`cab7cb8`+`48e4b1d`，合入后重取见 PR-16）   | 先跑 knip 全量取基线；只删 `export` 关键字，不删实现 |
 | PR-19  | O21 warn 门 + O24 knip 全量进 CI（非阻断）—— **已实现** `chore/desktop-size-gates`（`be4e173`+`ca8eaed`） | O24 的基线要在 O20 清完后重取，否则忽略清单会膨胀    |
 | PR-20  | O25 `main/windows/editor.ts` 非空断言收敛（144 → ≤100）                                                   | 独立于分解工作，但要在 O12 之前做，避免同一文件双改  |
 
