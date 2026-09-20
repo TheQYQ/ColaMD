@@ -88,10 +88,3 @@ export interface IUserPreferences {
   treeShowHiddenFiles?: boolean
   [key: string]: unknown
 }
-
-export interface LayoutState {
-  rightColumn: 'files' | 'search' | 'toc'
-  showSideBar: boolean
-  showTabBar: boolean
-  [key: string]: unknown
-}

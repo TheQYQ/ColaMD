@@ -5,8 +5,6 @@
 // builder. They cover the renderer surfaces touched by the sideBar SFCs;
 // deeper invariants live alongside the producers.
 
-import type { IFileState } from '@shared/types/files'
-
 // ---------------------------------------------------------------------------
 // File tree (sideBar/tree.vue, treeFile.vue, treeFolder.vue, project store)
 // ---------------------------------------------------------------------------
@@ -36,10 +34,3 @@ export interface TreeFolderNode {
 // The root project tree — same shape as TreeFolderNode in practice, exposed
 // under a friendlier alias so SFCs can spell their intent.
 export type TreeNode = TreeFolderNode
-
-// ---------------------------------------------------------------------------
-// Tab descriptor (consumed by the editor store)
-// ---------------------------------------------------------------------------
-
-// The sideBar consumes the same per-tab state shape as the editor store.
-export type TabDescriptor = IFileState

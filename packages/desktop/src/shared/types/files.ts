@@ -94,8 +94,6 @@ export interface FileNotification {
   action: (status?: unknown) => void
 }
 
-export type ITab = IFileState
-
 export interface FileChangeDetail {
   pathname: string
   type?: string

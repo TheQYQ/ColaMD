@@ -71,13 +71,3 @@ export const getShowInFolder = () => ({
     contextMenu.showInFolder()
   }
 })
-
-// Retained for backward compatibility
-export const NEW_FILE = getNewFile()
-export const NEW_DIRECTORY = getNewDirectory()
-export const COPY = getCOPY()
-export const CUT = getCUT()
-export const PASTE = getPASTE()
-export const RENAME = getRENAME()
-export const DELETE = getDELETE()
-export const SHOW_IN_FOLDER = getShowInFolder()

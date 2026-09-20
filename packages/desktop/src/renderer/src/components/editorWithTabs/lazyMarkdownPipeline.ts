@@ -41,7 +41,7 @@ export interface PipelineEngine {
   getHistory(): unknown
 }
 
-export interface PipelineDispatchPayload {
+interface PipelineDispatchPayload {
   id: string
   markdown: string | null
   edit?: boolean

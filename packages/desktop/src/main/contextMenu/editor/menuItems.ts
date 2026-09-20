@@ -72,16 +72,6 @@ export const getInsertAfter = (): MenuItemConstructorOptions => ({
   }
 })
 
-// Retained for backward compatibility
-export const CUT = getCUT()
-export const COPY = getCOPY()
-export const PASTE = getPASTE()
-export const COPY_AS_RICH = getCopyAsRich()
-export const COPY_AS_HTML = getCopyAsHtml()
-export const PASTE_AS_PLAIN_TEXT = getPasteAsPlainText()
-export const INSERT_BEFORE = getInsertBefore()
-export const INSERT_AFTER = getInsertAfter()
-
 export const SEPARATOR: MenuItemConstructorOptions = {
   type: 'separator'
 }

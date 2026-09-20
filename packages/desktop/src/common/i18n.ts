@@ -3,22 +3,6 @@ import path from 'path'
 
 type Translations = Record<string, unknown>
 
-const SUPPORTED_LANGUAGES = [
-  'en',
-  'zh-CN',
-  'zh-TW',
-  'es',
-  'fr',
-  'de',
-  'ja',
-  'ko',
-  'nl',
-  'pt',
-  'tr'
-] as const
-
-export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
-
 const translationsCache: Record<string, Translations> = {}
 
 /**
@@ -101,12 +85,4 @@ function getTranslation(
   return result
 }
 
-function getSupportedLanguages(): string[] {
-  return [...SUPPORTED_LANGUAGES]
-}
-
-function isLanguageSupported(language: string): boolean {
-  return (SUPPORTED_LANGUAGES as readonly string[]).includes(language)
-}
-
-export { getTranslation, getSupportedLanguages, isLanguageSupported, loadTranslations }
+export { getTranslation, loadTranslations }

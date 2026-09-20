@@ -355,17 +355,3 @@ export interface BootInfo {
   }
   isUpdatable: boolean
 }
-
-// =================================================================
-// Helper types for the preload bridge generic wrappers
-// =================================================================
-
-export type InvokeArgs<K extends keyof IpcInvokeChannels> = IpcInvokeChannels[K]['args']
-export type InvokeRet<K extends keyof IpcInvokeChannels> = IpcInvokeChannels[K]['ret']
-
-export type SyncArgs<K extends keyof IpcSyncChannels> = IpcSyncChannels[K]['args']
-export type SyncRet<K extends keyof IpcSyncChannels> = IpcSyncChannels[K]['ret']
-
-export type SendArgs<K extends keyof IpcSendChannels> = IpcSendChannels[K]
-
-export type EventArgs<K extends keyof IpcMainEventChannels> = IpcMainEventChannels[K]

@@ -242,6 +242,11 @@ export const themeFileName = (id: string): string => {
  * Strips any HTML tags from a string before displaying it in the UI —
  * theme metadata comes from untrusted `.colamd-theme` files. Used as a
  * fallback when the caller wants plain text.
+ *
+ * Deliberately uncalled today: the theme list renders metadata through escaped
+ * interpolation and the preview through PREVIEW_DOMPURIFY_CONFIG, so nothing
+ * needs plain-text stripping yet. Any new render of `.colamd-theme` text should
+ * use this instead of deleting it as dead code.
  */
 export const sanitizeThemeText = (value: string | undefined): string => {
   if (!value) return ''
