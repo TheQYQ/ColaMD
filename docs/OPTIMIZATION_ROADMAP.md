@@ -286,11 +286,14 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 验收：CI 日志里能看到未用文件/导出/类型三段；`knip.json` 的忽略项逐条有理由注释。
 - **完成状态 `ca8eaed`（分支 `chore/desktop-size-gates`）——走法与计划不同**：原写"去掉 `--dependencies` 限制"，但 `lint.yml` 里那条 knip 步骤是**阻断**的，直接把脚本换成全量会让依赖门禁被顺手废掉（今天全量退出码 1）。所以保留 `pnpm knip`（依赖，阻断）不动，新增 `pnpm knip:full` 与**第二条 `continue-on-error: true` 的 CI 步骤**"Report unused files, exports and types"。已核：`pnpm knip` 仍退出 0、`pnpm knip:full` 退出 1（如期），工作流解析后只有新步骤是非阻断。`knip.json` 两条忽略项本就各带理由注释（`patch-package`、`screencapture`）；试过的第三条（给 `sanitizeThemeText` 加 `ignoreExports`）被 knip 6 判为非法键，改为**在函数上写明保留理由**、让报告如实列出它。基线：合入后 47 项 → O13 清完剩 1 项。
 
-**O25 · `main/windows/editor.ts` 独占 31% 的非空断言** — 成本 M，影响 中
+**O25 · `main/windows/editor.ts` 独占 31% 的非空断言** — 成本 M，影响 中 — **已完成 `86b8711`（分支 `fix/non-null-editor`）**
 144 处 `no-non-null-assertion` 里该文件占 44 处，且模式高度单一：`win!`、`this.id!`、`this.bufferStoreInfo!`、`this._markdownToOpen!`——都是"构造后必定非空"的字段。
 
 - 改法（两步，各自可 revert）：① 能构造期填写的字段改成必填，让类型系统承担；② 真可能为空的路径在函数开头一次性窄化（`if (!win) return`），后续不再逐行 `!`。
 - 验收：`pnpm lint` 的 144 基数降到 ≤100，**且不得靠新增 `eslint-disable` 达成**；每条消除要能说出运行时为何非空。
+- **完成状态 `86b8711`（分支 `fix/non-null-editor`）**：44 处全部消除，`pnpm lint` 由 149 warnings → **105 warnings / 0 errors**（144 → 100 条非空断言，5 条 unused-vars 不变），未新增 `eslint-disable`（该文件为 0）。五条根因与"运行时为何非空"：① `let win: BrowserWindow | null` 只被 `closed` 回调置空，而窗口关闭后它自己名下的 13 个监听器不可能再触发，故改 `const`，12 处 `win!` 连带消失；② 五个记账字段把 `null` 当空值，于是 `destroy()` 之后仍排队的回调会踩空——改为 `''` / `[]` 的**总类型**，`destroy()` 清空而非置空，16 处消失；③ `bufferStoreInfo` 字段只被"赋值之后创建的闭包"读回，改用 `createWindow` 局部量并把路径直传给 `_restoreAllState(filePath)`，该字段变为只写后删除（会话持久化读的是 `win.restoreBufferId`，已核 `editorBufferStore/index.ts:201` 与 `windowManager.ts:370`），4 处消失；④ `this.id!` 读的是同一作用域已有的 `win.id`，1 处；⑤ 发给 `browserWindow` 的 11 处改用可选链，与 `base.ts:93`、`windowManager.ts:492` 既有写法一致——窗口拆完后已无渲染进程可投递。
+- 顺带修掉两处真实的"拆窗后崩溃"：`openTabs` 的 `.catch` 通知与 `_restoreAllState` 的 `Promise.all` 回调原本会在窗口已销毁时抛 `TypeError`。新增 `test/unit/specs/editor-window-teardown-race.spec.ts` 3 例钉住；该 spec 在改前实测 3 条全红（`Cannot read properties of null (reading 'push')` / `(reading 'some')`），改后全绿。
+- 门禁（分支上实跑，退出码逐条）：`pnpm typecheck` **0**、`pnpm test:unit` **0**（71 文件 / 904 通过 + 1 跳过，加本 spec 后 72 / 907）、`pnpm lint` **0**（105 warnings / 0 errors）、`pnpm build` **0**。全量 `pnpm test:e2e` 退出 **1**，4 条失败**逐条同名**于 §4.1 记录的 Windows 既有红（`all-blocks-roundtrip.spec.ts` 的 item 39 字节稳定性四条），另 **223 通过**；既有的第 5 条偶发（`tab-switch-cursor`）本轮未复现。ubuntu 腿的红绿本地无从判断，不下结论。
 
 **O26 · `prettier --check` 在本 checkout 里对任何文件都报警** — 成本 XS，影响 中 — **已完成 `ff7d72b`（分支 `chore/prettier-eol`），但原计划的"再谈门禁"要撤**
 根 `.prettierrc.yaml` 没设 `endOfLine`（默认 `lf`），而 git 的 `core.autocrlf` 使工作副本为 CRLF：`git ls-files --eol` 显示 `i/lf w/crlf`。实测完全未改动的 `codeMirror/modes.ts`、`codeMirror/overlayMode.ts`、`util/pdf.ts` 一并报 warn，而 index 中存的是 LF。
@@ -347,7 +350,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | PR-16  | O13 死代码清理 —— **已实现** `cleanup/dead-symbols`（`09e1a2b`+`80cc31b`）                                | 放在最后做：前面几批会改变引用关系，早期判定不稳     |
 | PR-18  | O20 去多余 export + O23 `mltiplexMode.ts` 改名 —— **已实现**（`cab7cb8`+`48e4b1d`，合入后重取见 PR-16）   | 先跑 knip 全量取基线；只删 `export` 关键字，不删实现 |
 | PR-19  | O21 warn 门 + O24 knip 全量进 CI（非阻断）—— **已实现** `chore/desktop-size-gates`（`be4e173`+`ca8eaed`） | O24 的基线要在 O20 清完后重取，否则忽略清单会膨胀    |
-| PR-20  | O25 `main/windows/editor.ts` 非空断言收敛（144 → ≤100）                                                   | 独立于分解工作，但要在 O12 之前做，避免同一文件双改  |
+| PR-20  | O25 `main/windows/editor.ts` 非空断言收敛（144 → ≤100）—— **已实现** `fix/non-null-editor`（`86b8711`）   | 独立于分解工作，但要在 O12 之前做，避免同一文件双改  |
 
 **推进纪律**
 
