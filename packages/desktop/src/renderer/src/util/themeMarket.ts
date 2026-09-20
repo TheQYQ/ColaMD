@@ -1,4 +1,5 @@
 import { sanitize, PREVIEW_DOMPURIFY_CONFIG } from './dompurify'
+import { byteLengthUtf8 } from './byteLengthUtf8'
 
 /**
  * ColaMD Theme Package format (.colamd-theme)
@@ -214,11 +215,6 @@ export const parseThemeJson = (json: string): ColaMDThemeManifest => {
 /** Serializes a manifest to pretty-printed JSON for export. */
 export const serializeTheme = (manifest: ColaMDThemeManifest): string => {
   return JSON.stringify(manifest, null, 2)
-}
-
-const byteLengthUtf8 = (s: string): number => {
-  // TextEncoder is available in both the renderer and modern browsers.
-  return new TextEncoder().encode(s).length
 }
 
 /**

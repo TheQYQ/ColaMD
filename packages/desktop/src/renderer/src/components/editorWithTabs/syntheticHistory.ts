@@ -31,8 +31,8 @@
 // new content and hence a brand new id (dirty) — never the saved one.
 
 // Trailing newlines are NOT meaningful content for save/dirty tracking — the
-// store itself normalizes them via `adjustTrailingNewlines`/`trimTrailingNewline`
-// before saving. The engine's markdown serialization is also unstable across a
+// save path normalizes them via `adjustTrailingNewlines`/`trimTrailingNewline`
+// (`store/help.ts`) before writing. The engine's markdown serialization is also unstable across a
 // `setContent` -> edit -> undo round-trip purely in trailing newlines (loading
 // `'x\n'` may serialize to `'x\n\n\n'`, while undoing an edit lands on `'x\n'`),
 // so the content signature must ignore them or undo-to-saved would never match.
