@@ -214,10 +214,14 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - E2E 覆盖实况（本轮 `grep` 全部 63 个 desktop spec 得出）：菜单条/布局开关/侧栏/TOC **有**覆盖——`menu-sanity.spec.ts`、`layout-toggles.spec.ts`、`issue-2421-sidebar-state.spec.ts`（最近一条 `69bffe1` 刚把它重锚到 V1 树 DOM）、`toc-*.spec.ts` ×4、`editor-input.spec.ts`。但 Phase 1/2 的新能力**零** E2E：阅读时长、大纲跟随高亮、模式切换保滚动、GitHub Alerts、定义列表、行内注释、`[toc]` 块，在 `test/e2e` 下均无匹配选择器或文案——WORKPLAN 自己在三处"验证"段落里写的就是"e2e（Playwright）未跑"。
 - 验收：故意引入一条仅 Windows 失败的路径断言，PR CI 应红；④ 的部分要求上述 7 项各有至少一条结构断言。
 
-**O15 · 补丁链有个静默缝隙** — 成本 S
+**O15 · 补丁链有个静默缝隙** — 成本 S — **不做：本地无法给出可信验收，缺口比原描述小**
 两个 `.patch` 靠 `scripts/postinstall.ts:152` 手工 `patch-package`（cwd=`packages/desktop`），而 `.github/actions/setup/action.yml` 统一 `--ignore-scripts` → 只有 `build.yml`/`e2e.yml`/`release.yml` 显式重跑 postinstall 才打过补丁，`lint.yml`/`test.yml`/`validate-licenses.yml` 没有。`knip.json:5` 的 `ignoreDependencies: ["patch-package"]` 恰好把这条缝隙从死代码检测里遮掉了。
 
-- 改法：迁到 pnpm 原生 `patchedDependencies`（当前 `pnpm-workspace.yaml` **没有这个键**），删掉 `knip.json` 里那条 ignore，让工具重新看得见。
+- 原写两条改法，逐条实测后都不成立：
+  - **"删掉 `knip.json` 里那条 ignore，让工具重新看得见"** 做不到。`scripts/postinstall.ts:43` 是按**路径字符串**调用 bin（`path.join(desktopRoot, 'node_modules', '.bin', 'patch-package' + ext)`），knip 的静态扫描本来就看不见它——这条 ignore 是一句**真话**，删了只会让阻断门 `pnpm knip` 变红。对照：`electron-rebuild` 同样按路径调用（`:44`）却不需要 ignore，因为它还出现在 `packages/desktop/package.json` 的 `rebuild-native` 脚本里，knip 能从脚本名看到。它只有在补丁迁走、`patch-package` 整个依赖被删时才会自然消失，不是独立可做的清项。
+  - **"迁到 pnpm 原生 `patchedDependencies`"** 的验收需要一次真 `pnpm install`：pnpm 会把 `patchedDependencies` 的哈希写进 `pnpm-lock.yaml`、重新解包并打补丁，而本机 `node_modules` 里 `native-keymap` 的 `.node` 是**已编译产物**——重新解包会把它抹掉，必须再跑一次 `electron-rebuild`（MSVC）才恢复，且 `ced+2.0.0.patch` 改的正是 `index.js` 里加载 `.node` 的那段路径逻辑。也就是说这条改法的验证代价是"把用户正在用的开发安装置于需要重装+重编译的状态"，失败不可局部回滚。这属于要先问一句的操作，不擅自做。
+- 顺带把缺口的真实大小量出来：两条补丁只影响**打包与原生运行**（`native-keymap/binding.gyp` 的 C++20 开关、`ced/index.js` 的二进制加载兜底），`lint.yml`（eslint/knip/prettier）与 `validate-licenses.yml` 读的都不是这两个包的行为；desktop 单测里碰到这两个包的一共 3 个文件（`encoding.spec.ts:7`、`watcher-await-write-finish.spec.ts:33`、`watcher-tree-filter.spec.ts:13`）**全部 `vi.mock('ced', …)`**，真实模块从不加载，`native-keymap` 在单测里零引用（它只被 `src/main/keyboard/index.ts:12` 与一处 `import type` 使用）。所以"三条腿没打补丁"目前**不产生假绿**，它只是让 O14 加平台腿时少一层保障——原写"PR-14 的前置"依然成立，但不是因为 CI 现在是错的。
+- **要谁来做**：在允许重装的环境上按 `pnpm patch native-keymap@3.3.9` → 套用现有 diff → `pnpm patch-commit <dir>`（`ced@2.0.0` 再来一遍）→ 删 `postinstall.ts:151-152` 与 `patch-package` 依赖 → 删 `knip.json` 的 ignore → `pnpm install && pnpm rebuild-native && pnpm test:e2e`。
 
 **O16 · 工具脚本自身的小坏点** — 成本 S
 `scripts/check-md-links.py:10` 的 `ROOT = dirname(abspath(__file__))` 指向 `scripts/` 而非仓库根，一跑即 `FileNotFoundError`（且只覆盖 README 与 `docs/i18n`，这解释了为何无工作流引用它）；`scripts/generateThirdPartyLicense.ts:7` 与 `validateLicenses.ts:6` `require('./thirdPartyChecker.js')` 而实文件是 `.ts`，全靠 tsx 后缀改写才没炸；`eslint.config.js:1-8` 直接 import 未声明在 `devDependencies` 的 `@eslint/js` 与 `globals`，靠 `shamefully-hoist` 兜住；`electron-builder.yml:11` 排除了两个不存在的文件（`eslint.config.mjs`、`dev-app-update.yml`）；根 ESLint ^9.39.4 与引擎 ^10.5.0、desktop Vite ^7.3.5 与引擎 ^8.0.16 大版本分裂。
@@ -343,15 +347,15 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 **第三批 · 持续投入（结构性，不设截止）**
 
-| PR     | 内容                                                                                                      | 说明                                                 |
-| ------ | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| PR-13… | O12 上帝文件分解（store 提 services → 拆 composable，每步 E2E 全绿）                                      | 每步可独立 revert，禁止与功能改动混提                |
-| PR-14  | O14 CI 矩阵与覆盖率报告                                                                                   | 依赖 O15 先解决补丁，否则加平台腿会因未打补丁而假红  |
-| PR-15  | O15 补丁迁到 `patchedDependencies`                                                                        | PR-14 的前置                                         |
-| PR-16  | O13 死代码清理 —— **已实现** `cleanup/dead-symbols`（`09e1a2b`+`80cc31b`）                                | 放在最后做：前面几批会改变引用关系，早期判定不稳     |
-| PR-18  | O20 去多余 export + O23 `mltiplexMode.ts` 改名 —— **已实现**（`cab7cb8`+`48e4b1d`，合入后重取见 PR-16）   | 先跑 knip 全量取基线；只删 `export` 关键字，不删实现 |
-| PR-19  | O21 warn 门 + O24 knip 全量进 CI（非阻断）—— **已实现** `chore/desktop-size-gates`（`be4e173`+`ca8eaed`） | O24 的基线要在 O20 清完后重取，否则忽略清单会膨胀    |
-| PR-20  | O25 `main/windows/editor.ts` 非空断言收敛（144 → ≤100）—— **已实现** `fix/non-null-editor`（`86b8711`）   | 独立于分解工作，但要在 O12 之前做，避免同一文件双改  |
+| PR     | 内容                                                                                                      | 说明                                                               |
+| ------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| PR-13… | O12 上帝文件分解（store 提 services → 拆 composable，每步 E2E 全绿）                                      | 每步可独立 revert，禁止与功能改动混提                              |
+| PR-14  | O14 CI 矩阵与覆盖率报告                                                                                   | 原写"依赖 PR-15"，实测两条补丁不影响任何现有腿的结论，不再互为前置 |
+| PR-15  | O15 补丁迁到 `patchedDependencies` —— **不做**（见 §3 O15：验收要重装+重编译，失败不可局部回滚）          | 需要允许重装的环境；命令序列已写在 §3 O15                          |
+| PR-16  | O13 死代码清理 —— **已实现** `cleanup/dead-symbols`（`09e1a2b`+`80cc31b`）                                | 放在最后做：前面几批会改变引用关系，早期判定不稳                   |
+| PR-18  | O20 去多余 export + O23 `mltiplexMode.ts` 改名 —— **已实现**（`cab7cb8`+`48e4b1d`，合入后重取见 PR-16）   | 先跑 knip 全量取基线；只删 `export` 关键字，不删实现               |
+| PR-19  | O21 warn 门 + O24 knip 全量进 CI（非阻断）—— **已实现** `chore/desktop-size-gates`（`be4e173`+`ca8eaed`） | O24 的基线要在 O20 清完后重取，否则忽略清单会膨胀                  |
+| PR-20  | O25 `main/windows/editor.ts` 非空断言收敛（144 → ≤100）—— **已实现** `fix/non-null-editor`（`86b8711`）   | 独立于分解工作，但要在 O12 之前做，避免同一文件双改                |
 
 **推进纪律**
 
