@@ -26,11 +26,11 @@ import type Accessor from '../../../src/main/app/accessor'
 import EditorWindow from '../../../src/main/windows/editor'
 import { WindowLifecycle } from '../../../src/main/windows/base'
 
-const stubAccessor = (): unknown =>
+const stubAccessor = (): Accessor =>
   ({
     menu: { addRecentlyUsedDocument: vi.fn() },
     preferences: { getItem: vi.fn(() => false), getAll: vi.fn(() => ({})) }
-  }) as Accessor
+  }) as unknown as Accessor
 
 describe('O25 — an editor window survives calls that arrive after destroy()', () => {
   it('leaves the lifecycle quit and the state emptied, not null', () => {
