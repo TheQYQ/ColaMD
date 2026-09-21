@@ -171,7 +171,7 @@ ColaMD/
 - 状态栏 `components/statusBar/index.vue`（左：源码模式开关；右：字数统计）
 - 浮层：未保存对话框、命令面板、关于、导出设置、重命名、导入
 
-最大的几个文件：`components/editorWithTabs/editor.vue` 2321、`store/editor.ts` 1977、`prefComponents/image/components/uploader/index.vue` 1193、`commands/index.ts` 766、`menu/menus.ts` 724、`prefComponents/theme/index.vue` 689、`util/docx/document.ts` 648、`sourceCode.vue` 628。改动这些文件请预期高冲突。
+最大的几个文件：`components/editorWithTabs/editor.vue` 2169、`store/editor.ts` 1977、`prefComponents/image/components/uploader/index.vue` 1193、`commands/index.ts` 766、`menu/menus.ts` 724、`prefComponents/theme/index.vue` 689、`util/docx/document.ts` 648、`sourceCode.vue` 628。改动这些文件请预期高冲突。
 
 ### 7.4 两个编辑面
 
