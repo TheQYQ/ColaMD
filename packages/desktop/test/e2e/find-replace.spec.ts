@@ -14,7 +14,7 @@ test.describe('Find bar', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(
       '# Find test\n\nThe quick brown fox jumps over the lazy dog. needleAlpha and needleBeta.\n'
     )
@@ -23,23 +23,23 @@ test.describe('Find bar', () => {
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('Find action reveals .search-bar', async() => {
+  test('Find action reveals .search-bar', async () => {
     await sendIpcToRenderer(app, 'mt::editor-edit-action', 'find')
     const searchBar = page.locator('.search-bar')
     await expect(searchBar).toBeVisible({ timeout: 5000 })
   })
 
-  test('Replace action shows the search bar in replace mode', async() => {
+  test('Replace action shows the search bar in replace mode', async () => {
     await sendIpcToRenderer(app, 'mt::editor-edit-action', 'replace')
     const searchBar = page.locator('.search-bar')
     await expect(searchBar).toBeVisible({ timeout: 5000 })
   })
 
-  test('Escape hides the search bar', async() => {
+  test('Escape hides the search bar', async () => {
     await sendIpcToRenderer(app, 'mt::editor-edit-action', 'find')
     const searchBar = page.locator('.search-bar')
     await expect(searchBar).toBeVisible({ timeout: 5000 })
@@ -78,7 +78,7 @@ const isTabDirty = (page: Page): Promise<boolean> =>
 // `locator.click()`; dispatching the event on the resolved element invokes the
 // Vue `@click` handler regardless of any overlay, which is exactly the wiring
 // these specs mean to exercise.
-const clickByEval = async(page: Page, selector: string): Promise<void> => {
+const clickByEval = async (page: Page, selector: string): Promise<void> => {
   const clicked = await page.evaluate((sel) => {
     const el = document.querySelector(sel) as HTMLElement | null
     if (!el) return false
@@ -91,8 +91,7 @@ const clickByEval = async(page: Page, selector: string): Promise<void> => {
 const undo = (app: ElectronApplication): Promise<void> =>
   sendIpcToRenderer(app, 'mt::editor-edit-action', 'undo')
 
-const counterText = (page: Page): Promise<string> =>
-  page.locator(RESULT_COUNTER).innerText()
+const counterText = (page: Page): Promise<string> => page.locator(RESULT_COUNTER).innerText()
 
 // Read the live WYSIWYG editor text (what the engine has rendered into the
 // contenteditable). Verifying replace results this way avoids the source-mode
@@ -109,7 +108,7 @@ const countOccurrences = (haystack: string, needle: string): number =>
 // Close the find bar (if open) and reset its inputs to a clean slate so the
 // next scenario starts fresh. Escape -> emptySearch() clears searchValue and
 // replaceValue and removes engine highlights.
-const closeAndReset = async(page: Page): Promise<void> => {
+const closeAndReset = async (page: Page): Promise<void> => {
   const bar = page.locator(SEARCH_BAR)
   if (await bar.isVisible()) {
     await page.keyboard.press('Escape')
@@ -123,7 +122,7 @@ const closeAndReset = async(page: Page): Promise<void> => {
 // current history entry as `lastSavedHistoryId` + clears the dirty flag), so a
 // subsequent edit's effect on the unsaved indicator is observed from a known
 // clean baseline. Mirrors the real post-save IPC the main process sends.
-const seedDocClean = async(
+const seedDocClean = async (
   app: ElectronApplication,
   page: Page,
   markdown: string
@@ -139,12 +138,12 @@ const seedDocClean = async(
   await expect.poll(() => isTabDirty(page)).toBe(false)
 }
 
-const openFind = async(app: ElectronApplication, page: Page): Promise<void> => {
+const openFind = async (app: ElectronApplication, page: Page): Promise<void> => {
   await sendIpcToRenderer(app, 'mt::editor-edit-action', 'find')
   await expect(page.locator(SEARCH_BAR)).toBeVisible({ timeout: 5000 })
 }
 
-const openReplace = async(app: ElectronApplication, page: Page): Promise<void> => {
+const openReplace = async (app: ElectronApplication, page: Page): Promise<void> => {
   await sendIpcToRenderer(app, 'mt::editor-edit-action', 'replace')
   await expect(page.locator(SEARCH_BAR)).toBeVisible({ timeout: 5000 })
   await expect(page.locator('.search-bar .replace')).toBeVisible({ timeout: 5000 })
@@ -154,18 +153,18 @@ test.describe('Find bar — realtime counter and highlights (item 180)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('apple banana apple cherry apple\n')
     app = launched.app
     page = launched.page
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('typed query shows "1 / 3" and one active + two inactive highlights', async() => {
+  test('typed query shows "1 / 3" and one active + two inactive highlights', async () => {
     await openFind(app, page)
     await page.locator(FIND_INPUT).fill('apple')
 
@@ -181,18 +180,18 @@ test.describe('Find bar — find next / previous navigation (items 152, 181)', (
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('apple one apple two apple three\n')
     app = launched.app
     page = launched.page
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('findNext cycles 1/3 -> 2/3 -> 3/3 -> wraps to 1/3, keeping one active highlight', async() => {
+  test('findNext cycles 1/3 -> 2/3 -> 3/3 -> wraps to 1/3, keeping one active highlight', async () => {
     await openFind(app, page)
     await page.locator(FIND_INPUT).fill('apple')
     await expect.poll(() => counterText(page)).toContain('1 / 3')
@@ -211,7 +210,7 @@ test.describe('Find bar — find next / previous navigation (items 152, 181)', (
     await expect.poll(() => page.locator('.mu-highlight').count()).toBe(1)
   })
 
-  test('findPrev from 1/3 wraps backward to 3/3 then steps back to 2/3', async() => {
+  test('findPrev from 1/3 wraps backward to 3/3 then steps back to 2/3', async () => {
     // Continues from the previous test's 1/3 state.
     await expect.poll(() => counterText(page)).toContain('1 / 3')
 
@@ -228,18 +227,18 @@ test.describe('Find bar — option toggles re-run the search (items 185, 186, 18
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('placeholder\n')
     app = launched.app
     page = launched.page
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('case-sensitive toggle drops the match count and gains the active class', async() => {
+  test('case-sensitive toggle drops the match count and gains the active class', async () => {
     await seedDocClean(app, page, 'Apple and apple are different.\n')
     await openFind(app, page)
     await page.locator(FIND_INPUT).fill('apple')
@@ -259,7 +258,7 @@ test.describe('Find bar — option toggles re-run the search (items 185, 186, 18
     await closeAndReset(page)
   })
 
-  test('whole-word toggle excludes the substring match and gains the active class', async() => {
+  test('whole-word toggle excludes the substring match and gains the active class', async () => {
     await seedDocClean(app, page, 'a cat in a category\n')
     await openFind(app, page)
     await page.locator(FIND_INPUT).fill('cat')
@@ -278,7 +277,7 @@ test.describe('Find bar — option toggles re-run the search (items 185, 186, 18
     await closeAndReset(page)
   })
 
-  test('regex toggle: invalid + empty-match show error UI, valid pattern highlights', async() => {
+  test('regex toggle: invalid + empty-match show error UI, valid pattern highlights', async () => {
     await seedDocClean(app, page, 'apple apricot banana\n')
     await openFind(app, page)
 
@@ -330,18 +329,18 @@ test.describe('Find bar — replace single / all dirty the tab (items 153, 183, 
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('placeholder\n')
     app = launched.app
     page = launched.page
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('replace-single changes exactly one occurrence and flags the tab unsaved (item 183)', async() => {
+  test('replace-single changes exactly one occurrence and flags the tab unsaved (item 183)', async () => {
     await seedDocClean(app, page, 'foo foo foo\n')
     await openReplace(app, page)
     await page.locator(FIND_INPUT).fill('foo')
@@ -351,7 +350,7 @@ test.describe('Find bar — replace single / all dirty the tab (items 153, 183, 
     await clickByEval(page, REPLACE_SINGLE_BTN)
 
     await expect
-      .poll(async() => {
+      .poll(async () => {
         const text = await editorText(page)
         return { bar: countOccurrences(text, 'bar'), foo: countOccurrences(text, 'foo') }
       })
@@ -361,7 +360,7 @@ test.describe('Find bar — replace single / all dirty the tab (items 153, 183, 
     await closeAndReset(page)
   })
 
-  test('replace-all replaces every occurrence and flags the tab unsaved (item 184)', async() => {
+  test('replace-all replaces every occurrence and flags the tab unsaved (item 184)', async () => {
     await seedDocClean(app, page, 'cat cat cat\n')
     await openReplace(app, page)
     await page.locator(FIND_INPUT).fill('cat')
@@ -371,7 +370,7 @@ test.describe('Find bar — replace single / all dirty the tab (items 153, 183, 
     await clickByEval(page, REPLACE_ALL_BTN)
 
     await expect
-      .poll(async() => {
+      .poll(async () => {
         const text = await editorText(page)
         return { dog: countOccurrences(text, 'dog'), cat: countOccurrences(text, 'cat') }
       })
@@ -384,7 +383,7 @@ test.describe('Find bar — replace single / all dirty the tab (items 153, 183, 
     await closeAndReset(page)
   })
 
-  test('replace-all across multiple blocks + undo restores every occurrence (items 153, 184)', async() => {
+  test('replace-all across multiple blocks + undo restores every occurrence (items 153, 184)', async () => {
     await seedDocClean(app, page, '# alpha heading\n\nalpha paragraph\n\n- alpha item\n')
     await openReplace(app, page)
     await page.locator(FIND_INPUT).fill('alpha')
@@ -394,7 +393,7 @@ test.describe('Find bar — replace single / all dirty the tab (items 153, 183, 
     await clickByEval(page, REPLACE_ALL_BTN)
 
     await expect
-      .poll(async() => {
+      .poll(async () => {
         const text = await editorText(page)
         return { omega: countOccurrences(text, 'omega'), alpha: countOccurrences(text, 'alpha') }
       })
@@ -410,7 +409,7 @@ test.describe('Find bar — replace single / all dirty the tab (items 153, 183, 
     // seeded-clean baseline content + history id).
     await undo(app)
     await expect
-      .poll(async() => {
+      .poll(async () => {
         const text = await editorText(page)
         return { omega: countOccurrences(text, 'omega'), alpha: countOccurrences(text, 'alpha') }
       })
@@ -423,18 +422,18 @@ test.describe('Find bar — left arrow toggles replace mode (item 191)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('toggle target\n')
     app = launched.app
     page = launched.page
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('left-arrow shows the replace row, then hides it again', async() => {
+  test('left-arrow shows the replace row, then hides it again', async () => {
     await openFind(app, page)
     const replaceRow = page.locator('.search-bar .replace')
     await expect(replaceRow).toHaveCount(0)
@@ -454,7 +453,7 @@ test.describe('Find bar — Escape clears highlights and restores the cursor (it
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(
       'The quick needleAlpha brown fox and needleBeta jumps.\n'
     )
@@ -463,11 +462,11 @@ test.describe('Find bar — Escape clears highlights and restores the cursor (it
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('Escape after a query clears every highlight and selects the active match', async() => {
+  test('Escape after a query clears every highlight and selects the active match', async () => {
     await openFind(app, page)
     await page.locator(FIND_INPUT).fill('needleAlpha')
     await expect.poll(() => counterText(page)).toContain('1 / 1')
@@ -493,7 +492,7 @@ test.describe('Find bar — shared with source-code mode (P1.3)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(
       '# Source mode\n\nfind me in source mode if you can.\n',
       { suppressErrorDialog: true }
@@ -503,11 +502,11 @@ test.describe('Find bar — shared with source-code mode (P1.3)', () => {
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('the shared search bar mounts in source-code mode and finds matches', async() => {
+  test('the shared search bar mounts in source-code mode and finds matches', async () => {
     await enterSourceMode(page, app)
 
     // P1.3 superseded item 194 ("suppressed in source mode"): the find action

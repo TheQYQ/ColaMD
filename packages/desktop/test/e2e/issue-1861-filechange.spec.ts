@@ -20,7 +20,7 @@ const isDirty = (page: Page) =>
 const WATCH_SETTLE = 2500
 
 test.describe('Issue #1861 — content-identical file change', () => {
-  test('an identical on-disk rewrite stays clean; a real change warns', async() => {
+  test('an identical on-disk rewrite stays clean; a real change warns', async () => {
     const { app, page, filePath } = await launchWithMarkdown('hello\nworld\n')
     await waitForMenuReady(app)
     await page.waitForTimeout(500)

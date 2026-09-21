@@ -36,12 +36,12 @@ const SCROLLED_TASKS = `${Array.from(
   (_, index) => `Paragraph before task ${index + 1}`
 ).join('\n\n')}\n\n- [ ] review decision\n`
 
-const setAutoCheck = async(app: ElectronApplication, value: boolean): Promise<void> => {
+const setAutoCheck = async (app: ElectronApplication, value: boolean): Promise<void> => {
   await sendIpcToRenderer(app, 'mt::user-preference', { autoCheck: value })
 }
 
 // Read the `.checked` flag of the nth rendered task checkbox input.
-const checkboxChecked = async(page: Page, index: number): Promise<boolean> => {
+const checkboxChecked = async (page: Page, index: number): Promise<boolean> => {
   return await page.evaluate((i) => {
     const inputs = document.querySelectorAll<HTMLInputElement>(
       '.editor-component input[type=checkbox]'
@@ -51,7 +51,7 @@ const checkboxChecked = async(page: Page, index: number): Promise<boolean> => {
   }, index)
 }
 
-const checkboxCount = async(page: Page): Promise<number> => {
+const checkboxCount = async (page: Page): Promise<number> => {
   return await page.evaluate(
     () => document.querySelectorAll('.editor-component input[type=checkbox]').length
   )
@@ -59,7 +59,7 @@ const checkboxCount = async(page: Page): Promise<number> => {
 
 // Reset the document back to the all-unchecked nested fixture via source mode,
 // then wait for the three rendered checkboxes to re-attach unchecked.
-const reloadFixture = async(page: Page, app: ElectronApplication): Promise<void> => {
+const reloadFixture = async (page: Page, app: ElectronApplication): Promise<void> => {
   await setSourceMarkdown(page, app, NESTED_TASKS)
   await expect.poll(() => checkboxCount(page)).toBe(3)
   await expect.poll(() => checkboxChecked(page, 0)).toBe(false)
@@ -71,7 +71,7 @@ test.describe('Checklist 32 — task list autoCheck cascade via a real checkbox 
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(NESTED_TASKS, { suppressErrorDialog: true })
     app = launched.app
     page = launched.page
@@ -80,11 +80,11 @@ test.describe('Checklist 32 — task list autoCheck cascade via a real checkbox 
     await expect.poll(() => checkboxCount(page)).toBe(3)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     await app.close()
   })
 
-  test('with autoCheck ON, clicking the parent flips both descendants + saves "- [x]" x3', async() => {
+  test('with autoCheck ON, clicking the parent flips both descendants + saves "- [x]" x3', async () => {
     await setAutoCheck(app, true)
     await page.waitForTimeout(200)
 
@@ -109,7 +109,7 @@ test.describe('Checklist 32 — task list autoCheck cascade via a real checkbox 
     await expectNoRendererErrors(app)
   })
 
-  test('with autoCheck OFF, clicking the parent changes only the parent (no cascade)', async() => {
+  test('with autoCheck OFF, clicking the parent changes only the parent (no cascade)', async () => {
     // Turn the cascade off and reset to a clean all-unchecked nested list.
     // (The previous test left all three checked.)
     await setAutoCheck(app, false)
@@ -136,7 +136,7 @@ test.describe('Checklist 32 — task list autoCheck cascade via a real checkbox 
 })
 
 test.describe('Task-list checkbox preserves the viewport', () => {
-  test('clicking a visible checkbox in a long document does not jump to the top', async() => {
+  test('clicking a visible checkbox in a long document does not jump to the top', async () => {
     const { app, page } = await launchWithMarkdown(SCROLLED_TASKS, {
       suppressErrorDialog: true
     })

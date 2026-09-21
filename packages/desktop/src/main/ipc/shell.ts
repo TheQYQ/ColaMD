@@ -8,7 +8,7 @@ import { typedHandle } from './typedHandle'
 // links may leave the app. file:// / smb:// / custom schemes stay blocked.
 const OPEN_EXTERNAL_RE = /^https?:\/\//i
 
-const openExternalSafe = async(url: string): Promise<boolean> => {
+const openExternalSafe = async (url: string): Promise<boolean> => {
   if (!OPEN_EXTERNAL_RE.test(url)) {
     log.warn('shell.openExternal blocked non-http(s) URL:', url)
     return false
@@ -27,7 +27,7 @@ export const registerShellHandlers = (): void => {
   ipcMain.on('mt::shell::open-external', (_e, url: string) => {
     openExternalSafe(url).catch((err) => log.error('shell.openExternal failed:', err))
   })
-  ipcMain.on('mt::shell::show-item', async(_e, fullPath: string) => {
+  ipcMain.on('mt::shell::show-item', async (_e, fullPath: string) => {
     try {
       await assertPathInScope(fullPath)
       shell.showItemInFolder(fullPath)
@@ -35,7 +35,7 @@ export const registerShellHandlers = (): void => {
       log.error('shell.showItemInFolder blocked:', err)
     }
   })
-  typedHandle('mt::shell::open-path', async(_e, fullPath: string) => {
+  typedHandle('mt::shell::open-path', async (_e, fullPath: string) => {
     try {
       // openPath on an .exe launches it — effectively exec. Scope it.
       await assertPathInScope(fullPath)

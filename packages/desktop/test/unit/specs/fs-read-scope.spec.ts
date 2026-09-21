@@ -25,7 +25,7 @@ import { addAllowedRoot, clearAllowedRootsForTest } from '../../../src/main/secu
 
 registerFsHandlers()
 
-const call = async(channel: string, ...args: unknown[]): Promise<unknown> => {
+const call = async (channel: string, ...args: unknown[]): Promise<unknown> => {
   const listener = handleChannels.get(channel)
   if (!listener) throw new Error(`nothing listens on ${channel}`)
   return listener({ sender: {} }, ...args)
@@ -34,7 +34,7 @@ const call = async(channel: string, ...args: unknown[]): Promise<unknown> => {
 let root: string
 let outside: string
 
-beforeAll(async() => {
+beforeAll(async () => {
   root = await fs.mkdtemp(path.join(os.tmpdir(), 'colamd-scope-'))
   outside = await fs.mkdtemp(path.join(os.tmpdir(), 'colamd-outside-'))
   await fs.writeFile(path.join(root, 'note.md'), '# hello\n')
@@ -43,34 +43,34 @@ beforeAll(async() => {
   addAllowedRoot(root)
 })
 
-afterAll(async() => {
+afterAll(async () => {
   clearAllowedRootsForTest()
   await fs.remove(root)
   await fs.remove(outside)
 })
 
 describe('read disclosure is scoped', () => {
-  it('reads a file inside a granted root', async() => {
+  it('reads a file inside a granted root', async () => {
     const buf = (await call('mt::fs::read-file', path.join(root, 'note.md'))) as Buffer
     expect(buf.toString()).toBe('# hello\n')
   })
 
-  it('lists a granted root', async() => {
+  it('lists a granted root', async () => {
     expect(await call('mt::fs::readdir', root)).toEqual(['note.md'])
   })
 
-  it('refuses to read a file outside every root', async() => {
+  it('refuses to read a file outside every root', async () => {
     await expect(call('mt::fs::read-file', path.join(outside, 'secret.md'))).rejects.toThrow(
       /outside the allowed scope/
     )
   })
 
-  it('refuses to list a directory outside every root', async() => {
+  it('refuses to list a directory outside every root', async () => {
     await expect(call('mt::fs::readdir', outside)).rejects.toThrow(/outside the allowed scope/)
   })
 
   // The deliberate part: the probes still answer about the same ungranted path.
-  it('still answers the boolean probes, which is the recorded boundary', async() => {
+  it('still answers the boolean probes, which is the recorded boundary', async () => {
     expect(await call('mt::fs::path-exists', path.join(outside, 'secret.md'))).toBe(true)
     expect(await call('mt::fs::is-file', path.join(outside, 'secret.md'))).toBe(true)
   })

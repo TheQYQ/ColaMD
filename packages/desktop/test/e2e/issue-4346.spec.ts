@@ -19,7 +19,7 @@ test.describe('Issue #4346: list-block null guards', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeEach(async() => {
+  test.beforeEach(async () => {
     const launched = await launchWithMarkdown('# Repro\n\n', { suppressErrorDialog: true })
     app = launched.app
     page = launched.page
@@ -27,11 +27,11 @@ test.describe('Issue #4346: list-block null guards', () => {
     await clearRendererErrors(app)
   })
 
-  test.afterEach(async() => {
+  test.afterEach(async () => {
     if (app) await app.close()
   })
 
-  test('select-all delete inside a single-item list does not crash', async() => {
+  test('select-all delete inside a single-item list does not crash', async () => {
     await setSourceMarkdown(page, app, '# Doc\n\n- only item\n')
     await page.waitForTimeout(400)
     await placeCaretInEditor(page)
@@ -45,7 +45,7 @@ test.describe('Issue #4346: list-block null guards', () => {
     await expectNoRendererErrors(app)
   })
 
-  test('backspace through every list item until list is empty does not crash', async() => {
+  test('backspace through every list item until list is empty does not crash', async () => {
     await setSourceMarkdown(page, app, '# Doc\n\n- a\n- b\n- c\n')
     await page.waitForTimeout(400)
     await placeCaretInEditor(page)
@@ -71,7 +71,7 @@ test.describe('Issue #4346: list-block null guards', () => {
     await expectNoRendererErrors(app)
   })
 
-  test('task list to bullet list transitions do not crash', async() => {
+  test('task list to bullet list transitions do not crash', async () => {
     await setSourceMarkdown(page, app, '# Doc\n\n- [ ] task one\n- [x] task two\n- regular item\n')
     await page.waitForTimeout(400)
     await placeCaretInEditor(page)
@@ -97,10 +97,12 @@ test.describe('Issue #4346: list-block null guards', () => {
     await expectNoRendererErrors(app)
   })
 
-  test('paste HTML with empty list does not crash', async() => {
+  test('paste HTML with empty list does not crash', async () => {
     const html = '<p>Before</p><ul></ul><ul><li></li></ul><ol></ol><p>After</p>'
     await page.evaluate((h) => {
-      const target = document.querySelector('.editor-component span.mu-paragraph-content') as HTMLElement | null
+      const target = document.querySelector(
+        '.editor-component span.mu-paragraph-content'
+      ) as HTMLElement | null
       if (!target) return
       const range = document.createRange()
       range.selectNodeContents(target)

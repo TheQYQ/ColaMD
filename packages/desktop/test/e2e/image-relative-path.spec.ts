@@ -39,7 +39,7 @@ test.describe('Relative-path image resolves to a DIRNAME-anchored file:// URL', 
   let page: Page
   let docDir: string
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const written = writeDocWithRelativeImage()
     docDir = written.docDir
     const launched = await launchElectron([written.docPath])
@@ -49,7 +49,7 @@ test.describe('Relative-path image resolves to a DIRNAME-anchored file:// URL', 
     await waitForMenuReady(app)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
     for (const dir of createdDirs) {
       try {
@@ -60,11 +60,11 @@ test.describe('Relative-path image resolves to a DIRNAME-anchored file:// URL', 
     }
   })
 
-  test('window.DIRNAME tracks the opened document directory', async() => {
+  test('window.DIRNAME tracks the opened document directory', async () => {
     // The renderer populates window.DIRNAME from the open file's dirname; the
     // engine reads it to anchor relative image paths (image.ts getImageSrc).
     await expect
-      .poll(async() => page.evaluate(() => window.DIRNAME), { timeout: 10000 })
+      .poll(async () => page.evaluate(() => window.DIRNAME), { timeout: 10000 })
       .toBeTruthy()
     const dirname = await page.evaluate(() => window.DIRNAME)
     // file:// URLs always use forward slashes, and so does the engine's
@@ -72,7 +72,7 @@ test.describe('Relative-path image resolves to a DIRNAME-anchored file:// URL', 
     expect(dirname.replace(/\\/g, '/')).toBe(docDir.replace(/\\/g, '/'))
   })
 
-  test('renders an <img> whose src is file://<docDir>/assets/cat.png', async() => {
+  test('renders an <img> whose src is file://<docDir>/assets/cat.png', async () => {
     const imgLocator = page.locator('.editor-component .mu-image-container img')
     await imgLocator.first().waitFor({ state: 'attached', timeout: 10000 })
 
@@ -81,7 +81,7 @@ test.describe('Relative-path image resolves to a DIRNAME-anchored file:// URL', 
     // (optionally cache-busted) file:// URL.
     await expect
       .poll(
-        async() => page.locator('.editor-component .mu-inline-image.mu-image-success').count(),
+        async () => page.locator('.editor-component .mu-inline-image.mu-image-success').count(),
         {
           timeout: 10000
         }
@@ -109,7 +109,7 @@ test.describe('Relative-path image resolves to a DIRNAME-anchored file:// URL', 
     expect(withoutQuery).toBe(expectedSrc)
   })
 
-  test('the anchored file:// URL points at a file that exists on disk', async() => {
+  test('the anchored file:// URL points at a file that exists on disk', async () => {
     const src = await page
       .locator('.editor-component .mu-image-container img')
       .first()

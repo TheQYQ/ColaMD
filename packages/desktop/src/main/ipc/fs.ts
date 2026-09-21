@@ -26,12 +26,12 @@ export const registerFsHandlers = (): void => {
   // already reads inside a granted root: the two settings/PDF paths read
   // `<userData>/themes/export` (registered at app/index.ts:273), and theme import
   // reads a path the user just picked, which `mt::dialog::open` grants.
-  typedHandle('mt::fs::read-file', async(_e, p: string, encoding?: BufferEncoding) => {
+  typedHandle('mt::fs::read-file', async (_e, p: string, encoding?: BufferEncoding) => {
     await assertPathInScope(p)
     const buf = await fs.readFile(p, encoding)
     return buf
   })
-  typedHandle('mt::fs::readdir', async(_e, p: string) => {
+  typedHandle('mt::fs::readdir', async (_e, p: string) => {
     await assertPathInScope(p)
     return fs.readdir(p)
   })
@@ -49,31 +49,31 @@ export const registerFsHandlers = (): void => {
   typedHandle('mt::fs::path-exists', (_e, p: string) => fs.pathExists(p))
 
   // Mutating channels — every path must resolve inside an allowed root.
-  typedHandle('mt::fs::copy', async(_e, src: string, dest: string) => {
+  typedHandle('mt::fs::copy', async (_e, src: string, dest: string) => {
     await assertPathInScope(src)
     await assertPathInScope(dest)
     return fs.copy(src, dest)
   })
-  typedHandle('mt::fs::ensure-dir', async(_e, p: string) => {
+  typedHandle('mt::fs::ensure-dir', async (_e, p: string) => {
     await assertPathInScope(p)
     return fs.ensureDir(p)
   })
 
-  typedHandle('mt::fs::output-file', async(_e, p: string, data: unknown) => {
+  typedHandle('mt::fs::output-file', async (_e, p: string, data: unknown) => {
     await assertPathInScope(p)
     return fs.outputFile(p, toBuffer(data) as string | NodeJS.ArrayBufferView)
   })
-  typedHandle('mt::fs::move', async(_e, src: string, dest: string) => {
+  typedHandle('mt::fs::move', async (_e, src: string, dest: string) => {
     await assertPathInScope(src)
     await assertPathInScope(dest)
     return fs.move(src, dest, { overwrite: false })
   })
 
-  typedHandle('mt::fs::write-file', async(_e, p: string, data: unknown) => {
+  typedHandle('mt::fs::write-file', async (_e, p: string, data: unknown) => {
     await assertPathInScope(p)
     return fs.writeFile(p, toBuffer(data) as string | NodeJS.ArrayBufferView)
   })
-  typedHandle('mt::fs::unlink', async(_e, p: string) => {
+  typedHandle('mt::fs::unlink', async (_e, p: string) => {
     await assertPathInScope(p)
     return fs.unlink(p)
   })

@@ -66,7 +66,7 @@ describe('quick open file-name search', () => {
     delete (window as unknown as { fileUtils: unknown }).fileUtils
   })
 
-  it('asks the ripgrep bridge for files mode over the project root', async() => {
+  it('asks the ripgrep bridge for files mode over the project root', async () => {
     const { requests } = installRipgrepBridge()
     window.fileUtils = {
       hasMarkdownExtension: () => false,

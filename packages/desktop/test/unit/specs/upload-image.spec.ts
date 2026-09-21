@@ -24,7 +24,7 @@ const sentPayload = (): Record<string, unknown> =>
 describe('uploadImage IPC payload shape', () => {
   const docPath = '/tmp/notes/a.md'
 
-  it('forwards a local path string with isPath:true', async() => {
+  it('forwards a local path string with isPath:true', async () => {
     const source = '/Users/someone/pictures/pic.png'
     const result = await uploadImage(docPath, source)
 
@@ -35,7 +35,7 @@ describe('uploadImage IPC payload shape', () => {
     expect(result).toBe('https://cdn/x.png')
   })
 
-  it('forwards a binary File with isPath:false and a Uint8Array + name', async() => {
+  it('forwards a binary File with isPath:false and a Uint8Array + name', async () => {
     const file = new File([new Uint8Array([1, 2, 3])], 'pic.png', { type: 'image/png' })
     await uploadImage(docPath, file)
 
@@ -50,7 +50,7 @@ describe('uploadImage IPC payload shape', () => {
 
   // The point of the channel's shape: nothing that selects code to run crosses
   // the boundary, under any key name.
-  it('sends exactly the three owned fields and no uploader settings', async() => {
+  it('sends exactly the three owned fields and no uploader settings', async () => {
     await uploadImage(docPath, '/x/y.png')
 
     expect(Object.keys(sentPayload()).sort()).toEqual(['image', 'isPath', 'pathname'])
@@ -59,7 +59,7 @@ describe('uploadImage IPC payload shape', () => {
     expect(JSON.stringify(sentPayload())).not.toContain('cliScript')
   })
 
-  it('returns the uploader-provided URL', async() => {
+  it('returns the uploader-provided URL', async () => {
     uploadImageFn.mockResolvedValueOnce('https://cdn/custom.png')
     const result = await uploadImage(docPath, '/x/y.png')
     expect(result).toBe('https://cdn/custom.png')

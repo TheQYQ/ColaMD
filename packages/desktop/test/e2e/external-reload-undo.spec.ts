@@ -9,7 +9,7 @@ import {
 
 // Trigger an editor undo through the same IPC channel the Edit › Undo menu item
 // uses (`mt::editor-edit-action` → bus `undo` → editor.undo()).
-const undo = async(app: Parameters<typeof sendIpcToRenderer>[0]): Promise<void> => {
+const undo = async (app: Parameters<typeof sendIpcToRenderer>[0]): Promise<void> => {
   await sendIpcToRenderer(app, 'mt::editor-edit-action', 'undo')
 }
 
@@ -17,7 +17,7 @@ const undo = async(app: Parameters<typeof sendIpcToRenderer>[0]): Promise<void> 
 // payload shape the main-process watcher sends (a `loadMarkdownFile` result in
 // `change.data`). Drives the real renderer reload path
 // LISTEN_FOR_FILE_CHANGE → HANDLE_DISK_CHANGE → loadChange → bus `file-changed` → handleFileChange.
-const reportExternalChange = async(
+const reportExternalChange = async (
   app: Parameters<typeof sendIpcToRenderer>[0],
   pathname: string,
   markdown: string
@@ -46,7 +46,7 @@ test.describe('External disk reload — undo restores the pre-change document', 
   // first Ctrl+Z after an external reload restored it. The @muyajs/core reload
   // path must record the same single invertible undo boundary (via
   // `Muya.replaceContent`) instead of `setContent` (which clears history).
-  test('first undo after an external reload restores the old content', async() => {
+  test('first undo after an external reload restores the old content', async () => {
     const { app, page, filePath } = await launchWithMarkdown('old content here\n')
     await waitForMenuReady(app)
 
@@ -89,7 +89,7 @@ test.describe('External disk reload — source-mode scroll position survives a s
   // next animation frame (because the muya editor.vue file-changed handler
   // relayouts in the same tick). With `muyaIndexCursor: null` on a freshly
   // loaded tab the restore branch — not setSelection — is the one that runs.
-  test('258: same-id reload preserves the source-mode scrollTop', async() => {
+  test('258: same-id reload preserves the source-mode scrollTop', async () => {
     // A long body so the CodeMirror content overflows and is actually
     // scrollable. The exact scroll element depends on CodeMirror's height:auto
     // + the outer .source-code overflow:auto interplay, so we discover whichever

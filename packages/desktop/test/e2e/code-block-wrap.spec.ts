@@ -19,7 +19,7 @@ const CODE_DOC =
 
 const CODE_SELECTOR = '.mu-code-block .mu-code'
 
-const setPreference = async(
+const setPreference = async (
   app: ElectronApplication,
   page: Page,
   prefs: Record<string, unknown>
@@ -29,7 +29,7 @@ const setPreference = async(
   }, prefs)
 }
 
-const readWhiteSpace = async(page: Page): Promise<string> => {
+const readWhiteSpace = async (page: Page): Promise<string> => {
   return await page.evaluate((selector) => {
     const el = document.querySelector(selector)
     return el ? getComputedStyle(el).whiteSpace : ''
@@ -40,7 +40,7 @@ test.describe('Code block wrap + line-numbers preferences', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(CODE_DOC)
     app = launched.app
     page = launched.page
@@ -48,12 +48,12 @@ test.describe('Code block wrap + line-numbers preferences', () => {
     await page.waitForSelector(CODE_SELECTOR, { state: 'attached', timeout: 15000 })
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
   // Item 99: wrap preference toggles white-space on .mu-code-block .mu-code.
-  test('wrapCodeBlocks toggles computed white-space on .mu-code-block .mu-code', async() => {
+  test('wrapCodeBlocks toggles computed white-space on .mu-code-block .mu-code', async () => {
     // Default preference is wrapCodeBlocks: false, so the editor root has no
     // .mu-code-wrap class and white-space is pre. Establish the baseline first.
     await expect.poll(() => readWhiteSpace(page), { timeout: 10000 }).toBe('pre')
@@ -70,8 +70,8 @@ test.describe('Code block wrap + line-numbers preferences', () => {
 
   // Item 44: line-numbers preference toggles the `mu-line-numbers` class on the
   // .mu-code-block pre, applied live via muya.setOptions(..., forceRender=true).
-  test('codeBlockLineNumbers toggles the mu-line-numbers class on the code block', async() => {
-    const hasLineNumbers = async(): Promise<boolean> => {
+  test('codeBlockLineNumbers toggles the mu-line-numbers class on the code block', async () => {
+    const hasLineNumbers = async (): Promise<boolean> => {
       return await page.evaluate(() => {
         const pre = document.querySelector('.mu-code-block')
         return !!pre && pre.classList.contains('mu-line-numbers')
@@ -94,7 +94,7 @@ test.describe('Code block wrap + line-numbers preferences', () => {
   // Item 44 (continued): both preferences take effect together and live — assert
   // the wrap CSS still resolves after a line-numbers forceRender re-creates the
   // code DOM (regression guard: a re-render must not orphan the injected style).
-  test('wrap CSS still matches the code DOM after a line-numbers re-render', async() => {
+  test('wrap CSS still matches the code DOM after a line-numbers re-render', async () => {
     await setPreference(app, page, { wrapCodeBlocks: true })
     await expect.poll(() => readWhiteSpace(page), { timeout: 10000 }).toBe('pre-wrap')
 

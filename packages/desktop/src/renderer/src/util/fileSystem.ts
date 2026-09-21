@@ -2,7 +2,7 @@ export type FileCreateType = 'file' | 'directory'
 export type PasteType = 'cut' | 'copy'
 export type HashType = 'sha1' | 'sha256' | 'sha512'
 
-export const create = async(pathname: string, type: FileCreateType): Promise<void> => {
+export const create = async (pathname: string, type: FileCreateType): Promise<void> => {
   return type === 'directory'
     ? window.fileUtils.ensureDir(pathname)
     : window.fileUtils.outputFile(pathname, '')
@@ -14,11 +14,11 @@ export interface PasteOptions {
   type: PasteType
 }
 
-export const paste = async({ src, dest, type }: PasteOptions): Promise<void> => {
+export const paste = async ({ src, dest, type }: PasteOptions): Promise<void> => {
   return type === 'cut' ? window.fileUtils.move(src, dest) : window.fileUtils.copy(src, dest)
 }
 
-export const rename = async(src: string, dest: string): Promise<void> => {
+export const rename = async (src: string, dest: string): Promise<void> => {
   return window.fileUtils.move(src, dest)
 }
 
@@ -31,7 +31,7 @@ const toHex = (buf: ArrayBuffer | Uint8Array): string => {
 
 // Replacement for crypto.createHash that uses the Web Crypto API. Only SHA-1 is
 // used by callers in this file.
-export const getHash = async(
+export const getHash = async (
   content: string | Uint8Array | ArrayBuffer,
   encoding?: string,
   type?: HashType
@@ -58,7 +58,7 @@ export const getHash = async(
 export const getContentHash = (content: string | Uint8Array | ArrayBuffer): Promise<string> =>
   getHash(content, 'utf8', 'sha1')
 
-export const moveImageToFolder = async(
+export const moveImageToFolder = async (
   pathname: string,
   image: string | File,
   outputDir: string,
@@ -104,7 +104,7 @@ export const moveImageToFolder = async(
   }
 }
 
-export const uploadImage = async(pathname: string, image: string | File): Promise<unknown> => {
+export const uploadImage = async (pathname: string, image: string | File): Promise<unknown> => {
   // Which uploader runs, and which script it executes, are read from main's own
   // stores (`src/main/ipc/uploader.ts`) — a payload that could name a program
   // would let the renderer run it.

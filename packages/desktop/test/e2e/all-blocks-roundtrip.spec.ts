@@ -44,7 +44,7 @@ const UNSAVED_DOT = '.editor-tabs li.unsaved'
 // item sends (`mt::editor-ask-file-save` -> store FILE_SAVE). The file was
 // opened from a real path so main takes the alreadyExistOnDisk branch: it
 // writes the markdown to disk and replies `mt::tab-saved`, clearing the dot.
-const save = async(app: ElectronApplication): Promise<void> => {
+const save = async (app: ElectronApplication): Promise<void> => {
   await sendIpcToRenderer(app, 'mt::editor-ask-file-save')
 }
 
@@ -68,7 +68,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
   let original: string
   let originalRaw: string
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     // Snapshot the on-disk bytes BEFORE launching so we can restore them in
     // afterAll (the test saves into the real fixture file) and so we have the
     // exact baseline to compare the serialized + saved content against.
@@ -82,7 +82,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
     await page.waitForTimeout(800)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
     // Restore the fixture to its original bytes regardless of test outcome so
     // the working tree is left untouched.
@@ -93,7 +93,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
     }
   })
 
-  test('every block type renders (sanity that the fixture loaded)', async() => {
+  test('every block type renders (sanity that the fixture loaded)', async () => {
     // Front matter + the structural block types are all present in the DOM.
     await page.waitForSelector('.editor-component h1', { state: 'attached', timeout: 10000 })
     const counts = await page.evaluate(() => {
@@ -122,7 +122,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
     expect(counts.link).toBeGreaterThanOrEqual(1)
   })
 
-  test('the freshly loaded doc is clean and serializes back to the original bytes', async() => {
+  test('the freshly loaded doc is clean and serializes back to the original bytes', async () => {
     // A freshly opened (unedited) file must not be marked dirty.
     expect(await isDirty(page)).toBe(false)
 
@@ -133,7 +133,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
     expect(serialized).toBe(original)
   })
 
-  test('repeated source <-> WYSIWYG toggles do not mutate or reformat the content', async() => {
+  test('repeated source <-> WYSIWYG toggles do not mutate or reformat the content', async () => {
     // Toggle source mode in and out twice; the content must be identical after
     // each handoff and must never diverge from the original.
     for (let i = 0; i < 2; i++) {
@@ -153,7 +153,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
     expect(afterToggles).toBe(original)
   })
 
-  test('saving clears the unsaved indicator and writes the original bytes back to disk', async() => {
+  test('saving clears the unsaved indicator and writes the original bytes back to disk', async () => {
     // The toggles above should not have dirtied the tab, but a pure round trip
     // can legitimately leave the tab clean; either way, force a save and verify
     // the post-save state is clean and the on-disk bytes are unchanged.
@@ -170,7 +170,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
     expect(await getMarkdownContent(page, app)).toBe(original)
   })
 
-  test('a dirty edit saves through the full IPC path and persists the exact editor serialization', async() => {
+  test('a dirty edit saves through the full IPC path and persists the exact editor serialization', async () => {
     // Genuinely exercise the dirty -> save -> clean transition (test 4 may have
     // saved an already-clean tab). A bulk source-mode edit that appends a
     // paragraph dirties the tab; confirm the unsaved dot appears.

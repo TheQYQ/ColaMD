@@ -138,7 +138,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
   }
 
   _listenForIpcMain(): void {
-    ipcMain.on('mt::ask-for-user-data', async(e) => {
+    ipcMain.on('mt::ask-for-user-data', async (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const userData = await this.getAll()
@@ -147,7 +147,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
 
     // The caller may ask for the picker but may not supply the result: this
     // folder is registered as a write-scope root for the guarded fs channels.
-    ipcMain.on('mt::ask-for-modify-image-folder-path', async(e) => {
+    ipcMain.on('mt::ask-for-modify-image-folder-path', async (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const { filePaths } = await dialog.showOpenDialog(win, {
@@ -162,7 +162,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
       this.setItems(userData)
     })
 
-    typedHandle('mt::ask-for-image-path', async(e) => {
+    typedHandle('mt::ask-for-image-path', async (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return ''
       const { filePaths } = await dialog.showOpenDialog(win, {

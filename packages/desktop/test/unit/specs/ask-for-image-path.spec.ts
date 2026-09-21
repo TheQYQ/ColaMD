@@ -68,7 +68,7 @@ describe('mt::ask-for-image-path handler', () => {
     fromWebContents.mockReturnValue(FAKE_WIN)
   })
 
-  it('returns filePaths[0] when the user picks a file', async() => {
+  it('returns filePaths[0] when the user picks a file', async () => {
     const handler = getHandler()
     showOpenDialog.mockResolvedValue({ filePaths: ['/abs/x.png'], canceled: false })
 
@@ -77,7 +77,7 @@ describe('mt::ask-for-image-path handler', () => {
     expect(result).toBe('/abs/x.png')
   })
 
-  it("returns '' when the dialog is canceled (empty filePaths)", async() => {
+  it("returns '' when the dialog is canceled (empty filePaths)", async () => {
     const handler = getHandler()
     showOpenDialog.mockResolvedValue({ filePaths: [], canceled: true })
 
@@ -86,7 +86,7 @@ describe('mt::ask-for-image-path handler', () => {
     expect(result).toBe('')
   })
 
-  it("returns '' when there is no owning BrowserWindow", async() => {
+  it("returns '' when there is no owning BrowserWindow", async () => {
     const handler = getHandler()
     fromWebContents.mockReturnValue(null)
 
@@ -96,7 +96,7 @@ describe('mt::ask-for-image-path handler', () => {
     expect(showOpenDialog).not.toHaveBeenCalled()
   })
 
-  it('opens the dialog with an openFile property and the image-extension filter', async() => {
+  it('opens the dialog with an openFile property and the image-extension filter', async () => {
     const handler = getHandler()
     showOpenDialog.mockResolvedValue({ filePaths: ['/abs/y.jpg'], canceled: false })
 

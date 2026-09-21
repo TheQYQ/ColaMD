@@ -38,7 +38,7 @@ const registerMarkdownMathMode = (CodeMirror: CodeMirrorLike): void => {
   }
 
   const defineMode = (name: string, latexDelimiters: boolean): void => {
-    CodeMirror.defineMode(name, function(config: AnyObj) {
+    CodeMirror.defineMode(name, function (config: AnyObj) {
       const gfmMode = CodeMirror.getMode(config, {
         name: 'gfm',
         fencedCodeBlocks: true,

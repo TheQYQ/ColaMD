@@ -13,7 +13,7 @@ import { launchWithMarkdown, setSourceMarkdown } from './helpers'
 // Assertions are on classes and counts, never on rendered words: alert titles
 // and the empty-TOC placeholder come from muya's locale tables.
 
-const setPreference = async(
+const setPreference = async (
   app: ElectronApplication,
   page: Page,
   prefs: Record<string, unknown>
@@ -27,17 +27,17 @@ test.describe('Markdown extension capabilities in the real renderer', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# anchor\n\nplaceholder\n')
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('a GitHub alert blockquote carries the alert type class', async() => {
+  test('a GitHub alert blockquote carries the alert type class', async () => {
     // Alerts are not behind a preference (muya config/index.ts has no flag for
     // them), so this is a plain render check — with the negative case, because
     // an ordinary quote must not be dressed up as an alert.
@@ -49,7 +49,7 @@ test.describe('Markdown extension capabilities in the real renderer', () => {
     await expect(page.locator('blockquote.mu-alert')).toHaveCount(0)
   })
 
-  test('definition lists render only once the preference is on', async() => {
+  test('definition lists render only once the preference is on', async () => {
     const doc = 'Term\n: def A\n: def B\n'
 
     // Off by default (store/preferences.ts:207), so the block stays a paragraph.
@@ -66,7 +66,7 @@ test.describe('Markdown extension capabilities in the real renderer', () => {
     await expect(page.locator('dl.mu-def-list')).toHaveCount(0)
   })
 
-  test('inline comments become their own span once the preference is on', async() => {
+  test('inline comments become their own span once the preference is on', async () => {
     // The `%%` markers stay in the DOM as syntax — muya hides them with
     // `font-size: 0` (inlineSyntax.css:21), which `innerText` does not strip —
     // so what is pinned is the rendered comment body, not the absence of `%%`.
@@ -78,7 +78,7 @@ test.describe('Markdown extension capabilities in the real renderer', () => {
     await expect(comment).toHaveText('aside')
   })
 
-  test('a [toc] block builds a live table of contents', async() => {
+  test('a [toc] block builds a live table of contents', async () => {
     await setSourceMarkdown(page, app, '# Alpha\n\n# Beta\n\n[toc]\n')
     await expect(page.locator('figure.mu-toc-block')).toHaveCount(1)
 

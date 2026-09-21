@@ -1,10 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import {
-  launchWithMarkdown,
-  setSourceMarkdown,
-  getMarkdownContent
-} from './helpers'
+import { launchWithMarkdown, setSourceMarkdown, getMarkdownContent } from './helpers'
 
 // ---------------------------------------------------------------------------
 // Coverage backfill (checklist items 30, 42). No e2e anywhere drives
@@ -33,7 +29,7 @@ import {
 // the first paragraph: collapse the range to the end of the span, fire a
 // selectionchange, then a synthetic keyup on the editor root so the engine
 // updates its `activeContentBlock` (it derives that from click/keyup events).
-const placeCaretInContentSpan = async(page: Page, index: number): Promise<void> => {
+const placeCaretInContentSpan = async (page: Page, index: number): Promise<void> => {
   await page.evaluate((idx) => {
     const root = document.querySelector('.editor-component') as HTMLElement | null
     if (!root) return
@@ -59,7 +55,7 @@ const placeCaretInContentSpan = async(page: Page, index: number): Promise<void> 
 // Count how many top-level list items exist (li that are NOT inside a nested
 // list) vs. items that live inside a nested list (ul/ol that is itself a
 // descendant of an li).
-const listShape = async(page: Page): Promise<{ topLevelItems: number; nestedItems: number }> => {
+const listShape = async (page: Page): Promise<{ topLevelItems: number; nestedItems: number }> => {
   return await page.evaluate(() => {
     const root = document.querySelector('.editor-component')
     if (!root) return { topLevelItems: 0, nestedItems: 0 }
@@ -82,17 +78,17 @@ test.describe('List Tab/Shift-Tab nesting (items 30, 42)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('seed\n')
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('Tab nests the second bullet item under the first; Shift-Tab flattens it', async() => {
+  test('Tab nests the second bullet item under the first; Shift-Tab flattens it', async () => {
     // Seed a flat two-item bullet list via source mode (deterministic), then go
     // back to WYSIWYG.
     await setSourceMarkdown(page, app, '- item one\n- item two\n')
@@ -147,7 +143,7 @@ test.describe('List Tab/Shift-Tab nesting (items 30, 42)', () => {
     expect(flatMd).toBe('- item one\n- item two')
   })
 
-  test('Tab cannot nest the FIRST item (no previous sibling) — it stays flat', async() => {
+  test('Tab cannot nest the FIRST item (no previous sibling) — it stays flat', async () => {
     await setSourceMarkdown(page, app, '- only first\n- only second\n')
     await page.waitForFunction(
       () => {
@@ -168,7 +164,7 @@ test.describe('List Tab/Shift-Tab nesting (items 30, 42)', () => {
     await expect.poll(() => listShape(page)).toEqual({ topLevelItems: 2, nestedItems: 0 })
   })
 
-  test('Ordered list nests on Tab with the marker-width indent (3 spaces)', async() => {
+  test('Ordered list nests on Tab with the marker-width indent (3 spaces)', async () => {
     await setSourceMarkdown(page, app, '1. alpha\n2. beta\n')
     await page.waitForFunction(
       () => {

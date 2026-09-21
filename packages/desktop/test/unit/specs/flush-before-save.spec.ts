@@ -233,7 +233,7 @@ describe('editor store — flush pending edits on the remaining read paths', () 
     expect(call?.[MARKDOWN_ARG]).toBe(FLUSHED)
   })
 
-  it('FORCE_CLOSE_TAB snapshots the flushed markdown (Session End)', async() => {
+  it('FORCE_CLOSE_TAB snapshots the flushed markdown (Session End)', async () => {
     const store = useEditorStore()
     seedTabs(store)
     detach = onFlushCommit(store)

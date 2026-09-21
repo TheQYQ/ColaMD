@@ -28,11 +28,7 @@ import {
 // to commit its active block (the engine derives `activeContentBlock` from
 // keyup/click on the editor root). Using an explicit text-node offset keeps the
 // caret position deterministic in headless Chromium.
-const placeCaretInParagraph = (
-  page: Page,
-  index: number,
-  ch: number
-): Promise<boolean> =>
+const placeCaretInParagraph = (page: Page, index: number, ch: number): Promise<boolean> =>
   page.evaluate(
     ({ paragraphIndex, offset }) => {
       const root = document.querySelector('.editor-component') as HTMLElement | null
@@ -81,20 +77,18 @@ test.describe('Parity G7 — WYSIWYG -> source caret sync', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
-    const launched = await launchWithMarkdown(
-      'first para\n\nsecond para\n\nthird para here\n'
-    )
+  test.beforeAll(async () => {
+    const launched = await launchWithMarkdown('first para\n\nsecond para\n\nthird para here\n')
     app = launched.app
     page = launched.page
     await waitForMenuReady(app)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('G7: source mode opens at the line/column the WYSIWYG caret was on', async() => {
+  test('G7: source mode opens at the line/column the WYSIWYG caret was on', async () => {
     // Caret after "third " (offset 6) in the third paragraph.
     expect(await placeCaretInParagraph(page, 2, 6)).toBe(true)
     await page.waitForTimeout(200)
@@ -110,7 +104,7 @@ test.describe('Parity G7 — WYSIWYG -> source caret sync', () => {
 })
 
 test.describe('Parity G8 — language switch refreshes inline hints', () => {
-  test('G8: an empty paragraph\'s quick-insert hint updates on language change', async() => {
+  test("G8: an empty paragraph's quick-insert hint updates on language change", async () => {
     const { app, page } = await launchWithMarkdown('\n')
     await waitForMenuReady(app)
 
@@ -170,7 +164,7 @@ test.describe('Heading creation under zh-CN does not crash the renderer (item 27
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('\n', { suppressErrorDialog: true })
     app = launched.app
     page = launched.page
@@ -185,11 +179,11 @@ test.describe('Heading creation under zh-CN does not crash the renderer (item 27
     await page.waitForTimeout(400)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('typing `# Hello` renders an h1 with the right text under zh-CN', async() => {
+  test('typing `# Hello` renders an h1 with the right text under zh-CN', async () => {
     await focusEditor(page)
     // The leading `#` + space is the ATX-heading markdown shortcut; the engine
     // converts the empty paragraph to an atx-heading on input.
@@ -209,7 +203,7 @@ test.describe('Heading creation under zh-CN does not crash the renderer (item 27
     await expectNoRendererErrors(app)
   })
 
-  test('typing `## H2` renders an h2 with the right text under zh-CN', async() => {
+  test('typing `## H2` renders an h2 with the right text under zh-CN', async () => {
     // Continue in the same zh-CN session: caret at end of the h1, press Enter
     // to open a fresh empty paragraph, then type the level-2 ATX shortcut.
     await page.keyboard.press('End')

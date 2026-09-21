@@ -11,7 +11,7 @@ test.describe('Find bar prefill from selection', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(
       '# Find test\n\nThe quick brown fox jumps over the lazy dog.\n'
     )
@@ -20,11 +20,11 @@ test.describe('Find bar prefill from selection', () => {
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('double-click word prefills the find input and counts matches', async() => {
+  test('double-click word prefills the find input and counts matches', async () => {
     const point = await page.evaluate(() => {
       const paras = Array.from(document.querySelectorAll('.mu-paragraph'))
       for (const para of paras) {
@@ -49,7 +49,7 @@ test.describe('Find bar prefill from selection', () => {
     // Windows Chromium double-click word selection also grabs the trailing
     // space; trim so the assertion holds on both platforms.
     await expect
-      .poll(async() => (await page.evaluate(() => window.getSelection()?.toString()))?.trim())
+      .poll(async () => (await page.evaluate(() => window.getSelection()?.toString()))?.trim())
       .toBe('fox')
 
     // The DOM selection is set synchronously by the double-click, but the engine
@@ -76,7 +76,7 @@ test.describe('Find bar prefill from selection', () => {
 
     const input = page.locator('.search-bar input').first()
     // Same trailing-space tolerance as the selection poll above.
-    await expect.poll(async() => (await input.inputValue()).trim()).toBe('fox')
+    await expect.poll(async () => (await input.inputValue()).trim()).toBe('fox')
 
     // The selection seeds a real search: the result counter reports the match.
     const result = page.locator('.search-bar .search-result')

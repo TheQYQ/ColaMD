@@ -8,7 +8,7 @@ const win = window as unknown as {
   electron?: { ipcRenderer: { invoke: Mock } }
 }
 
-const loadSpellChecker = async(isOsx: boolean) => {
+const loadSpellChecker = async (isOsx: boolean) => {
   vi.resetModules()
   vi.doMock('@/util', () => ({ isOsx }))
   return (await import('../../../src/renderer/src/spellchecker/index')).SpellChecker
@@ -27,7 +27,7 @@ describe('renderer SpellChecker.switchLanguage', () => {
     vi.doUnmock('@/util')
   })
 
-  it('invokes the IPC channel once and records the new language (non-macOS, enabled)', async() => {
+  it('invokes the IPC channel once and records the new language (non-macOS, enabled)', async () => {
     const SpellChecker = await loadSpellChecker(false)
     const checker = new SpellChecker(true, 'en-US')
 
@@ -40,7 +40,7 @@ describe('renderer SpellChecker.switchLanguage', () => {
     expect(checker.currentSpellcheckerLanguage).toBe('de-DE')
   })
 
-  it('short-circuits to true on macOS without touching IPC', async() => {
+  it('short-circuits to true on macOS without touching IPC', async () => {
     const SpellChecker = await loadSpellChecker(true)
     const checker = new SpellChecker(true, 'en-US')
 
@@ -53,7 +53,7 @@ describe('renderer SpellChecker.switchLanguage', () => {
     expect(checker.currentSpellcheckerLanguage).toBe('en-US')
   })
 
-  it('returns false without IPC when the spell checker is disabled (non-macOS)', async() => {
+  it('returns false without IPC when the spell checker is disabled (non-macOS)', async () => {
     const SpellChecker = await loadSpellChecker(false)
     const checker = new SpellChecker(false, 'en-US')
 
@@ -64,7 +64,7 @@ describe('renderer SpellChecker.switchLanguage', () => {
     expect(checker.currentSpellcheckerLanguage).toBe('en-US')
   })
 
-  it('throws on an empty language when enabled (non-macOS) and never invokes IPC', async() => {
+  it('throws on an empty language when enabled (non-macOS) and never invokes IPC', async () => {
     const SpellChecker = await loadSpellChecker(false)
     const checker = new SpellChecker(true, 'en-US')
 

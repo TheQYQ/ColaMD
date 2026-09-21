@@ -49,7 +49,11 @@ const loadComponent = (deps: Record<string, unknown>) => {
       storeToRefs, useI18n, debounce, ArrowDown, ArrowUp, RefreshRight, Switch } = __deps
     ${js}
     return module.exports`
-  ) as (deps: Record<string, unknown>, exports: object, module: object) => {
+  ) as (
+    deps: Record<string, unknown>,
+    exports: object,
+    module: object
+  ) => {
     default: { setup: (props: unknown, ctx: { expose: () => void }) => Bindings }
   }
   const m = { exports: {} as Record<string, unknown> }
@@ -59,7 +63,9 @@ const loadComponent = (deps: Record<string, unknown>) => {
 const makeBindings = () => {
   // currentFile.searchMatches is the channel SELECTION_CHANGE writes the
   // selected text into; storeToRefs hands the component a ref to it.
-  const currentFile = ref<{ searchMatches: { matches: unknown[]; index: number; value: string } } | null>({
+  const currentFile = ref<{
+    searchMatches: { matches: unknown[]; index: number; value: string }
+  } | null>({
     searchMatches: { matches: [], index: -1, value: '' }
   })
   const deps = {
@@ -92,7 +98,7 @@ const makeBindings = () => {
 }
 
 describe('find-bar prefill from selection', () => {
-  it('prefills the input with the selected text when the bar opens', async() => {
+  it('prefills the input with the selected text when the bar opens', async () => {
     const { ret, setSelection } = makeBindings()
     setSelection('fox')
     await nextTick()
@@ -101,7 +107,7 @@ describe('find-bar prefill from selection', () => {
     expect(ret.searchValue.value).toBe('fox')
   })
 
-  it('does not let the focus-steal selection-change clobber the prefill', async() => {
+  it('does not let the focus-steal selection-change clobber the prefill', async () => {
     const { ret, setSelection } = makeBindings()
     // User selects a word in the editor.
     setSelection('fox')

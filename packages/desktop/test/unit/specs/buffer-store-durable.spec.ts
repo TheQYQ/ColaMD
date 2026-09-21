@@ -27,7 +27,7 @@ afterEach(() => {
 })
 
 describe('EditorBufferStore.writeBufferStoreFile — durable atomic write (#4852 follow-up)', () => {
-  it('writes the state as JSON and leaves no temp file behind', async() => {
+  it('writes the state as JSON and leaves no temp file behind', async () => {
     const dir = tempDir()
     const target = path.join(dir, 'buffer.json')
     const state = { tabs: [{ id: '1', markdown: 'hello' }] }
@@ -39,7 +39,7 @@ describe('EditorBufferStore.writeBufferStoreFile — durable atomic write (#4852
     expect(readdirSync(dir)).toEqual(['buffer.json'])
   })
 
-  it('overwrites an existing buffer file', async() => {
+  it('overwrites an existing buffer file', async () => {
     const dir = tempDir()
     const target = path.join(dir, 'buffer.json')
 
@@ -53,7 +53,7 @@ describe('EditorBufferStore.writeBufferStoreFile — durable atomic write (#4852
   // M1.4: writes left the main-process sync path. Two rapid writes for the
   // same file must still land in call order — an older snapshot may never
   // overwrite a newer one.
-  it('serializes rapid writes per file (last write wins)', async() => {
+  it('serializes rapid writes per file (last write wins)', async () => {
     const dir = tempDir()
     const target = path.join(dir, 'buffer.json')
 

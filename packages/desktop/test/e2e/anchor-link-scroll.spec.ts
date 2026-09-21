@@ -53,7 +53,7 @@ const scrollTop = (page: Page): Promise<number> =>
 // engine's domNode click listener runs the full format-click pipeline. Both
 // modifier flags are set so the same event satisfies the macOS (metaKey) and
 // non-macOS (ctrlKey) branches of editor.vue's `ctrlOrMeta` check.
-const modifierClickLink = async(page: Page): Promise<boolean> =>
+const modifierClickLink = async (page: Page): Promise<boolean> =>
   page.evaluate((selector) => {
     const el = document.querySelector(selector) as HTMLElement | null
     if (!el) return false
@@ -71,7 +71,7 @@ test.describe('In-document anchor link click scrolls the editor (item 236)', () 
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(DOC, { suppressErrorDialog: true })
     app = launched.app
     page = launched.page
@@ -80,11 +80,11 @@ test.describe('In-document anchor link click scrolls the editor (item 236)', () 
     await page.waitForSelector(LINK_WRAPPER, { state: 'attached', timeout: 15000 })
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('the rendered link resolves its href to the in-doc anchor and the heading is present', async() => {
+  test('the rendered link resolves its href to the in-doc anchor and the heading is present', async () => {
     // The link carries the bare anchor href via the snabbdom DOM property, and
     // the destination heading (`## My Section`) is a top-level `.mu-container`
     // child — exactly the set resolveTocHeadingElement enumerates by index.
@@ -98,7 +98,7 @@ test.describe('In-document anchor link click scrolls the editor (item 236)', () 
         hrefAttr: link ? link.getAttribute('href') : null,
         // The `data-raw` payload is what FORMAT_LINK_CLICK's caller forwards;
         // its presence confirms this is the rendered link wrapper.
-        raw: link ? link.dataset.raw ?? null : null,
+        raw: link ? (link.dataset.raw ?? null) : null,
         headingText: heading ? heading.textContent : null
       }
     }, LINK_WRAPPER)
@@ -108,7 +108,7 @@ test.describe('In-document anchor link click scrolls the editor (item 236)', () 
     expect(wiring.headingText).toContain('My Section')
   })
 
-  test('Cmd/Ctrl-clicking the link scrolls the editor down to the heading', async() => {
+  test('Cmd/Ctrl-clicking the link scrolls the editor down to the heading', async () => {
     // Start at the top of the document.
     await page.evaluate(() => {
       const el = document.querySelector('.editor-component') as HTMLElement | null
@@ -138,7 +138,7 @@ test.describe('In-document anchor link click scrolls the editor (item 236)', () 
     await expectNoRendererErrors(app)
   })
 
-  test('a plain (no-modifier) click on the link does NOT scroll', async() => {
+  test('a plain (no-modifier) click on the link does NOT scroll', async () => {
     // Reset to the top.
     await page.evaluate(() => {
       const el = document.querySelector('.editor-component') as HTMLElement | null

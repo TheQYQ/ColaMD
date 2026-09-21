@@ -202,7 +202,7 @@ class Preference extends TypedEmitter<PreferenceEvents> {
     // renderer can type is arbitrary code execution in the main process — same
     // class of hole as the write-scope root above, same fix: only a native file
     // dialog assigns it, and `setItem` broadcasts the result like any preference.
-    ipcMain.on('mt::ask-for-modify-cli-script', async(e) => {
+    ipcMain.on('mt::ask-for-modify-cli-script', async (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const { filePaths } = await dialog.showOpenDialog(win, { properties: ['openFile'] })

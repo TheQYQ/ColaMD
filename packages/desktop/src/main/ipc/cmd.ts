@@ -3,7 +3,7 @@ import commandExists from 'command-exists'
 import { typedHandle } from './typedHandle'
 
 export const registerCmdHandlers = (): void => {
-  typedHandle('mt::cmd::exists', async(_event, name: string) => {
+  typedHandle('mt::cmd::exists', async (_event, name: string) => {
     try {
       if (commandExists.sync(name)) return true
 

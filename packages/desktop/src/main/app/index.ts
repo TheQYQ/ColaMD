@@ -246,7 +246,7 @@ class App {
     return path.join(screenshotFolderPath, fileName)
   }
 
-  ready = async(): Promise<void> => {
+  ready = async (): Promise<void> => {
     // Detect/store the language before any window exists so the renderer
     // starts with the right locale on its startup language query.
     await this._initializeLanguage()
@@ -711,11 +711,11 @@ class App {
       this._createEditorWindow()
     })
 
-    onInternalChannel('screen-capture', async(win: BrowserWindow) => {
+    onInternalChannel('screen-capture', async (win: BrowserWindow) => {
       if (isOsx) {
         // Use macOs `screencapture` command line when in macOs system.
         const screenshotFileName = await this.getScreenshotFileName()
-        exec('screencapture -i -c', async(err) => {
+        exec('screencapture -i -c', async (err) => {
           if (err) {
             log.error(err)
             return
@@ -829,7 +829,7 @@ class App {
       }
     })
 
-    ipcMain.on('mt::select-default-directory-to-open', async(e) => {
+    ipcMain.on('mt::select-default-directory-to-open', async (e) => {
       const { preferences } = this._accessor
       const { defaultDirectoryToOpen } = preferences.getAll()
       const win = BrowserWindow.fromWebContents(e.sender)
@@ -868,7 +868,7 @@ class App {
       return { defaultKeybindings, userKeybindings }
     })
 
-    typedHandle('mt::keybinding-save-user-keybindings', async(_event, userKeybindings) => {
+    typedHandle('mt::keybinding-save-user-keybindings', async (_event, userKeybindings) => {
       const { keybindings, menu } = this._accessor
       const editorWindows = this._windowManager
         .getWindowsByType(WindowType.EDITOR)
@@ -885,7 +885,7 @@ class App {
       return saved
     })
 
-    typedHandle('mt::fs-trash-item', async(_event, fullPath: string) => {
+    typedHandle('mt::fs-trash-item', async (_event, fullPath: string) => {
       await assertPathInScope(fullPath)
       return shell.trashItem(fullPath)
     })

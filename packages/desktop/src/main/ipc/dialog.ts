@@ -49,17 +49,17 @@ const grantedSaveResult = (result: ElectronSaveDialogResult): ElectronSaveDialog
 }
 
 export const registerDialogHandlers = (): void => {
-  typedHandle('mt::dialog::open', async(event, options: ElectronOpenDialogOptions) => {
+  typedHandle('mt::dialog::open', async (event, options: ElectronOpenDialogOptions) => {
     const win = windowFromEvent(event.sender)
     return grantedOpenResult(await dialog.showOpenDialog(win!, options))
   })
 
-  typedHandle('mt::dialog::save', async(event, options: ElectronSaveDialogOptions) => {
+  typedHandle('mt::dialog::save', async (event, options: ElectronSaveDialogOptions) => {
     const win = windowFromEvent(event.sender)
     return grantedSaveResult(await dialog.showSaveDialog(win!, options))
   })
 
-  typedHandle('mt::dialog::message-box', async(event, options: ElectronMessageBoxOptions) => {
+  typedHandle('mt::dialog::message-box', async (event, options: ElectronMessageBoxOptions) => {
     const win = windowFromEvent(event.sender)
     return dialog.showMessageBox(win!, options)
   })

@@ -6,22 +6,22 @@ test.describe('Theme switching', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# Theme test\n\nHello theme world.\n')
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('Switch to a dark theme adds body.dark', async() => {
+  test('Switch to a dark theme adds body.dark', async () => {
     await clickMenuById(app, 'dracula')
     await expect(page.locator('body')).toHaveClass(/(^|\s)dark(\s|$)/)
   })
 
-  test('Switch to a light theme removes body.dark', async() => {
+  test('Switch to a light theme removes body.dark', async () => {
     await clickMenuById(app, 'light')
     await page.waitForFunction(() => !document.body.classList.contains('dark'), null, {
       timeout: 5000
@@ -29,7 +29,7 @@ test.describe('Theme switching', () => {
     expect(await page.evaluate(() => document.body.classList.contains('dark'))).toBe(false)
   })
 
-  test('Switch back to dark theme re-applies body.dark', async() => {
+  test('Switch back to dark theme re-applies body.dark', async () => {
     await clickMenuById(app, 'nord')
     await expect(page.locator('body')).toHaveClass(/(^|\s)dark(\s|$)/)
   })
@@ -42,7 +42,7 @@ test.describe('Theme switching', () => {
   // those tokens. We assert the keyword token color is themed (non-default) and
   // differs between a dark theme (dracula) and the light baseline. Real pixel
   // fidelity stays manual; this just proves the wiring is live and theme-aware.
-  test('Prism code-block token color follows the active theme', async() => {
+  test('Prism code-block token color follows the active theme', async () => {
     await setSourceMarkdown(page, app, '```js\nconst answer = 42\n```\n')
 
     // The language grammar loads asynchronously, so the token spans only
@@ -54,7 +54,7 @@ test.describe('Theme switching', () => {
       { timeout: 15000 }
     )
 
-    const readKeywordColor = async(): Promise<string> => {
+    const readKeywordColor = async (): Promise<string> => {
       return await page.evaluate(() => {
         const el = document.querySelector(
           '.editor-component span.token.keyword'
@@ -69,7 +69,7 @@ test.describe('Theme switching', () => {
     let darkColor = ''
     await expect
       .poll(
-        async() => {
+        async () => {
           darkColor = await readKeywordColor()
           return darkColor
         },
@@ -87,7 +87,7 @@ test.describe('Theme switching', () => {
     let lightColor = ''
     await expect
       .poll(
-        async() => {
+        async () => {
           lightColor = await readKeywordColor()
           return lightColor
         },

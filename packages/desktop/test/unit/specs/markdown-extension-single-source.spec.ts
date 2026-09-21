@@ -31,7 +31,7 @@ interface FileUtilsSurface {
   hasMarkdownExtension: (filename: string) => boolean
 }
 
-const loadPreloadSurface = async(): Promise<FileUtilsSurface> => {
+const loadPreloadSurface = async (): Promise<FileUtilsSurface> => {
   await import('../../../src/preload/index')
   const api = exposed.get('fileUtils') as FileUtilsSurface | undefined
   if (!api) throw new Error('preload did not expose window.fileUtils')
@@ -39,17 +39,17 @@ const loadPreloadSurface = async(): Promise<FileUtilsSurface> => {
 }
 
 describe('O22 — one markdown extension list', () => {
-  it('exposes the authoritative inclusion patterns even with an empty boot handshake', async() => {
+  it('exposes the authoritative inclusion patterns even with an empty boot handshake', async () => {
     const fileUtils = await loadPreloadSurface()
     expect([...fileUtils.MARKDOWN_INCLUSIONS]).toEqual([...MARKDOWN_INCLUSIONS])
   })
 
-  it('forwards the shared predicate instead of a duplicated copy', async() => {
+  it('forwards the shared predicate instead of a duplicated copy', async () => {
     const fileUtils = await loadPreloadSurface()
     expect(fileUtils.hasMarkdownExtension).toBe(hasMarkdownExtension)
   })
 
-  it('classifies the same names as the authority', async() => {
+  it('classifies the same names as the authority', async () => {
     const fileUtils = await loadPreloadSurface()
     const markdown = [
       'note.md',

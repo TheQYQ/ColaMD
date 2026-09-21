@@ -39,7 +39,7 @@ matrix() {
 matrix
 `
 
-const reportExternalChange = async(
+const reportExternalChange = async (
   app: ElectronApplication,
   pathname: string,
   markdown: string
@@ -63,7 +63,7 @@ const reportExternalChange = async(
   })
 }
 
-test('Issue #4921: source-mode updates preserve CodeMirror line-tree identity', async() => {
+test('Issue #4921: source-mode updates preserve CodeMirror line-tree identity', async () => {
   const { app, page, filePath } = await launchWithMarkdown('initial\n', {
     suppressErrorDialog: true
   })
