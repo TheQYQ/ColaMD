@@ -1,15 +1,24 @@
 import { watch, type Ref } from 'vue'
 import type { PreferencesState } from '@/store/preferences'
 // The engine owns these settings; the component only mirrors them. Each watcher below
-// says "if the preference moved and an engine instance exists, push it" — 28 copies of
-// that one sentence, which is why they left the component. The ones that also touch
-// something else (source-mode CodeMirror styles, the DOM line-width rule, menu state,
-// the native spellchecker) stayed in editor.vue for that reason.
+// says the same sentence — "if the preference moved and an engine instance exists, push
+// it" — 28 copies of it, which is why they left the component. Two reasons a watcher
+// stays in editor.vue instead: it ALSO does something else on the same change (re-style
+// source-mode CodeMirror, resize the DOM line-width rule, re-enable the menus, switch
+// the native spellchecker), or it dereferences the engine without the existence guard
+// that every watcher here has. `spellcheckerNoUnderline` is the second case, sitting
+// between two spellchecker watchers that are first case as well.
 //
-// `forceRender` is muya's second setOptions argument; where a watcher used to omit it,
-// the moved code still omits it rather than passing false, because muya defaults the
-// parameter to false (muya.ts:338) and re-parsing behaviour keys off the option set
-// (muya.ts:99-108), not off an explicit false.
+// What this file does NOT buy: the option keys in the bodies are unchecked (muya takes
+// Partial<IMuyaOptions>, muya.ts:338, while `Engine` here takes Record<string, unknown>),
+// and the editor ref arrives typed `any` from the component, so nothing binds that call.
+// What is enforced is the mapping between each preference name and the ref passed in,
+// via MirrorKey below — which is also why the unguarded watcher above cannot be moved
+// without either lying about the ref or silently swallowing a pre-mount change.
+//
+// `forceRender` keeps its omission where the original omitted it: muya defaults that
+// parameter to false, and which options force a re-parse is a fixed set
+// (muya.ts:100-109), not something an explicit false changes.
 interface Engine {
   setOptions(options: Record<string, unknown>, forceRender?: boolean): void
   setListIndentation(value: unknown): void
