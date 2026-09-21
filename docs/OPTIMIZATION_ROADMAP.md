@@ -293,12 +293,15 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法（已实施）：`openFileOrFolder` 的兜底分支由 `console.error` 改为经 `mt::show-notification` 报给该窗口（与 rename/move 失败同模式）；契约里给两条通道各补一行语义注释，免得下一轮又被判成重复。文案只新增标题 `dialog.openFailure`（11 份语言，值已各自翻译），消息复用既有的 `store.editor.fileRemovedOnDisk`，不新增长句翻译。
 - 验收（更正后）：原写的"E2E 点一条指向已删除文件的最近文档"**做不到**——reader 会把它过滤掉，构造不出该菜单项。改为单测 `open-path-failure-notification.spec.ts` 锁通知载荷，并用既有 `rename-failure-notification.spec.ts`（E2E，本地真窗口通过）证明这条通道真能渲染出通知条。
 
-**O19 · 偏好键的三处声明** — 成本 S，影响 中 — **主进程可见部分已完成 `b4776b9`（分支 `security/image-folder-dialog-only`）**
+**O19 · 偏好键的三处声明** — 成本 S，影响 中 — **主进程可见部分与 6 处默认值不一致均已完成 `b4776b9`（分支 `security/image-folder-dialog-only`）**
 
 > **测量更正**：本条原写"11 个偏好键只活在渲染端"。逐项定位后，那 10 个键**没有一个需要进 preferences schema**：`webImages`/`cloudImages`/`currentUploader`/`cliScript` 是 dataCenter 的键（`dataCenter/schema.json` 已声明 imageFolderPath 一族），`installedThemes`/`typewriter`/`focus`/`sourceCode`/`deleteUnreferencedImages` 是渲染端自己的状态（编辑模式注释即写明 not persisted），`imageFolderPath` 由 O7① 归给 dataCenter。真正的 schema 缺口只有 **1 个**：`treePathExcludePatterns`——它在 `static/preference.json` 有默认值、且被主进程读（`filesystem/watcher.ts:59`、`app/windowManager.ts:469`），却是 77 个键里唯一没有 schema 条目的。
 
 - 改法（已实施）：给 `schema.json` 补 `treePathExcludePatterns`（`array` of `string`，默认 `[]`，紧邻同族的 `searchExclusions` 写法）；新增 `test/unit/specs/preference-schema-parity.spec.ts` 把两处可机检的声明双向钉住，并检查"出厂默认值被自家 enum 允许"。
-- 剩余（**本条不修，需单独决策**）：`schema.json` 与 `static/preference.json` 有 **6 处默认值不一致**——`fileSortBy`（`modified` vs `created`）、`codeBlockLineNumbers`（true vs false）、`wrapCodeBlocks`（true vs false）、`followSystemTheme`（false vs true），另 2 个键 schema 无 `default`。谁生效取决于用户是否已有 settings 文件（`preferences/index.ts:88-93` 用 static 值补齐/落盘），所以挑一侧改是**行为变更**，不在声明齐套这一步里做。parity spec 因此刻意不比对 default。
+- 剩余（~~**本条不修，需单独决策**~~ → **已决策并修掉，见下条**）：`schema.json` 与 `static/preference.json` 有 **6 处默认值不一致**——`fileSortBy`（`modified` vs `created`）、`codeBlockLineNumbers`（true vs false）、`wrapCodeBlocks`（true vs false）、`followSystemTheme`（false vs true），另 2 个键 schema 无 `default`。谁生效取决于用户是否已有 settings 文件（`preferences/index.ts:88-93` 用 static 值补齐/落盘），所以挑一侧改是**行为变更**，不在声明齐套这一步里做。parity spec 因此刻意不比对 default。
+- **决策已下并落地（分支 `fix/preference-default-parity`）**：以 **`static/preference.json` 为准**对齐 schema，理由是它才是今天全新安装真正拿到的值——`preferences/index.ts:88-93` 在无 settings 文件时整份写盘，schema 的 `default` 只在"已有 settings 文件但缺这个键"（即某键是后续版本新增的）时兜底。所以这不是"两处配置数字不一样"的洁癖问题，而是**升级用户与全新用户行为不同**：升级者拿到 `fileSortBy=modified`、代码块显示行号、代码块自动换行、不跟随系统主题；全新用户正好相反，且 `lastOpenedFolder` / `defaultDirectoryToOpen` 在升级者那里读成 `undefined` 而不是 `""`。
+- 机制核对（读源码，不是推测）：`src/main/preferences/index.ts:50-51` 把 `schema.json` 交给 electron-store（schema default 的兜底路径），`:65,80-83,92-93` 读 `static/preference.json` 并 `store.set(defaultSettings)` 首启整份落盘；两份文件各 77 键、键名集合相同（脚本比对：only-in-one 两侧均为 0），改完后 `differing defaults = 0`。
+- 防回归：`preference-schema-parity.spec.ts` 末尾那两段"刻意不比对 default"的说明改成两条真断言——**default 必须与随包文件相等**、**每个 string 键都必须有 default**（后者把这次补的 2 个空串默认值钉住）。7 例全过。这两条是"两份文件是否一致"的相等比较，没有可被写坏的实现分支，因此本轮不再做变异测试。
 
 ### F 组·全仓体检新增（2026-09-19，测量方法见 `docs/PROJECT_GUIDE.md` §13）
 
