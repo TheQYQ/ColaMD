@@ -24,7 +24,7 @@ import {
   nextCycleIndex,
   selectTabAfterClose
 } from './tabOps'
-import { historyMarksDirty, isNewlineOnlyFromEmpty } from './contentChange'
+import { historyFrameId, historyMarksDirty, isNewlineOnlyFromEmpty } from './contentChange'
 import {
   FileEncodingCommand,
   LineEndingCommand,
@@ -658,75 +658,84 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
+    /**
+     * A tab acquired a real path (save-as or a dialog save). A tab already open
+     * on that path is closed first, since two tabs on one file would fight over
+     * it; the surviving tab keeps its id so undo and watchers stay attached.
+     */
+    SET_PATHNAME(fileInfo: IpcMainEventChannels['mt::set-pathname'][0]): void {
+      const { tabs } = this
+      const { pathname, id, filename } = fileInfo
+      const tab = tabs.find((f) => f.id === id)
+      if (!tab) {
+        console.error('[ERROR] Cannot change file path from unknown tab.')
+        return
+      }
+
+      const existingTab = tabs.find(
+        (t) => t.id !== id && window.fileUtils.isSamePathSync(t.pathname, pathname)
+      )
+      if (existingTab) {
+        this.CLOSE_TAB(existingTab)
+      }
+
+      if (id === this.currentFile?.id && pathname) {
+        window.DIRNAME = window.path.dirname(pathname)
+      }
+      Object.assign(tab, { filename, pathname, isSaved: true })
+      debouncedSendBufferedState()
+    },
+
+    /**
+     * Main finished writing the tab. Remember which history frame that was: the
+     * saved flag is re-derived from it later, so an undo back to this exact
+     * content clears the dot again without comparing text.
+     */
+    MARK_TAB_SAVED(tabId: string): void {
+      const tab = this.tabs.find((f) => f.id === tabId)
+      if (!tab) return
+
+      const frameId = historyFrameId(tab.history)
+      if (frameId !== undefined) {
+        tab.lastSavedHistoryId = frameId
+      }
+      tab.isSaved = true
+      debouncedSendBufferedState()
+    },
+
+    TAB_SAVE_FAILURE(tabId: string, msg: string): void {
+      const tab = this.tabs.find((t) => t.id === tabId)
+      if (!tab) {
+        notice.notify({
+          title: t('dialog.saveFailure'),
+          message: msg,
+          type: 'error',
+          time: 20000,
+          showConfirm: false
+        })
+        return
+      }
+
+      tab.isSaved = false
+      this.pushTabNotification({
+        tabId,
+        msg: t('store.editor.errorWhileSaving', { msg }),
+        style: 'crit'
+      })
+      debouncedSendBufferedState()
+    },
+
     LISTEN_FOR_SET_PATHNAME(): void {
       window.electron.ipcRenderer.on('mt::set-pathname', (_, fileInfo) => {
-        const { tabs } = this
-        const { pathname, id } = fileInfo
-        const tab = tabs.find((f) => f.id === id)
-        if (!tab) {
-          console.error('[ERROR] Cannot change file path from unknown tab.')
-          return
-        }
-
-        // If a tab with the same file path already exists we need to close the tab.
-        // The existing tab is overwritten by this tab.
-        const existingTab = tabs.find(
-          (t) => t.id !== id && window.fileUtils.isSamePathSync(t.pathname, pathname)
-        )
-        if (existingTab) {
-          this.CLOSE_TAB(existingTab)
-        }
-
-        // SET_PATHNAME
-        const { filename } = fileInfo
-        if (id === this.currentFile?.id && pathname) {
-          window.DIRNAME = window.path.dirname(pathname)
-        }
-        if (tab) {
-          Object.assign(tab, { filename, pathname, isSaved: true })
-          debouncedSendBufferedState()
-        }
+        this.SET_PATHNAME(fileInfo)
       })
 
       window.electron.ipcRenderer.on('mt::tab-saved', (_, tabId) => {
-        const tab = this.tabs.find((f) => f.id === tabId)
-        if (tab) {
-          const lastEditIndex = tab.history.lastEditIndex
-          if (
-            typeof lastEditIndex === 'number' &&
-            lastEditIndex >= 0 &&
-            lastEditIndex < tab.history.stack.length
-          ) {
-            const entry = tab.history.stack[lastEditIndex]
-            if (entry && typeof entry.id === 'number') {
-              tab.lastSavedHistoryId = entry.id
-            }
-          }
-          tab.isSaved = true
-          debouncedSendBufferedState()
-        }
+        this.MARK_TAB_SAVED(tabId)
       })
 
       window.electron.ipcRenderer.on('mt::tab-save-failure', (_, tabId, msg) => {
-        const tab = this.tabs.find((t) => t.id === tabId)
-        if (!tab) {
-          notice.notify({
-            title: t('dialog.saveFailure'),
-            message: msg,
-            type: 'error',
-            time: 20000,
-            showConfirm: false
-          })
-          return
-        }
-
-        tab.isSaved = false
-        this.pushTabNotification({
-          tabId,
-          msg: t('store.editor.errorWhileSaving', { msg }),
-          style: 'crit'
-        })
-        debouncedSendBufferedState()
+        this.TAB_SAVE_FAILURE(tabId, msg)
       })
     },
 

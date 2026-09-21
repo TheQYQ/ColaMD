@@ -13,6 +13,22 @@ export const isNewlineOnlyFromEmpty = (oldMarkdown: string, markdown: string): b
   oldMarkdown.length === 0 && markdown.length === 1 && markdown[0] === '\n'
 
 /**
+ * The id of the history frame the editor currently sits on, or undefined when
+ * there is none to record — no index, an index past the stack, or a frame whose
+ * id is not the numeric form the save tracking uses. `MARK_TAB_SAVED` stores
+ * this as `lastSavedHistoryId`, which is what `historyMarksDirty` compares
+ * against, so an id of 0 must survive the comparison rather than read as absent.
+ */
+export const historyFrameId = (history: IFileState['history']): number | undefined => {
+  const { stack, lastEditIndex } = history
+  if (typeof lastEditIndex !== 'number' || lastEditIndex < 0 || lastEditIndex >= stack.length) {
+    return undefined
+  }
+  const entry = stack[lastEditIndex]
+  return entry && typeof entry.id === 'number' ? entry.id : undefined
+}
+
+/**
  * Whether the history stack says the tab holds unsaved work.
  *
  * Normally the frame at `lastEditIndex` is compared against the frame that was

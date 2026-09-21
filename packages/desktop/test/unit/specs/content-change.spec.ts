@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { IFileState } from '@shared/types/files'
-import { historyMarksDirty, isNewlineOnlyFromEmpty } from '@/store/contentChange'
+import { historyFrameId, historyMarksDirty, isNewlineOnlyFromEmpty } from '@/store/contentChange'
 
 // O12(4) — the two predicates LISTEN_FOR_CONTENT_CHANGE decides on, pinned outside
 // the action so the dirty rule (which is what decides whether a save is owed) has
@@ -8,6 +8,29 @@ import { historyMarksDirty, isNewlineOnlyFromEmpty } from '@/store/contentChange
 
 const history = (over: Partial<IFileState['history']> = {}): IFileState['history'] =>
   ({ stack: [{ id: 1 }, { id: 2 }, { id: 3 }], index: 0, ...over }) as IFileState['history']
+
+describe('historyFrameId', () => {
+  it('reads the frame the editor sits on', () => {
+    expect(historyFrameId(history({ lastEditIndex: 2 }))).toBe(3)
+    expect(historyFrameId(history({ lastEditIndex: 0 }))).toBe(1)
+  })
+
+  it('returns undefined for no frame, a negative index, or one past the stack', () => {
+    expect(historyFrameId(history({ lastEditIndex: undefined }))).toBeUndefined()
+    expect(historyFrameId(history({ lastEditIndex: -1 }))).toBeUndefined()
+    expect(historyFrameId(history({ lastEditIndex: 9 }))).toBeUndefined()
+  })
+
+  it('keeps a frame id of 0, which a truthiness check would drop', () => {
+    const zeroBased = { stack: [{ id: 0 }], index: 0, lastEditIndex: 0 } as IFileState['history']
+    expect(historyFrameId(zeroBased)).toBe(0)
+  })
+
+  it('ignores a frame whose id is not the numeric save-tracking form', () => {
+    const stringy = { stack: [{ id: 'mu-1' }], index: 0, lastEditIndex: 0 } as IFileState['history']
+    expect(historyFrameId(stringy)).toBeUndefined()
+  })
+})
 
 describe('isNewlineOnlyFromEmpty', () => {
   it('matches only an empty buffer becoming a lone newline', () => {
