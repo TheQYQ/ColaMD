@@ -49,7 +49,7 @@ const defaultFileStateWithoutId = {
  * omitted — every actual file state must allocate a unique id via
  * `getBlankFileState` / `createDocumentState`.
  */
-export const defaultFileState: Omit<IFileState, 'id'> = defaultFileStateWithoutId
+const defaultFileState: Omit<IFileState, 'id'> = defaultFileStateWithoutId
 
 export const getOptionsFromState = (
   file: IFileState

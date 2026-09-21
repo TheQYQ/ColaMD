@@ -18,6 +18,13 @@ import {
   type SelectionFormat
 } from '../services/applicationMenuState'
 import {
+  createFileChangedEvent,
+  exchangeTargetIndex,
+  moveItem,
+  nextCycleIndex,
+  selectTabAfterClose
+} from './tabOps'
+import {
   FileEncodingCommand,
   LineEndingCommand,
   QuickOpenCommand,
@@ -1100,23 +1107,11 @@ export const useEditorStore = defineStore('editor', {
       this.updateTabIdToIndex() // Update before sending it out to prevent stale mappings.
 
       if (currentFile && file.id === currentFile.id) {
-        const fileState: IFileState | null =
-          this.tabs[index] ?? this.tabs[index - 1] ?? this.tabs[0] ?? null
+        const fileState = selectTabAfterClose(this.tabs, index)
         this.currentFile = fileState
         if (fileState && typeof fileState.markdown === 'string') {
-          const { id, markdown, cursor, history, pathname, scrollTop, blocks, muyaIndexCursor } =
-            fileState
-          window.DIRNAME = pathname ? window.path.dirname(pathname) : ''
-          bus.emit('file-changed', {
-            id,
-            markdown,
-            cursor,
-            muyaIndexCursor,
-            renderCursor: true,
-            history,
-            scrollTop,
-            blocks
-          })
+          window.DIRNAME = fileState.pathname ? window.path.dirname(fileState.pathname) : ''
+          bus.emit('file-changed', createFileChangedEvent(fileState))
         } else {
           window.DIRNAME = ''
         }
@@ -1198,21 +1193,11 @@ export const useEditorStore = defineStore('editor', {
       this.updateTabIdToIndex() // Update before sending it out to prevent stale mappings.
 
       if (this.currentFile == null && this.tabs.length > 0) {
-        this.currentFile = this.tabs[tabIndex] ?? this.tabs[tabIndex - 1] ?? this.tabs[0] ?? null
-        if (this.currentFile && typeof this.currentFile.markdown === 'string') {
-          const { id, markdown, cursor, history, pathname, scrollTop, blocks, muyaIndexCursor } =
-            this.currentFile
-          window.DIRNAME = pathname ? window.path.dirname(pathname) : ''
-          bus.emit('file-changed', {
-            id,
-            markdown,
-            cursor,
-            muyaIndexCursor,
-            renderCursor: true,
-            history,
-            scrollTop,
-            blocks
-          })
+        this.currentFile = selectTabAfterClose(this.tabs, tabIndex)
+        const current = this.currentFile
+        if (current && typeof current.markdown === 'string') {
+          window.DIRNAME = current.pathname ? window.path.dirname(current.pathname) : ''
+          bus.emit('file-changed', createFileChangedEvent(current))
         }
       }
 
@@ -1226,15 +1211,6 @@ export const useEditorStore = defineStore('editor', {
     EXCHANGE_TABS_BY_ID(tabIDs: { fromId: string; toId: string | null }): void {
       const { fromId, toId } = tabIDs
       const { tabs } = this
-      const moveItem = <T>(arr: T[], from: number, to: number): boolean => {
-        if (from === to) return true
-        const len = arr.length
-        const item = arr.splice(from, 1)
-        if (item.length === 0) return false
-
-        arr.splice(to, 0, item[0]!)
-        return arr.length === len
-      }
 
       const fromIndex = tabs.findIndex((t) => t.id === fromId)
       if (fromIndex === -1) return
@@ -1244,8 +1220,7 @@ export const useEditorStore = defineStore('editor', {
       } else {
         const toIndex = tabs.findIndex((t) => t.id === toId)
         if (toIndex === -1) return
-        const realToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex
-        moveItem(tabs, fromIndex, realToIndex)
+        moveItem(tabs, fromIndex, exchangeTargetIndex(fromIndex, toIndex))
       }
       this.updateTabIdToIndex()
       debouncedSendBufferedState()
@@ -1269,14 +1244,7 @@ export const useEditorStore = defineStore('editor', {
         return
       }
 
-      let nextTabIndex = 0
-      if (!direction) {
-        // Switch tab to the left.
-        nextTabIndex = currentIndex === 0 ? tabs.length - 1 : currentIndex - 1
-      } else {
-        // Switch tab to the right.
-        nextTabIndex = (currentIndex + 1) % tabs.length
-      }
+      const nextTabIndex = nextCycleIndex(currentIndex, tabs.length, direction)
 
       const nextTab = tabs[nextTabIndex]
       if (!nextTab || !nextTab.id) {
