@@ -24,31 +24,48 @@ test.describe('paragraph/format menus disabled in source mode (#3531)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
-    const launched = await launchWithMarkdown('# Doc\n\nhello world\n', { suppressErrorDialog: true })
+  test.beforeAll(async () => {
+    const launched = await launchWithMarkdown('# Doc\n\nhello world\n', {
+      suppressErrorDialog: true
+    })
     app = launched.app
     page = launched.page
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('menus are enabled in WYSIWYG, disabled in source mode, restored on exit', async() => {
-    await expect.poll(() => readEnabled(app)).toEqual({
-      table: true, heading1: true, strong: true, emphasis: true
-    })
+  test('menus are enabled in WYSIWYG, disabled in source mode, restored on exit', async () => {
+    await expect
+      .poll(() => readEnabled(app))
+      .toEqual({
+        table: true,
+        heading1: true,
+        strong: true,
+        emphasis: true
+      })
 
     await enterSourceMode(page, app)
-    await expect.poll(() => readEnabled(app)).toEqual({
-      table: false, heading1: false, strong: false, emphasis: false
-    })
+    await expect
+      .poll(() => readEnabled(app))
+      .toEqual({
+        table: false,
+        heading1: false,
+        strong: false,
+        emphasis: false
+      })
 
     await exitSourceMode(page, app)
-    await expect.poll(() => readEnabled(app)).toEqual({
-      table: true, heading1: true, strong: true, emphasis: true
-    })
+    await expect
+      .poll(() => readEnabled(app))
+      .toEqual({
+        table: true,
+        heading1: true,
+        strong: true,
+        emphasis: true
+      })
   })
 })
 
@@ -56,7 +73,7 @@ test.describe('menus reflect cursor context after exiting source mode (#3531)', 
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('```js\nconst x = 1\n```\n\n# Heading\n', {
       suppressErrorDialog: true
     })
@@ -65,11 +82,11 @@ test.describe('menus reflect cursor context after exiting source mode (#3531)', 
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('a cursor in a code block keeps Format items disabled after a source-mode round-trip', async() => {
+  test('a cursor in a code block keeps Format items disabled after a source-mode round-trip', async () => {
     // Put the caret inside the fenced code block; its context disables the Format menu.
     await page.locator('.editor-component pre.mu-code-block .mu-codeblock-content').first().click()
     await expect.poll(() => readEnabled(app).then((s) => s.strong)).toBe(false)

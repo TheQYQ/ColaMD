@@ -18,11 +18,11 @@ import {
 // Trigger an editor undo through the same IPC channel the Edit › Undo menu item
 // uses (`mt::editor-edit-action` → bus `undo` → editor.undo()). More reliable
 // than synthesizing the Cmd/Ctrl+Z keystroke against the contenteditable.
-const undo = async(app: Parameters<typeof sendIpcToRenderer>[0]): Promise<void> => {
+const undo = async (app: Parameters<typeof sendIpcToRenderer>[0]): Promise<void> => {
   await sendIpcToRenderer(app, 'mt::editor-edit-action', 'undo')
 }
 
-const redo = async(app: Parameters<typeof sendIpcToRenderer>[0]): Promise<void> => {
+const redo = async (app: Parameters<typeof sendIpcToRenderer>[0]): Promise<void> => {
   await sendIpcToRenderer(app, 'mt::editor-edit-action', 'redo')
 }
 
@@ -30,10 +30,8 @@ test.describe('Parity PG2 — WYSIWYG caret restored after a source-mode edit', 
   // handleFileChange now maps the saved `muyaIndexCursor` ({line, ch}) onto a
   // block-key cursor via the engine's `setCursorByOffset`, so the source-mode
   // editing position is restored on the handoff back to WYSIWYG.
-  test('PG2: the caret lands in the block the source-mode cursor was on', async() => {
-    const { app, page } = await launchWithMarkdown(
-      'first para\n\nsecond para\n\nthird para here\n'
-    )
+  test('PG2: the caret lands in the block the source-mode cursor was on', async () => {
+    const { app, page } = await launchWithMarkdown('first para\n\nsecond para\n\nthird para here\n')
     await waitForMenuReady(app)
 
     await enterSourceMode(page, app)
@@ -78,7 +76,7 @@ test.describe('Parity PG14 — first undo after source mode reverts the edit in 
   // source-mode edit in one step — matching legacy muyajs' full-state-snapshot
   // history. See the matching note in editor.vue handleFileChange and the
   // engine unit coverage in packages/muya/src/__tests__/replaceContent.spec.ts.
-  test('PG14: one undo after exiting source mode reverts the source-mode change', async() => {
+  test('PG14: one undo after exiting source mode reverts the source-mode change', async () => {
     const { app, page } = await launchWithMarkdown('base\n')
     await waitForMenuReady(app)
 
@@ -97,7 +95,7 @@ test.describe('Parity PG14 — first undo after source mode reverts the edit in 
     await app.close()
   })
 
-  test('PG14: redo re-applies the source-mode change in one step', async() => {
+  test('PG14: redo re-applies the source-mode change in one step', async () => {
     const { app, page } = await launchWithMarkdown('base\n')
     await waitForMenuReady(app)
 
@@ -115,7 +113,7 @@ test.describe('Parity PG14 — first undo after source mode reverts the edit in 
     await app.close()
   })
 
-  test('PG14: a block-type bulk change reverts in one undo step', async() => {
+  test('PG14: a block-type bulk change reverts in one undo step', async () => {
     const { app, page } = await launchWithMarkdown('hello\n')
     await waitForMenuReady(app)
 
@@ -139,7 +137,7 @@ test.describe('Parity PG15 — undo back to on-disk content restores the saved i
   // `lastSavedHistoryId` to the baseline (id 0); undoing an edit back to disk
   // content reproduces the baseline content and hence the saved id, restoring the
   // saved/clean indicator.
-  test('PG15: undoing an edit back to disk content clears the unsaved indicator', async() => {
+  test('PG15: undoing an edit back to disk content clears the unsaved indicator', async () => {
     const { app, page } = await launchWithMarkdown('hello world\n')
     await waitForMenuReady(app)
 
@@ -148,7 +146,9 @@ test.describe('Parity PG15 — undo back to on-disk content restores the saved i
     await page.waitForTimeout(500)
 
     // Sanity: the edit dirtied the tab and changed the content.
-    expect(await page.evaluate(() => !!document.querySelector('.editor-tabs li.unsaved'))).toBe(true)
+    expect(await page.evaluate(() => !!document.querySelector('.editor-tabs li.unsaved'))).toBe(
+      true
+    )
     expect((await getMarkdownContent(page, app)).trim()).toContain('EXTRA')
 
     // Undo back to the on-disk content.
@@ -170,7 +170,7 @@ test.describe('Parity PG15 — undo back to on-disk content restores the saved i
   // With the old depth-as-id scheme the id collided with the saved id and the
   // dirty tab read as clean (risking data loss on close-without-save). The
   // monotonic content-keyed id keeps the divergent document dirty.
-  test('G6: a divergent re-edit at the saved undo depth stays dirty', async() => {
+  test('G6: a divergent re-edit at the saved undo depth stays dirty', async () => {
     const { app, page } = await launchWithMarkdown('A\n')
     await waitForMenuReady(app)
 
@@ -200,9 +200,7 @@ test.describe('Parity PG15 — undo back to on-disk content restores the saved i
     const content = (await getMarkdownContent(page, app)).trim()
     expect(content).toContain('C')
     expect(content).not.toContain('B')
-    const dirty = await page.evaluate(
-      () => !!document.querySelector('.editor-tabs li.unsaved')
-    )
+    const dirty = await page.evaluate(() => !!document.querySelector('.editor-tabs li.unsaved'))
     expect(dirty).toBe(true)
     await app.close()
   })
@@ -241,7 +239,7 @@ test.describe('Item 248 — a real source-mode keystroke dirties the tab dot', (
   // the dot stays clean WHILE in source mode. The edit becomes a dirtying history
   // boundary on the source->WYSIWYG handoff (editor.vue handleFileChange ->
   // replaceContent), so the `.unsaved` dot appears right after exit.
-  test('typing in source mode marks the tab unsaved and the text survives exit', async() => {
+  test('typing in source mode marks the tab unsaved and the text survives exit', async () => {
     const { app, page } = await launchWithMarkdown('saved baseline\n')
     await waitForMenuReady(app)
 
@@ -296,7 +294,7 @@ test.describe('Item 256 — save -> clean -> edit -> dirty -> undo-to-saved cycl
   // dot, that a fresh edit re-marks it, and that undoing back to the saved state
   // clears it again. This exercises the full content-keyed synthetic-history
   // round trip the save indicator relies on.
-  test('a save clears the dot, a new edit re-marks it, and undo-to-saved clears it', async() => {
+  test('a save clears the dot, a new edit re-marks it, and undo-to-saved clears it', async () => {
     const { app, page } = await launchWithMarkdown('hello world\n')
     await waitForMenuReady(app)
 

@@ -21,7 +21,7 @@ test.describe('Issue #2800: typing <pre>...</pre> does not crash', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeEach(async() => {
+  test.beforeEach(async () => {
     const launched = await launchWithMarkdown('# R\n\n', { suppressErrorDialog: true })
     app = launched.app
     page = launched.page
@@ -29,11 +29,11 @@ test.describe('Issue #2800: typing <pre>...</pre> does not crash', () => {
     await clearRendererErrors(app)
   })
 
-  test.afterEach(async() => {
+  test.afterEach(async () => {
     if (app) await app.close()
   })
 
-  test('typing literal <pre>test</pre> and continuing does not crash', async() => {
+  test('typing literal <pre>test</pre> and continuing does not crash', async () => {
     await typeIntoEditor(page, '<pre>test</pre>')
     await page.waitForTimeout(200)
     await page.keyboard.type(' more text', { delay: 10 })
@@ -47,7 +47,7 @@ test.describe('Issue #2800: typing <pre>...</pre> does not crash', () => {
     await expectNoRendererErrors(app)
   })
 
-  test('typing other inline HTML tags does not crash', async() => {
+  test('typing other inline HTML tags does not crash', async () => {
     // Adjacent inline HTML opens — same partialRender mismatch family.
     await typeIntoEditor(page, '<span>foo</span>')
     await page.waitForTimeout(100)
@@ -58,12 +58,14 @@ test.describe('Issue #2800: typing <pre>...</pre> does not crash', () => {
     await expectNoRendererErrors(app)
   })
 
-  test('typing <pre>...</pre> in typewriter mode does not crash', async() => {
+  test('typing <pre>...</pre> in typewriter mode does not crash', async () => {
     // Issue title mentions "in typewriter mode". Toggle it via menu and
     // re-run the recipe.
     const { clickMenuById, waitForMenuReady } = await import('./helpers')
     await waitForMenuReady(app)
-    await clickMenuById(app, 'typewriterModeMenuItem').catch(() => { /* ok if id differs */ })
+    await clickMenuById(app, 'typewriterModeMenuItem').catch(() => {
+      /* ok if id differs */
+    })
     await page.waitForTimeout(100)
     await placeCaretInEditor(page)
     await clearRendererErrors(app)

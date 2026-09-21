@@ -52,7 +52,7 @@ test.describe('Heading hover-to-copy anchor affordance (item 241)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(DOC, { suppressErrorDialog: true })
     app = launched.app
     page = launched.page
@@ -60,11 +60,11 @@ test.describe('Heading hover-to-copy anchor affordance (item 241)', () => {
     await page.waitForSelector(COPY_LINK, { state: 'attached', timeout: 15000 })
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('the heading renders an accessible copy-anchor affordance', async() => {
+  test('the heading renders an accessible copy-anchor affordance', async () => {
     const info = await page.evaluate((selector) => {
       const el = document.querySelector(selector) as HTMLElement | null
       if (!el) return null
@@ -85,7 +85,7 @@ test.describe('Heading hover-to-copy anchor affordance (item 241)', () => {
     expect(info?.hasIcon).toBe(true)
   })
 
-  test('hovering the heading then clicking the affordance copies "#<githubSlug>"', async() => {
+  test('hovering the heading then clicking the affordance copies "#<githubSlug>"', async () => {
     // Clear the clipboard to a known sentinel so we can prove the write came
     // from this interaction and not a stale value.
     await writeClipboard(app, 'sentinel-before-copy')
@@ -103,7 +103,7 @@ test.describe('Heading hover-to-copy anchor affordance (item 241)', () => {
     await expectNoRendererErrors(app)
   })
 
-  test('the copied anchor starts with "#" and matches the heading github slug', async() => {
+  test('the copied anchor starts with "#" and matches the heading github slug', async () => {
     await writeClipboard(app, '')
     await expect.poll(() => readClipboard(app)).toBe('')
 
@@ -122,7 +122,7 @@ test.describe('Heading hover-to-copy anchor affordance (item 241)', () => {
     await expectNoRendererErrors(app)
   })
 
-  test('activating the affordance via keyboard (Enter) also copies the anchor', async() => {
+  test('activating the affordance via keyboard (Enter) also copies the anchor', async () => {
     await writeClipboard(app, 'keyboard-sentinel')
     await expect.poll(() => readClipboard(app)).toBe('keyboard-sentinel')
 

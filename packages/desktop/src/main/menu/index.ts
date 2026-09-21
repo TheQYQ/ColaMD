@@ -505,7 +505,7 @@ class AppMenu {
       this.clearRecentlyUsedDocuments()
     })
 
-    onInternalChannel('broadcast-preferences-changed', async(prefs: Partial<IUserPreferences>) => {
+    onInternalChannel('broadcast-preferences-changed', async (prefs: Partial<IUserPreferences>) => {
       if (prefs.theme !== undefined || prefs.followSystemTheme !== undefined) {
         this.updateAppMenu()
       }

@@ -21,7 +21,7 @@ test.describe('New File on a collapsed folder (#3439)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     // launchElectron opens the desktop package folder in the sidebar (its
     // sub-folders render as collapsed tree-folders).
     const launched = await launchElectron()
@@ -35,7 +35,7 @@ test.describe('New File on a collapsed folder (#3439)', () => {
     // the renderer, driving the real context-menu → bus → store → tree-folder
     // path.
     await app.evaluate(({ ipcMain }) => {
-      const findId = (items: Array<{ id?: string, submenu?: unknown }>): string | null => {
+      const findId = (items: Array<{ id?: string; submenu?: unknown }>): string | null => {
         for (const it of items || []) {
           if (it?.id && String(it.id).startsWith('newFileMenuItem')) return it.id
           if (it?.submenu) {
@@ -52,18 +52,20 @@ test.describe('New File on a collapsed folder (#3439)', () => {
           setTimeout(() => {
             try {
               event.sender.send('mt::menu::click', { id })
-            } catch { /* window gone */ }
+            } catch {
+              /* window gone */
+            }
           }, 30)
         }
       })
     })
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('the create input appears when New File targets a collapsed folder', async() => {
+  test('the create input appears when New File targets a collapsed folder', async () => {
     // No tree-folder create input is rendered initially.
     expect(await visibleNewInput(page)).toBe(0)
 

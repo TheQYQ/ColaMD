@@ -19,11 +19,7 @@ const tabSelector = '.tabs-container > li'
 // `close-all`) delegate to — the bus itself is a module-scoped mitt emitter
 // not reachable from `page.evaluate`, so the store handle is the headless
 // equivalent of clicking the (native, non-headless) context-menu entries.
-const callEditorStoreAction = (
-  page: Page,
-  action: string,
-  tabId?: string
-): Promise<boolean> =>
+const callEditorStoreAction = (page: Page, action: string, tabId?: string): Promise<boolean> =>
   page.evaluate(
     ({ actionName, id }) => {
       const root = document.querySelector('#app') as
@@ -64,24 +60,24 @@ test.describe('Tab management', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# Tab base\n')
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('Initial document loads as a single tab in the tab list', async() => {
+  test('Initial document loads as a single tab in the tab list', async () => {
     // Tab bar may be hidden by default (v-show), but the DOM still contains the list.
     await page.waitForSelector('.tabs-container', { state: 'attached', timeout: 5000 })
     const count = await page.locator(tabSelector).count()
     expect(count).toBeGreaterThanOrEqual(1)
   })
 
-  test('Creating a new untitled tab grows the tab count', async() => {
+  test('Creating a new untitled tab grows the tab count', async () => {
     const before = await page.locator(tabSelector).count()
     await sendIpcToRenderer(app, 'mt::new-untitled-tab', true, '')
     await page.waitForFunction(
@@ -95,7 +91,7 @@ test.describe('Tab management', () => {
     expect(after).toBeGreaterThan(before)
   })
 
-  test('Creating a new untitled tab auto-focuses the editor', async() => {
+  test('Creating a new untitled tab auto-focuses the editor', async () => {
     // Drop focus first so the assertion proves the NEW tab grabbed focus rather
     // than inheriting a stale one from the previously active editor.
     await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
@@ -134,7 +130,7 @@ test.describe('Tab management', () => {
   // Item 251 — switching between two populated tabs swaps the editor BODY, not
   // just the active-tab highlight. Proves UPDATE_CURRENT_FILE -> file-changed ->
   // setContent re-renders the document on every switch.
-  test('Switching tabs swaps the editor body to match the tab', async() => {
+  test('Switching tabs swaps the editor body to match the tab', async () => {
     // Tab index 0 is the launch tab ('# Tab base'); open a fresh tab B whose
     // body is distinct, auto-selected.
     const before = await page.locator(tabSelector).count()
@@ -149,14 +145,14 @@ test.describe('Tab management', () => {
 
     // The newly-selected tab B shows B's body.
     await expect
-      .poll(async() => (await getMarkdownContent(page, app)).trim(), { timeout: 5000 })
+      .poll(async () => (await getMarkdownContent(page, app)).trim(), { timeout: 5000 })
       .toBe('second body')
 
     // Switch to index 0 — the editor body must revert to tab A's content and the
     // active tab id must change away from B.
     await sendIpcToRenderer(app, 'mt::switch-tab-by-index', 0)
     await expect
-      .poll(async() => (await getMarkdownContent(page, app)).trim(), { timeout: 5000 })
+      .poll(async () => (await getMarkdownContent(page, app)).trim(), { timeout: 5000 })
       .toBe('# Tab base')
     expect(await activeTabId(page)).not.toBe(bId)
 
@@ -166,7 +162,7 @@ test.describe('Tab management', () => {
     expect(bIndex).toBeGreaterThanOrEqual(0)
     await sendIpcToRenderer(app, 'mt::switch-tab-by-index', bIndex)
     await expect
-      .poll(async() => (await getMarkdownContent(page, app)).trim(), { timeout: 5000 })
+      .poll(async () => (await getMarkdownContent(page, app)).trim(), { timeout: 5000 })
       .toBe('second body')
     expect(await activeTabId(page)).toBe(bId)
   })
@@ -174,7 +170,7 @@ test.describe('Tab management', () => {
   // Item 262 — a blank untitled tab is NOT marked unsaved before any input
   // (the engine's lone-'\n' init json-change is guarded in
   // LISTEN_FOR_CONTENT_CHANGE), and flips to unsaved on the first real keystroke.
-  test('Blank untitled tab is clean until the first keystroke', async() => {
+  test('Blank untitled tab is clean until the first keystroke', async () => {
     const before = await page.locator(tabSelector).count()
     await sendIpcToRenderer(app, 'mt::new-untitled-tab', true, '')
     await page.waitForFunction(
@@ -200,10 +196,7 @@ test.describe('Tab management', () => {
     await typeIntoEditor(page, 'X')
     await expect
       .poll(
-        () =>
-          page.evaluate(
-            () => !!document.querySelector('.tabs-container > li.active.unsaved')
-          ),
+        () => page.evaluate(() => !!document.querySelector('.tabs-container > li.active.unsaved')),
         { timeout: 5000 }
       )
       .toBe(true)
@@ -223,7 +216,7 @@ test.describe('Tab management', () => {
   // historySerialization.spec.ts already proves redo is lossless when the
   // caret is correctly seated. The mandatory per-tab undo isolation below is
   // fully and faithfully exercised.)
-  test('Per-tab undo history survives a tab switch', async() => {
+  test('Per-tab undo history survives a tab switch', async () => {
     // Tab A: a known saved baseline so the dirty/undo round-trip is observable.
     const aLaunch = await launchWithMarkdown('alpha\n')
     const aApp = aLaunch.app
@@ -238,7 +231,7 @@ test.describe('Tab management', () => {
       await placeCaretInEditor(aPage)
       await typeIntoEditor(aPage, ' MARKERA end')
       await expect
-        .poll(async() => (await getMarkdownContent(aPage, aApp)).trim(), { timeout: 5000 })
+        .poll(async () => (await getMarkdownContent(aPage, aApp)).trim(), { timeout: 5000 })
         .toContain('MARKERA')
       await expect.poll(isDirty, { timeout: 5000 }).toBe(true)
       const aTabId = await activeTabId(aPage)
@@ -255,7 +248,7 @@ test.describe('Tab management', () => {
       await placeCaretInEditor(aPage)
       await typeIntoEditor(aPage, ' MARKERB end')
       await expect
-        .poll(async() => (await getMarkdownContent(aPage, aApp)).trim(), { timeout: 5000 })
+        .poll(async () => (await getMarkdownContent(aPage, aApp)).trim(), { timeout: 5000 })
         .toContain('MARKERB')
 
       // Switch back to tab A by its id's index.
@@ -264,7 +257,7 @@ test.describe('Tab management', () => {
       expect(aIndex).toBeGreaterThanOrEqual(0)
       await sendIpcToRenderer(aApp, 'mt::switch-tab-by-index', aIndex)
       await expect
-        .poll(async() => (await getMarkdownContent(aPage, aApp)).trim(), { timeout: 5000 })
+        .poll(async () => (await getMarkdownContent(aPage, aApp)).trim(), { timeout: 5000 })
         .toContain('MARKERA')
       // A is shown again (its own edit), B's edit never leaked into A, and A is
       // still dirty from its own un-undone edit.
@@ -280,7 +273,7 @@ test.describe('Tab management', () => {
       // A's text and never resurrect B's.
       await expect
         .poll(
-          async() => {
+          async () => {
             const current = (await getMarkdownContent(aPage, aApp)).trim()
             if (current === 'alpha') return current
             await sendIpcToRenderer(aApp, 'mt::editor-edit-action', 'undo')
@@ -304,7 +297,7 @@ test.describe('Tab management', () => {
   // the active tab is highlighted but invisible (the strip never scrolls), so
   // the user can't see which tab they're on. Runs in its own app because it
   // opens many tabs to force horizontal overflow.
-  test('Switching to an overflowed tab scrolls it into view', async() => {
+  test('Switching to an overflowed tab scrolls it into view', async () => {
     const launch = await launchWithMarkdown('# overflow base\n')
     const sApp = launch.app
     const sPage = launch.page
@@ -370,14 +363,14 @@ test.describe('Tab management', () => {
   // not headless-reachable). All tabs kept SAVED so no unsaved-close dialog
   // blocks. Runs in its own app so the close-all teardown can't disturb the
   // shared-app tests above.
-  test('Context-menu close-others / close-saved / close-all survivor sets', async() => {
+  test('Context-menu close-others / close-saved / close-all survivor sets', async () => {
     const launch = await launchWithMarkdown('# keep\n')
     const cApp = launch.app
     const cPage = launch.page
     try {
       // Helper: open `n` extra untitled tabs with distinct content and mark
       // every existing tab SAVED via the real `mt::tab-saved` save-confirm IPC.
-      const openSavedTabs = async(bodies: string[]): Promise<void> => {
+      const openSavedTabs = async (bodies: string[]): Promise<void> => {
         for (const body of bodies) {
           const before = await cPage.locator(tabSelector).count()
           await sendIpcToRenderer(cApp, 'mt::new-untitled-tab', true, body)
@@ -404,9 +397,7 @@ test.describe('Tab management', () => {
       expect(ids.length).toBeGreaterThanOrEqual(3)
       const keepId = ids[1] as string
       expect(await callEditorStoreAction(cPage, 'CLOSE_OTHER_TABS', keepId)).toBe(true)
-      await expect
-        .poll(() => readTabIds(cPage), { timeout: 5000 })
-        .toEqual([keepId])
+      await expect.poll(() => readTabIds(cPage), { timeout: 5000 }).toEqual([keepId])
 
       // --- close-saved: every saved tab closes ---
       // Top up to several SAVED tabs again, then close-saved -> none survive.

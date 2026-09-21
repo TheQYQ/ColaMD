@@ -61,7 +61,7 @@ afterEach(() => {
 })
 
 describe('Keybindings.setUserKeybindings live re-registration (#3681)', () => {
-  it('re-registers shortcuts on open windows so changes apply without a restart', async() => {
+  it('re-registers shortcuts on open windows so changes apply without a restart', async () => {
     const kb = makeKeybindings()
     const win = { isDestroyed: () => false } as unknown as WinArg
     register.mockClear()
@@ -78,7 +78,7 @@ describe('Keybindings.setUserKeybindings live re-registration (#3681)', () => {
     expect(unregister).toHaveBeenCalled()
   })
 
-  it('skips destroyed windows', async() => {
+  it('skips destroyed windows', async () => {
     const kb = makeKeybindings()
     const win = { isDestroyed: () => true } as unknown as WinArg
     register.mockClear()

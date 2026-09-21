@@ -15,32 +15,36 @@ vi.mock('main_renderer/commands', () => ({
 
 const keybindings = { getAccelerator: () => undefined } as never
 
-interface Item { type?: string, visible?: boolean, id?: string }
+interface Item {
+  type?: string
+  visible?: boolean
+  id?: string
+}
 
 async function buildEditSubmenu(isOsx: boolean): Promise<Item[]> {
   vi.resetModules()
   vi.doMock('main_renderer/config', () => ({ isOsx }))
   const mod = await import('main_renderer/menu/templates/edit')
-  return (mod.default(keybindings).submenu as Item[])
+  return mod.default(keybindings).submenu as Item[]
 }
 
 const hasAdjacentVisibleSeparators = (items: Item[]): boolean => {
-  const visible = items.filter(i => i.visible !== false)
-  return visible.some((item, i) =>
-    item.type === 'separator' && visible[i + 1]?.type === 'separator'
+  const visible = items.filter((i) => i.visible !== false)
+  return visible.some(
+    (item, i) => item.type === 'separator' && visible[i + 1]?.type === 'separator'
   )
 }
 
 describe('Edit menu separators (#2997)', () => {
-  it('has no doubled separator on Windows/Linux', async() => {
+  it('has no doubled separator on Windows/Linux', async () => {
     const submenu = await buildEditSubmenu(false)
-    expect(submenu.find(i => i.id === 'screenshot')?.visible).toBe(false)
+    expect(submenu.find((i) => i.id === 'screenshot')?.visible).toBe(false)
     expect(hasAdjacentVisibleSeparators(submenu)).toBe(false)
   })
 
-  it('keeps the screenshot entry and its separators on macOS', async() => {
+  it('keeps the screenshot entry and its separators on macOS', async () => {
     const submenu = await buildEditSubmenu(true)
-    expect(submenu.find(i => i.id === 'screenshot')?.visible).toBe(true)
+    expect(submenu.find((i) => i.id === 'screenshot')?.visible).toBe(true)
     expect(hasAdjacentVisibleSeparators(submenu)).toBe(false)
   })
 })

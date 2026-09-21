@@ -30,7 +30,7 @@ describe('preferences language change', () => {
     stubRendererGlobals()
   })
 
-  it('creates no polling timer', async() => {
+  it('creates no polling timer', async () => {
     const interval = vi.spyOn(globalThis, 'setInterval')
 
     await import('@/prefComponents/sideBar/config')
@@ -39,7 +39,7 @@ describe('preferences language change', () => {
     interval.mockRestore()
   })
 
-  it('re-notifies the sidebar when the language changes', async() => {
+  it('re-notifies the sidebar when the language changes', async () => {
     // Same module graph as config's own `import bus`, which resetModules()
     // would otherwise split into a second emitter instance.
     const { default: bus } = await import('@/bus')

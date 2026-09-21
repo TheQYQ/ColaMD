@@ -11,11 +11,7 @@
 // there is no href, and FORMAT_LINK_CLICK guards null hrefs defensively.
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import {
-  launchWithMarkdown,
-  clearRendererErrors,
-  expectNoRendererErrors
-} from './helpers'
+import { launchWithMarkdown, clearRendererErrors, expectNoRendererErrors } from './helpers'
 
 const CUSTOM_PROTOCOL_DOC =
   '# Repro\n\n[sambesi://localhost/node/11164](sambesi://localhost/node/11164)\n'
@@ -26,11 +22,11 @@ test.describe('Issue #4356: link popover with an unsupported protocol href', () 
   let app: ElectronApplication
   let page: Page
 
-  test.afterEach(async() => {
+  test.afterEach(async () => {
     if (app) await app.close()
   })
 
-  test('popover offers only unlink and the renderer does not crash', async() => {
+  test('popover offers only unlink and the renderer does not crash', async () => {
     const launched = await launchWithMarkdown(CUSTOM_PROTOCOL_DOC, {
       suppressErrorDialog: true
     })
@@ -50,7 +46,7 @@ test.describe('Issue #4356: link popover with an unsupported protocol href', () 
     await expectNoRendererErrors(app)
   })
 
-  test('anchor links still offer jump and clicking it does not crash', async() => {
+  test('anchor links still offer jump and clicking it does not crash', async () => {
     const launched = await launchWithMarkdown(ANCHOR_LINK_DOC, {
       suppressErrorDialog: true
     })

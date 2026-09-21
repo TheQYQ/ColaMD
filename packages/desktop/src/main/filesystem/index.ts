@@ -22,7 +22,7 @@ export const normalizeAndResolvePath = (pathname: string): string => {
   return path.resolve(pathname)
 }
 
-export const writeFile = async(
+export const writeFile = async (
   pathname: string,
   content: string | Buffer,
   extension?: string,

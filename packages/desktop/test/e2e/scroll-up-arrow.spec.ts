@@ -9,7 +9,7 @@ test.describe('Arrow-up scrolls the document (#3329)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const md = `${Array.from({ length: 120 }, (_, i) => `Paragraph ${i + 1}`).join('\n\n')}\n`
     const launched = await launchWithMarkdown(md)
     app = launched.app
@@ -17,14 +17,16 @@ test.describe('Arrow-up scrolls the document (#3329)', () => {
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
   const scrollTop = () =>
-    page.evaluate(() => (document.querySelector('.editor-component') as HTMLElement)?.scrollTop ?? -1)
+    page.evaluate(
+      () => (document.querySelector('.editor-component') as HTMLElement)?.scrollTop ?? -1
+    )
 
-  const pressMany = async(key: string, times: number) => {
+  const pressMany = async (key: string, times: number) => {
     for (let i = 0; i < times; i++) {
       await page.keyboard.press(key)
       await page.waitForTimeout(6)
@@ -32,7 +34,7 @@ test.describe('Arrow-up scrolls the document (#3329)', () => {
     await page.waitForTimeout(120)
   }
 
-  test('moving the caret up brings the view back up', async() => {
+  test('moving the caret up brings the view back up', async () => {
     // Caret to the bottom — the #628 handler scrolls the view down.
     await pressMany('ArrowDown', 80)
     const bottom = await scrollTop()

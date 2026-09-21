@@ -32,7 +32,7 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
 
   let basePath: string
 
-  beforeEach(async() => {
+  beforeEach(async () => {
     basePath = tempDir()
     const { default: VersionHistoryStore } = await import('main_renderer/versionHistory')
     const instance = new VersionHistoryStore(basePath)
@@ -46,7 +46,7 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
     }
   })
 
-  it('stores and retrieves a snapshot', async() => {
+  it('stores and retrieves a snapshot', async () => {
     const snap: VersionSnapshot = {
       id: 'test-1',
       pathname: '/foo/bar.md',
@@ -68,7 +68,7 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
     expect(store.getSnapshots('/nonexistent.md')).toEqual([])
   })
 
-  it('deduplicates identical content', async() => {
+  it('deduplicates identical content', async () => {
     const snap1: VersionSnapshot = {
       id: 'a',
       pathname: '/doc.md',
@@ -93,7 +93,7 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
     expect(store.getSnapshots('/doc.md')).toHaveLength(1)
   })
 
-  it('keeps different content as separate snapshots', async() => {
+  it('keeps different content as separate snapshots', async () => {
     await store.saveSnapshot({
       id: 'a',
       pathname: '/doc.md',
@@ -116,7 +116,7 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
     expect(list.map((s) => s.id)).toEqual(['a', 'b'])
   })
 
-  it('retrieves content by snapshot id', async() => {
+  it('retrieves content by snapshot id', async () => {
     await store.saveSnapshot({
       id: 'snap-x',
       pathname: '/doc.md',
@@ -130,7 +130,7 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
     expect(store.getSnapshotContent('/doc.md', 'nonexistent')).toBeNull()
   })
 
-  it('deletes a specific snapshot', async() => {
+  it('deletes a specific snapshot', async () => {
     await store.saveSnapshot({
       id: 'keep',
       pathname: '/doc.md',
@@ -160,7 +160,7 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
     expect(store.deleteSnapshot('/doc.md', 'nope')).toBe(false)
   })
 
-  it('clears all history for a file', async() => {
+  it('clears all history for a file', async () => {
     await store.saveSnapshot({
       id: 'a',
       pathname: '/doc.md',
@@ -179,7 +179,7 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
     expect(store.clearHistory('/never-existed.md')).toBe(false)
   })
 
-  it('isolates histories by pathname', async() => {
+  it('isolates histories by pathname', async () => {
     await store.saveSnapshot({
       id: 'a',
       pathname: '/file-a.md',
@@ -203,7 +203,7 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
     expect(store.getSnapshots('/file-b.md')[0].markdown).toBe('content b')
   })
 
-  it('caps snapshots at MAX_SNAPSHOTS_PER_FILE (FIFO eviction)', async() => {
+  it('caps snapshots at MAX_SNAPSHOTS_PER_FILE (FIFO eviction)', async () => {
     // Insert 52 snapshots (cap is 50).
     for (let i = 0; i < 52; i++) {
       await store.saveSnapshot({
@@ -223,7 +223,7 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
     expect(list[49].id).toBe('snap-51')
   })
 
-  it('persists snapshots to disk (survives instance recreation)', async() => {
+  it('persists snapshots to disk (survives instance recreation)', async () => {
     const { default: VersionHistoryStore } = await import('main_renderer/versionHistory')
 
     // First instance writes.
@@ -244,7 +244,7 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
     expect(list[0].markdown).toBe('durable')
   })
 
-  it('writes a valid JSON file on disk', async() => {
+  it('writes a valid JSON file on disk', async () => {
     const { default: VersionHistoryStore } = await import('main_renderer/versionHistory')
     const instance = new VersionHistoryStore(basePath)
 
@@ -268,7 +268,7 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
     expect(parsed.snapshots[0].id).toBe('json-test')
   })
 
-  it('recovers gracefully from corrupted disk file', async() => {
+  it('recovers gracefully from corrupted disk file', async () => {
     const { default: VersionHistoryStore } = await import('main_renderer/versionHistory')
     const instance = new VersionHistoryStore(basePath)
 

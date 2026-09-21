@@ -7,7 +7,7 @@ interface FontListShape {
 }
 
 export const registerFontsHandlers = (): void => {
-  typedHandle('mt::fonts::list', async() => {
+  typedHandle('mt::fonts::list', async () => {
     try {
       const fontList = (await import('font-list')) as FontListShape
       const getFonts = fontList.getFonts || fontList.default?.getFonts

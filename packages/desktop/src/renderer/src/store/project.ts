@@ -257,7 +257,7 @@ export const useProjectStore = defineStore('project', () => {
       const { pathname: src } = activeItem.value
       clipboard.value = { type: String(type), src }
     })
-    bus.on('SIDEBAR::paste', async() => {
+    bus.on('SIDEBAR::paste', async () => {
       const cb = clipboard.value
       const { pathname, isDirectory } = activeItem.value
       const dirname = isDirectory ? pathname : window.path.dirname(pathname)

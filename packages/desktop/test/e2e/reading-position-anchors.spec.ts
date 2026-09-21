@@ -88,18 +88,18 @@ test.describe('Outline follows the viewport', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(outlineDoc)
     app = launched.app
     page = launched.page
     await ensureTocVisible(app, page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('scrolling the editor moves the outline highlight to that section', async() => {
+  test('scrolling the editor moves the outline highlight to that section', async () => {
     // Downward first: the highlight is recomputed inside the container's `scroll`
     // handler, so a document that has never scrolled has no event to compute
     // from. Scroll to the top from there and the same rule points at Alpha.
@@ -132,22 +132,22 @@ test.describe('Entering Source Code mode scrolls to the caret', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(caretDoc)
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('the source editor opens scrolled to the line the WYSIWYG caret was on', async() => {
+  test('the source editor opens scrolled to the line the WYSIWYG caret was on', async () => {
     // `mu-plain-text` rather than its `mu-paragraph-content` parent: Playwright's
     // `:text-is` only matches the smallest element holding the text.
     await page.locator(`span.mu-plain-text:text-is("${MARKER_LINE}")`).click()
 
-    const readHandoff = async(): Promise<{
+    const readHandoff = async (): Promise<{
       caretLineText: string
       scrollTop: number
       scrolledToCaret: boolean
@@ -176,16 +176,16 @@ test.describe('Entering Source Code mode scrolls to the caret', () => {
     // G7 (parity-cursor-lang.spec.ts:97) owns this half, and it is also what
     // makes the two below non-vacuous: on line 0 a scrollTop of 0 would match too.
     await expect
-      .poll(async() => (await readHandoff()).caretLineText, { timeout: 5000 })
+      .poll(async () => (await readHandoff()).caretLineText, { timeout: 5000 })
       .toBe(MARKER_LINE)
 
     // The unasserted half: sourceCode.vue:568 moved the container down to that
     // line, rather than leaving the source view at the top of the document.
     await expect
-      .poll(async() => (await readHandoff()).scrollTop, { timeout: 5000 })
+      .poll(async () => (await readHandoff()).scrollTop, { timeout: 5000 })
       .toBeGreaterThan(0)
     await expect
-      .poll(async() => (await readHandoff()).scrolledToCaret, { timeout: 5000 })
+      .poll(async () => (await readHandoff()).scrolledToCaret, { timeout: 5000 })
       .toBe(true)
   })
 })

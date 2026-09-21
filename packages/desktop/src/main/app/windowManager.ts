@@ -470,7 +470,7 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
       ]
       if (TREE_FILTER_KEYS.some((key) => key in prefs)) {
         // Fire-and-forget rescan; deliberately unawaited so the preference handler
-        ;(async() => {
+        ;(async () => {
           for (const { browserWindow } of this._windows.values()) {
             if (!browserWindow) continue
             const editor = this.get(browserWindow.id) as EditorWindow | undefined

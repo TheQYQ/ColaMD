@@ -35,7 +35,7 @@ class SpellcheckerLanguageCommand {
     this.subcommandSelectedIndex = -1
   }
 
-  run = async(): Promise<void> => {
+  run = async (): Promise<void> => {
     const langs = await SpellChecker.getAvailableDictionaries()
 
     const finalLangs: string[] = langs.length > 0 ? langs : ['en-US']
@@ -53,13 +53,13 @@ class SpellcheckerLanguageCommand {
     )
   }
 
-  execute = async(): Promise<void> => {
+  execute = async (): Promise<void> => {
     // Timeout to hide the command palette and then show again to prevent issues.
     await delay(100)
     bus.emit('show-command-palette', this)
   }
 
-  executeSubcommand = async(id: string): Promise<void> => {
+  executeSubcommand = async (id: string): Promise<void> => {
     const command = this.subcommands.find((cmd) => cmd.id === id)
     if (this.spellchecker.isEnabled) {
       bus.emit('switch-spellchecker-language', command?.value)

@@ -57,7 +57,7 @@ export interface LaunchOptions {
   suppressErrorDialog?: boolean
 }
 
-export const launchElectron = async(
+export const launchElectron = async (
   userArgs?: string[],
   options: LaunchOptions = {}
 ): Promise<LaunchResult> => {
@@ -91,7 +91,7 @@ export const launchElectron = async(
 // (`mt::handle-renderer-error`) that exceptionHandler.ts listens on, and
 // accumulate the count in a shared global so specs can read it back via
 // `getRendererErrors`. Multiple listeners are allowed on ipcMain.
-const installRendererErrorCounter = async(app: ElectronApplication): Promise<void> => {
+const installRendererErrorCounter = async (app: ElectronApplication): Promise<void> => {
   await app.evaluate(({ ipcMain }) => {
     const g = global as unknown as {
       __mt_renderer_errors__?: Array<{ message?: string; name?: string; stack?: string }>
@@ -106,7 +106,7 @@ const installRendererErrorCounter = async(app: ElectronApplication): Promise<voi
   })
 }
 
-const getRendererErrors = async(
+const getRendererErrors = async (
   app: ElectronApplication
 ): Promise<Array<{ message?: string; name?: string; stack?: string }>> => {
   return await app.evaluate(() => {
@@ -125,7 +125,7 @@ const getRendererErrors = async(
 // renderer shows a dialog → no one clicks it in headless mode → 30 s timeout.
 // We intercept at the `mt::close-window-confirm` level and emit a direct
 // `mt::discard-unsaved-tabs-and-close` to skip the dialog entirely.
-const installUnsavedDialogAutoDismiss = async(app: ElectronApplication): Promise<void> => {
+const installUnsavedDialogAutoDismiss = async (app: ElectronApplication): Promise<void> => {
   await app.evaluate(({ ipcMain }) => {
     ipcMain.on('mt::close-window-confirm', (_e, unsavedFiles) => {
       const tabIds = unsavedFiles.map((f: { id: string }) => f.id)
@@ -135,7 +135,7 @@ const installUnsavedDialogAutoDismiss = async(app: ElectronApplication): Promise
   })
 }
 
-export const clearRendererErrors = async(app: ElectronApplication): Promise<void> => {
+export const clearRendererErrors = async (app: ElectronApplication): Promise<void> => {
   await app.evaluate(() => {
     const g = global as unknown as {
       __mt_renderer_errors__?: Array<unknown>
@@ -146,7 +146,7 @@ export const clearRendererErrors = async(app: ElectronApplication): Promise<void
 
 // Assert that no renderer-process error has been captured since the last clear.
 // On failure, prints the captured stacks so the spec output is actionable.
-export const expectNoRendererErrors = async(app: ElectronApplication): Promise<void> => {
+export const expectNoRendererErrors = async (app: ElectronApplication): Promise<void> => {
   const errors = await getRendererErrors(app)
   if (errors.length > 0) {
     const summary = errors
@@ -160,7 +160,7 @@ export const expectNoRendererErrors = async(app: ElectronApplication): Promise<v
 // Poll until a renderer error matching `predicate` is captured (or timeout).
 // Prefer this over a fixed `waitForTimeout` when waiting for an error to
 // surface — IPC delivery time varies on slower CI runners.
-export const waitForRendererError = async(
+export const waitForRendererError = async (
   app: ElectronApplication,
   predicate: (e: { message?: string; name?: string; stack?: string }) => boolean,
   timeoutMs = 5000,
@@ -176,7 +176,7 @@ export const waitForRendererError = async(
   return null
 }
 
-export const waitForMenuReady = async(
+export const waitForMenuReady = async (
   app: ElectronApplication,
   timeout = 10000
 ): Promise<void> => {
@@ -189,7 +189,7 @@ export const waitForMenuReady = async(
   throw new Error('Application menu was not built within timeout')
 }
 
-export const clickMenuById = async(app: ElectronApplication, id: string): Promise<void> => {
+export const clickMenuById = async (app: ElectronApplication, id: string): Promise<void> => {
   await app.evaluate(({ Menu, BrowserWindow }, menuId) => {
     const menu = Menu.getApplicationMenu()
     if (!menu) throw new Error('Application menu is not built yet')
@@ -216,7 +216,7 @@ export const clickMenuById = async(app: ElectronApplication, id: string): Promis
 // Ensure the sidebar TOC panel is visible, opening it via the View menu when
 // needed. (The sidebar never auto-opens since the Typora-style rebuild, so a
 // file open leaves whatever panel state the window already had.)
-export const ensureTocVisible = async(app: ElectronApplication, page: Page): Promise<void> => {
+export const ensureTocVisible = async (app: ElectronApplication, page: Page): Promise<void> => {
   const tree = page.locator('.side-bar-toc .el-tree')
   if (await tree.isVisible().catch(() => false)) return
   await clickMenuById(app, 'tocMenuItem')
@@ -227,7 +227,7 @@ export const ensureTocVisible = async(app: ElectronApplication, page: Page): Pro
 // close hangs while any dirty tab is open: main waits on
 // `mt::show-unsaved-dialog` for a click that never comes. Describes that edit
 // content must call this before app.close().
-export const markAllTabsClean = async(app: ElectronApplication, page: Page): Promise<void> => {
+export const markAllTabsClean = async (app: ElectronApplication, page: Page): Promise<void> => {
   const tabIds = await page.evaluate(() =>
     Array.from(document.querySelectorAll('.editor-tabs li[data-id]'))
       .map((el) => el.getAttribute('data-id'))
@@ -241,7 +241,7 @@ export const markAllTabsClean = async(app: ElectronApplication, page: Page): Pro
     .toBe(true)
 }
 
-export const waitForEditor = async(page: Page, timeout = 15000): Promise<void> => {
+export const waitForEditor = async (page: Page, timeout = 15000): Promise<void> => {
   await page.waitForSelector('.editor-component', { state: 'attached', timeout })
   await page.waitForFunction(
     () => {
@@ -253,7 +253,7 @@ export const waitForEditor = async(page: Page, timeout = 15000): Promise<void> =
   )
 }
 
-export const enterSourceMode = async(page: Page, app: ElectronApplication): Promise<void> => {
+export const enterSourceMode = async (page: Page, app: ElectronApplication): Promise<void> => {
   const already = await page.evaluate(() => !!document.querySelector('.source-code .CodeMirror'))
   if (already) return
   await clickMenuById(app, 'sourceCodeModeMenuItem')
@@ -270,7 +270,7 @@ export const enterSourceMode = async(page: Page, app: ElectronApplication): Prom
   )
 }
 
-export const exitSourceMode = async(page: Page, app: ElectronApplication): Promise<void> => {
+export const exitSourceMode = async (page: Page, app: ElectronApplication): Promise<void> => {
   const inSource = await page.evaluate(() => !!document.querySelector('.source-code .CodeMirror'))
   if (!inSource) return
   await clickMenuById(app, 'sourceCodeModeMenuItem')
@@ -279,7 +279,7 @@ export const exitSourceMode = async(page: Page, app: ElectronApplication): Promi
   })
 }
 
-export const getMarkdownContent = async(page: Page, app: ElectronApplication): Promise<string> => {
+export const getMarkdownContent = async (page: Page, app: ElectronApplication): Promise<string> => {
   const wasInSource = await page.evaluate(
     () => !!document.querySelector('.source-code .CodeMirror')
   )
@@ -294,7 +294,7 @@ export const getMarkdownContent = async(page: Page, app: ElectronApplication): P
   return value
 }
 
-export const typeIntoEditor = async(page: Page, text: string): Promise<void> => {
+export const typeIntoEditor = async (page: Page, text: string): Promise<void> => {
   await page.click('.editor-component', { timeout: 5000 })
   await page.keyboard.type(text, { delay: 0 })
 }
@@ -335,18 +335,18 @@ const commitSelection = (collapse: boolean) => {
   return true
 }
 
-export const focusEditor = async(page: Page): Promise<void> => {
+export const focusEditor = async (page: Page): Promise<void> => {
   await page.evaluate(commitSelection, false)
   // Allow muya's selectionchange listener to commit the selection to its model.
   await page.waitForTimeout(150)
 }
 
-export const placeCaretInEditor = async(page: Page): Promise<void> => {
+export const placeCaretInEditor = async (page: Page): Promise<void> => {
   await page.evaluate(commitSelection, true)
   await page.waitForTimeout(150)
 }
 
-export const setSourceMarkdown = async(
+export const setSourceMarkdown = async (
   page: Page,
   app: ElectronApplication,
   markdown: string
@@ -369,7 +369,7 @@ const writeTempMarkdown = (content: string): string => {
   return filePath
 }
 
-export const launchWithDoc = async(
+export const launchWithDoc = async (
   relativeFixture: string,
   options: LaunchOptions = {}
 ): Promise<LaunchResult> => {
@@ -383,7 +383,7 @@ export interface LaunchWithMarkdownResult extends LaunchResult {
   filePath: string
 }
 
-export const launchWithMarkdown = async(
+export const launchWithMarkdown = async (
   markdown = '',
   options: LaunchOptions = {}
 ): Promise<LaunchWithMarkdownResult> => {
@@ -394,7 +394,7 @@ export const launchWithMarkdown = async(
   return { app, page, filePath }
 }
 
-export const sendIpcToRenderer = async(
+export const sendIpcToRenderer = async (
   app: ElectronApplication,
   channel: string,
   ...args: unknown[]

@@ -91,7 +91,7 @@ describe('O7(1) — the image folder is dialog-assigned only', () => {
     expect(broadcasts[0]).toEqual({ theme: 'dark' })
   })
 
-  it('asks the user through the dialog even when the renderer already sends a path', async() => {
+  it('asks the user through the dialog even when the renderer already sends a path', async () => {
     showOpenDialog.mockResolvedValue({ filePaths: ['/picked/by/user'] })
     const dataCenter = new DataCenter({
       dataCenterPath: '/tmp/colamd-datacenter',
@@ -104,7 +104,7 @@ describe('O7(1) — the image folder is dialog-assigned only', () => {
     expect(dataCenter.getItem('imageFolderPath')).toBe('/picked/by/user')
   })
 
-  it('keeps the stored folder when the dialog is cancelled', async() => {
+  it('keeps the stored folder when the dialog is cancelled', async () => {
     showOpenDialog.mockResolvedValue({ filePaths: [] })
     const dataCenter = new DataCenter({
       dataCenterPath: '/tmp/colamd-datacenter',
@@ -131,7 +131,7 @@ describe('O7(1) — the image folder is dialog-assigned only', () => {
     expect(broadcasts[0]).toEqual({ theme: 'dark' })
   })
 
-  it('assigns cliScript only through the file dialog', async() => {
+  it('assigns cliScript only through the file dialog', async () => {
     const preference = new Preference({ preferencesPath: '/tmp/colamd-prefs' })
     showOpenDialog.mockResolvedValue({ filePaths: ['/usr/local/bin/upload.sh'] })
 
@@ -140,7 +140,7 @@ describe('O7(1) — the image folder is dialog-assigned only', () => {
     expect(preference.getItem('cliScript')).toBe('/usr/local/bin/upload.sh')
   })
 
-  it('leaves cliScript alone when the script dialog is cancelled', async() => {
+  it('leaves cliScript alone when the script dialog is cancelled', async () => {
     const preference = new Preference({ preferencesPath: '/tmp/colamd-prefs' })
     showOpenDialog.mockResolvedValue({ filePaths: [] })
 

@@ -31,7 +31,7 @@ const { exportStyledHTML } = await import('@/util/exportHtml')
 const fakeMuya = {} as never
 
 describe('export with Header & Footer preserves diagram content (#3359)', () => {
-  it('keeps the mermaid foreignObject label when a header is present', async() => {
+  it('keeps the mermaid foreignObject label when a header is present', async () => {
     const html = await exportStyledHTML(fakeMuya, '```mermaid\ngraph LR\n```', {
       header: { type: 0, left: '', center: 'My Title', right: '' }
     })
@@ -39,7 +39,7 @@ describe('export with Header & Footer preserves diagram content (#3359)', () => 
     expect(html).toContain('My Title')
   })
 
-  it('still strips unsafe markup from the user-supplied header text', async() => {
+  it('still strips unsafe markup from the user-supplied header text', async () => {
     const html = await exportStyledHTML(fakeMuya, 'x', {
       header: { type: 0, left: '', center: '<script>alert(1)</script>Safe', right: '' }
     })

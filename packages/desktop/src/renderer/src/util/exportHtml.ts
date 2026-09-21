@@ -170,7 +170,7 @@ const rewriteAnchorHrefs = (html: string): string =>
  * at the `[TOC]` marker, and — when a header/footer is supplied — wraps the
  * article in the page-container table for paged PDF / print export.
  */
-export const exportStyledHTML = async(
+export const exportStyledHTML = async (
   muya: Muya,
   markdown: string,
   options: ExportStyledHtmlOptions = {}

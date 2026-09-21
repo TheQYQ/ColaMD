@@ -35,7 +35,7 @@ import { clearAllowedRootsForTest, getAllowedRoots } from '../../../src/main/sec
 
 registerDialogHandlers()
 
-const invoke = async(channel: string, ...args: unknown[]): Promise<unknown> => {
+const invoke = async (channel: string, ...args: unknown[]): Promise<unknown> => {
   const listener = handleChannels.get(channel)
   if (!listener) throw new Error(`nothing listens on ${channel}`)
   return listener({ sender: {} }, ...args)
@@ -48,7 +48,7 @@ describe('a dialog result grants the scope it names', () => {
     showSaveDialog.mockReset()
   })
 
-  it('grants the containing folder of a picked file', async() => {
+  it('grants the containing folder of a picked file', async () => {
     const picked = '/picked/by/user/theme.colamd-theme'
     showOpenDialog.mockResolvedValue({ canceled: false, filePaths: [picked] })
 
@@ -59,7 +59,7 @@ describe('a dialog result grants the scope it names', () => {
     expect(result).toEqual({ canceled: false, filePaths: [picked] })
   })
 
-  it('grants a picked directory itself rather than its parent', async() => {
+  it('grants a picked directory itself rather than its parent', async () => {
     showOpenDialog.mockResolvedValue({ canceled: false, filePaths: ['/picked/folder'] })
 
     await invoke('mt::dialog::open', { properties: ['openDirectory'] })
@@ -67,7 +67,7 @@ describe('a dialog result grants the scope it names', () => {
     expect(getAllowedRoots()).toEqual([path.resolve('/picked/folder')])
   })
 
-  it('grants the folder of a save target that does not exist yet', async() => {
+  it('grants the folder of a save target that does not exist yet', async () => {
     showSaveDialog.mockResolvedValue({ canceled: false, filePath: '/export/here.md' })
 
     await invoke('mt::dialog::save', {})
@@ -75,7 +75,7 @@ describe('a dialog result grants the scope it names', () => {
     expect(getAllowedRoots()).toEqual([path.resolve('/export')])
   })
 
-  it('grants every path of a multi-selection result', async() => {
+  it('grants every path of a multi-selection result', async () => {
     showOpenDialog.mockResolvedValue({
       canceled: false,
       filePaths: ['/a/one.md', '/b/two.md']
@@ -86,7 +86,7 @@ describe('a dialog result grants the scope it names', () => {
     expect([...getAllowedRoots()].sort()).toEqual([path.resolve('/a'), path.resolve('/b')].sort())
   })
 
-  it('grants nothing when the user cancels', async() => {
+  it('grants nothing when the user cancels', async () => {
     showOpenDialog.mockResolvedValue({ canceled: true, filePaths: [] })
     showSaveDialog.mockResolvedValue({ canceled: true })
 

@@ -26,7 +26,7 @@ import {
   setSourceMarkdown
 } from './helpers'
 
-const placeCaretInSpanContaining = async(page: Page, needle: string) => {
+const placeCaretInSpanContaining = async (page: Page, needle: string) => {
   await page.evaluate((text) => {
     const spans = document.querySelectorAll('.editor-component span.mu-paragraph-content')
     let target: HTMLElement | null = null
@@ -52,7 +52,7 @@ test.describe('Issue #4374: enterHandler chopBlockByCursor nextSibling crash', (
   let app: ElectronApplication
   let page: Page
 
-  test.beforeEach(async() => {
+  test.beforeEach(async () => {
     const launched = await launchWithMarkdown('# Repro\n\n', { suppressErrorDialog: true })
     app = launched.app
     page = launched.page
@@ -60,11 +60,11 @@ test.describe('Issue #4374: enterHandler chopBlockByCursor nextSibling crash', (
     await clearRendererErrors(app)
   })
 
-  test.afterEach(async() => {
+  test.afterEach(async () => {
     if (app) await app.close()
   })
 
-  test('Enter inside the second paragraph of a loose list item does not crash', async() => {
+  test('Enter inside the second paragraph of a loose list item does not crash', async () => {
     const md = '# Doc\n\n- first paragraph\n\n  second paragraph\n\n- another item\n'
     await setSourceMarkdown(page, app, md)
     await page.waitForTimeout(500)
@@ -76,7 +76,7 @@ test.describe('Issue #4374: enterHandler chopBlockByCursor nextSibling crash', (
     await expectNoRendererErrors(app)
   })
 
-  test('Enter in the trailing paragraph of a task list item does not crash', async() => {
+  test('Enter in the trailing paragraph of a task list item does not crash', async () => {
     const md = '# Doc\n\n- [ ] task line\n\n  trailing paragraph\n'
     await setSourceMarkdown(page, app, md)
     await page.waitForTimeout(500)
@@ -88,7 +88,7 @@ test.describe('Issue #4374: enterHandler chopBlockByCursor nextSibling crash', (
     await expectNoRendererErrors(app)
   })
 
-  test('Enter in a paragraph after a nested sublist in a loose item does not crash', async() => {
+  test('Enter in a paragraph after a nested sublist in a loose item does not crash', async () => {
     const md =
       '# Doc\n\n' +
       '- main paragraph\n' +
@@ -107,7 +107,7 @@ test.describe('Issue #4374: enterHandler chopBlockByCursor nextSibling crash', (
     await expectNoRendererErrors(app)
   })
 
-  test('Enter mid-paragraph in second paragraph of loose list item does not crash', async() => {
+  test('Enter mid-paragraph in second paragraph of loose list item does not crash', async () => {
     const md = '# Doc\n\n- alpha\n\n  beta gamma delta\n'
     await setSourceMarkdown(page, app, md)
     await page.waitForTimeout(500)
@@ -121,7 +121,7 @@ test.describe('Issue #4374: enterHandler chopBlockByCursor nextSibling crash', (
     await expectNoRendererErrors(app)
   })
 
-  test('Enter at end of a single-paragraph list item still creates a new item', async() => {
+  test('Enter at end of a single-paragraph list item still creates a new item', async () => {
     // Sanity check that the historical [p] / [p, sublist] code paths still
     // behave: a single-paragraph normal list item splitting on Enter must
     // continue to yield a new list item, not regress to a paragraph break.

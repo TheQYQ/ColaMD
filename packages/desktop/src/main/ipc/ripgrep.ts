@@ -445,7 +445,7 @@ export const registerRipgrepHandlers = (): void => {
   // the renderer ships a JSON clone of its own options and main reads named fields.
   // Deciding who owns that payload shape is validation work, tracked as O7②.
   // eslint-disable-next-line no-restricted-syntax -- payload shape owned by neither side yet
-  ipcMain.handle('mt::rg::start', async(event, req: RipgrepRequest) => {
+  ipcMain.handle('mt::rg::start', async (event, req: RipgrepRequest) => {
     const { searchId, mode, directories, pattern, options } = req
     cleanupAtSenderDestroy(event.sender)
     // A search answers with file contents and paths, so it discloses the same

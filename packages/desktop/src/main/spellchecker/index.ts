@@ -20,7 +20,7 @@ const removeFromDictionary = (win: BrowserWindow, word: string): boolean => {
 /**
  * Returns a list of all words in the custom dictionary.
  */
-const getCustomDictionaryWords = async(win: BrowserWindow): Promise<string[]> => {
+const getCustomDictionaryWords = async (win: BrowserWindow): Promise<string[]> => {
   return win.webContents.session.listWordsInSpellCheckerDictionary()
 }
 
@@ -60,22 +60,22 @@ export const getAvailableDictionaries = (win: BrowserWindow): string[] => {
 }
 
 const registerSpellcheckerHandlers = (): void => {
-  typedHandle('mt::spellchecker-remove-word', async(e, word: string) => {
+  typedHandle('mt::spellchecker-remove-word', async (e, word: string) => {
     const win = BrowserWindow.fromWebContents(e.sender)
     if (!win) return false
     return removeFromDictionary(win, word)
   })
-  typedHandle('mt::spellchecker-switch-language', async(e, lang: string) => {
+  typedHandle('mt::spellchecker-switch-language', async (e, lang: string) => {
     const win = BrowserWindow.fromWebContents(e.sender)
     if (win) switchLanguage(win, lang)
   })
-  typedHandle('mt::spellchecker-get-available-dictionaries', async(e) => {
+  typedHandle('mt::spellchecker-get-available-dictionaries', async (e) => {
     const win = BrowserWindow.fromWebContents(e.sender)
     if (!win) return []
     return getAvailableDictionaries(win)
   })
   // We have to set a language or call `switchLanguage` on Linux and Windows.
-  typedHandle('mt::spellchecker-set-enabled', async(e, enabled: boolean) => {
+  typedHandle('mt::spellchecker-set-enabled', async (e, enabled: boolean) => {
     const win = BrowserWindow.fromWebContents(e.sender)
     if (!win) return false
     if (!setSpellCheckerEnabled(win, enabled)) {
@@ -84,7 +84,7 @@ const registerSpellcheckerHandlers = (): void => {
     }
     return true
   })
-  typedHandle('mt::spellchecker-get-custom-dictionary-words', async(e) => {
+  typedHandle('mt::spellchecker-get-custom-dictionary-words', async (e) => {
     const win = BrowserWindow.fromWebContents(e.sender)
     if (!win) return []
     return getCustomDictionaryWords(win)

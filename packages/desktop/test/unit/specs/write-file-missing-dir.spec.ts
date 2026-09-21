@@ -22,7 +22,7 @@ afterEach(() => {
 })
 
 describe('writeFile — missing parent directory (#3509)', () => {
-  it('recreates a directory that no longer exists and writes the file', async() => {
+  it('recreates a directory that no longer exists and writes the file', async () => {
     const base = tempDir()
     const missingDir = path.join(base, 'moved-away')
     const target = path.join(missingDir, 'note.md')
@@ -33,7 +33,7 @@ describe('writeFile — missing parent directory (#3509)', () => {
     expect(readFileSync(target, 'utf-8')).toBe('hello')
   })
 
-  it('writes normally when the parent directory exists', async() => {
+  it('writes normally when the parent directory exists', async () => {
     const base = tempDir()
     const target = path.join(base, 'note.md')
 

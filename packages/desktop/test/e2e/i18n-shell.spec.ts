@@ -15,13 +15,13 @@ import { launchWithMarkdown, sendIpcToRenderer, waitForMenuReady } from './helpe
 const SEARCH_INPUT = '.search-wrapper input.search, input.search'
 
 // Open the command palette and wait for its search input to be visible.
-const openPalette = async(app: ElectronApplication, page: Page): Promise<void> => {
+const openPalette = async (app: ElectronApplication, page: Page): Promise<void> => {
   await sendIpcToRenderer(app, 'mt::show-command-palette')
   await expect(page.locator(SEARCH_INPUT).first()).toBeVisible({ timeout: 5000 })
 }
 
 // Close the palette (Escape) and wait until no visible search input remains.
-const closePalette = async(page: Page): Promise<void> => {
+const closePalette = async (page: Page): Promise<void> => {
   await page.keyboard.press('Escape')
   await page.waitForFunction(
     () => {
@@ -47,18 +47,18 @@ test.describe('i18n shell — language switch re-translates the Vue shell', () =
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# x\n')
     app = launched.app
     page = launched.page
     await waitForMenuReady(app)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('command palette placeholder re-translates en -> zh-CN', async() => {
+  test('command palette placeholder re-translates en -> zh-CN', async () => {
     // Ensure we start from English regardless of machine locale.
     await sendIpcToRenderer(app, 'language-changed', 'en')
     await sendIpcToRenderer(app, 'mt::user-preference', { language: 'en' })
@@ -85,7 +85,7 @@ test.describe('i18n shell — language switch re-translates the Vue shell', () =
     // freshly-reopened palette until the placeholder reflects the new locale.
     await expect
       .poll(
-        async() => {
+        async () => {
           await openPalette(app, page)
           const value = await readPlaceholder(page)
           await closePalette(page)

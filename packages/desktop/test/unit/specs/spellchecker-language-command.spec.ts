@@ -25,7 +25,7 @@ describe('SpellcheckerLanguageCommand', () => {
   })
 
   describe('run() — building subcommands from available dictionaries', () => {
-    it('builds one subcommand per available dictionary and selects the current lang', async() => {
+    it('builds one subcommand per available dictionary and selects the current lang', async () => {
       vi.spyOn(SpellChecker, 'getAvailableDictionaries').mockResolvedValue([
         'en-US',
         'de-DE',
@@ -42,7 +42,7 @@ describe('SpellcheckerLanguageCommand', () => {
       expect(command.subcommandSelectedIndex).toBe(1)
     })
 
-    it('falls back to ["en-US"] when the dictionary list is empty', async() => {
+    it('falls back to ["en-US"] when the dictionary list is empty', async () => {
       vi.spyOn(SpellChecker, 'getAvailableDictionaries').mockResolvedValue([])
       const command = new SpellcheckerLanguageCommand(makeChecker('en-US', true))
 
@@ -53,7 +53,7 @@ describe('SpellcheckerLanguageCommand', () => {
       expect(command.subcommandSelectedIndex).toBe(0)
     })
 
-    it('sets subcommandSelectedIndex to -1 when the current lang is not offered', async() => {
+    it('sets subcommandSelectedIndex to -1 when the current lang is not offered', async () => {
       vi.spyOn(SpellChecker, 'getAvailableDictionaries').mockResolvedValue(['en-US', 'fr-FR'])
       const command = new SpellcheckerLanguageCommand(makeChecker('de-DE', true))
 
@@ -64,7 +64,7 @@ describe('SpellcheckerLanguageCommand', () => {
   })
 
   describe('executeSubcommand() — enabled vs disabled', () => {
-    it('emits switch-spellchecker-language with the picked value when enabled', async() => {
+    it('emits switch-spellchecker-language with the picked value when enabled', async () => {
       vi.spyOn(SpellChecker, 'getAvailableDictionaries').mockResolvedValue(['en-US', 'de-DE'])
       const command = new SpellcheckerLanguageCommand(makeChecker('en-US', true))
       await command.run()
@@ -75,17 +75,14 @@ describe('SpellcheckerLanguageCommand', () => {
       expect(notice.notify).not.toHaveBeenCalled()
     })
 
-    it('does NOT emit and notifies a warning when the spellchecker is disabled', async() => {
+    it('does NOT emit and notifies a warning when the spellchecker is disabled', async () => {
       vi.spyOn(SpellChecker, 'getAvailableDictionaries').mockResolvedValue(['en-US', 'de-DE'])
       const command = new SpellcheckerLanguageCommand(makeChecker('en-US', false))
       await command.run()
 
       await command.executeSubcommand('spellchecker.switch-language-id-de-DE')
 
-      expect(emitSpy).not.toHaveBeenCalledWith(
-        'switch-spellchecker-language',
-        expect.anything()
-      )
+      expect(emitSpy).not.toHaveBeenCalledWith('switch-spellchecker-language', expect.anything())
       expect(notice.notify).toHaveBeenCalledTimes(1)
       expect(notice.notify).toHaveBeenCalledWith({
         title: 'Spelling',

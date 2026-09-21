@@ -67,7 +67,7 @@ const isHeadingInViewport = (page: Page, index: number): Promise<boolean> =>
 const tocLabel = (page: Page, text: string) =>
   page.locator('.side-bar-toc').getByText(text, { exact: true })
 
-const showSidebar = async(app: ElectronApplication, page: Page): Promise<void> => {
+const showSidebar = async (app: ElectronApplication, page: Page): Promise<void> => {
   const visible = await page.evaluate(() => {
     const el = document.querySelector('.side-bar') as HTMLElement | null
     return !!(el && el.offsetParent !== null)
@@ -89,7 +89,7 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(buildLongDoc())
     app = launched.app
     page = launched.page
@@ -106,11 +106,11 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
     )
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('clicking a deep outline entry scrolls the editor to that heading', async() => {
+  test('clicking a deep outline entry scrolls the editor to that heading', async () => {
     const targetText = 'Heading Number 18'
     const targetIndex = await headingIndexByText(page, targetText)
     expect(targetIndex).toBeGreaterThanOrEqual(0)
@@ -134,7 +134,7 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
     await expect.poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 }).toBe(true)
   })
 
-  test('clicking an earlier heading scrolls back up toward it', async() => {
+  test('clicking an earlier heading scrolls back up toward it', async () => {
     // After the previous test the editor is scrolled down near heading 18.
     const fromTop = await getScrollTop(page)
     expect(fromTop).toBeGreaterThan(0)
@@ -151,7 +151,7 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
     await expect.poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 }).toBe(true)
   })
 
-  test('clicking the same heading twice is idempotent (stays at that heading)', async() => {
+  test('clicking the same heading twice is idempotent (stays at that heading)', async () => {
     const targetText = 'Heading Number 12'
     const targetIndex = await headingIndexByText(page, targetText)
     expect(targetIndex).toBeGreaterThanOrEqual(0)

@@ -13,30 +13,45 @@ test.describe('#2372 source-mode selection colour', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
-    const launched = await launchWithMarkdown('# Selection\n\nalpha bravo charlie\n\ndelta echo foxtrot\n')
+  test.beforeAll(async () => {
+    const launched = await launchWithMarkdown(
+      '# Selection\n\nalpha bravo charlie\n\ndelta echo foxtrot\n'
+    )
     app = launched.app
     page = launched.page
     await clickMenuById(app, 'dark') // a railscasts dark theme
-    await page.waitForFunction(() => document.body.classList.contains('dark'), null, { timeout: 5000 })
-    await enterSourceMode(page, app)
-    await page.waitForFunction(() => !!document.querySelector('.source-code .CodeMirror.cm-s-railscasts'), null, {
+    await page.waitForFunction(() => document.body.classList.contains('dark'), null, {
       timeout: 5000
     })
+    await enterSourceMode(page, app)
+    await page.waitForFunction(
+      () => !!document.querySelector('.source-code .CodeMirror.cm-s-railscasts'),
+      null,
+      {
+        timeout: 5000
+      }
+    )
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('selection background is the visible editor selection colour, not near-background', async() => {
+  test('selection background is the visible editor selection colour, not near-background', async () => {
     // Select all via the real CodeMirror instance so it renders .CodeMirror-selected.
     await page.evaluate(() => {
-      const cm = (document.querySelector('.source-code .CodeMirror') as Element & { CodeMirror?: { focus: () => void; execCommand: (c: string) => void } }).CodeMirror
+      const cm = (
+        document.querySelector('.source-code .CodeMirror') as Element & {
+          CodeMirror?: { focus: () => void; execCommand: (c: string) => void }
+        }
+      ).CodeMirror
       cm!.focus()
       cm!.execCommand('selectAll')
     })
-    await page.waitForSelector('.source-code .CodeMirror-selected', { state: 'attached', timeout: 5000 })
+    await page.waitForSelector('.source-code .CodeMirror-selected', {
+      state: 'attached',
+      timeout: 5000
+    })
 
     const { selBg, selectionColor } = await page.evaluate(() => {
       const sel = document.querySelector('.source-code .CodeMirror-selected') as HTMLElement

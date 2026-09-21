@@ -31,7 +31,7 @@ test.describe('#2421 sidebar state survives toggle', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# Doc\n\n## A\n\n## B\n')
     app = launched.app
     page = launched.page
@@ -48,14 +48,14 @@ test.describe('#2421 sidebar state survives toggle', () => {
     )
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) {
       await markAllTabsClean(app, page)
       await app.close()
     }
   })
 
-  test('collapsing then re-expanding preserves a widened sidebar width', async() => {
+  test('collapsing then re-expanding preserves a widened sidebar width', async () => {
     // Widen the sidebar past the 220px minimum by dragging the drag-bar, so a
     // width loss on collapse is observable (the default already sits at 220).
     const dragBar = page.locator('.side-bar .drag-bar')
@@ -101,7 +101,7 @@ test.describe('#2421 sidebar state survives toggle', () => {
     expect(reExpanded).toBeGreaterThan(0)
   })
 
-  test('a collapsed tree section stays collapsed after toggling the sidebar', async() => {
+  test('a collapsed tree section stays collapsed after toggling the sidebar', async () => {
     // The collapsible section is the project-tree root, which only renders
     // when a folder (not just a file) is open — launch a second instance with
     // the desktop package folder.

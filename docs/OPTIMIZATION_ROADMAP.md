@@ -71,7 +71,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 其后又逐个合入两条：`chore/desktop-size-gates`（`be4e173` O21 + `ca8eaed` O24）、`cleanup/dead-symbols`（`09e1a2b` + `80cc31b` O13、O20 复核）。合入后在 `develop` 上复跑：`pnpm check` 退出 0（149 warnings / 0 errors）、`pnpm knip`（依赖）退出 0、`pnpm knip:full` 只剩 1 项、desktop 单测 71 文件 904 通过 + 1 跳过。
 
-遗留事项：**分支仍未 push**（远端还没有这些提交）。等实机确认的：O17 侧栏新建行、O7① 设置页图片目录那行（改成了只读文本）。等拍板的三条：O26 的 prettier↔ESLint 冲突、O19 剩余的 6 处默认值不一致、O7② 的读通道域与两处载荷归属。O6 与 O10 经复核分别降级与撤下，理由见各自条目；O20 移交 O13 的死代码已随 `cleanup/dead-symbols` 清完（见 O13 的完成状态）。
+遗留事项：**分支仍未 push**（远端还没有这些提交）。等实机确认的：O17 侧栏新建行、O7① 设置页图片目录那行（改成了只读文本）、O7② 新改的"CLI 脚本"那行（同样从输入框变成只读文本 + Open 按钮）。原先"等拍板"的三条已各自有了结论：O26 见本条的拍板记录（布局归 prettier，`--check` 不做门禁）、O19 的 6 处默认值以 `static/preference.json` 为准并已对齐（见 O19）、O7② 的读通道域与载荷归属已落地（见 O7②）。仍然敞着的是 O7② 记录的两项收尾（布尔探测通道的授权故事、`mt::rg::start` 的载荷归属）与 O12 第 6 步 part B。O6 与 O10 经复核分别降级与撤下，理由见各自条目；O20 移交 O13 的死代码已随 `cleanup/dead-symbols` 清完（见 O13 的完成状态）。
 
 **合并顺序（用 `git merge-tree` 对 12 个分支两两预演，非破坏性）**：5 对会冲突，其余两两可自动合。
 
@@ -376,13 +376,16 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 门禁（合入 `develop` 后复跑，退出码逐条）：`pnpm check`（lint + typecheck）**0**（105 warnings / 0 errors）、`pnpm test:unit` **0**（72 文件 / 907 通过 + 1 跳过）、`pnpm knip`（依赖，阻断）**0**、`pnpm knip:full`（报告）**1**（仍只 `sanitizeThemeText` 一项，删掉的 `bufferStoreInfo` 字段没有新增项）、`pnpm build` **0**。全量 `pnpm test:e2e` 退出 **1**，4 条失败**逐条同名**于 §4.1 记录的 Windows 既有红（`all-blocks-roundtrip.spec.ts` 的 item 39 字节稳定性四条），另 **223 通过**；既有的第 5 条偶发（`tab-switch-cursor`）本轮未复现。ubuntu 腿的红绿本地无从判断，不下结论。
 - **一次真实的漏检**：分支上先跑的 `pnpm typecheck` 报 0，是因为那次跑在新 spec 写出来**之前**；合入后在 `develop` 复跑立刻暴露 spec 里 `as Accessor` 的 TS2352/TS2345。修在合入之后（不是绕过），也是"合入后必须重测"这条纪律的又一例。
 
-**O26 · `prettier --check` 在本 checkout 里对任何文件都报警** — 成本 XS，影响 中 — **已完成 `ff7d72b`（分支 `chore/prettier-eol`），但原计划的"再谈门禁"要撤**
+**O26 · `prettier --check` 在本 checkout 里对任何文件都报警** — 成本 XS，影响 中 — **已完成 `ff7d72b`（分支 `chore/prettier-eol`）；冲突也已拍板并落地（分支 `chore/prettier-eslint-agreement`，见本条最后）**
 根 `.prettierrc.yaml` 没设 `endOfLine`（默认 `lf`），而 git 的 `core.autocrlf` 使工作副本为 CRLF：`git ls-files --eol` 显示 `i/lf w/crlf`。实测完全未改动的 `codeMirror/modes.ts`、`codeMirror/overlayMode.ts`、`util/pdf.ts` 一并报 warn，而 index 中存的是 LF。
 
 - 改法（已实施）：`.prettierrc.yaml` 加一行 `endOfLine: auto`。全仓 `--check` 的告警数从 **533 → 266**（`prettier --check . --end-of-line lf` 对照同一命令），即一半以上是纯粹的换行假红。
 - **原判定要修两点**：① "100% 假红"不准确——是被 CRLF 假红放大的混合状态；② 本条点名的 3 个文件里 2 个（`modes.ts`、`overlayMode.ts`）确实只因为换行，加上 `auto` 后就干净了；`util/pdf.ts` 还留着 1 行**真实**风格差异（`async(` vs prettier 要的 `async (`）。
 - **撤掉"之后再谈把 `--check` 纳入门禁"**：数完才知道那不是一个开关。173 个仍被标记的 `.ts` 里，**84 个的全部差异只有 `async(` 这一处**——仓库自己的 ESLint（neostandard 的 `space-before-function-paren: never`）要求 `async(`，prettier 永远要 `async (`；另 **89 个**还带 printWidth 换行差异（这些文件从来没被 prettier 格式化过，ESLint 不管换行）。也就是说 `--check` 变绿的前提是一次全仓 `prettier --write` + 废掉那条与它对立的 stylistic 规则；而 lint-staged 现在是 prettier 先写、eslint --fix 后改，两者已经在每次提交上打架。**这是决策，不是清理**，本条不做，留在这里免得下一轮又把它当成"顺手能加的门禁"。
+- **冲突已拍板并落地**（分支 `chore/prettier-eslint-agreement`）：决定**布局由 prettier 说了算**。理由不是"prettier 更好看"，而是这条规则与另一个工具互相否决：`eslint.config.js:88` 与 `:152` 两处写死 `'@stylistic/space-before-function-paren': ['error', 'never']`，而 prettier 永远输出 `async (`。实测冲突形状——`util/pdf.ts` 与它的 prettier 输出**只差一处** `async(`→`async (`，把那份 prettier 输出喂给 eslint 得 1 条可自动修复的 error；也就是说 lint-staged（prettier 先写、eslint --fix 后改）在每个这类文件上每次提交都互相改回去。本轮就撞上两次：`editor-input.spec.ts` 提交时被顺手重排了两行与本步无关的声明。
+- 改法与量出来的代价：规则改成 prettier 兼容的 `{ named: 'never', anonymous: 'always', asyncArrow: 'always' }`（即 ESLint 该规则的默认形状），`eslint . --fix` 落地，**150 文件 / +866 −860**，其中几乎每一行都只是那一个空格。门禁：`pnpm check` 退出 **0**（仍是 103 warnings / **0 errors**，基线未动）、`pnpm test:unit` 退出 **0**（79 文件 / 979 通过 + 1 跳过）。回测同一对照：prettier 的输出过 eslint 现在得 **0 error**（只剩该文件原有的 2 条 warning），互斥消失了。
 - 顺带：本轮 WORKPLAN 与两个源文件被重排数百行，成因就是这行缺失。
+- **仍然不做**全仓 `prettier --write`：改完后 `prettier --check .` 仍标 **160** 个文件（此前 266，去掉的正是 `async(` 这一类互否差异），剩下的是 printWidth 换行等纯布局差异——为它把 160 个文件的 blame 全冲掉不划算。**结论：`--check` 依然不是门禁**，这条从"等拍板"变成"已拍板：要的是两个工具不再互斥，不是要全仓看起来全新"。
 
 **O27 · 四条本地化键在 10 份语言里仍是英文** — 成本 XS，影响 低—中 — **已完成 `962baa0`（分支 `fix/locale-failure-strings`）**
 `dialog.renameFailure`、`dialog.moveFailure`、`store.editor.errorWhileRenaming`、`store.editor.errorWhileMoving` 的值在 **11 份语言里全部与英文逐字相同**（同一对照下 `dialog.saveFailure`、`store.editor.errorWhileSaving` 都已翻译，本轮 O18 新增的 `dialog.openFailure` 也逐语言写了译名）。也就是说重命名/移动失败弹窗在非英文界面下是英文串。
@@ -396,15 +399,15 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 **第一批 · 一天内可全清（零架构风险，先把实锤 bug 和噪音关掉）**
 
-| PR    | 内容                                                                                                                  | 依赖       |
-| ----- | --------------------------------------------------------------------------------------------------------------------- | ---------- |
-| PR-1  | O1 quickOpen 具名导入 + 单测锁住发出的检索载荷（`mode: files`）；顺带让 `FileSearcher` 有引用，O13 的"孤儿"判定变干净 | 无         |
-| PR-2  | O2 + O5 + O11 + O17（四个 XS 小修，一 PR 收）                                                                         | 无         |
-| PR-3  | O3 `startUpAction` 值域下沉 `shared/types`，并去掉宽松的 `string` 兜底类型                                            | 无         |
-| PR-4  | O16 工具小坏点（`check-md-links.py` 接入 CI、eslint 插件显式化、`dev-app-update.yml`）                                | 无         |
-| PR-5  | 本文与 `docs/PROJECT_GUIDE.md` 的口径校准；旧两份文档顶部加指引                                                       | 前四条合完 |
-| PR-21 | O26 `.prettierrc.yaml` 设 `endOfLine: auto` —— **已实现** `ff7d72b`；`--check` 入门禁已撤销（见 O26）                 | 无         |
-| PR-23 | O27 四条英文残留译名 + locale 同值棘轮 —— **已实现** `962baa0`                                                        | 无         |
+| PR    | 内容                                                                                                                                                                                                                                                   | 依赖       |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
+| PR-1  | O1 quickOpen 具名导入 + 单测锁住发出的检索载荷（`mode: files`）；顺带让 `FileSearcher` 有引用，O13 的"孤儿"判定变干净                                                                                                                                  | 无         |
+| PR-2  | O2 + O5 + O11 + O17（四个 XS 小修，一 PR 收）                                                                                                                                                                                                          | 无         |
+| PR-3  | O3 `startUpAction` 值域下沉 `shared/types`，并去掉宽松的 `string` 兜底类型                                                                                                                                                                             | 无         |
+| PR-4  | O16 工具小坏点（`check-md-links.py` 接入 CI、eslint 插件显式化、`dev-app-update.yml`）                                                                                                                                                                 | 无         |
+| PR-5  | 本文与 `docs/PROJECT_GUIDE.md` 的口径校准；旧两份文档顶部加指引                                                                                                                                                                                        | 前四条合完 |
+| PR-21 | O26 `.prettierrc.yaml` 设 `endOfLine: auto` —— **已实现** `ff7d72b`；prettier↔ESLint 冲突**已拍板并落地** `chore/prettier-eslint-agreement`（布局归 prettier，`space-before-function-paren` 改为与之兼容的形状，150 文件仅空格；`--check` 仍不做门禁） | 无         |
+| PR-23 | O27 四条英文残留译名 + locale 同值棘轮 —— **已实现** `962baa0`                                                                                                                                                                                         | 无         |
 
 **第二批 · 一到两周（信任边界与响应性，需要设计确认）**
 

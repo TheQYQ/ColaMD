@@ -129,7 +129,7 @@ const uploadByCli = (cliScript: string, localPath: string): Promise<string> =>
     )
   })
 
-const writeBinaryToTmp = async(
+const writeBinaryToTmp = async (
   data: Uint8Array | number[] | null | undefined,
   suffix: string = ''
 ): Promise<string> => {
@@ -139,7 +139,7 @@ const writeBinaryToTmp = async(
   return tmpPath
 }
 
-const uploadFromPath = async(
+const uploadFromPath = async (
   imagePath: string,
   options: { currentUploader: string; cliScript: string }
 ): Promise<string> => {
@@ -154,7 +154,7 @@ interface BufferImagePayload {
   name: string
 }
 
-const uploadFromBuffer = async(
+const uploadFromBuffer = async (
   { data, name }: BufferImagePayload,
   options: {
     currentUploader: string
@@ -178,7 +178,7 @@ const uploadFromBuffer = async(
 }
 
 export const registerUploaderHandlers = (accessor: Accessor): void => {
-  typedHandle('mt::uploader::upload', async(_event, req) => {
+  typedHandle('mt::uploader::upload', async (_event, req) => {
     // The renderer names only *which image* to upload. Which program runs is
     // main's own setting: `cliScript` used to travel in this payload, which made
     // the channel arbitrary code execution in the main process — `execFile`

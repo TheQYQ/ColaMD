@@ -13,24 +13,23 @@ test.describe('Find bar reopen selects the existing term (#3458)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('apple banana apple cherry\n')
     app = launched.app
     page = launched.page
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('re-opening Find highlights the existing query so it can be typed over', async() => {
+  test('re-opening Find highlights the existing query so it can be typed over', async () => {
     await sendIpcToRenderer(app, 'mt::editor-edit-action', 'find')
     await expect(page.locator('.search-bar')).toBeVisible({ timeout: 5000 })
     await page.locator(FIND_INPUT).fill('apple')
     // Let the search settle (active match selected) before re-opening.
-    await expect.poll(() => page.locator('.search-bar .search-result').innerText())
-      .toContain('/ 2')
+    await expect.poll(() => page.locator('.search-bar .search-result').innerText()).toContain('/ 2')
 
     // Re-trigger Find while the bar is already open with a term present.
     await sendIpcToRenderer(app, 'mt::editor-edit-action', 'find')

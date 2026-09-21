@@ -46,7 +46,7 @@ const DARK_THEMES: ReadonlyArray<readonly [string, string]> = [
   ['tokyoNightStorm', 'tokyo-night-storm']
 ]
 
-export default function(userPreference: Preference): MenuItemConstructorOptions {
+export default function (userPreference: Preference): MenuItemConstructorOptions {
   const preferences = userPreference.getAll() as { theme?: string; followSystemTheme?: boolean }
   const { theme, followSystemTheme } = preferences
   const isThemeSelectionEnabled = !followSystemTheme

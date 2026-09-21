@@ -85,7 +85,10 @@ export default [
       'no-extra-semi': 'off',
       '@stylistic/indent': ['error', 2, { SwitchCase: 1, ignoreComments: true }],
       '@stylistic/semi': ['error', 'never'],
-      '@stylistic/space-before-function-paren': ['error', 'never'],
+      '@stylistic/space-before-function-paren': [
+        'error',
+        { named: 'never', anonymous: 'always', asyncArrow: 'always' },
+      ],
       '@stylistic/arrow-parens': 'off',
       '@stylistic/no-mixed-operators': 'off'
     }
@@ -149,7 +152,10 @@ export default [
     rules: {
       '@stylistic/indent': ['error', 2, { SwitchCase: 1, ignoreComments: true }],
       '@stylistic/semi': ['error', 'never'],
-      '@stylistic/space-before-function-paren': ['error', 'never'],
+      '@stylistic/space-before-function-paren': [
+        'error',
+        { named: 'never', anonymous: 'always', asyncArrow: 'always' },
+      ],
       '@stylistic/arrow-parens': 'off',
       '@stylistic/no-mixed-operators': 'off',
       'no-return-await': 'error',

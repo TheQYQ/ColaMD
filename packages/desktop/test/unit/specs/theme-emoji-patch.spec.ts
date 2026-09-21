@@ -18,7 +18,7 @@ vi.hoisted(() => {
 const EMOJI_SELECTOR = '.mu-emoji-picker section .emoji-wrapper .item span'
 const EMOJI_FONT = 'Noto Color Emoji'
 
-const loadTheme = async(isLinux: boolean) => {
+const loadTheme = async (isLinux: boolean) => {
   vi.resetModules()
   vi.doMock('@/util', () => ({ isLinux, isOsx: false, isWindows: false }))
   return await import('@/util/theme')
@@ -39,7 +39,7 @@ describe('theme.ts emoji-picker Linux font patch', () => {
     vi.doUnmock('@/util')
   })
 
-  it('injects the .mu-emoji-picker font fallback into the common sheet on Linux', async() => {
+  it('injects the .mu-emoji-picker font fallback into the common sheet on Linux', async () => {
     const { addCommonStyle } = await loadTheme(true)
     addCommonStyle(commonOptions)
 
@@ -49,7 +49,7 @@ describe('theme.ts emoji-picker Linux font patch', () => {
     expect(css).toContain(`${EMOJI_SELECTOR} { font-family: sans-serif, "${EMOJI_FONT}"; }`)
   }, 10000) // Extended timeout: dynamic import of theme module is slow under parallel load
 
-  it('omits the emoji patch entirely off Linux', async() => {
+  it('omits the emoji patch entirely off Linux', async () => {
     const { addCommonStyle } = await loadTheme(false)
     addCommonStyle(commonOptions)
 
@@ -58,7 +58,7 @@ describe('theme.ts emoji-picker Linux font patch', () => {
     expect(css).not.toContain(EMOJI_FONT)
   })
 
-  it('keeps targeting the engine .mu-emoji-picker selector (not a legacy ag-* class) on Linux', async() => {
+  it('keeps targeting the engine .mu-emoji-picker selector (not a legacy ag-* class) on Linux', async () => {
     const { addCommonStyle } = await loadTheme(true)
     addCommonStyle(commonOptions)
 
@@ -67,7 +67,7 @@ describe('theme.ts emoji-picker Linux font patch', () => {
     expect(css).not.toContain('.ag-emoji-picker')
   })
 
-  it('routes the patch through addStyles (theme + common) on Linux', async() => {
+  it('routes the patch through addStyles (theme + common) on Linux', async () => {
     const { addStyles } = await loadTheme(true)
     addStyles({ theme: 'light', ...commonOptions })
 
@@ -77,7 +77,7 @@ describe('theme.ts emoji-picker Linux font patch', () => {
     expect(themeHtml).not.toContain('.mu-emoji-picker')
   })
 
-  it('routes nothing emoji-related through addStyles off Linux', async() => {
+  it('routes nothing emoji-related through addStyles off Linux', async () => {
     const { addStyles } = await loadTheme(false)
     addStyles({ theme: 'light', ...commonOptions })
 

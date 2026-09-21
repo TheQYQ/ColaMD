@@ -35,24 +35,24 @@ test.describe('Code block typing — real-keyboard fenced conversion (item 95)',
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('seed paragraph\n')
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test.beforeEach(async() => {
+  test.beforeEach(async () => {
     // Reset to a single empty paragraph and drop the caret into it so the
     // engine's activeContentBlock points at the paragraph we type into.
     await setSourceMarkdown(page, app, '\n')
     await placeCaretInEditor(page)
   })
 
-  test('typing ```js + Enter creates a fenced code block with language js', async() => {
+  test('typing ```js + Enter creates a fenced code block with language js', async () => {
     await page.click('.editor-component', { timeout: 5000 })
     // Type the full opening fence WITH the language token, then Enter. Typing
     // the language token before Enter is what lets the picker capture 'js' and

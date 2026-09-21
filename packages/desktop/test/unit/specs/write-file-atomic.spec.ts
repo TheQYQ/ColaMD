@@ -31,7 +31,7 @@ afterEach(() => {
 })
 
 describe('writeFile — durable atomic save (#3786, #3828)', () => {
-  it('overwrites an existing file and leaves no temp file behind', async() => {
+  it('overwrites an existing file and leaves no temp file behind', async () => {
     const dir = tempDir()
     const target = path.join(dir, 'note.md')
     writeFileSync(target, 'OLD')
@@ -43,7 +43,7 @@ describe('writeFile — durable atomic save (#3786, #3828)', () => {
     expect(readdirSync(dir)).toEqual(['note.md'])
   })
 
-  it('writes a Buffer payload (the markdown save path)', async() => {
+  it('writes a Buffer payload (the markdown save path)', async () => {
     const dir = tempDir()
     const target = path.join(dir, 'note.md')
 
@@ -52,7 +52,7 @@ describe('writeFile — durable atomic save (#3786, #3828)', () => {
     expect(readFileSync(target, 'utf-8')).toBe('buffered')
   })
 
-  it('still recreates a missing parent directory (#3509)', async() => {
+  it('still recreates a missing parent directory (#3509)', async () => {
     const base = tempDir()
     const target = path.join(base, 'moved-away', 'note.md')
 
@@ -63,8 +63,8 @@ describe('writeFile — durable atomic save (#3786, #3828)', () => {
   })
 
   it.skipIf(process.platform === 'win32')(
-    'preserves the target file\'s permission mode across a save',
-    async() => {
+    "preserves the target file's permission mode across a save",
+    async () => {
       const dir = tempDir()
       const target = path.join(dir, 'secret.md')
       writeFileSync(target, 'v1')

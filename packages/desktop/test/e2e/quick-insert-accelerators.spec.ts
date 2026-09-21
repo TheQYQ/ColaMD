@@ -34,17 +34,17 @@ test.describe('Quick-insert accelerators (item 49)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('seed paragraph\n')
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test.beforeEach(async() => {
+  test.beforeEach(async () => {
     // Reset to a single empty paragraph and drop a collapsed caret into it so
     // the engine's activeContentBlock points at an EMPTY ParagraphContent — the
     // precondition the accelerator handler gates on.
@@ -54,7 +54,7 @@ test.describe('Quick-insert accelerators (item 49)', () => {
     await placeCaretInEditor(page)
   })
 
-  test('⌥⌘C converts the empty paragraph into a code block', async() => {
+  test('⌥⌘C converts the empty paragraph into a code block', async () => {
     await page.keyboard.press('Meta+Alt+c')
 
     const codeBlock = page.locator('.editor-component pre.mu-code-block').first()
@@ -68,7 +68,7 @@ test.describe('Quick-insert accelerators (item 49)', () => {
     await expect(page.locator('.editor-component blockquote.mu-block-quote')).toHaveCount(0)
   })
 
-  test('⌥⌘Q converts the empty paragraph into a blockquote', async() => {
+  test('⌥⌘Q converts the empty paragraph into a blockquote', async () => {
     await page.keyboard.press('Meta+Alt+q')
 
     const quote = page.locator('.editor-component blockquote.mu-block-quote').first()
