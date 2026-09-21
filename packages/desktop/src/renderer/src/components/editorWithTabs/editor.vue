@@ -97,18 +97,7 @@ import {
   TableColumnToolbar,
   TableDragBar,
   TableRowColumMenu,
-  wordCount as muyaWordCount,
-  en,
-  de,
-  es,
-  fr,
-  ja,
-  ko,
-  pt,
-  tr,
-  zhCN,
-  zhTW,
-  type ILocale
+  wordCount as muyaWordCount
 } from '@muyajs/core'
 import { exportStyledHTML, type HeaderFooterPart } from '@/util/exportHtml'
 import { exportDocx } from '@/util/exportDocx'
@@ -123,6 +112,7 @@ import { SpellChecker } from '@/spellchecker'
 import { isOsx, animatedScrollTo } from '@/util'
 import { STANDAR_Y, useEditorScroll } from './useEditorScroll'
 import { useEditorImages } from './useEditorImages'
+import { createMuyaOptions, getMuyaLocale, resolveCodeFont, resolveEditorFont } from './muyaOptions'
 import { moveImageToFolder, uploadImage } from '@/util/fileSystem'
 import { guessClipboardFilePath } from '@/util/clipboard'
 import { dataURLToFile } from '@/util/dataURLToFile'
@@ -147,22 +137,6 @@ import { Close as CloseIcon } from '@element-plus/icons-vue'
 import { type InputNumberInstance } from 'element-plus'
 
 const { t } = useI18n()
-
-// Map the desktop language preference to the engine's bundled locale objects.
-const MUYA_LOCALES: Record<string, ILocale> = {
-  en,
-  de,
-  es,
-  fr,
-  ja,
-  ko,
-  pt,
-  tr,
-  'zh-CN': zhCN,
-  'zh-TW': zhTW
-}
-
-const getMuyaLocale = (language: string): ILocale => MUYA_LOCALES[language] ?? en
 
 // `Muya.use(...)` appends to the static `Muya.plugins` array, and every
 // `init()` instantiates the full list. Registration is process-global, so guard
@@ -265,10 +239,6 @@ const { currentFile, tabs } = storeToRefs(editorStore)
 const { projectTree } = storeToRefs(projectStore)
 
 // Component state
-const defaultFontFamily = DEFAULT_EDITOR_FONT_FAMILY
-const resolveEditorFont = (family: string): string =>
-  family ? `${family}, ${defaultFontFamily}` : defaultFontFamily
-const resolveCodeFont = (family: string): string => `${family}, ${DEFAULT_CODE_FONT_FAMILY}`
 const selectionChange = ref<unknown>(null)
 const editor = ref<MuyaInstance>(null)
 const isShowClose = ref(false)
@@ -1493,64 +1463,7 @@ onMounted(() => {
     Muya.use(TableRowColumMenu)
   }
 
-  const options: Record<string, unknown> = {
-    focusMode: focus.value,
-    markdown: props.markdown,
-    locale: getMuyaLocale(language.value),
-    preferLooseListItem: preferLooseListItem.value,
-    autoPairBracket: autoPairBracket.value,
-    autoPairMarkdownSyntax: autoPairMarkdownSyntax.value,
-    trimUnnecessaryCodeBlockEmptyLines: trimUnnecessaryCodeBlockEmptyLines.value,
-    autoPairQuote: autoPairQuote.value,
-    bulletListMarker: bulletListMarker.value,
-    orderListDelimiter: orderListDelimiter.value,
-    tabSize: tabSize.value,
-    fontSize: fontSize.value,
-    lineHeight: lineHeight.value,
-    editorFontFamily: resolveEditorFont(editorFontFamily.value),
-    codeFontSize: codeFontSize.value,
-    codeFontFamily: resolveCodeFont(codeFontFamily.value),
-    wrapCodeBlocks: wrapCodeBlocks.value,
-    codeBlockLineNumbers: codeBlockLineNumbers.value,
-    listIndentation: listIndentation.value,
-    frontmatterType: frontmatterType.value,
-    superSubScript: superSubScript.value,
-    footnote: footnote.value,
-    mathLatexDelimiters: mathLatexDelimiters.value,
-    inlineComment: inlineComment.value,
-    definitionList: definitionList.value,
-    disableHtml: !isHtmlEnabled.value,
-    isGitlabCompatibilityEnabled: isGitlabCompatibilityEnabled.value,
-    hideQuickInsertHint: hideQuickInsertHint.value,
-    hideLinkPopup: hideLinkPopup.value,
-    autoCheck: autoCheck.value,
-    sequenceTheme: sequenceTheme.value,
-    plantumlServer: preferencesStore.plantumlServer,
-    spellcheckEnabled: spellcheckerEnabled.value,
-    spellcheckHideMarks: spellcheckerNoUnderline.value,
-    // Resolve the OS clipboard to a local file path on paste (image-from-file).
-    clipboardFilePath: guessClipboardFilePath,
-    // Read the OS clipboard's plain text for "Paste as Plain Text" (execCommand('paste') no longer fires).
-    clipboardText: () => window.electron.clipboard.readText(),
-    // Image-persist callbacks read by the engine's clipboard + drag-drop handlers
-    // from `muya.options.*` (distinct from the ImageEditTool plugin option above).
-    // Without these, local-file drag-drop, screenshot/binary clipboard paste, and
-    // copy-to-assets on a pasted image file silently no-op or insert raw paths.
-    imageAction: muyaImageAction,
-    getPathForFile: (file: File) => window.electron.webUtils.getPathForFile(file)
-  }
-
-  if (/dark/i.test(theme.value)) {
-    Object.assign(options, {
-      mermaidTheme: 'dark',
-      vegaTheme: 'dark'
-    })
-  } else {
-    Object.assign(options, {
-      mermaidTheme: 'default',
-      vegaTheme: 'latimes'
-    })
-  }
+  const options = createMuyaOptions(props.markdown)
 
   // `markRaw` keeps Vue from wrapping the Muya instance in a reactive Proxy.
   // The engine stores live DOM nodes and block-tree references and patches the
