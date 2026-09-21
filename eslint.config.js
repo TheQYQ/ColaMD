@@ -274,10 +274,15 @@ export default [
   // reported by the tooling that should have noticed them. Thresholds sit just
   // above the worst offender that exists today, so the pair warns on nothing
   // until the tree grows past it again; each step of O12 lowers them a notch.
+  //
+  // 43: measured, not guessed. O12(4) took `LISTEN_FOR_CONTENT_CHANGE` from 44 to
+  // 26, and re-probing the package showed the ceiling is now bound by the
+  // theme-parsing arrow function in `renderer/src/util/theme.ts`, not by the
+  // editor store at all. 277 still binds on the `store/project.ts` setup.
   {
     files: ['packages/desktop/src/**/*.ts', 'packages/desktop/src/**/*.vue'],
     rules: {
-      complexity: ['warn', 44],
+      complexity: ['warn', 43],
       'max-lines-per-function': [
         'warn',
         { max: 277, skipBlankLines: true, skipComments: true }
