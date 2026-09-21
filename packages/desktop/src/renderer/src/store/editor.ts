@@ -43,7 +43,7 @@ import {
   resolveCleanupCandidate,
   type CleanupCandidate
 } from '../util/imageCleanup'
-import type { VersionSnapshot } from '@shared/types/ipc'
+import type { IpcMainEventChannels, VersionSnapshot } from '@shared/types/ipc'
 import type {
   IFileState,
   FileNotification,
@@ -1764,75 +1764,89 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
-    LISTEN_FOR_FILE_CHANGE(): void {
+    /**
+     * A tab's file moved on disk — deleted, or rewritten by something outside the
+     * app (git checkout, an editor, a formatter). Either stay quiet, reload from
+     * disk, or ask the user first; the branches below are that decision.
+     *
+     * `change.data` is `unknown` in the cross-process contract, so the two places
+     * that need the loaded-document shape cast it; main fills it from
+     * `loadMarkdownFile`.
+     */
+    HANDLE_DISK_CHANGE(payload: IpcMainEventChannels['mt::update-file'][0]): void {
       const preferencesStore = usePreferencesStore()
-      window.electron.ipcRenderer.on('mt::update-file', (_, payload) => {
-        const { type, change } = payload
-        const { tabs } = this
-        const { pathname } = change
-        const tab = tabs.find((t) => window.fileUtils.isSamePathSync(t.pathname, pathname))
-        if (tab) {
-          const { id, isSaved, filename } = tab
-          switch (type) {
-            case 'unlink': {
-              tab.isSaved = false
-              this.pushTabNotification({
-                tabId: id,
-                msg: t('store.editor.fileRemovedOnDisk', { name: filename }),
-                style: 'warn',
-                showConfirm: false,
-                exclusiveType: 'file_changed'
-              })
-              debouncedSendBufferedState()
-              break
-            }
-            case 'add':
-            case 'change': {
-              // Flush the active tab first: its `tab.markdown` lags the live
-              // engine until a flush, and comparing against a stale value
-              // would falsely report a content change and warn/reload (#1861).
-              if (tab.id === this.currentFile?.id) {
-                this.flushActiveEditor()
-              }
-              // Only the file's metadata changed on disk (e.g. a git checkout
-              // that left the content byte-identical) — there is nothing to
-              // reload and no reason to warn the user (#1861).
-              const newMarkdown = (change as unknown as FileChangePayload).data?.markdown
-              if (typeof newMarkdown === 'string' && newMarkdown === tab.markdown) {
-                break
-              }
+      const { type, change } = payload
+      const { tabs } = this
+      const { pathname } = change
+      const tab = tabs.find((t) => window.fileUtils.isSamePathSync(t.pathname, pathname))
+      if (!tab) {
+        console.error(`HANDLE_DISK_CHANGE: Cannot find tab for path "${pathname}".`)
+        return
+      }
 
-              const { autoSave } = preferencesStore
-              if (autoSave) {
-                clearAutoSaveTimer(id)
-
-                if (isSaved) {
-                  this.loadChange(change as unknown as FileChangePayload)
-                  return
-                }
-              }
-
-              tab.isSaved = false
-              this.pushTabNotification({
-                tabId: id,
-                msg: t('store.editor.fileChangedOnDisk', { name: filename }),
-                showConfirm: true,
-                exclusiveType: 'file_changed',
-                action: (status) => {
-                  if (status) {
-                    this.loadChange(change as unknown as FileChangePayload)
-                  }
-                }
-              })
-              debouncedSendBufferedState()
-              break
-            }
-            default:
-              console.error(`LISTEN_FOR_FILE_CHANGE: Invalid type "${type}"`)
-          }
-        } else {
-          console.error(`LISTEN_FOR_FILE_CHANGE: Cannot find tab for path "${pathname}".`)
+      const { id, isSaved, filename } = tab
+      switch (type) {
+        case 'unlink': {
+          tab.isSaved = false
+          this.pushTabNotification({
+            tabId: id,
+            msg: t('store.editor.fileRemovedOnDisk', { name: filename }),
+            style: 'warn',
+            showConfirm: false,
+            exclusiveType: 'file_changed'
+          })
+          debouncedSendBufferedState()
+          break
         }
+        case 'add':
+        case 'change': {
+          // Flush the active tab first: its `tab.markdown` lags the live
+          // engine until a flush, and comparing against a stale value
+          // would falsely report a content change and warn/reload (#1861).
+          if (tab.id === this.currentFile?.id) {
+            this.flushActiveEditor()
+          }
+          // Only the file's metadata changed on disk (e.g. a git checkout
+          // that left the content byte-identical) — there is nothing to
+          // reload and no reason to warn the user (#1861).
+          const newMarkdown = (change as unknown as FileChangePayload).data?.markdown
+          if (typeof newMarkdown === 'string' && newMarkdown === tab.markdown) {
+            break
+          }
+
+          const { autoSave } = preferencesStore
+          if (autoSave) {
+            clearAutoSaveTimer(id)
+
+            if (isSaved) {
+              this.loadChange(change as unknown as FileChangePayload)
+              return
+            }
+          }
+
+          tab.isSaved = false
+          this.pushTabNotification({
+            tabId: id,
+            msg: t('store.editor.fileChangedOnDisk', { name: filename }),
+            showConfirm: true,
+            exclusiveType: 'file_changed',
+            action: (status) => {
+              if (status) {
+                this.loadChange(change as unknown as FileChangePayload)
+              }
+            }
+          })
+          debouncedSendBufferedState()
+          break
+        }
+        default:
+          console.error(`HANDLE_DISK_CHANGE: Invalid type "${type}"`)
+      }
+    },
+
+    LISTEN_FOR_FILE_CHANGE(): void {
+      window.electron.ipcRenderer.on('mt::update-file', (_, payload) => {
+        this.HANDLE_DISK_CHANGE(payload)
       })
     },
 
