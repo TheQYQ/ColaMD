@@ -104,25 +104,13 @@ export const moveImageToFolder = async(
   }
 }
 
-export interface UploadImagePreferences {
-  currentUploader: string
-  cliScript?: string
-}
-
-export const uploadImage = async(
-  pathname: string,
-  image: string | File,
-  preferences: UploadImagePreferences
-): Promise<unknown> => {
-  // Pass only a plain serializable object — the full Pinia $state is a Vue
-  // Proxy which Electron's structured-clone algorithm cannot serialize.
-  const ipcPrefs = {
-    currentUploader: preferences.currentUploader,
-    cliScript: preferences.cliScript ?? ''
-  }
+export const uploadImage = async(pathname: string, image: string | File): Promise<unknown> => {
+  // Which uploader runs, and which script it executes, are read from main's own
+  // stores (`src/main/ipc/uploader.ts`) — a payload that could name a program
+  // would let the renderer run it.
   const isPath = typeof image === 'string'
   if (isPath) {
-    return window.uploader.uploadImage({ pathname, image, isPath: true, preferences: ipcPrefs })
+    return window.uploader.uploadImage({ pathname, image, isPath: true })
   }
   const file = image as File
   const arrayBuffer = await file.arrayBuffer()
@@ -132,8 +120,7 @@ export const uploadImage = async(
       data: new Uint8Array(arrayBuffer),
       name: file.name
     },
-    isPath: false,
-    preferences: ipcPrefs
+    isPath: false
   }
   return window.uploader.uploadImage(payload)
 }

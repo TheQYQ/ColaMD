@@ -83,7 +83,7 @@ describe('a dialog result grants the scope it names', () => {
 
     await invoke('mt::dialog::open', { properties: ['openFile', 'multiSelections'] })
 
-    expect(getAllowedRoots().sort()).toEqual([path.resolve('/a'), path.resolve('/b')].sort())
+    expect([...getAllowedRoots()].sort()).toEqual([path.resolve('/a'), path.resolve('/b')].sort())
   })
 
   it('grants nothing when the user cancels', async() => {

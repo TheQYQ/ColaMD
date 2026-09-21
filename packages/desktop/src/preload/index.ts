@@ -202,7 +202,7 @@ const ripgrepAPI = {
 }
 
 const uploaderAPI = {
-  uploadImage: (req: unknown) => invoke('mt::uploader::upload', req)
+  uploadImage: (req: unknown) => invoke('mt::uploader::upload', req as never)
 }
 
 const versionHistoryAPI = {

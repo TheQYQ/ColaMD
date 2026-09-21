@@ -196,8 +196,7 @@
               <span
                 class="link"
                 @click="open('https://picgo.github.io/PicGo-Core-Doc/')"
-              >{{
-                t('preferences.image.uploader.usageGuide.documentation')
+              >{{ t('preferences.image.uploader.usageGuide.documentation')
               }}<LinkIcon
                 :size="14"
                 class="link-icon"
@@ -225,19 +224,19 @@
           <div class="label">
             {{ t('preferences.image.uploader.scriptLocation') }}:
           </div>
-          <el-input
-            v-model="cliScript"
-            :placeholder="t('preferences.image.uploader.scriptPath')"
-            size="mini"
-          />
+          <span
+            class="script-path"
+            :title="cliScript"
+          >{{
+            cliScript || t('preferences.image.uploader.scriptPath')
+          }}</span>
         </div>
         <div class="form-group">
           <el-button
             size="mini"
-            :disabled="cliScriptDisable"
-            @click="save()"
+            @click="pickCliScript"
           >
-            {{ t('preferences.image.uploader.save') }}
+            {{ t('preferences.image.folderSetting.open') }}
           </el-button>
         </div>
       </div>
@@ -303,10 +302,7 @@ const buttonTimer = ref<ReturnType<typeof setTimeout> | null>(null) // Button di
 const initialButtonTimer = ref<ReturnType<typeof setTimeout> | null>(null) // Initial button timer
 const showStandaloneRefreshButton = ref<boolean>(true) // Whether to show the standalone refresh button
 // computed
-const {
-  currentUploader,
-  cliScript: prefCliScript
-} = storeToRefs(preferenceStore)
+const { currentUploader, cliScript: prefCliScript } = storeToRefs(preferenceStore)
 
 // `isFileExecutable` is async via IPC; track the result in a ref so the
 // disabled state still updates reactively.
@@ -326,7 +322,11 @@ watch(
   },
   { immediate: true }
 )
-const cliScriptDisable = computed(() => !cliScript.value || !cliScriptExecutable.value)
+// The row shows what main assigned through the file dialog, so the local copy
+// has to follow the preference whenever the dialog answers with it.
+watch(prefCliScript, (value) => {
+  cliScript.value = value
+})
 
 // Listen for uploader switch; immediately start detection when switching to picgo
 watch(currentUploader, (newValue, oldValue) => {
@@ -564,16 +564,11 @@ const open = (link: string): void => {
   window.electron.shell.openExternal(link)
 }
 
-const save = (): void => {
-  preferenceStore.SET_USER_DATA({
-    type: 'cliScript',
-    value: cliScript.value
-  })
-  notice.notify({
-    title: t('preferences.image.uploader.saveConfig'),
-    message: t('preferences.image.uploader.scriptConfigSaved'),
-    type: 'primary'
-  })
+// The script path is not typed here: it names a program the main process
+// executes, so only a native file dialog may assign it (see
+// `mt::ask-for-modify-cli-script` in src/main/preferences/index.ts).
+const pickCliScript = (): void => {
+  preferenceStore.SET_CLI_SCRIPT()
 }
 
 const setCurrentUploader = (value: string | number | boolean): void => {
@@ -781,7 +776,6 @@ const testPicgo = async (): Promise<void> => {
   // Stop animation after detection completes
   stopAnimationAndButton()
 }
-
 </script>
 
 <style scoped>
@@ -1189,5 +1183,4 @@ const testPicgo = async (): Promise<void> => {
 .pref-image-uploader .button-group {
   margin-top: 30px;
 }
-
 </style>

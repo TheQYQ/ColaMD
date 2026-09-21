@@ -10,14 +10,15 @@ import { registerWindowHandlers } from './window'
 import { registerCmdHandlers } from './cmd'
 import { registerI18nHandlers } from './i18n'
 import { registerMenuHandlers } from './menu'
+import type Accessor from '../app/accessor'
 
-export const registerSandboxIpcHandlers = (): void => {
+export const registerSandboxIpcHandlers = (accessor: Accessor): void => {
   registerBootInfo()
   registerDialogHandlers()
   registerFsHandlers()
   registerPathHandlers()
   registerRipgrepHandlers()
-  registerUploaderHandlers()
+  registerUploaderHandlers(accessor)
   registerFontsHandlers()
   registerShellHandlers()
   registerWindowHandlers()
