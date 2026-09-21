@@ -72,8 +72,7 @@ test.describe('Editor input and source-mode roundtrip', () => {
 const WORD_COUNT_TEXT = '.status-bar .word-count .text-center-vertical'
 
 // Read the status-bar counter text, e.g. "12 Words". Returns the trimmed string.
-const counterText = (page: Page): Promise<string> =>
-  page.locator(WORD_COUNT_TEXT).innerText()
+const counterText = (page: Page): Promise<string> => page.locator(WORD_COUNT_TEXT).innerText()
 
 // Parse the leading integer off a counter label like "12 Words" / "3 Paragraphs".
 const counterValue = async(page: Page): Promise<number> => {
@@ -88,7 +87,9 @@ const counterValue = async(page: Page): Promise<number> => {
 // algorithm itself is already unit-covered in
 // packages/muya/src/utils/__tests__/wordCount.spec.ts; this is only used to
 // pin the desktop status-bar's value/mode wiring to the live document.
-const expectedCount = (markdown: string): { word: number; paragraph: number; character: number; all: number } => {
+const expectedCount = (
+  markdown: string
+): { word: number; paragraph: number; character: number; all: number } => {
   const paragraph = markdown.split(/\n{2,}/).filter((line) => line).length
   const removedChinese = markdown.replace(/[一-龥]/g, '')
   const tokens = removedChinese.split(/\s+/).filter((t) => t)
@@ -135,13 +136,13 @@ test.describe('Status-bar word counter (item 24)', () => {
 
     // The counter updates async after the json-change round-trip; it must have
     // strictly increased over the pre-typing baseline.
-    await expect.poll(() => counterValue(page), { timeout: 5000 }).toBeGreaterThan(before)
+    await expect.poll(() => counterValue(page)).toBeGreaterThan(before)
 
     // The displayed value matches the engine's wordCount over the exact markdown
     // that is now loaded (verifies the status bar tracks the live document, and
     // that the CJK chars each counted as a word).
     const markdown = await getMarkdownContent(page, app)
-    await expect.poll(() => counterValue(page), { timeout: 5000 }).toBe(expectedCount(markdown).word)
+    await expect.poll(() => counterValue(page)).toBe(expectedCount(markdown).word)
   })
 
   test('the counter follows the active display mode as it is cycled', async() => {
@@ -222,8 +223,7 @@ test.describe('Edit > Select All (item 169)', () => {
       await page.waitForTimeout(120)
       const selected = await page.evaluate(() => window.getSelection()?.toString() ?? '')
       return (
-        selected.includes('First paragraph alpha.') &&
-        selected.includes('Last paragraph gamma.')
+        selected.includes('First paragraph alpha.') && selected.includes('Last paragraph gamma.')
       )
     }
 
@@ -239,11 +239,14 @@ test.describe('Edit > Select All (item 169)', () => {
     // Establish a known whole-document editor selection first (escalate fully).
     await placeCaretInEditor(page)
     await expect
-      .poll(async() => {
-        await sendIpcToRenderer(app, 'mt::editor-edit-action', 'selectAll')
-        await page.waitForTimeout(120)
-        return page.evaluate(() => window.getSelection()?.toString() ?? '')
-      }, { timeout: 5000 })
+      .poll(
+        async() => {
+          await sendIpcToRenderer(app, 'mt::editor-edit-action', 'selectAll')
+          await page.waitForTimeout(120)
+          return page.evaluate(() => window.getSelection()?.toString() ?? '')
+        },
+        { timeout: 5000 }
+      )
       .toContain('Last paragraph gamma.')
 
     // Open the find bar and move focus into its search input. handleSelectAll
