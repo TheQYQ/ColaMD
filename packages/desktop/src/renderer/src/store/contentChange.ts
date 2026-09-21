@@ -13,6 +13,27 @@ export const isNewlineOnlyFromEmpty = (oldMarkdown: string, markdown: string): b
   oldMarkdown.length === 0 && markdown.length === 1 && markdown[0] === '\n'
 
 /**
+ * An external reload replaces the tab's document, so the frame the user was
+ * standing on is kept as the single entry of a fresh one-frame history: that is
+ * what makes the first undo return the pre-reload document. Everything else is
+ * dropped, and the frame is released from the old stack on the way out — the
+ * release happens whether or not a frame was found, as before.
+ */
+export const takeReloadBoundary = (
+  history: IFileState['history']
+): IFileState['history'] | null => {
+  const { index, stack } = history
+  if (index < 0 || stack.length < 1) return null
+
+  const entry = stack[index]
+  const boundary = entry ? { stack: [entry], index: 0 } : null
+
+  history.index--
+  history.stack.pop()
+  return boundary
+}
+
+/**
  * The id of the history frame the editor currently sits on, or undefined when
  * there is none to record — no index, an index past the stack, or a frame whose
  * id is not the numeric form the save tracking uses. `MARK_TAB_SAVED` stores

@@ -25,7 +25,12 @@ import {
   nextCycleIndex,
   selectTabAfterClose
 } from './tabOps'
-import { historyFrameId, historyMarksDirty, isNewlineOnlyFromEmpty } from './contentChange'
+import {
+  historyFrameId,
+  historyMarksDirty,
+  isNewlineOnlyFromEmpty,
+  takeReloadBoundary
+} from './contentChange'
 import {
   FileEncodingCommand,
   LineEndingCommand,
@@ -391,22 +396,7 @@ export const useEditorStore = defineStore('editor', {
       const oldNotifications = tab.notifications
       // Preserve scroll across external reload so the editor stays put.
       const oldScrollTop = tab.scrollTop
-      let oldHistory: IFileState['history'] | null = null
-      const histIndex = tab.history.index
-      if (histIndex >= 0 && tab.history.stack.length >= 1) {
-        const entry = tab.history.stack[histIndex]
-        if (entry) {
-          // Allow to restore the old document.
-          oldHistory = {
-            stack: [entry],
-            index: 0
-          }
-        }
-
-        // Free reference from array
-        tab.history.index--
-        tab.history.stack.pop()
-      }
+      const oldHistory = takeReloadBoundary(tab.history)
 
       // Update file content and restore some entries.
       Object.assign(tab, newFileState)

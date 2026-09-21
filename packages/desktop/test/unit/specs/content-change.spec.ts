@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { IFileState } from '@shared/types/files'
-import { historyFrameId, historyMarksDirty, isNewlineOnlyFromEmpty } from '@/store/contentChange'
+import {
+  historyFrameId,
+  historyMarksDirty,
+  isNewlineOnlyFromEmpty,
+  takeReloadBoundary
+} from '@/store/contentChange'
 
-// O12(4) — the two predicates LISTEN_FOR_CONTENT_CHANGE decides on, pinned outside
-// the action so the dirty rule (which is what decides whether a save is owed) has
-// a name and a case for each of its branches.
+// O12(4)+(5) — the decisions LISTEN_FOR_CONTENT_CHANGE and the external-reload
+// path make, pinned outside the actions so each rule has a name and a case for
+// every branch it owns.
 
 const history = (over: Partial<IFileState['history']> = {}): IFileState['history'] =>
   ({ stack: [{ id: 1 }, { id: 2 }, { id: 3 }], index: 0, ...over }) as IFileState['history']
@@ -29,6 +34,39 @@ describe('historyFrameId', () => {
   it('ignores a frame whose id is not the numeric save-tracking form', () => {
     const stringy = { stack: [{ id: 'mu-1' }], index: 0, lastEditIndex: 0 } as IFileState['history']
     expect(historyFrameId(stringy)).toBeUndefined()
+  })
+})
+
+describe('takeReloadBoundary', () => {
+  it('keeps the frame the user stands on and releases the rest', () => {
+    const hist = {
+      stack: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      index: 1
+    } as IFileState['history']
+
+    expect(takeReloadBoundary(hist)).toEqual({ stack: [{ id: 2 }], index: 0 })
+    expect(hist).toMatchObject({ index: 0, stack: [{ id: 1 }, { id: 2 }] })
+  })
+
+  it('returns nothing before the first frame, without touching the stack', () => {
+    const hist = { stack: [{ id: 1 }], index: -1 } as IFileState['history']
+
+    expect(takeReloadBoundary(hist)).toBeNull()
+    expect(hist).toMatchObject({ index: -1, stack: [{ id: 1 }] })
+  })
+
+  it('returns nothing for an empty stack', () => {
+    const hist = { stack: [], index: 0 } as IFileState['history']
+
+    expect(takeReloadBoundary(hist)).toBeNull()
+    expect(hist.stack).toEqual([])
+  })
+
+  it('still releases a slot when the index runs past the stack', () => {
+    const hist = { stack: [{ id: 1 }], index: 4 } as IFileState['history']
+
+    expect(takeReloadBoundary(hist)).toBeNull()
+    expect(hist).toMatchObject({ index: 3, stack: [] })
   })
 })
 
