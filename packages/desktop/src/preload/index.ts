@@ -172,7 +172,7 @@ const i18nAPI = {
 
 type RipgrepHandler = (payload: unknown) => void
 const ripgrepAPI = {
-  start: (req: unknown) => invoke('mt::rg::start', req),
+  start: (req: unknown) => invoke('mt::rg::start', req as never),
   cancel: (searchId: string) => send('mt::rg::cancel', searchId),
   onMatch: (handler: RipgrepHandler) => {
     const sub = (_e: IpcRendererEvent, payload: unknown) => handler(payload)

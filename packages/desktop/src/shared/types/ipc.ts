@@ -18,6 +18,7 @@
  */
 
 import type { IKeyboardLayoutInfo, IKeyboardMapping } from 'native-keymap'
+import type { RipgrepRequest } from './ripgrep'
 import type {
   MarkdownDocument,
   TabOptions,
@@ -85,7 +86,7 @@ export interface IpcInvokeChannels {
   'mt::keybinding-save-user-keybindings': { args: [bindings: Map<string, string>]; ret: boolean }
   'mt::menu::get-recent-documents': { args: []; ret: string[] }
   'mt::paths::is-image': { args: [path: string]; ret: boolean }
-  'mt::rg::start': { args: [req: unknown]; ret: void }
+  'mt::rg::start': { args: [req: RipgrepRequest]; ret: void }
   'mt::shell::open-external': { args: [url: string]; ret: boolean }
   'mt::shell::open-path': { args: [fullPath: string]; ret: string }
   'mt::spellchecker-get-available-dictionaries': { args: []; ret: string[] }

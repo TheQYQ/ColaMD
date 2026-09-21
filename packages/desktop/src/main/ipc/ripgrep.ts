@@ -4,6 +4,8 @@ import { ipcMain, type WebContents } from 'electron'
 import log from 'electron-log'
 import { rgPath as bundledRgPath } from '@vscode/ripgrep'
 import { assertPathInScope } from '../security/pathScope'
+import { typedHandle } from './typedHandle'
+import type { RipgrepSearchOptions as SearchOptions } from '@shared/types/ripgrep'
 
 const resolveRgPath = (): string => {
   if (process.env.COLAMD_RIPGREP_PATH) return process.env.COLAMD_RIPGREP_PATH
@@ -158,20 +160,6 @@ const prepareRegexp = (regexpStr: string): string => {
 }
 
 const isMultilineRegexp = (regexpStr: string): boolean => regexpStr.includes('\\n')
-
-interface SearchOptions {
-  isRegexp?: boolean
-  isCaseSensitive?: boolean
-  isWholeWord?: boolean
-  followSymlinks?: boolean
-  maxFileSize?: number | string
-  includeHidden?: boolean
-  noIgnore?: boolean
-  leadingContextLineCount?: number
-  trailingContextLineCount?: number
-  inclusions?: string[]
-  exclusions?: string[]
-}
 
 const startTextSearch = (
   sender: WebContents,
@@ -432,20 +420,11 @@ const startFileSearch = (
   }
 }
 
-interface RipgrepRequest {
-  searchId: string
-  mode: 'files' | 'text'
-  directories: string[]
-  pattern: string
-  options: SearchOptions
-}
-
 export const registerRipgrepHandlers = (): void => {
-  // Not `typedHandle` yet: the contract can only promise `req: unknown` here, because
-  // the renderer ships a JSON clone of its own options and main reads named fields.
-  // Deciding who owns that payload shape is validation work, tracked as O7②.
-  // eslint-disable-next-line no-restricted-syntax -- payload shape owned by neither side yet
-  ipcMain.handle('mt::rg::start', async (event, req: RipgrepRequest) => {
+  // The payload shape lives in `@shared/types/ripgrep`, so this channel can go
+  // through the typed wrapper: the renderer's object and main's destructure are
+  // now checked against one declaration instead of each keeping its own copy.
+  typedHandle('mt::rg::start', async (event, req) => {
     const { searchId, mode, directories, pattern, options } = req
     cleanupAtSenderDestroy(event.sender)
     // A search answers with file contents and paths, so it discloses the same
