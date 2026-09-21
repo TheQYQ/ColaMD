@@ -55,6 +55,40 @@ export const moveItem = <T>(arr: T[], from: number, to: number): boolean => {
   return arr.length === len
 }
 
+/** One tab the freshly loaded window should open. */
+export interface BootstrapTabRequest {
+  markdown?: string
+  selected: boolean
+}
+
+/**
+ * What a window opens on first paint, in priority order: the welcome document
+ * (first run only), else a single blank tab, else the markdown strings main
+ * handed over — where only the first is selected so the rest land as background
+ * tabs. An empty result means the window is restoring a session instead.
+ *
+ * `welcomeMarkdown` is `unknown` because it reaches the renderer through the
+ * bootstrap config's index signature, and it is only read when truthy — as
+ * before, `String(...)` never sees the absent case.
+ */
+export const initialTabsToOpen = ({
+  addBlankTab,
+  welcomeMarkdown,
+  markdownList
+}: {
+  addBlankTab?: boolean
+  welcomeMarkdown?: unknown
+  markdownList: string[]
+}): BootstrapTabRequest[] => {
+  if (welcomeMarkdown) {
+    return [{ markdown: String(welcomeMarkdown), selected: true }]
+  }
+  if (addBlankTab) {
+    return [{ selected: true }]
+  }
+  return markdownList.map((markdown, index) => ({ markdown, selected: index === 0 }))
+}
+
 /** The bus payload that (re)loads a tab into the editor. */
 interface FileChangedEvent {
   id: string

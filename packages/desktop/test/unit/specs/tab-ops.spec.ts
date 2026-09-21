@@ -3,6 +3,7 @@ import type { IFileState } from '@shared/types/files'
 import {
   createFileChangedEvent,
   exchangeTargetIndex,
+  initialTabsToOpen,
   moveItem,
   nextCycleIndex,
   selectTabAfterClose
@@ -120,6 +121,29 @@ describe('moveItem', () => {
     const a = [null, 'y'] as unknown as (string | null)[]
     expect(moveItem(a, 0, 1)).toBe(true)
     expect(a).toEqual(['y', null])
+  })
+})
+
+describe('initialTabsToOpen', () => {
+  it('prefers the welcome document over a blank tab', () => {
+    expect(
+      initialTabsToOpen({ welcomeMarkdown: '# hi', addBlankTab: true, markdownList: [] })
+    ).toEqual([{ markdown: '# hi', selected: true }])
+  })
+
+  it('opens one selected blank tab when nothing else is asked for', () => {
+    expect(initialTabsToOpen({ addBlankTab: true, markdownList: [] })).toEqual([{ selected: true }])
+  })
+
+  it('opens every seeded document but selects only the first', () => {
+    expect(initialTabsToOpen({ markdownList: ['a', 'b'] })).toEqual([
+      { markdown: 'a', selected: true },
+      { markdown: 'b', selected: false }
+    ])
+  })
+
+  it('asks for nothing when the window restores a session', () => {
+    expect(initialTabsToOpen({ markdownList: [] })).toEqual([])
   })
 })
 

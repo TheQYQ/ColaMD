@@ -20,6 +20,7 @@ import {
 import {
   createFileChangedEvent,
   exchangeTargetIndex,
+  initialTabsToOpen,
   moveItem,
   nextCycleIndex,
   selectTabAfterClose
@@ -45,6 +46,7 @@ import {
 } from '../util/imageCleanup'
 import type { IpcMainEventChannels, VersionSnapshot } from '@shared/types/ipc'
 import type {
+  BootstrapEditorConfig,
   IFileState,
   FileNotification,
   LineEnding,
@@ -967,11 +969,44 @@ export const useEditorStore = defineStore('editor', {
     },
 
     // This events are only used during window creation.
-    LISTEN_FOR_BOOTSTRAP_WINDOW(): void {
+    /**
+     * The first message from a freshly loaded window: fold the launch config into
+     * the other stores, then open whatever tabs it asks for. Kept apart from the
+     * registration below so the sequence can be driven from a test.
+     */
+    APPLY_BOOTSTRAP_EDITOR(config: BootstrapEditorConfig): void {
+      const {
+        welcomeMarkdown,
+        addBlankTab,
+        markdownList,
+        lineEnding,
+        sideBarVisibility,
+        tabBarVisibility,
+        sourceCodeModeEnabled
+      } = config
+
       const preferencesStore = usePreferencesStore()
       const layoutStore = useLayoutStore()
-      const projectStore = useProjectStore()
       const mainStore = useMainStore()
+
+      mainStore.SET_INITIALIZED()
+      preferencesStore.SET_USER_PREFERENCE({ endOfLine: lineEnding })
+      layoutStore.SET_LAYOUT({
+        rightColumn: 'files',
+        showSideBar: !!sideBarVisibility,
+        showTabBar: !!tabBarVisibility
+      })
+      layoutStore.DISPATCH_LAYOUT_MENU_ITEMS()
+      preferencesStore.SET_MODE({ type: 'sourceCode', checked: !!sourceCodeModeEnabled })
+
+      for (const request of initialTabsToOpen({ welcomeMarkdown, addBlankTab, markdownList })) {
+        this.NEW_UNTITLED_TAB(request)
+      }
+    },
+
+    LISTEN_FOR_BOOTSTRAP_WINDOW(): void {
+      const projectStore = useProjectStore()
+      const preferencesStore = usePreferencesStore()
 
       // Delay load runtime commands and initialize commands.
       setTimeout(() => {
@@ -994,43 +1029,7 @@ export const useEditorStore = defineStore('editor', {
       }, 400)
 
       window.electron.ipcRenderer.on('mt::bootstrap-editor', (_, config) => {
-        const {
-          addBlankTab,
-          welcomeMarkdown,
-          markdownList,
-          lineEnding,
-          sideBarVisibility,
-          tabBarVisibility,
-          sourceCodeModeEnabled
-        } = config
-
-        mainStore.SET_INITIALIZED()
-        preferencesStore.SET_USER_PREFERENCE({ endOfLine: lineEnding })
-        layoutStore.SET_LAYOUT({
-          rightColumn: 'files',
-          showSideBar: !!sideBarVisibility,
-          showTabBar: !!tabBarVisibility
-        })
-        layoutStore.DISPATCH_LAYOUT_MENU_ITEMS()
-        preferencesStore.SET_MODE({
-          type: 'sourceCode',
-          checked: !!sourceCodeModeEnabled
-        })
-
-        if (welcomeMarkdown) {
-          this.NEW_UNTITLED_TAB({ markdown: String(welcomeMarkdown), selected: true })
-        } else if (addBlankTab) {
-          this.NEW_UNTITLED_TAB({ selected: true })
-        } else if (markdownList.length) {
-          let isFirst = true
-          for (const md of markdownList) {
-            this.NEW_UNTITLED_TAB({
-              markdown: md,
-              selected: isFirst
-            })
-            isFirst = false
-          }
-        }
+        this.APPLY_BOOTSTRAP_EDITOR(config)
       })
     },
 
