@@ -52,6 +52,28 @@ describe('preference declarations agree', () => {
     expect(rejected).toEqual([])
   })
 
+  it('declares the same default the shipped file uses', () => {
+    // Which of the two sources wins depends on whether a settings file exists:
+    // first run writes static/preference.json wholesale, while a key missing
+    // from an existing file (one added in a later release) falls back to the
+    // schema default. Six keys disagreed, so upgrading users got a different
+    // sidebar sort order, code-block line numbers, code wrapping and
+    // theme-following behaviour than fresh installs, and two folder keys read
+    // as undefined instead of "". Aligned to the shipped file; this keeps them
+    // from drifting apart again.
+    const differing = schemaKeys
+      .filter((key) => 'default' in schema[key])
+      .filter((key) => JSON.stringify(schema[key].default) !== JSON.stringify(staticDefaults[key]))
+    expect(differing).toEqual([])
+  })
+
+  it('gives every string entry a default so no reader sees undefined', () => {
+    const missing = schemaKeys.filter(
+      (key) => schema[key].type === 'string' && !('default' in schema[key])
+    )
+    expect(missing).toEqual([])
+  })
+
   it('declares the file-tree exclusion patterns main reads', () => {
     // Read at filesystem/watcher.ts:59 and app/windowManager.ts:469.
     expect(schema.treePathExcludePatterns).toEqual({
@@ -64,8 +86,6 @@ describe('preference declarations agree', () => {
   })
 })
 
-// NOT asserted on purpose: six keys carry a different `default` in the schema than
-// in static/preference.json (fileSortBy, codeBlockLineNumbers, wrapCodeBlocks,
-// followSystemTheme, and two with no schema default). Which one wins depends on
-// whether a settings file already exists, so picking a side is a behaviour change
-// that needs its own decision — recorded as O19's remainder.
+// O19's remainder is closed by the two default cases above: the six divergences
+// were aligned to static/preference.json rather than the other way round, because
+// that file is what a fresh install actually gets today.
