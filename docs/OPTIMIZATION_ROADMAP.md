@@ -71,7 +71,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 其后又逐个合入两条：`chore/desktop-size-gates`（`be4e173` O21 + `ca8eaed` O24）、`cleanup/dead-symbols`（`09e1a2b` + `80cc31b` O13、O20 复核）。合入后在 `develop` 上复跑：`pnpm check` 退出 0（149 warnings / 0 errors）、`pnpm knip`（依赖）退出 0、`pnpm knip:full` 只剩 1 项、desktop 单测 71 文件 904 通过 + 1 跳过。
 
-遗留事项：**分支仍未 push**（远端还没有这些提交）。等实机确认的：O17 侧栏新建行、O7① 设置页图片目录那行（改成了只读文本）、O7② 新改的"CLI 脚本"那行（同样从输入框变成只读文本 + Open 按钮）。原先"等拍板"的三条已各自有了结论：O26 见本条的拍板记录（布局归 prettier，`--check` 不做门禁）、O19 的 6 处默认值以 `static/preference.json` 为准并已对齐（见 O19）、O7② 的读通道域与载荷归属已落地（见 O7②）。仍然敞着的是 O7② 记录的两项收尾（布尔探测通道的授权故事、`mt::rg::start` 的载荷归属）与 O12 第 6 步 part B。O6 与 O10 经复核分别降级与撤下，理由见各自条目；O20 移交 O13 的死代码已随 `cleanup/dead-symbols` 清完（见 O13 的完成状态）。
+遗留事项：**分支仍未 push**（远端还没有这些提交）。等实机确认的：O17 侧栏新建行、O7① 设置页图片目录那行（改成了只读文本）、O7② 新改的"CLI 脚本"那行（同样从输入框变成只读文本 + Open 按钮）。原先"等拍板"的三条已各自有了结论：O26 见本条的拍板记录（布局归 prettier，`--check` 不做门禁）、O19 的 6 处默认值以 `static/preference.json` 为准并已对齐（见 O19）、O7② 的读通道域与载荷归属已落地（见 O7②）。仍然敞着的是 O7② 的一条收尾（布尔探测通道要不要收域，需要先有授权故事）与 O12 第 6 步 part B 的引擎装配段。O6 与 O10 经复核分别降级与撤下，理由见各自条目；O20 移交 O13 的死代码已随 `cleanup/dead-symbols` 清完（见 O13 的完成状态）。
 
 **合并顺序（用 `git merge-tree` 对 12 个分支两两预演，非破坏性）**：5 对会冲突，其余两两可自动合。
 
@@ -141,7 +141,8 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
   - **读通道已收域（同一分支的第二步）**：`fs.ts` 里 disclosing 内容的两条——`mt::fs::read-file` 与 `mt::fs::readdir`——现在过 `assertPathInScope`；`mt::rg::start` 的 `directories[]` 也逐条过（它是**递归**的内容+路径披露，是这类通道里最宽的一条）。新增 `test/unit/specs/fs-read-scope.spec.ts` 5 例钉住"域内可读、域外必读、布尔探测仍然必答"。**先纠正我上一轮写下的一个假前提**：我当时记的"`is-executable` 服务文档内链接点击"是错的——`isFileExecutable` 全仓只有一个消费者，就是 `prefComponents/image/components/uploader/index.vue` 那行在用户挑完脚本后检查它是否可执行。
   - **划下来的线（是决定，不是遗漏）**：五个布尔探测通道（`is-file`/`is-directory`/`path-exists`/`is-executable`/`paths::is-image`）**不收域**，理由写在了 `fs.ts` 注册处的注释与 `pathScope.ts` 头部：它们只回答一位、不回答内容与同级文件名，而它们的调用方天生要问"还没被授权的路径"（上传器行问的是用户刚挑的脚本、`store/editor.ts:558` 与 `store/project.ts:282,330` 在授权之前就探候选目录）。残余风险据实写清：这些通道合起来是一个**路径存在性 oracle**，能猜不能读。`fs-read-scope.spec.ts` 把"域外 `path-exists` 仍返回 true"钉成断言，将来谁要收紧都会先撞到这里。
   - **收域把一处测试的形状暴露出来了**：`ripgrep-search.spec.ts` 原本 `launchElectron()` 不带任何路径、直接对一个从未打开的临时目录发起搜索——加了 scope 检查后它红了，而这正是"被攻破的渲染端"的形状。改法是让测试按真实用法启动（把 fixture 目录作为打开路径传入，main 因此授权它），并**补一条负例**钉住"域外目录的 `mt::rg::start` 必须拒"。全量 E2E 由 233 变 **234 通过 / 0 失败**（退出 0，7.1 分钟），`pnpm check` 103/0、`pnpm test:unit` 79 文件 979 通过 + 1 跳过、`pnpm knip` 0、`pnpm build` 0。
-  - **② 还剩什么**：`mt::rg::start` 的载荷归属（它仍是裸 `ipcMain.handle`，`RipgrepRequest` 里 `options` 的形状无人认领——O8 的两处豁免现在只剩这一处）；以及上面那条线要不要往上挪（把布尔探测也收域），那需要先给三个 probe 调用点各自的授权故事。
+  - **② 还剩什么**：只剩上面那条线要不要往上挪（把五个布尔探测也收域），那需要先给它们各自的授权故事。`mt::rg::start` 的载荷归属已经在分支 `refactor/rg-payload-ownership` 里做完（见 O8 的对应更新：形状进 `shared/types/ripgrep.ts`、通道改走 `typedHandle`、负例探针 3 条 TS2345）。
+- **一次方法论上的自打**：那轮负例探针我先前跑过两次、两次都报"退出 0、没有类型错误"，据此几乎要写下"契约其实没在主进程生效"。真实原因是这台机器的 `python3` 是 Windows Store 的**静默空壳**——我用来改类型的 heredoc 脚本根本没执行，文件一个字节没变，"探针通过"是假阴。第三次换成 `sed` 并在同一条命令里 `grep` 出自已改的行来证明改动落地，才拿到 3 条 TS2345。**记下：负例探针必须同时断言"改动确实生效"，否则退出码 0 只说明脚本没跑。**
 - 回滚点：偏好迁移需保留旧值读取一次以兼容，标 `deprecated` 后分版删除（①未做迁移：老 settings 文件里残留的 `imageFolderPath` 现在只是没人读的冗余键，不再被授权，因此不影响行为）。
 
 **O8 · IPC 契约是单向的** — 成本 M，影响 中 — **① handle 半边已完成 `cba0836`（分支 `refactor/typed-ipc-handle`）**
@@ -150,7 +151,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法（①已实施）：新增 `src/main/ipc/typedHandle.ts`，把 41 个 handle 通道的注册绑到契约上；配平 lint 门：根 `eslint.config.js` 第 11 节在 `src/main/**` 禁 `ipcMain.handle`，只剩两处带理由的豁免（见下）。
 - **实测产出（这才是本项的价值证明）**：接上 41 个通道立刻出 10 个不匹配，其中 1 条是 `mt::spellchecker-switch-language` 多余的 `return null`（三个调用方都 await 后丢弃），其余 8 条是**契约自己本来就写错了**（下表），另 1 条是 `mt::rg::start` 的载荷归属问题（见"剩余"）。
 - 连带收益：`KeybindingConfigurator.ts:93-99` 那段 `as unknown as boolean` 连同它"契约写的是 void"的过期注释一起删掉——§13 的 `as unknown as` 基数 64 → 63（该分支未合入前 develop 仍是 64）。
-- 剩余（②未完成）：`mt::rg::start` 与 `mt::uploader::upload` 的载荷仍是 `unknown`，两处各自留着 `ipcMain.handle` + 行内理由。不是类型问题：渲染端发的是自家选项的 JSON 克隆，主进程按命名字段读，**载荷形状无人认领**，收窄要先决定归属，已并入 O7② 的校验活。`on`/`send` 通道（82 条）同理尚未绑契约，本项未做。
+- **两条载荷归属都已闭合（随 O7② 一起做完）**：`mt::uploader::upload` 的载荷形状进了契约（`shared/types/ipc.ts` 内联声明，主进程不再 `req as UploadRequest` 自己认一遍），`mt::rg::start` 的形状进了新文件 `shared/types/ripgrep.ts`（`RipgrepRequest` + `RipgrepSearchOptions`，主进程原来那两份本地 `interface` 删掉、按别名引回），两条通道都改走 `typedHandle`。**编译期保护的负例探针**：把共享类型里 `directories: string[]` 改成 `number[]`，`pnpm typecheck` 立刻在 `src/main/ipc/ripgrep.ts` 报 **3 条 TS2345**（改回后退出 0）——这就是"归属"落到实处的意思。附带结果：`src/main/**` 里裸 `ipcMain.handle` 只剩 `typedHandle.ts` 自身那一处（它就是禁令指向的包装器），**O8 的禁令不再有任何业务侧豁免**。`on`/`send` 通道（82 条）仍未绑契约，本项未做。
 - 验收（已达成）：负例探针——把 `mt::cmd::exists` 的参数标注改成 `number`，`pnpm typecheck` 立刻 TS2345 失败（改前不会）；改回后 typecheck 0 错、`pnpm lint` 回到 149 warnings/0 errors 基线（转换过程中我自己造出 8 条 unused-import 告警，已清）、单测 61 文件 863 通过 + 1 跳过、`launch`+`context-isolation`+`ripgrep-search` E2E 4 例真窗口通过。**未采纳**原写的"CI 跑 tsc 负例夹具"，因为 lint 禁令已在 `pnpm lint` 门内阻断绕行，夹具只会多养一套测试基建。
 
 契约写错的 8 条（全部为编译期发现，运行时此前看不出差别）：
