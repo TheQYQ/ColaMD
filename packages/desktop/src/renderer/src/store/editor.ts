@@ -24,6 +24,7 @@ import {
   nextCycleIndex,
   selectTabAfterClose
 } from './tabOps'
+import { historyMarksDirty, isNewlineOnlyFromEmpty } from './contentChange'
 import {
   FileEncodingCommand,
   LineEndingCommand,
@@ -1445,6 +1446,20 @@ export const useEditorStore = defineStore('editor', {
       this.toc = listToTree<TocItem>(toc ?? [])
     },
 
+    /**
+     * PERFORMANCE: both content-change tiers guarded this with the cheap
+     * `lvl:githubSlug:content` signature (see `tocSignature` above) before
+     * rebuilding, because most typing keystrokes touch no heading and the tree
+     * rebuild is not free. Unlike UPDATE_TOC this refreshes only the tab on
+     * screen, and only when the signature actually moved.
+     */
+    refreshTocIfChanged(id: string, toc: TocItem[] | null | undefined): void {
+      if (id === this.currentFile?.id && toc && tocSignature(toc) !== tocSignature(this.listToc)) {
+        this.listToc = toc
+        this.toc = listToTree<TocItem>(toc)
+      }
+    },
+
     // Content change from realtime preview editor and source code editor
     // There is a chance that this event is fired AFTER the tab is switched.
     //
@@ -1475,7 +1490,7 @@ export const useEditorStore = defineStore('editor', {
         return
       }
 
-      const tab = this.tabs[this.tabIdToIndex[id]!]
+      const tab = this.tabs[this.tabIdToIndex[id]]
       if (!tab) return
 
       const preferencesStore = usePreferencesStore()
@@ -1514,17 +1529,7 @@ export const useEditorStore = defineStore('editor', {
         // wordCount rides this debounced tier too (sidebar counter only —
         // see the json-change callback in editor.vue); apply it when present.
         if (wordCount) tab.wordCount = wordCount
-        // PERFORMANCE: Cheap signature check first — if the `lvl:slug`
-        // signature hasn't changed, skip the expensive deep-equal and tree
-        // rebuild. Most typing keystrokes don't modify headings.
-        if (
-          id === this.currentFile?.id &&
-          toc &&
-          tocSignature(toc) !== tocSignature(this.listToc)
-        ) {
-          this.listToc = toc
-          this.toc = listToTree<TocItem>(toc)
-        }
+        this.refreshTocIfChanged(id, toc)
         return
       }
 
@@ -1533,7 +1538,7 @@ export const useEditorStore = defineStore('editor', {
       markdown = adjustTrailingNewlines(markdown, trimTrailingNewline)
       tab.markdown = markdown
 
-      if (oldMarkdown.length === 0 && markdown.length === 1 && markdown[0] === '\n') {
+      if (isNewlineOnlyFromEmpty(oldMarkdown, markdown)) {
         debouncedSendBufferedState()
         return
       }
@@ -1545,28 +1550,12 @@ export const useEditorStore = defineStore('editor', {
       if (blocks) tab.blocks = blocks
 
       // Only update TOC if it's the current file
-      // PERFORMANCE: Cheap signature check first — if the `lvl:slug`
-      // signature hasn't changed, skip the expensive deep-equal and tree
-      // rebuild. Most typing keystrokes don't modify headings.
-      if (id === this.currentFile?.id && toc && tocSignature(toc) !== tocSignature(this.listToc)) {
-        this.listToc = toc
-        this.toc = listToTree<TocItem>(toc)
-      }
+      this.refreshTocIfChanged(id, toc)
 
-      const lastEditIndex = tab.history.lastEditIndex
-      const editEntry =
-        typeof lastEditIndex === 'number' && lastEditIndex >= 0
-          ? tab.history.stack[lastEditIndex]
-          : undefined
-      const historyMarksDirty =
-        (typeof lastEditIndex === 'number' &&
-          lastEditIndex >= 0 &&
-          editEntry !== undefined &&
-          editEntry.id !== tab.lastSavedHistoryId) ||
-        (lastEditIndex === -1 &&
-          tab.lastSavedHistoryId !== -1 &&
-          tab.lastSavedHistoryId !== tab.history.lastInitIndex) // Edge Case: Undo to original content (lastEditIndex === -1) after saving means we cant use the lastEditIndex. Compare it against the lastInitIndex instead.
-      const isDirty = history === undefined ? markdown !== oldMarkdown : historyMarksDirty
+      const isDirty =
+        history === undefined
+          ? markdown !== oldMarkdown
+          : historyMarksDirty(tab.history, tab.lastSavedHistoryId)
       if (isDirty) {
         tab.isSaved = false
         if (pathname && autoSave) {
