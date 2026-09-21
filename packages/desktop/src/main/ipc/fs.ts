@@ -21,15 +21,32 @@ const toBuffer = (data: unknown): unknown => {
 }
 
 export const registerFsHandlers = (): void => {
-  // Read-only channels — intentionally NOT scope-checked (see pathScope.ts).
-  typedHandle('mt::fs::is-file', (_e, p: string) => commonIsFile(p))
-  typedHandle('mt::fs::is-directory', (_e, p: string) => commonIsDirectory(p))
+  // Content and name disclosure — scope-checked, because these are the two that
+  // can exfiltrate what a file contains or what a directory holds. Every caller
+  // already reads inside a granted root: the two settings/PDF paths read
+  // `<userData>/themes/export` (registered at app/index.ts:273), and theme import
+  // reads a path the user just picked, which `mt::dialog::open` grants.
   typedHandle('mt::fs::read-file', async(_e, p: string, encoding?: BufferEncoding) => {
+    await assertPathInScope(p)
     const buf = await fs.readFile(p, encoding)
     return buf
   })
+  typedHandle('mt::fs::readdir', async(_e, p: string) => {
+    await assertPathInScope(p)
+    return fs.readdir(p)
+  })
+
+  // Existence and mode probes — deliberately NOT scope-checked, and this is the
+  // line, not an oversight. They answer one bit about a path the caller already
+  // claims, never its contents or siblings, and their callers need to ask about
+  // paths that are outside every root by design: the uploader row checks whether
+  // the script the user just chose is executable, and the tab/project code probes
+  // candidate directories before anything is granted. Tightening them is a
+  // separate decision with a grant story per caller (docs/OPTIMIZATION_ROADMAP.md
+  // O7② "剩下的").
+  typedHandle('mt::fs::is-file', (_e, p: string) => commonIsFile(p))
+  typedHandle('mt::fs::is-directory', (_e, p: string) => commonIsDirectory(p))
   typedHandle('mt::fs::path-exists', (_e, p: string) => fs.pathExists(p))
-  typedHandle('mt::fs::readdir', (_e, p: string) => fs.readdir(p))
 
   // Mutating channels — every path must resolve inside an allowed root.
   typedHandle('mt::fs::copy', async(_e, src: string, dest: string) => {

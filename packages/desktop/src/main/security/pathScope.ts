@@ -24,11 +24,14 @@ import { realpath } from 'fs/promises'
 //   4. checks the (symlink-resolved) path is exactly, or is a subpath of, a
 //      registered root — using case-insensitive comparison on Windows/macOS.
 //
-// Read-only channels (read-file / readdir / stat / …) are intentionally out of
-// scope: they are gated elsewhere and excluding them keeps the blast radius of
-// this module contained to *mutation*. The residual risk — a compromised
-// renderer mutating files inside an already-granted root — is bounded by
-// construction (it requires a root the user already opened).
+// Disclosure of *contents* and *names* goes through this module too:
+// `mt::fs::read-file` and `mt::fs::readdir` are scope-checked (ipc/fs.ts), so a
+// renderer can only read what the user opened or picked. The boolean probes
+// (`is-file`, `is-directory`, `path-exists`, `is-executable`, `paths::is-image`)
+// stay open by decision, not oversight — see the comment at their registration
+// site. The residual risk — a compromised renderer mutating files inside an
+// already-granted root — is bounded by construction (it requires a root the user
+// already opened).
 //
 // NOTE: root grants only happen at provably-trusted sites (dialog/argv/menu
 // flows). Channels a compromised renderer can forge directly (e.g.
