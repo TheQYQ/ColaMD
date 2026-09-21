@@ -134,7 +134,11 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 - ①（已实施）：这个键此前**有两个家**——dataCenter（对话框写、有 schema）与 preferences（渲染端可写、**没有任何 schema 声明**），而 `addAllowedRoot` 读的正是可伪造的那一份。现在收敛为单一家：`mt::set-user-preference` 丢弃该键并告警，选择器忽略调用方传来的路径（只能"要一次对话框"），授权跟随 user-data 广播，`IUserPreferences` 不再声明它，设置页那行输入框改成只读文本（可写但必被主进程丢弃的输入框比没有输入框更糟）。
 - ①的验收（已达成，含"先红后绿"）：把两处防护临时还原并重新构建后，新增的 E2E 用例**确实失败**（伪造的 `imageFolderPath` 让越界写盘成功）；换回本分支实现后 `security-path-scope.spec.ts` 7 例全绿；另有 3 条单测钉住两处拒收与"取消对话框保持原值"。**待实机看**：设置页图片目录那行的观感（与 O17 同一类：lint/typecheck/单测证明不了几何）。
-- ②（**未做，且量出的前置比原计划多一步**）：读通道要收域，绕不开"对话框选中的路径没有归属"这一事实——`mt::dialog::open` 不 `addAllowedRoot`（全仓 8 个授权点里没有它，见 `app/index.ts:272,373,575-576` 与 `menu/actions/file.ts:693,878,881`），而渲染端确实用 `fileUtils.readFile` 读用户在对话框里选中的主题/设置文件（`prefComponents/theme/index.vue:216`、`components/exportSettings/index.vue:542`）。所以 ② 的第一步应是"**选择器结果即授权**"（与 `openFileOrFolder:878` 同形），之后才能谈读通道的三源收敛。顺带把 O8 留下的两处载荷归属（`mt::rg::start`、`mt::uploader::upload`）一并定 owned-by。
+- **② 的第一步已落地**（分支 `security/picker-grants-and-read-scope`，两件事）：
+  - **选择器结果即授权**：`src/main/ipc/dialog.ts` 的 `mt::dialog::open`/`mt::dialog::save` 现在对每条返回路径按 `isDirectory` 授目录本身、否则授其父目录（与 `menu/actions/file.ts:878-881` 的 `openFileOrFolder` 同形，取消对话框不授权）。新增 `test/unit/specs/dialog-picker-grants-root.spec.ts` 5 例钉住这四种形状，变异验证：把 `grantPickedPaths` 改成直接 return，4 例红、"取消不授权"那例仍绿。
+  - **`mt::uploader::upload` 的载荷归属**（这条在核对时升级为信任边界问题）：该通道的 `req.preferences.cliScript` 会直接进 `execFile(cliScript, [localPath])`（旧 `uploader.ts:111-122`），`execFile` 挡住的是 shell 元字符而不是"任意程序"，也就是说**任何能走到这条通道的渲染端 bug 等于主进程代码执行**——正是 `pathScope.ts:7-12` 声明要防的那一类。现在：主进程在调用时从自家存储读 `currentUploader`（dataCenter）与 `cliScript`（preferences），脚本必须是存在的文件才执行，载荷形状由 `shared/types/ipc.ts` 的契约拥有（该通道不再是裸 `ipcMain.handle`，O8 的两处豁免少一处）。与 ① 同形的是"谁来赋值"：`mt::set-user-preference` 现在丢弃 `cliScript`，只有 `mt::ask-for-modify-cli-script` 打开的原生文件选择器能写它，设置页那行因此从可输入 `el-input` 改成只读文本 + Open 按钮（复用既有 `preferences.image.folderSetting.open` 文案，未新增 locale 键），该行原有的"是否可执行"检查保持不动。渲染端载荷收敛为 `{ pathname, image, isPath }`，`upload-image.spec.ts` 改成钉"任何键名下都不许有选码用的字段越过边界"。
+  - **注册位置**：`registerSandboxIpcHandlers()` 从 `src/main/index.ts:77` 挪到 accessor 构造之后（:108 前）并收 `accessor` 参数——这是本次唯一改到启动顺序的地方，全量 E2E 233 通过 / 0 失败（7.2 分钟，退出 0）就是它没有把任何通道注册晚的证据。
+  - **② 剩下的**：`fs.ts:25-32` 的六条只读通道收域还没做。已量清的边界是：渲染端一共 10 个调用点，其中 8 个落在 userData / 已打开根内（`exportSettings/index.vue:529-542`、`util/pdf.ts:73-77` 都在 `userDataPath/themes/export`），主题导入那 1 个由上面的选择器授权解决；**唯一的判断点是 `util/fileSystem.ts:142` 的 `isExecutable(filepath)`**，它服务文档内链接点击、目标可以在授权根之外，把"探测类"通道与"内容类"通道一刀切收域会让点外部链接静默失效——这条要单独决定，不做完不算 ② 完成。`mt::rg::start`（`ipc/ripgrep.ts:442-452`）的 `directories[]` 是同一类递归读面，也要逐条过 scope。
 - 回滚点：偏好迁移需保留旧值读取一次以兼容，标 `deprecated` 后分版删除（①未做迁移：老 settings 文件里残留的 `imageFolderPath` 现在只是没人读的冗余键，不再被授权，因此不影响行为）。
 
 **O8 · IPC 契约是单向的** — 成本 M，影响 中 — **① handle 半边已完成 `cba0836`（分支 `refactor/typed-ipc-handle`）**
@@ -401,16 +405,16 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 **第二批 · 一到两周（信任边界与响应性，需要设计确认）**
 
-| PR        | 内容                                                                                                                                   | 依赖                         |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| PR-6      | O8 契约双向化 —— **①已实现** `cba0836`；②载荷归属并入 O7②                                                                              | 建议 PR-1 先合，作为回归样例 |
-| PR-7      | O7① 图片目录只经对话框 + O19 主进程可见键进 schema —— **已实现** `security/image-folder-dialog-only`（`6007c0a`+`b4776b9`，基于 PR-6） | PR-6（叠加其上）             |
-| PR-8      | O7② 读通道路径域 —— **未做**；前置改为"选择器结果即授权"（见 O7②），并顺带定 `mt::rg::start`/`mt::uploader::upload` 的载荷归属         | PR-7                         |
-| PR-9      | O9 批量写入合并广播 —— **已实现** `perf/preference-broadcast`（`2d56e65`+`300d03c`）                                                   | 无                           |
-| PR-22     | O22 Markdown 扩展名单一来源 —— **已实现** `fix/markdown-extension-single-source`（`76e5a92`）                                          | 无                           |
-| PR-11     | O4 空实现取舍（实现或摘入口）+ O18 最近文档失败可见性 —— **已实现** `fix/open-failure-visible`（`7bbedb5`+`f3e13be`）                  | 无                           |
-| ~~PR-10~~ | ~~O6 图片补全缓存失效 + 有界~~ — **取消**：缓存本来就会重建（见 O6 前提更正），残余是有界性且未测出量级                                | —                            |
-| ~~PR-12~~ | ~~O10 `isSamePathSync` 去阻塞~~ — **取消**：不在热路径（见 O10 撤下说明）                                                              | —                            |
+| PR        | 内容                                                                                                                                                                                                                                                            | 依赖                         |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| PR-6      | O8 契约双向化 —— **①已实现** `cba0836`；②载荷归属并入 O7②                                                                                                                                                                                                       | 建议 PR-1 先合，作为回归样例 |
+| PR-7      | O7① 图片目录只经对话框 + O19 主进程可见键进 schema —— **已实现** `security/image-folder-dialog-only`（`6007c0a`+`b4776b9`，基于 PR-6）                                                                                                                          | PR-6（叠加其上）             |
+| PR-8      | O7② 读通道路径域 —— **部分实现** `security/picker-grants-and-read-scope`（选择器结果即授权 + `mt::uploader::upload` 载荷归属，后者实测为"渲染端可指定主进程执行哪个程序"的信任边界洞，已闭）；六条只读通道收域仍未做，唯一判断点是 `is-executable` 服务链接点击 | PR-7                         |
+| PR-9      | O9 批量写入合并广播 —— **已实现** `perf/preference-broadcast`（`2d56e65`+`300d03c`）                                                                                                                                                                            | 无                           |
+| PR-22     | O22 Markdown 扩展名单一来源 —— **已实现** `fix/markdown-extension-single-source`（`76e5a92`）                                                                                                                                                                   | 无                           |
+| PR-11     | O4 空实现取舍（实现或摘入口）+ O18 最近文档失败可见性 —— **已实现** `fix/open-failure-visible`（`7bbedb5`+`f3e13be`）                                                                                                                                           | 无                           |
+| ~~PR-10~~ | ~~O6 图片补全缓存失效 + 有界~~ — **取消**：缓存本来就会重建（见 O6 前提更正），残余是有界性且未测出量级                                                                                                                                                         | —                            |
+| ~~PR-12~~ | ~~O10 `isSamePathSync` 去阻塞~~ — **取消**：不在热路径（见 O10 撤下说明）                                                                                                                                                                                       | —                            |
 
 > 第二批补记：O22 原本漏在 §4 表外（只在 §3 有条目），本轮以 PR-22 编号补进表内。O6/O10 从第二批移出，移出理由写在各自条目的更正段里，不另开"已删除"章节。
 
