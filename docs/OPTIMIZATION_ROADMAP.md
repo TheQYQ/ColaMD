@@ -293,7 +293,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法（已实施）：`openFileOrFolder` 的兜底分支由 `console.error` 改为经 `mt::show-notification` 报给该窗口（与 rename/move 失败同模式）；契约里给两条通道各补一行语义注释，免得下一轮又被判成重复。文案只新增标题 `dialog.openFailure`（11 份语言，值已各自翻译），消息复用既有的 `store.editor.fileRemovedOnDisk`，不新增长句翻译。
 - 验收（更正后）：原写的"E2E 点一条指向已删除文件的最近文档"**做不到**——reader 会把它过滤掉，构造不出该菜单项。改为单测 `open-path-failure-notification.spec.ts` 锁通知载荷，并用既有 `rename-failure-notification.spec.ts`（E2E，本地真窗口通过）证明这条通道真能渲染出通知条。
 
-**O19 · 偏好键的三处声明** — 成本 S，影响 中 — **主进程可见部分与 6 处默认值不一致均已完成 `b4776b9`（分支 `security/image-folder-dialog-only`）**
+**O19 · 偏好键的三处声明** — 成本 S，影响 中 — **两部分均已完成**：主进程可见键进 schema `b4776b9`（分支 `security/image-folder-dialog-only`），6 处默认值不一致 `cbed8b4`（分支 `fix/preference-default-parity`）\*\*
 
 > **测量更正**：本条原写"11 个偏好键只活在渲染端"。逐项定位后，那 10 个键**没有一个需要进 preferences schema**：`webImages`/`cloudImages`/`currentUploader`/`cliScript` 是 dataCenter 的键（`dataCenter/schema.json` 已声明 imageFolderPath 一族），`installedThemes`/`typewriter`/`focus`/`sourceCode`/`deleteUnreferencedImages` 是渲染端自己的状态（编辑模式注释即写明 not persisted），`imageFolderPath` 由 O7① 归给 dataCenter。真正的 schema 缺口只有 **1 个**：`treePathExcludePatterns`——它在 `static/preference.json` 有默认值、且被主进程读（`filesystem/watcher.ts:59`、`app/windowManager.ts:469`），却是 77 个键里唯一没有 schema 条目的。
 
