@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import Store, { type Schema } from 'electron-store'
-import { BrowserWindow, ipcMain, nativeTheme } from 'electron'
+import { BrowserWindow, dialog, ipcMain, nativeTheme } from 'electron'
 import log from 'electron-log'
 import { isWindows } from '../config'
 import { hasSameKeys } from '../utils'
@@ -190,13 +190,25 @@ class Preference extends TypedEmitter<PreferenceEvents> {
     // renderer widen its own mutation scope. Only the folder dialog in DataCenter
     // assigns that key, and the grant follows the user-data broadcast instead.
     ipcMain.on('mt::set-user-preference', (_e, settings: Record<string, unknown>) => {
-      const { imageFolderPath, ...rest } = settings || {}
-      if (imageFolderPath !== undefined) {
+      const { imageFolderPath, cliScript, ...rest } = settings || {}
+      if (imageFolderPath !== undefined || cliScript !== undefined) {
         log.warn(
-          'Rejected a renderer-side write of imageFolderPath; it is assigned by the folder dialog only.'
+          'Rejected a renderer-side write of imageFolderPath and/or cliScript; both are assigned by a main-process dialog only.'
         )
       }
       this.setItems(rest)
+    })
+    // `cliScript` is the program `mt::uploader::upload` runs, so a value the
+    // renderer can type is arbitrary code execution in the main process — same
+    // class of hole as the write-scope root above, same fix: only a native file
+    // dialog assigns it, and `setItem` broadcasts the result like any preference.
+    ipcMain.on('mt::ask-for-modify-cli-script', async(e) => {
+      const win = BrowserWindow.fromWebContents(e.sender)
+      if (!win) return
+      const { filePaths } = await dialog.showOpenDialog(win, { properties: ['openFile'] })
+      if (filePaths && filePaths[0]) {
+        this.setItem('cliScript', filePaths[0])
+      }
     })
     ipcMain.on('mt::cmd-toggle-autosave', () => {
       this.setItem('autoSave', !this.getItem('autoSave'))

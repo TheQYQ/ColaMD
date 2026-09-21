@@ -116,4 +116,36 @@ describe('O7(1) — the image folder is dialog-assigned only', () => {
 
     expect(dataCenter.getItem('imageFolderPath')).toBe(before)
   })
+
+  // O7(2) — `cliScript` names the program `mt::uploader::upload` execs, so the
+  // renderer must not be able to assign it either. Same rule, same mechanism.
+  it('drops a renderer-forged cliScript from the preference channel', () => {
+    const preference = new Preference({ preferencesPath: '/tmp/colamd-prefs' })
+    emitted.length = 0
+    fire('mt::set-user-preference', { theme: 'dark', cliScript: '/tmp/evil.sh' })
+
+    expect(preference.getItem<string>('theme')).toBe('dark')
+    expect(preference.getItem('cliScript')).toBeUndefined()
+    const broadcasts = payloadOf('broadcast-preferences-changed')
+    expect(broadcasts.length).toBe(1)
+    expect(broadcasts[0]).toEqual({ theme: 'dark' })
+  })
+
+  it('assigns cliScript only through the file dialog', async() => {
+    const preference = new Preference({ preferencesPath: '/tmp/colamd-prefs' })
+    showOpenDialog.mockResolvedValue({ filePaths: ['/usr/local/bin/upload.sh'] })
+
+    await (fire('mt::ask-for-modify-cli-script') as Promise<void>)
+
+    expect(preference.getItem('cliScript')).toBe('/usr/local/bin/upload.sh')
+  })
+
+  it('leaves cliScript alone when the script dialog is cancelled', async() => {
+    const preference = new Preference({ preferencesPath: '/tmp/colamd-prefs' })
+    showOpenDialog.mockResolvedValue({ filePaths: [] })
+
+    await (fire('mt::ask-for-modify-cli-script') as Promise<void>)
+
+    expect(preference.getItem('cliScript')).toBeUndefined()
+  })
 })

@@ -316,6 +316,12 @@ export const usePreferencesStore = defineStore('preferences', {
       window.electron.ipcRenderer.send('mt::ask-for-modify-image-folder-path')
     },
 
+    SET_CLI_SCRIPT(): void {
+      // Same rule as the image folder: the value names a program the main
+      // process executes, so only a native file dialog may assign it.
+      window.electron.ipcRenderer.send('mt::ask-for-modify-cli-script')
+    },
+
     SELECT_DEFAULT_DIRECTORY_TO_OPEN(): void {
       window.electron.ipcRenderer.send('mt::select-default-directory-to-open')
     },

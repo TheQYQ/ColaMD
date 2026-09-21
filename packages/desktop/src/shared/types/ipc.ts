@@ -93,7 +93,19 @@ export interface IpcInvokeChannels {
   'mt::spellchecker-remove-word': { args: [word: string]; ret: boolean }
   'mt::spellchecker-set-enabled': { args: [enabled: boolean]; ret: boolean }
   'mt::spellchecker-switch-language': { args: [language: string]; ret: void }
-  'mt::uploader::upload': { args: [req: unknown]; ret: unknown }
+  // The contract owns this shape, and the renderer's `uploadImage` must satisfy
+  // it: `cliScript` used to ride along here, i.e. the message named the program
+  // the main process would exec.
+  'mt::uploader::upload': {
+    args: [
+      req: {
+        pathname: string
+        image: string | { data: Uint8Array | number[]; name: string }
+        isPath: boolean
+      }
+    ]
+    ret: unknown
+  }
   'mt::version-history:save': {
     args: [snapshot: VersionSnapshot]
     ret: VersionSnapshot | null
@@ -137,6 +149,7 @@ export interface IpcSendChannels {
   // No argument: main opens the picker and assigns the result itself, because
   // this folder is also a write-scope root (see security/pathScope.ts).
   'mt::ask-for-modify-image-folder-path': []
+  'mt::ask-for-modify-cli-script': []
   'mt::ask-for-open-file-in-sidebar': []
   'mt::ask-for-user-data': []
   'mt::ask-for-user-preference': []

@@ -807,12 +807,7 @@ const imageAction = async (
   switch (imageInsertAction.value) {
     case 'upload': {
       try {
-        // Pass the full preferences state object to avoid dereferencing non-existent .value
-        destImagePath = (await uploadImage(
-          currentPathname,
-          image,
-          preferencesStore.$state as unknown as import('@/util/fileSystem').UploadImagePreferences
-        )) as string
+        destImagePath = (await uploadImage(currentPathname, image)) as string
       } catch (err) {
         notice.notify({
           title: 'Upload Image',
