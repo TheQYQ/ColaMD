@@ -24,7 +24,8 @@ export default [
       'packages/desktop/src/renderer/src/assets/symbolIcon/index.js',
       '**/*.min.json',
       '**/test-results/**',
-      '**/playwright-report/**'
+      '**/playwright-report/**',
+      '**/coverage/**'
     ]
   },
 

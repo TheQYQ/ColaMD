@@ -17,14 +17,34 @@ concurrency:
 
 jobs:
   e2e:
-    # Full postinstall + build + the whole e2e suite takes ~7 min.
+    # Full postinstall + build + the whole e2e suite takes ~7 min on linux. The
+    # macOS leg below has never run, so it gets the same cap and can only prove
+    # itself slower or fail — never silently hang for hours.
     timeout-minutes: 30
 
-    runs-on: ubuntu-24.04
+    strategy:
+      # Same reason build.yml sets this: one leg flaking must not cancel the
+      # other's results, or a red run reads as two red runs.
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux
+            os: ubuntu-24.04
+            platform: linux
+          # O14 ②: the product ships macOS installers, and the whole Playwright
+          # suite ran exclusively on ubuntu-24.04 until now. Windows is
+          # deliberately not added here (see docs/OPTIMIZATION_ROADMAP.md O14:
+          # headless Electron plus the native modules cost more than they buy,
+          # and `test.yml` already covers Windows at the unit level).
+          - name: macos
+            os: macos-15
+            platform: macos
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Install System Dependencies
+        if: matrix.platform == 'linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -34,6 +54,12 @@ jobs:
 
       - uses: ./.github/actions/setup
 
+      # Mirrors build.yml: must be set before postinstall runs electron-rebuild.
+      - name: Set C++20 for MacOS
+        if: matrix.platform == 'macos'
+        run: |
+          echo "CXXFLAGS=-std=gnu++20 -stdlib=libc++" >> $GITHUB_ENV
+
       # Run the full postinstall: Electron binary download, patch-package,
       # electron-rebuild, and minify-locales.
       - name: Run postinstall
@@ -41,13 +67,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           npm_config_user_agent: 'pnpm'
-          USE_ELECTRON_CLANG: '0'
+          USE_ELECTRON_CLANG: ${{ matrix.platform == 'linux' && '0' || '' }}
 
       - name: Build app
         run: pnpm build
 
-      - name: Run E2E Tests
+      # Linux has no display server, hence xvfb. macOS runners boot into a real
+      # window-server session, so the Electron windows launch without one — and
+      # `xvfb-run` does not exist there.
+      - name: Run E2E Tests (linux)
+        if: matrix.platform == 'linux'
         run: xvfb-run --auto-servernum pnpm test:e2e
+
+      - name: Run E2E Tests (macos)
+        if: matrix.platform == 'macos'
+        run: pnpm test:e2e
 
       # Playwright writes traces (see trace: 'on-first-retry' in
       # test/e2e/playwright.config.ts) and an HTML report under
@@ -58,7 +92,9 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-diagnostics
+          # Two legs, two artifacts: a shared name would make the second upload
+          # overwrite the first, and the leg that failed is the one you need.
+          name: e2e-diagnostics-${{ matrix.name }}
           path: |
             packages/desktop/test-results/**
             packages/desktop/playwright-report/**
