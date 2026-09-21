@@ -30,3 +30,49 @@ jobs:
 
       - name: Run Unit Tests
         run: pnpm test
+
+  # O14 ③ — both packages have carried a coverage provider in devDependencies
+  # for a long time (`@vitest/coverage-v8` for desktop, `@vitest/coverage-istanbul`
+  # for the engine, whose `coverage` script predates this workflow) and neither
+  # has ever produced a number anyone could read. This job reports and uploads
+  # only: no thresholds, and `continue-on-error` on every step, so it cannot
+  # block a merge. Whether to turn any part of it into a gate is a separate
+  # decision with a baseline to argue from (docs/OPTIMIZATION_ROADMAP.md O14 ③).
+  #
+  # What the desktop number does NOT include: `.vue` single-file components. The
+  # v8 provider's remapper cannot parse them (`Failed to parse .../Main.vue.
+  # Excluding it from coverage.`), which is why the script scopes the include to
+  # `src/**/*.ts` — measuring only what the tool can read, instead of printing
+  # an error per component and a denominator that silently ignores them.
+  coverage:
+    # Desktop suite under instrumentation plus the engine's own run, on top of
+    # the install the test job also pays.
+    timeout-minutes: 25
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      # Each package reports separately, and the first one failing must not
+      # hide the second one's number.
+      - name: Desktop unit coverage
+        continue-on-error: true
+        run: pnpm -C packages/desktop test:coverage
+
+      - name: Engine unit coverage
+        continue-on-error: true
+        run: pnpm -C packages/muya coverage
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            packages/desktop/coverage/**
+            packages/muya/coverage/**
+          retention-days: 14
+          # Same reasoning as e2e.yml's upload: a step that died before writing
+          # a report must not turn into a second failure here.
+          if-no-files-found: ignore
