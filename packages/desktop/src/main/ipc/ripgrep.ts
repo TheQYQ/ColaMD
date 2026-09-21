@@ -3,6 +3,7 @@ import path from 'path'
 import { ipcMain, type WebContents } from 'electron'
 import log from 'electron-log'
 import { rgPath as bundledRgPath } from '@vscode/ripgrep'
+import { assertPathInScope } from '../security/pathScope'
 
 const resolveRgPath = (): string => {
   if (process.env.COLAMD_RIPGREP_PATH) return process.env.COLAMD_RIPGREP_PATH
@@ -444,9 +445,17 @@ export const registerRipgrepHandlers = (): void => {
   // the renderer ships a JSON clone of its own options and main reads named fields.
   // Deciding who owns that payload shape is validation work, tracked as O7②.
   // eslint-disable-next-line no-restricted-syntax -- payload shape owned by neither side yet
-  ipcMain.handle('mt::rg::start', (event, req: RipgrepRequest) => {
+  ipcMain.handle('mt::rg::start', async(event, req: RipgrepRequest) => {
     const { searchId, mode, directories, pattern, options } = req
     cleanupAtSenderDestroy(event.sender)
+    // A search answers with file contents and paths, so it discloses the same
+    // kind of data as `mt::fs::read-file` / `readdir` — recursively, which makes
+    // it the widest one. Every directory the renderer names must therefore sit
+    // inside a granted root; real callers only ever name an opened folder or a
+    // document's own directory, both registered when the window opens them.
+    for (const dir of directories ?? []) {
+      await assertPathInScope(dir)
+    }
     if (mode === 'files') startFileSearch(event.sender, searchId, directories, options || {})
     else startTextSearch(event.sender, searchId, directories, pattern, options || {})
   })
