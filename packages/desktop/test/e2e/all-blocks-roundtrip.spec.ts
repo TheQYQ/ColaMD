@@ -50,6 +50,15 @@ const save = async(app: ElectronApplication): Promise<void> => {
 
 const readDisk = (): string => fs.readFileSync(FIXTURE_ABS, 'utf-8')
 
+// The fixture is committed with LF (`git ls-files --eol` says i/lf) but a Windows
+// checkout with core.autocrlf gets CRLF in the working tree, while the engine
+// serializes LF. Comparing the raw bytes therefore made every one of the four
+// byte-stability assertions below fail on Windows and pass on Linux, reporting
+// "the round trip reformats the document" when nothing of the sort happened. The
+// comparison is about content, so it uses the committed form; the file is still
+// put back byte-for-byte on teardown.
+const asCommitted = (text: string): string => text.replace(/\r\n/g, '\n')
+
 const isDirty = (page: Page): Promise<boolean> =>
   page.evaluate((sel) => !!document.querySelector(sel), UNSAVED_DOT)
 
@@ -57,12 +66,14 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
   let app: ElectronApplication
   let page: Page
   let original: string
+  let originalRaw: string
 
   test.beforeAll(async() => {
     // Snapshot the on-disk bytes BEFORE launching so we can restore them in
     // afterAll (the test saves into the real fixture file) and so we have the
     // exact baseline to compare the serialized + saved content against.
-    original = readDisk()
+    originalRaw = readDisk()
+    original = asCommitted(originalRaw)
     const launched = await launchWithDoc(FIXTURE_REL)
     app = launched.app
     page = launched.page
@@ -76,7 +87,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
     // Restore the fixture to its original bytes regardless of test outcome so
     // the working tree is left untouched.
     try {
-      fs.writeFileSync(FIXTURE_ABS, original, 'utf-8')
+      fs.writeFileSync(FIXTURE_ABS, originalRaw, 'utf-8')
     } catch {
       /* ignore */
     }
@@ -153,7 +164,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
 
     // The bytes written to disk equal the original fixture (no reformat on
     // save). Poll because the disk write is async on the main side.
-    await expect.poll(() => readDisk(), { timeout: 5000 }).toBe(original)
+    await expect.poll(() => asCommitted(readDisk()), { timeout: 5000 }).toBe(original)
 
     // And the in-editor serialization still matches.
     expect(await getMarkdownContent(page, app)).toBe(original)
@@ -175,6 +186,6 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
 
     await save(app)
     await expect.poll(() => isDirty(page), { timeout: 5000 }).toBe(false)
-    await expect.poll(() => readDisk(), { timeout: 5000 }).toBe(editorContent)
+    await expect.poll(() => asCommitted(readDisk()), { timeout: 5000 }).toBe(editorContent)
   })
 })
