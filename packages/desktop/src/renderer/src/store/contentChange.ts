@@ -13,6 +13,46 @@ export const isNewlineOnlyFromEmpty = (oldMarkdown: string, markdown: string): b
   oldMarkdown.length === 0 && markdown.length === 1 && markdown[0] === '\n'
 
 /**
+ * An external reload replaces the tab's document, so the frame the user was
+ * standing on is kept as the single entry of a fresh one-frame history: that is
+ * what makes the first undo return the pre-reload document. Everything else is
+ * dropped, and the frame is released from the old stack on the way out — the
+ * release happens whether or not a frame was found, as before.
+ */
+export const takeReloadBoundary = (
+  history: IFileState['history']
+): IFileState['history'] | null => {
+  const { index, stack } = history
+  // Written as a negation of the old `histIndex >= 0 && stack.length >= 1` so a
+  // non-numeric index short-circuits exactly as it did inline, instead of
+  // decrementing to NaN and dropping a frame on the way out.
+  if (!(index >= 0) || stack.length < 1) return null
+
+  const entry = stack[index]
+  const boundary = entry ? { stack: [entry], index: 0 } : null
+
+  history.index--
+  history.stack.pop()
+  return boundary
+}
+
+/**
+ * The id of the history frame the editor currently sits on, or undefined when
+ * there is none to record — no index, an index past the stack, or a frame whose
+ * id is not the numeric form the save tracking uses. `MARK_TAB_SAVED` stores
+ * this as `lastSavedHistoryId`, which is what `historyMarksDirty` compares
+ * against, so an id of 0 must survive the comparison rather than read as absent.
+ */
+export const historyFrameId = (history: IFileState['history']): number | undefined => {
+  const { stack, lastEditIndex } = history
+  if (typeof lastEditIndex !== 'number' || lastEditIndex < 0 || lastEditIndex >= stack.length) {
+    return undefined
+  }
+  const entry = stack[lastEditIndex]
+  return entry && typeof entry.id === 'number' ? entry.id : undefined
+}
+
+/**
  * Whether the history stack says the tab holds unsaved work.
  *
  * Normally the frame at `lastEditIndex` is compared against the frame that was

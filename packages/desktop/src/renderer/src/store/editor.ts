@@ -20,11 +20,17 @@ import {
 import {
   createFileChangedEvent,
   exchangeTargetIndex,
+  initialTabsToOpen,
   moveItem,
   nextCycleIndex,
   selectTabAfterClose
 } from './tabOps'
-import { historyMarksDirty, isNewlineOnlyFromEmpty } from './contentChange'
+import {
+  historyFrameId,
+  historyMarksDirty,
+  isNewlineOnlyFromEmpty,
+  takeReloadBoundary
+} from './contentChange'
 import {
   FileEncodingCommand,
   LineEndingCommand,
@@ -43,8 +49,9 @@ import {
   resolveCleanupCandidate,
   type CleanupCandidate
 } from '../util/imageCleanup'
-import type { VersionSnapshot } from '@shared/types/ipc'
+import type { IpcMainEventChannels, VersionSnapshot } from '@shared/types/ipc'
 import type {
+  BootstrapEditorConfig,
   IFileState,
   FileNotification,
   LineEnding,
@@ -172,6 +179,18 @@ export interface EditorState {
 }
 
 const autoSaveTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+/**
+ * Drop a tab's pending auto-save. Three paths need it — the tab closed, a newer
+ * edit re-arms it, or the disk version takes over — and in all three a timer left
+ * armed would write content the user has already moved past.
+ */
+const clearAutoSaveTimer = (id: string | undefined): void => {
+  if (!id) return
+  const timer = autoSaveTimers.get(id)
+  if (timer !== undefined) clearTimeout(timer)
+  autoSaveTimers.delete(id)
+}
 
 // Pending unreferenced-image cleanup checks, keyed by absolute path. The
 // delay gives undo (or a cut followed by an immediate paste-back) a window to
@@ -377,22 +396,7 @@ export const useEditorStore = defineStore('editor', {
       const oldNotifications = tab.notifications
       // Preserve scroll across external reload so the editor stays put.
       const oldScrollTop = tab.scrollTop
-      let oldHistory: IFileState['history'] | null = null
-      const histIndex = tab.history.index
-      if (histIndex >= 0 && tab.history.stack.length >= 1) {
-        const entry = tab.history.stack[histIndex]
-        if (entry) {
-          // Allow to restore the old document.
-          oldHistory = {
-            stack: [entry],
-            index: 0
-          }
-        }
-
-        // Free reference from array
-        tab.history.index--
-        tab.history.stack.pop()
-      }
+      const oldHistory = takeReloadBoundary(tab.history)
 
       // Update file content and restore some entries.
       Object.assign(tab, newFileState)
@@ -646,75 +650,84 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
+    /**
+     * A tab acquired a real path (save-as or a dialog save). A tab already open
+     * on that path is closed first, since two tabs on one file would fight over
+     * it; the surviving tab keeps its id so undo and watchers stay attached.
+     */
+    SET_PATHNAME(fileInfo: IpcMainEventChannels['mt::set-pathname'][0]): void {
+      const { tabs } = this
+      const { pathname, id, filename } = fileInfo
+      const tab = tabs.find((f) => f.id === id)
+      if (!tab) {
+        console.error('[ERROR] Cannot change file path from unknown tab.')
+        return
+      }
+
+      const existingTab = tabs.find(
+        (t) => t.id !== id && window.fileUtils.isSamePathSync(t.pathname, pathname)
+      )
+      if (existingTab) {
+        this.CLOSE_TAB(existingTab)
+      }
+
+      if (id === this.currentFile?.id && pathname) {
+        window.DIRNAME = window.path.dirname(pathname)
+      }
+      Object.assign(tab, { filename, pathname, isSaved: true })
+      debouncedSendBufferedState()
+    },
+
+    /**
+     * Main finished writing the tab. Remember which history frame that was: the
+     * saved flag is re-derived from it later, so an undo back to this exact
+     * content clears the dot again without comparing text.
+     */
+    MARK_TAB_SAVED(tabId: string): void {
+      const tab = this.tabs.find((f) => f.id === tabId)
+      if (!tab) return
+
+      const frameId = historyFrameId(tab.history)
+      if (frameId !== undefined) {
+        tab.lastSavedHistoryId = frameId
+      }
+      tab.isSaved = true
+      debouncedSendBufferedState()
+    },
+
+    TAB_SAVE_FAILURE(tabId: string, msg: string): void {
+      const tab = this.tabs.find((t) => t.id === tabId)
+      if (!tab) {
+        notice.notify({
+          title: t('dialog.saveFailure'),
+          message: msg,
+          type: 'error',
+          time: 20000,
+          showConfirm: false
+        })
+        return
+      }
+
+      tab.isSaved = false
+      this.pushTabNotification({
+        tabId,
+        msg: t('store.editor.errorWhileSaving', { msg }),
+        style: 'crit'
+      })
+      debouncedSendBufferedState()
+    },
+
     LISTEN_FOR_SET_PATHNAME(): void {
       window.electron.ipcRenderer.on('mt::set-pathname', (_, fileInfo) => {
-        const { tabs } = this
-        const { pathname, id } = fileInfo
-        const tab = tabs.find((f) => f.id === id)
-        if (!tab) {
-          console.error('[ERROR] Cannot change file path from unknown tab.')
-          return
-        }
-
-        // If a tab with the same file path already exists we need to close the tab.
-        // The existing tab is overwritten by this tab.
-        const existingTab = tabs.find(
-          (t) => t.id !== id && window.fileUtils.isSamePathSync(t.pathname, pathname)
-        )
-        if (existingTab) {
-          this.CLOSE_TAB(existingTab)
-        }
-
-        // SET_PATHNAME
-        const { filename } = fileInfo
-        if (id === this.currentFile?.id && pathname) {
-          window.DIRNAME = window.path.dirname(pathname)
-        }
-        if (tab) {
-          Object.assign(tab, { filename, pathname, isSaved: true })
-          debouncedSendBufferedState()
-        }
+        this.SET_PATHNAME(fileInfo)
       })
 
       window.electron.ipcRenderer.on('mt::tab-saved', (_, tabId) => {
-        const tab = this.tabs.find((f) => f.id === tabId)
-        if (tab) {
-          const lastEditIndex = tab.history.lastEditIndex
-          if (
-            typeof lastEditIndex === 'number' &&
-            lastEditIndex >= 0 &&
-            lastEditIndex < tab.history.stack.length
-          ) {
-            const entry = tab.history.stack[lastEditIndex]
-            if (entry && typeof entry.id === 'number') {
-              tab.lastSavedHistoryId = entry.id
-            }
-          }
-          tab.isSaved = true
-          debouncedSendBufferedState()
-        }
+        this.MARK_TAB_SAVED(tabId)
       })
 
       window.electron.ipcRenderer.on('mt::tab-save-failure', (_, tabId, msg) => {
-        const tab = this.tabs.find((t) => t.id === tabId)
-        if (!tab) {
-          notice.notify({
-            title: t('dialog.saveFailure'),
-            message: msg,
-            type: 'error',
-            time: 20000,
-            showConfirm: false
-          })
-          return
-        }
-
-        tab.isSaved = false
-        this.pushTabNotification({
-          tabId,
-          msg: t('store.editor.errorWhileSaving', { msg }),
-          style: 'crit'
-        })
-        debouncedSendBufferedState()
+        this.TAB_SAVE_FAILURE(tabId, msg)
       })
     },
 
@@ -946,11 +959,44 @@ export const useEditorStore = defineStore('editor', {
     },
 
     // This events are only used during window creation.
-    LISTEN_FOR_BOOTSTRAP_WINDOW(): void {
+    /**
+     * The first message from a freshly loaded window: fold the launch config into
+     * the other stores, then open whatever tabs it asks for. Kept apart from the
+     * registration below so the sequence can be driven from a test.
+     */
+    APPLY_BOOTSTRAP_EDITOR(config: BootstrapEditorConfig): void {
+      const {
+        welcomeMarkdown,
+        addBlankTab,
+        markdownList,
+        lineEnding,
+        sideBarVisibility,
+        tabBarVisibility,
+        sourceCodeModeEnabled
+      } = config
+
       const preferencesStore = usePreferencesStore()
       const layoutStore = useLayoutStore()
-      const projectStore = useProjectStore()
       const mainStore = useMainStore()
+
+      mainStore.SET_INITIALIZED()
+      preferencesStore.SET_USER_PREFERENCE({ endOfLine: lineEnding })
+      layoutStore.SET_LAYOUT({
+        rightColumn: 'files',
+        showSideBar: !!sideBarVisibility,
+        showTabBar: !!tabBarVisibility
+      })
+      layoutStore.DISPATCH_LAYOUT_MENU_ITEMS()
+      preferencesStore.SET_MODE({ type: 'sourceCode', checked: !!sourceCodeModeEnabled })
+
+      for (const request of initialTabsToOpen({ welcomeMarkdown, addBlankTab, markdownList })) {
+        this.NEW_UNTITLED_TAB(request)
+      }
+    },
+
+    LISTEN_FOR_BOOTSTRAP_WINDOW(): void {
+      const projectStore = useProjectStore()
+      const preferencesStore = usePreferencesStore()
 
       // Delay load runtime commands and initialize commands.
       setTimeout(() => {
@@ -973,43 +1019,7 @@ export const useEditorStore = defineStore('editor', {
       }, 400)
 
       window.electron.ipcRenderer.on('mt::bootstrap-editor', (_, config) => {
-        const {
-          addBlankTab,
-          welcomeMarkdown,
-          markdownList,
-          lineEnding,
-          sideBarVisibility,
-          tabBarVisibility,
-          sourceCodeModeEnabled
-        } = config
-
-        mainStore.SET_INITIALIZED()
-        preferencesStore.SET_USER_PREFERENCE({ endOfLine: lineEnding })
-        layoutStore.SET_LAYOUT({
-          rightColumn: 'files',
-          showSideBar: !!sideBarVisibility,
-          showTabBar: !!tabBarVisibility
-        })
-        layoutStore.DISPATCH_LAYOUT_MENU_ITEMS()
-        preferencesStore.SET_MODE({
-          type: 'sourceCode',
-          checked: !!sourceCodeModeEnabled
-        })
-
-        if (welcomeMarkdown) {
-          this.NEW_UNTITLED_TAB({ markdown: String(welcomeMarkdown), selected: true })
-        } else if (addBlankTab) {
-          this.NEW_UNTITLED_TAB({ selected: true })
-        } else if (markdownList.length) {
-          let isFirst = true
-          for (const md of markdownList) {
-            this.NEW_UNTITLED_TAB({
-              markdown: md,
-              selected: isFirst
-            })
-            isFirst = false
-          }
-        }
+        this.APPLY_BOOTSTRAP_EDITOR(config)
       })
     },
 
@@ -1093,11 +1103,7 @@ export const useEditorStore = defineStore('editor', {
         this.updateTabIdToIndex()
       }
 
-      if (file.id && autoSaveTimers.has(file.id)) {
-        const timer = autoSaveTimers.get(file.id)
-        if (timer) clearTimeout(timer)
-        autoSaveTimers.delete(file.id)
-      }
+      clearAutoSaveTimer(file.id)
 
       // Snapshot on close so the user can recover unsaved work from the
       // history panel even if they chose "Don't Save".
@@ -1584,11 +1590,7 @@ export const useEditorStore = defineStore('editor', {
       const projectStore = useProjectStore()
       const { autoSaveDelay } = preferencesStore
 
-      if (autoSaveTimers.has(id)) {
-        const timer = autoSaveTimers.get(id)
-        clearTimeout(timer)
-        autoSaveTimers.delete(id)
-      }
+      clearAutoSaveTimer(id)
 
       const timer = setTimeout(() => {
         autoSaveTimers.delete(id)
@@ -1760,79 +1762,89 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
-    LISTEN_FOR_FILE_CHANGE(): void {
+    /**
+     * A tab's file moved on disk — deleted, or rewritten by something outside the
+     * app (git checkout, an editor, a formatter). Either stay quiet, reload from
+     * disk, or ask the user first; the branches below are that decision.
+     *
+     * `change.data` is `unknown` in the cross-process contract, so the two places
+     * that need the loaded-document shape cast it; main fills it from
+     * `loadMarkdownFile`.
+     */
+    HANDLE_DISK_CHANGE(payload: IpcMainEventChannels['mt::update-file'][0]): void {
       const preferencesStore = usePreferencesStore()
-      window.electron.ipcRenderer.on('mt::update-file', (_, payload) => {
-        const { type, change } = payload
-        const { tabs } = this
-        const { pathname } = change
-        const tab = tabs.find((t) => window.fileUtils.isSamePathSync(t.pathname, pathname))
-        if (tab) {
-          const { id, isSaved, filename } = tab
-          switch (type) {
-            case 'unlink': {
-              tab.isSaved = false
-              this.pushTabNotification({
-                tabId: id,
-                msg: t('store.editor.fileRemovedOnDisk', { name: filename }),
-                style: 'warn',
-                showConfirm: false,
-                exclusiveType: 'file_changed'
-              })
-              debouncedSendBufferedState()
-              break
-            }
-            case 'add':
-            case 'change': {
-              // Flush the active tab first: its `tab.markdown` lags the live
-              // engine until a flush, and comparing against a stale value
-              // would falsely report a content change and warn/reload (#1861).
-              if (tab.id === this.currentFile?.id) {
-                this.flushActiveEditor()
-              }
-              // Only the file's metadata changed on disk (e.g. a git checkout
-              // that left the content byte-identical) — there is nothing to
-              // reload and no reason to warn the user (#1861).
-              const newMarkdown = (change as unknown as FileChangePayload).data?.markdown
-              if (typeof newMarkdown === 'string' && newMarkdown === tab.markdown) {
-                break
-              }
+      const { type, change } = payload
+      const { tabs } = this
+      const { pathname } = change
+      const tab = tabs.find((t) => window.fileUtils.isSamePathSync(t.pathname, pathname))
+      if (!tab) {
+        console.error(`HANDLE_DISK_CHANGE: Cannot find tab for path "${pathname}".`)
+        return
+      }
 
-              const { autoSave } = preferencesStore
-              if (autoSave) {
-                if (autoSaveTimers.has(id)) {
-                  const timer = autoSaveTimers.get(id)
-                  if (timer) clearTimeout(timer)
-                  autoSaveTimers.delete(id)
-                }
-
-                if (isSaved) {
-                  this.loadChange(change as unknown as FileChangePayload)
-                  return
-                }
-              }
-
-              tab.isSaved = false
-              this.pushTabNotification({
-                tabId: id,
-                msg: t('store.editor.fileChangedOnDisk', { name: filename }),
-                showConfirm: true,
-                exclusiveType: 'file_changed',
-                action: (status) => {
-                  if (status) {
-                    this.loadChange(change as unknown as FileChangePayload)
-                  }
-                }
-              })
-              debouncedSendBufferedState()
-              break
-            }
-            default:
-              console.error(`LISTEN_FOR_FILE_CHANGE: Invalid type "${type}"`)
-          }
-        } else {
-          console.error(`LISTEN_FOR_FILE_CHANGE: Cannot find tab for path "${pathname}".`)
+      const { id, isSaved, filename } = tab
+      switch (type) {
+        case 'unlink': {
+          tab.isSaved = false
+          this.pushTabNotification({
+            tabId: id,
+            msg: t('store.editor.fileRemovedOnDisk', { name: filename }),
+            style: 'warn',
+            showConfirm: false,
+            exclusiveType: 'file_changed'
+          })
+          debouncedSendBufferedState()
+          break
         }
+        case 'add':
+        case 'change': {
+          // Flush the active tab first: its `tab.markdown` lags the live
+          // engine until a flush, and comparing against a stale value
+          // would falsely report a content change and warn/reload (#1861).
+          if (tab.id === this.currentFile?.id) {
+            this.flushActiveEditor()
+          }
+          // Only the file's metadata changed on disk (e.g. a git checkout
+          // that left the content byte-identical) — there is nothing to
+          // reload and no reason to warn the user (#1861).
+          const newMarkdown = (change as unknown as FileChangePayload).data?.markdown
+          if (typeof newMarkdown === 'string' && newMarkdown === tab.markdown) {
+            break
+          }
+
+          const { autoSave } = preferencesStore
+          if (autoSave) {
+            clearAutoSaveTimer(id)
+
+            if (isSaved) {
+              this.loadChange(change as unknown as FileChangePayload)
+              return
+            }
+          }
+
+          tab.isSaved = false
+          this.pushTabNotification({
+            tabId: id,
+            msg: t('store.editor.fileChangedOnDisk', { name: filename }),
+            showConfirm: true,
+            exclusiveType: 'file_changed',
+            action: (status) => {
+              if (status) {
+                this.loadChange(change as unknown as FileChangePayload)
+              }
+            }
+          })
+          debouncedSendBufferedState()
+          break
+        }
+        default:
+          console.error(`HANDLE_DISK_CHANGE: Invalid type "${type}"`)
+      }
+    },
+
+    LISTEN_FOR_FILE_CHANGE(): void {
+      window.electron.ipcRenderer.on('mt::update-file', (_, payload) => {
+        this.HANDLE_DISK_CHANGE(payload)
       })
     },
 

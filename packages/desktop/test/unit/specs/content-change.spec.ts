@@ -1,13 +1,81 @@
 import { describe, expect, it } from 'vitest'
 import type { IFileState } from '@shared/types/files'
-import { historyMarksDirty, isNewlineOnlyFromEmpty } from '@/store/contentChange'
+import {
+  historyFrameId,
+  historyMarksDirty,
+  isNewlineOnlyFromEmpty,
+  takeReloadBoundary
+} from '@/store/contentChange'
 
-// O12(4) — the two predicates LISTEN_FOR_CONTENT_CHANGE decides on, pinned outside
-// the action so the dirty rule (which is what decides whether a save is owed) has
-// a name and a case for each of its branches.
+// O12(4)+(5) — the decisions LISTEN_FOR_CONTENT_CHANGE and the external-reload
+// path make, pinned outside the actions so each rule has a name and a case for
+// every branch it owns.
 
 const history = (over: Partial<IFileState['history']> = {}): IFileState['history'] =>
   ({ stack: [{ id: 1 }, { id: 2 }, { id: 3 }], index: 0, ...over }) as IFileState['history']
+
+describe('historyFrameId', () => {
+  it('reads the frame the editor sits on', () => {
+    expect(historyFrameId(history({ lastEditIndex: 2 }))).toBe(3)
+    expect(historyFrameId(history({ lastEditIndex: 0 }))).toBe(1)
+  })
+
+  it('returns undefined for no frame, a negative index, or one past the stack', () => {
+    expect(historyFrameId(history({ lastEditIndex: undefined }))).toBeUndefined()
+    expect(historyFrameId(history({ lastEditIndex: -1 }))).toBeUndefined()
+    expect(historyFrameId(history({ lastEditIndex: 9 }))).toBeUndefined()
+  })
+
+  it('keeps a frame id of 0, which a truthiness check would drop', () => {
+    const zeroBased = { stack: [{ id: 0 }], index: 0, lastEditIndex: 0 } as IFileState['history']
+    expect(historyFrameId(zeroBased)).toBe(0)
+  })
+
+  it('ignores a frame whose id is not the numeric save-tracking form', () => {
+    const stringy = { stack: [{ id: 'mu-1' }], index: 0, lastEditIndex: 0 } as IFileState['history']
+    expect(historyFrameId(stringy)).toBeUndefined()
+  })
+})
+
+describe('takeReloadBoundary', () => {
+  it('keeps the frame the user stands on and releases the rest', () => {
+    const hist = {
+      stack: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      index: 1
+    } as IFileState['history']
+
+    expect(takeReloadBoundary(hist)).toEqual({ stack: [{ id: 2 }], index: 0 })
+    expect(hist).toMatchObject({ index: 0, stack: [{ id: 1 }, { id: 2 }] })
+  })
+
+  it('returns nothing before the first frame, without touching the stack', () => {
+    const hist = { stack: [{ id: 1 }], index: -1 } as IFileState['history']
+
+    expect(takeReloadBoundary(hist)).toBeNull()
+    expect(hist).toMatchObject({ index: -1, stack: [{ id: 1 }] })
+  })
+
+  it('returns nothing for an empty stack', () => {
+    const hist = { stack: [], index: 0 } as IFileState['history']
+
+    expect(takeReloadBoundary(hist)).toBeNull()
+    expect(hist.stack).toEqual([])
+  })
+
+  it('leaves the stack alone when the index is not a number at all', () => {
+    const hist = { stack: [{ id: 1 }], index: undefined } as unknown as IFileState['history']
+
+    expect(takeReloadBoundary(hist)).toBeNull()
+    expect(hist).toMatchObject({ index: undefined, stack: [{ id: 1 }] })
+  })
+
+  it('still releases a slot when the index runs past the stack', () => {
+    const hist = { stack: [{ id: 1 }], index: 4 } as IFileState['history']
+
+    expect(takeReloadBoundary(hist)).toBeNull()
+    expect(hist).toMatchObject({ index: 3, stack: [] })
+  })
+})
 
 describe('isNewlineOnlyFromEmpty', () => {
   it('matches only an empty buffer becoming a lone newline', () => {
