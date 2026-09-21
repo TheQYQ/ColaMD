@@ -56,7 +56,7 @@ export const moveItem = <T>(arr: T[], from: number, to: number): boolean => {
 }
 
 /** One tab the freshly loaded window should open. */
-export interface BootstrapTabRequest {
+interface BootstrapTabRequest {
   markdown?: string
   selected: boolean
 }

@@ -16,7 +16,7 @@ const undo = async(app: Parameters<typeof sendIpcToRenderer>[0]): Promise<void> 
 // Reproduce the watcher's external-change report: the same `mt::update-file`
 // payload shape the main-process watcher sends (a `loadMarkdownFile` result in
 // `change.data`). Drives the real renderer reload path
-// LISTEN_FOR_FILE_CHANGE → loadChange → bus `file-changed` → handleFileChange.
+// LISTEN_FOR_FILE_CHANGE → HANDLE_DISK_CHANGE → loadChange → bus `file-changed` → handleFileChange.
 const reportExternalChange = async(
   app: Parameters<typeof sendIpcToRenderer>[0],
   pathname: string,

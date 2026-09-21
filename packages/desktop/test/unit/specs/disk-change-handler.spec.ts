@@ -36,6 +36,7 @@ vi.mock('@/store/bufferedState', () => ({
 }))
 
 import notice from '@/services/notification'
+import { debouncedSendBufferedState } from '@/store/bufferedState'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
 
@@ -94,11 +95,16 @@ describe('useEditorStore.HANDLE_DISK_CHANGE', () => {
   it('says nothing about a tab that is not open', () => {
     const store = useEditorStore()
     store.tabs = [] as unknown as typeof store.tabs
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     store.HANDLE_DISK_CHANGE({ type: 'change', change: diskData('# elsewhere\n') as never })
 
+    // Nothing in this action reaches `notice`, so the guard is observed through
+    // the log line it prints and the absence of any other effect.
+    expect(err).toHaveBeenCalledWith(`HANDLE_DISK_CHANGE: Cannot find tab for path "${PATH}".`)
     expect(notice.notify).not.toHaveBeenCalled()
-    expect(store.tabs).toHaveLength(0)
+    expect(debouncedSendBufferedState).not.toHaveBeenCalled()
+    err.mockRestore()
   })
 
   it('marks the tab dirty and warns when the file disappeared', () => {
@@ -126,6 +132,9 @@ describe('useEditorStore.HANDLE_DISK_CHANGE', () => {
 
     expect(tab.notifications).toHaveLength(0)
     expect(tab.isSaved).toBe(false)
+    // The byte-identical branch leaves before the buffer write, so nothing is
+    // scheduled at all — this is what separates it from the reload branch below.
+    expect(debouncedSendBufferedState).not.toHaveBeenCalled()
   })
 
   it('reloads a saved tab without warning when auto-save is on', () => {
@@ -137,6 +146,9 @@ describe('useEditorStore.HANDLE_DISK_CHANGE', () => {
 
     expect(tab.markdown).toBe('# rewritten\n')
     expect(tab.notifications).toHaveLength(0)
+    // Exactly one buffer write: the reload path returns early, and the single
+    // call is the one loadChange makes for itself.
+    expect(debouncedSendBufferedState).toHaveBeenCalledTimes(1)
   })
 
   it('warns before reloading when the tab holds unsaved work', () => {
@@ -150,6 +162,8 @@ describe('useEditorStore.HANDLE_DISK_CHANGE', () => {
     expect(tab.isSaved).toBe(false)
     expect(tab.notifications).toHaveLength(1)
     expect(tab.notifications[0]).toMatchObject({ showConfirm: true, exclusiveType: 'file_changed' })
+    // The warning path does write the buffer once, unlike the ignore path.
+    expect(debouncedSendBufferedState).toHaveBeenCalledTimes(1)
   })
 
   it('rejects an unknown change type instead of guessing', () => {

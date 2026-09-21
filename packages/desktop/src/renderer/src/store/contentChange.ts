@@ -23,7 +23,10 @@ export const takeReloadBoundary = (
   history: IFileState['history']
 ): IFileState['history'] | null => {
   const { index, stack } = history
-  if (index < 0 || stack.length < 1) return null
+  // Written as a negation of the old `histIndex >= 0 && stack.length >= 1` so a
+  // non-numeric index short-circuits exactly as it did inline, instead of
+  // decrementing to NaN and dropping a frame on the way out.
+  if (!(index >= 0) || stack.length < 1) return null
 
   const entry = stack[index]
   const boundary = entry ? { stack: [entry], index: 0 } : null

@@ -179,6 +179,9 @@ describe('useEditorStore.TAB_SAVE_FAILURE', () => {
     expect(notice.notify).toHaveBeenCalledTimes(1)
     const payload = vi.mocked(notice.notify).mock.calls[0][0] as Record<string, unknown>
     expect(payload).toMatchObject({ type: 'error', message: 'EACCES' })
+    // i18n runs for real here, so assert a resolved string came out rather than
+    // pinning the English wording the machine locale may not show.
+    expect(payload.title).not.toBe('dialog.saveFailure')
     expect(typeof payload.title).toBe('string')
     expect((payload.title as string).length).toBeGreaterThan(0)
   })

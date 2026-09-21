@@ -62,6 +62,13 @@ describe('takeReloadBoundary', () => {
     expect(hist.stack).toEqual([])
   })
 
+  it('leaves the stack alone when the index is not a number at all', () => {
+    const hist = { stack: [{ id: 1 }], index: undefined } as unknown as IFileState['history']
+
+    expect(takeReloadBoundary(hist)).toBeNull()
+    expect(hist).toMatchObject({ index: undefined, stack: [{ id: 1 }] })
+  })
+
   it('still releases a slot when the index runs past the stack', () => {
     const hist = { stack: [{ id: 1 }], index: 4 } as IFileState['history']
 
