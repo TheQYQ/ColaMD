@@ -173,6 +173,18 @@ export interface EditorState {
 
 const autoSaveTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
+/**
+ * Drop a tab's pending auto-save. Three paths need it — the tab closed, a newer
+ * edit re-arms it, or the disk version takes over — and in all three a timer left
+ * armed would write content the user has already moved past.
+ */
+const clearAutoSaveTimer = (id: string | undefined): void => {
+  if (!id) return
+  const timer = autoSaveTimers.get(id)
+  if (timer !== undefined) clearTimeout(timer)
+  autoSaveTimers.delete(id)
+}
+
 // Pending unreferenced-image cleanup checks, keyed by absolute path. The
 // delay gives undo (or a cut followed by an immediate paste-back) a window to
 // restore the reference before the file is unlinked.
@@ -1093,11 +1105,7 @@ export const useEditorStore = defineStore('editor', {
         this.updateTabIdToIndex()
       }
 
-      if (file.id && autoSaveTimers.has(file.id)) {
-        const timer = autoSaveTimers.get(file.id)
-        if (timer) clearTimeout(timer)
-        autoSaveTimers.delete(file.id)
-      }
+      clearAutoSaveTimer(file.id)
 
       // Snapshot on close so the user can recover unsaved work from the
       // history panel even if they chose "Don't Save".
@@ -1584,11 +1592,7 @@ export const useEditorStore = defineStore('editor', {
       const projectStore = useProjectStore()
       const { autoSaveDelay } = preferencesStore
 
-      if (autoSaveTimers.has(id)) {
-        const timer = autoSaveTimers.get(id)
-        clearTimeout(timer)
-        autoSaveTimers.delete(id)
-      }
+      clearAutoSaveTimer(id)
 
       const timer = setTimeout(() => {
         autoSaveTimers.delete(id)
@@ -1800,11 +1804,7 @@ export const useEditorStore = defineStore('editor', {
 
               const { autoSave } = preferencesStore
               if (autoSave) {
-                if (autoSaveTimers.has(id)) {
-                  const timer = autoSaveTimers.get(id)
-                  if (timer) clearTimeout(timer)
-                  autoSaveTimers.delete(id)
-                }
+                clearAutoSaveTimer(id)
 
                 if (isSaved) {
                   this.loadChange(change as unknown as FileChangePayload)
