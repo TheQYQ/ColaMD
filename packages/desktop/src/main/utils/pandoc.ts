@@ -1,6 +1,6 @@
 // Copy from https://github.com/utatti/simple-pandoc/blob/master/index.js
 import { spawn } from 'child_process'
-import { mkdtemp, unlink, writeFile as fsWriteFile } from 'fs/promises'
+import { mkdtemp, rm, writeFile as fsWriteFile } from 'fs/promises'
 import os from 'os'
 import path from 'path'
 import type { Readable } from 'stream'
@@ -95,12 +95,15 @@ export async function exportViaPandoc(
     // which is not a usable export file.
     const args = [
       '-s',
-      '-f', 'markdown',
-      '-t', format,
-      '-o', outputPath,
+      '-f',
+      'markdown',
+      '-t',
+      format,
+      '-o',
+      outputPath,
       ...(options.title ? ['--metadata', `title:${options.title}`] : []),
       ...(options.args ?? []),
-      tmpMarkdown,
+      tmpMarkdown
     ]
 
     await new Promise<void>((resolve, reject) => {
@@ -111,11 +114,17 @@ export async function exportViaPandoc(
         stderr += chunk.toString()
       })
       proc.on('close', (code) => {
-        if (code === 0) { resolve() } else { reject(new Error(stderr.trim() || `pandoc exited with code ${code}`)) }
+        if (code === 0) {
+          resolve()
+        } else {
+          reject(new Error(stderr.trim() || `pandoc exited with code ${code}`))
+        }
       })
     })
   } finally {
-    await unlink(tmpMarkdown).catch(() => {})
-    await unlink(tmpDir).catch(() => {})
+    // Recursive, because `unlink` cannot remove a directory on any platform --
+    // the swallowed error used to leave a `colamd-pandoc-*` directory behind for
+    // every export, forever.
+    await rm(tmpDir, { recursive: true, force: true }).catch(() => {})
   }
 }
