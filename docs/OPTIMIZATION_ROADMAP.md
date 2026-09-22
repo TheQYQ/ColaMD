@@ -474,6 +474,11 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 4. 动 O7/O8 之前先跑 §1 的两条基线命令，把改动前面板数字抄进 PR，避免优化完发现退化。
 5. 能在单测层锁住的契约优先用单测：`test.yml` 跑 ubuntu + windows 两腿，`e2e.yml` 只有 ubuntu，而 E2E 覆盖不到的平台恰是缺陷高发的平台；E2E 留给必须真窗口、真进程的行为。**第 5 条已被下面的预演实证**：本轮两个真缺陷都只在 Windows 上红（locale 断言、round-trip 字节断言），ubuntu 腿看不见。
 
+### 4.0 PR 历史两处核对（2026-09-22，我自己误报过一次）
+
+- `#34`（2026-09-12 建、**3 秒后自动合并**，`promote/workplan-m14` → `main`，1 提交 1 文件）与 `#35`（2026-09-18，`cleanup/code-simplify` → `develop`，3 提交 / 84 文件、净删约 1300 行）都是**本程序早前会话**用仓库自身身份（`浅影 <108055644+TheQYQ@users.noreply.github.com>`）开的，两条**都已 merged**，内容早已在 `develop` / `main`：`#34` 是把 `ColaMD_WORKPLAN.md` 的 M1.4 状态行按"promote 到 main"的既有惯例 cherry-pick 过去，`#35` 是那次全仓过度工程清理（`cleanup/code-simplify` 分支至今还在本地，尖端 `57e0e65`）。它们也正是"`develop` 与 `main` 图谱上 main 多出 30 个提交"的来路，但**内容差异为 0**（`compare/develop...main` 的 `files` 为空），所以那 30 条纯是 promote/merge 造成的图形状差异，不是漏掉的改动。
+- 我在这轮里把它报成"出现了两个我没创建的 open PR，可能有别的自动化在动你的仓库"——**两句都错**：状态是把 `gh pr list` 输出的列读错了，来源是没查权威 API 就编了个解释。教训写在这：**关于共享状态的结论只能来自针对性查询，不能来自列表排版**；我给出的一切实测数字后面都应能指到一条具体命令的输出。
+
 ### 4.1 十二分支全量合入门禁预演（2026-09-20，分支 `tmp/integration-rehearsal`）
 
 按上表依赖顺序把 12 个分支逐个 `git merge --no-ff` 进 `develop`，然后在合入后的树上跑全套门禁（不是分支上的自测）。

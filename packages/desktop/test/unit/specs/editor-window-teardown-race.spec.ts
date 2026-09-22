@@ -8,6 +8,13 @@ import { describe, expect, it, vi } from 'vitest'
 
 const { emitted } = vi.hoisted(() => ({ emitted: [] as unknown[][] }))
 
+// The window module's import chain ends at `filesystem/encoding`, which loads the
+// native `ced` addon; its binary exists only where Electron's ABI was built, so on
+// CI's plain-Node `test` legs this file failed before a single test was collected.
+vi.mock('../../../src/main/filesystem/encoding', () => ({
+  guessEncoding: () => 'UTF-8'
+}))
+
 vi.mock('electron', () => ({
   BrowserWindow: class {},
   dialog: { showMessageBox: vi.fn() },
