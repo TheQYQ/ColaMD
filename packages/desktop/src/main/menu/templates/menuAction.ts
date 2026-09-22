@@ -11,11 +11,19 @@ export type WindowAction = (browserWindow: BrowserWindow | undefined) => void
  * focused window to an action.
  *
  * The window is cast because Electron hands a `BaseWindow` while the actions take
- * a `BrowserWindow`. `getAccelerator` answers `null` for a key with no binding,
- * and `MenuItemConstructorOptions` wants `undefined` there. Entries that need an
- * `id`, a `type`, or a visibility rule pass it as `extra`; an entry that needs
- * the clicked menu item itself, not the window, is not this shape and stays
- * written out.
+ * a `BrowserWindow`. Entries that need an `id`, a `type`, or a visibility rule
+ * pass it as `extra`; an entry that needs the clicked menu item itself, not the
+ * window, is not this shape and stays written out.
+ *
+ * Two things are worth knowing before changing this:
+ *
+ * - An empty `acceleratorKey` means no lookup and no property. Writing
+ *   `accelerator: undefined` where a hand-written entry omitted the field is
+ *   visible to Electron, and to `format-menu-state.spec.ts`, which counts
+ *   accelerators by `'accelerator' in item`.
+ * - `run` is read while the template is built, not when the entry is clicked.
+ *   Specs that mock an actions module as an empty object therefore have to answer
+ *   for the export names, because destructuring them is what fails.
  */
 export const menuAction =
   (keybindings: Keybindings) =>
