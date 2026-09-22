@@ -289,17 +289,20 @@ export default [
   // floor turned the worst remaining function into `util/docx/document.ts:346`
   // at 36 — so the ceiling comes down to just above that.
   //
-  // 255: the length ceiling moved as well. It bound on `store/project.ts`'s setup
-  // at 277 until the directory-watch reducer came out of it into
-  // `store/treeEvents.ts`, leaving that setup at 250; runners-up are 242 and 202
-  // (`useEngineOptionSync.ts`), so any further cut has to clear those.
+  // 205: the length ceiling moved twice since. It bound on `store/project.ts`'s setup
+  // at 277 until the directory-watch reducer came out into `store/treeEvents.ts`
+  // (250); the sidebar paste handler then came out into `store/sidebarPaste.ts`
+  // (204). Runners-up are 202 (`useEngineOptionSync.ts`) and 173
+  // (`main/windows/editor.ts`), so 205 sits just above the binder — measured by
+  // probing the whole package at a floor of 120 and reading the lengths eslint
+  // reports, never by guessing.
   {
     files: ['packages/desktop/src/**/*.ts', 'packages/desktop/src/**/*.vue'],
     rules: {
       complexity: ['warn', 37],
       'max-lines-per-function': [
         'warn',
-        { max: 255, skipBlankLines: true, skipComments: true }
+        { max: 205, skipBlankLines: true, skipComments: true }
       ]
     }
   }
