@@ -20,7 +20,6 @@
 import type { IKeyboardLayoutInfo, IKeyboardMapping } from 'native-keymap'
 import type { RipgrepRequest } from './ripgrep'
 import type {
-  MarkdownDocument,
   TabOptions,
   BootstrapEditorConfig,
   PageOptions,
@@ -28,7 +27,8 @@ import type {
   SaveOptions,
   LineEnding,
   FileChangeDetail,
-  UnsavedFile
+  UnsavedFile,
+  MarkdownDocumentRaw
 } from './files'
 import type { BufferedState as BufferedStateType } from './bufferedState'
 import type { MenuTemplate, MenuPopupPosition } from './menu'
@@ -337,17 +337,17 @@ export interface IpcMainEventChannels {
   'mt::export-success': [payload: { type: string; filePath: string }]
   'mt::force-close-tabs-by-id': [tabIds: string[]]
   'mt::discard-unsaved-tabs-and-close': [tabIds: string[]]
-  'mt::show-unsaved-dialog': []
+  'mt::show-unsaved-dialog': [count: number]
   'mt::invalidate-image-cache': []
   'mt::keybindings-response': [bindings: unknown]
   'mt::load-state': [state: BufferedStateType]
   'mt::menu::click': [menuId: string]
-  'mt::menu::closed': []
+  'mt::menu::closed': [payload: { windowId: number }]
   'mt::new-untitled-tab': [selected?: boolean, markdown?: string]
   'mt::open-directory': [directoryPath: string]
   'mt::reload-directory': [directoryPath: string]
   'mt::open-new-tab': [
-    markdownDocument: MarkdownDocument | null,
+    markdownDocument: MarkdownDocumentRaw | null,
     options?: TabOptions,
     selected?: boolean
   ]
@@ -378,13 +378,13 @@ export interface IpcMainEventChannels {
   'mt::update-file': [payload: { type: 'add' | 'change' | 'unlink'; change: FileChangeDetail }]
   'mt::update-object-tree': [payload: unknown]
   'mt::user-preference': [partial: unknown]
-  'mt::window-active-status': [active: boolean]
+  'mt::window-active-status': [payload: { status: boolean }]
   'mt::window-enter-full-screen': []
   'mt::window-leave-full-screen': []
   'mt::window-maximize': []
   'mt::window-unmaximize': []
   'mt::window-zoom': [zoomLevel: number]
-  'settings::change-tab': [tab: string]
+  'settings::change-tab': [tab?: string | null]
 }
 
 // =================================================================

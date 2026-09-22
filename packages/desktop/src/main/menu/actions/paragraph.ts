@@ -2,6 +2,7 @@ import { type BrowserWindow, type Menu, type MenuItem } from 'electron'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
 import type { SelectionState } from '@shared/types/ipc'
+import { typedSend } from '../../ipc/typedSend'
 
 // The selection-state shape lives in the shared contract now, so the channel
 // that carries it can be checked by `typedOn`; re-exported for the importers
@@ -42,7 +43,7 @@ const MENU_ID_MAP: Readonly<Record<string, string>> = Object.freeze({
 
 const transformEditorElement = (win: Win, type: string): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::editor-paragraph-action', { type })
+    typedSend(win.webContents, 'mt::editor-paragraph-action', { type })
   }
 }
 

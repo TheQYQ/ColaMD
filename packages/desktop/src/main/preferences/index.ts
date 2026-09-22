@@ -10,6 +10,7 @@ import { TypedEmitter } from '@shared/types/typedEmitter'
 import type { IUserPreferences, StartUpAction } from '@shared/types/preferences'
 import schema from './schema.json'
 import { typedOn } from '../ipc/typedOn'
+import { typedSend } from '../ipc/typedSend'
 
 // Retired value, accepted only to be rewritten by the 0.18.6 migration below.
 const LEGACY_LAST_STATE = 'lastState'
@@ -189,7 +190,7 @@ class Preference extends TypedEmitter<PreferenceEvents> {
     typedOn('mt::ask-for-user-preference', (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (win) {
-        win.webContents.send('mt::user-preference', this.getAll())
+        typedSend(win.webContents, 'mt::user-preference', this.getAll())
       }
     })
     // `imageFolderPath` doubles as a write-scope grant: App registers it with

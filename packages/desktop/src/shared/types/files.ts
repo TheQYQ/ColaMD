@@ -4,13 +4,33 @@
 // commits. Until then, these are intentionally open structures — better an
 // imperfect surface than a placeholder that's wrong.
 
+import type { Encoding } from 'common/encoding'
+
+/**
+ * A document as read from disk, before the editor normalises it. Main sends
+ * this to the renderer over `mt::open-new-tab`, so the shape belongs to the
+ * contract -- `src/main/filesystem/markdown.ts` now imports it from here
+ * instead of keeping its own private copy that could drift.
+ */
+export interface MarkdownDocumentRaw {
+  markdown: string
+  filename: string
+  pathname: string
+  encoding: Encoding
+  lineEnding: LineEnding
+  adjustLineEndingOnSave: boolean
+  trimTrailingNewline: number
+  isMixedLineEndings: boolean
+}
 export type LineEnding = 'lf' | 'crlf'
 
 export interface MarkdownDocument {
   markdown: string
   filename: string
   pathname: string | null
-  encoding?: string
+  // Main hands the reader's `{encoding, isBom}` object over untouched, so this
+  // is the `Encoding` record rather than a bare label.
+  encoding?: Encoding
   lineEnding?: LineEnding
   adjustLineEndingOnSave?: boolean
   trimTrailingNewline?: number
@@ -169,3 +189,4 @@ export type ExportType =
   | 'latex'
   | 'rtf'
   | 'opml'
+  | 'print'

@@ -1,5 +1,6 @@
 import { getTranslation } from 'common/i18n'
 import { BrowserWindow } from 'electron'
+import { typedSend } from './ipc/typedSend'
 
 // Current language setting (can be obtained from config file or user settings)
 let currentLanguage = 'en'
@@ -20,7 +21,7 @@ export function setLanguage(language: string): void {
   const windows = BrowserWindow.getAllWindows()
   windows.forEach((window) => {
     if (window && !window.isDestroyed()) {
-      window.webContents.send('language-changed', language)
+      typedSend(window.webContents, 'language-changed', language)
     }
   })
 }

@@ -245,13 +245,15 @@ export default [
     }
   },
 
-  // 11. Main-process `invoke` and `on` handlers go through the shared contract.
+  // 11. Main-process IPC goes through the shared contract in all three directions.
   //
   // `shared/types/ipc.ts` types the preload side of every channel, but a bare
-  // `ipcMain.handle('mt::…', …)` was unchecked: Electron hands the listener
-  // `any[]`, so name, argument tuple and return type could drift and only fail
-  // at run time. Wrapping registration in `typedHandle` (src/main/ipc/typedHandle.ts)
-  // makes the contract load-bearing; this rule stops new bypasses.
+  // `ipcMain.handle('mt::…', …)`, `ipcMain.on('mt::…', …)` or
+  // `win.webContents.send('mt::…', …)` was unchecked: Electron hands those
+  // listeners and that payload `any[]`, so name, argument tuple and return type
+  // could drift and only fail at run time. Wrapping them in `typedHandle`,
+  // `typedOn`/`typedSyncOn` and `typedSend` makes the contract load-bearing;
+  // these rules stop new bypasses.
   //
   // Converting all 41 channels surfaced eight declarations that were already
   // wrong — e.g. `mt::ask-for-image-path` was typed `string[]` while the handler
@@ -263,6 +265,13 @@ export default [
   // twelve declarations written as `unknown` while both ends already knew the
   // shape; they are typed now and the rule leaves exactly one exemption:
   // `utils/internalIpc.ts`, whose channel argument is a runtime string.
+  //
+  // The third selector is the push direction (`typedSend`, src/main/ipc/typedSend.ts):
+  // 91 of the 97 `X.webContents.send` / `X.sender.send` sites are bound now and
+  // checked both ways. The six exemptions are channels built at runtime — three
+  // `mt::response-of-image-path-${id}` reply addresses, `EVENT_NAME[type]` in the
+  // filesystem watcher, and `mt::window-${channel}` in the window-event bridge —
+  // where no static contract key exists to check against.
   {
     files: ['packages/desktop/src/main/**/*.ts'],
     rules: {
@@ -278,6 +287,13 @@ export default [
           selector: "CallExpression[callee.object.name='ipcMain'][callee.property.name='on']",
           message:
             'Register listeners through typedOn()/typedSyncOn() from src/main/ipc/typedOn.ts so the channel and its argument tuple stay checked against shared/types/ipc.ts.'
+        },
+        {
+          // The push direction: `X.webContents.send(…)` / `X.sender.send(…)`.
+          selector:
+            "CallExpression[callee.object.property.name='webContents'][callee.property.name='send'], CallExpression[callee.object.property.name='sender'][callee.property.name='send']",
+          message:
+            'Push to a renderer through typedSend() from src/main/ipc/typedSend.ts so the channel and its payload stay checked against shared/types/ipc.ts.'
         }
       ]
     }

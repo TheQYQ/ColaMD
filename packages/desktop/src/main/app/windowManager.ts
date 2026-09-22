@@ -13,6 +13,7 @@ import { WindowType } from '../windows/base'
 import type { WindowTypeValue } from '../windows/base'
 import type EditorWindow from '../windows/editor'
 import { typedOn } from '../ipc/typedOn'
+import { typedSend } from '../ipc/typedSend'
 
 class WindowActivityList {
   // Oldest             Newest
@@ -478,7 +479,7 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
             const root = editor?.openedRootDirectory
             if (!editor || !root) continue
             await this._watcher.unwatch(browserWindow, root, 'dir')
-            browserWindow.webContents.send('mt::reload-directory', root)
+            typedSend(browserWindow.webContents, 'mt::reload-directory', root)
             this._watcher.watch(browserWindow, root, 'dir')
           }
         })().catch((err) => log.error('Tree filter rescan failed:', err))
@@ -490,14 +491,14 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
       }
       if (Object.keys(prefs).length > 0) {
         for (const { browserWindow } of this._windows.values()) {
-          browserWindow?.webContents.send('mt::user-preference', prefs)
+          typedSend(browserWindow?.webContents, 'mt::user-preference', prefs)
         }
       }
     })
 
     onInternalChannel('broadcast-user-data-changed', (userData: Record<string, unknown>) => {
       for (const { browserWindow } of this._windows.values()) {
-        browserWindow?.webContents.send('mt::user-preference', userData)
+        typedSend(browserWindow?.webContents, 'mt::user-preference', userData)
       }
     })
   }

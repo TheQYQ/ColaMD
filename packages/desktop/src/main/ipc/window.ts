@@ -3,6 +3,7 @@ import log from 'electron-log'
 import type { MenuTemplate, MenuTemplateItem, MenuPopupPosition } from '@shared/types/menu'
 import { typedHandle } from './typedHandle'
 import { typedOn } from './typedOn'
+import { typedSend } from './typedSend'
 
 const windowFromEvent = (event: IpcMainEvent): BrowserWindow | null =>
   BrowserWindow.fromWebContents(event.sender)
@@ -93,7 +94,7 @@ export const registerWindowHandlers = (): void => {
         callback: () => {
           popups.delete(win.id)
           try {
-            event.sender.send('mt::menu::closed', { windowId: win.id })
+            typedSend(event.sender, 'mt::menu::closed', { windowId: win.id })
           } catch {
             /* destroyed */
           }
