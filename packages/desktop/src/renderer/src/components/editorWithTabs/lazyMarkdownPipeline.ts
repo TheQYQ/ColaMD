@@ -76,6 +76,9 @@ export function createLazyMarkdownPipeline(deps: LazyMarkdownPipelineDeps) {
     const engine = deps.getEngine()
     const id = deps.getCurrentId()
     if (!engine || !id) return
+    // The engine serializes only its flushed state, so a snapshot taken without
+    // this would describe the document as it was before the queued ops.
+    engine.flush()
     const markdown = engine.getMarkdownLive()
     pendingMarkdownCommit = false
     deps.dispatch({
@@ -98,6 +101,11 @@ export function createLazyMarkdownPipeline(deps: LazyMarkdownPipelineDeps) {
     // The debounce can outlive its tab: a switch inside the window must not
     // commit the NEW document's content under the OLD tab's id.
     if (!engine || id !== deps.getCurrentId()) return
+    // Same reason as in `commitPendingMarkdown`, and this is the path that was
+    // missing it: the debounced commit cleared `pendingMarkdownCommit` after
+    // serializing an un-flushed document, so every later flush-on-read (entering
+    // source mode, saving) saw a clean flag and read that stale snapshot.
+    engine.flush()
     const markdown = engine.getMarkdownLive()
     pendingMarkdownCommit = false
     deps.dispatch({
