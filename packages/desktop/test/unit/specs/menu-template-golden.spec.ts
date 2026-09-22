@@ -65,8 +65,12 @@ vi.mock('main_renderer/menu/actions/format', () => h.proxy)
 vi.mock('main_renderer/menu/actions/colamd', () => h.proxy)
 
 // Every accelerator key echoes back through the name, so an entry that asks for
-// the wrong binding shows up in the golden.
-const keybindings = { getAccelerator: (key: string) => `A(${key})` } as never
+// the wrong binding shows up in the golden. An unregistered id answers `null`,
+// which is what `ShortcutHandler.getAccelerator` really does -- that is how
+// entries with no binding at all are told apart from bound ones.
+const keybindings = {
+  getAccelerator: (key: string) => (key === '' ? null : `A(${key})`)
+} as never
 
 interface RawItem {
   label?: string
@@ -75,6 +79,8 @@ interface RawItem {
   role?: string
   accelerator?: string
   visible?: boolean
+  enabled?: boolean
+  checked?: boolean
   submenu?: RawItem[]
   click?: (menuItem: unknown, browserWindow: unknown) => void
 }
@@ -116,7 +122,7 @@ async function build(module: string): Promise<RawItem[]> {
   return mod.default(keybindings, { getAll: () => ({ autoSave: true }) } as never, [
     '/recent/a.md',
     '/recent/b.md'
-  ]).submenu!
+  ]).submenu as RawItem[]
 }
 
 const GOLDEN: Record<string, string[]> = {
@@ -242,4 +248,19 @@ describe('menu template golden shape', () => {
       expect(actual).toEqual(GOLDEN[group])
     })
   }
+
+  // The lines above record label, id, type, role, accelerator and visibility.
+  // Three fields an entry can carry are left out because separators and
+  // tickboxes use them and the line format has no branch for both: `enabled`,
+  // `checked`, and a separator's own `visible`. Asserted here instead of being
+  // silently uncovered.
+  it('keeps the fields the line format leaves out', async () => {
+    const items = await build('file')
+    const recent = items.find((i) => i.label === 'menu.file.openRecent')?.submenu ?? []
+    expect(recent.find((i) => i.type === 'separator')?.visible).toBe(true)
+    expect(recent.find((i) => i.label === 'menu.file.clearRecentlyUsed')?.enabled).toBe(true)
+    const autoSave = items.find((i) => i.id === 'autoSaveMenuItem')
+    expect(autoSave?.type).toBe('checkbox')
+    expect(autoSave?.checked).toBe(true)
+  })
 })

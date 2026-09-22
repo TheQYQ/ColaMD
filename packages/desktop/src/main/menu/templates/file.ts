@@ -1,6 +1,7 @@
 import { app, type BrowserWindow, type MenuItemConstructorOptions } from 'electron'
 import * as actions from '../actions/file'
 import { userSetting } from '../actions/colamd'
+import { menuAction, type WindowAction } from './menuAction'
 import { isOsx } from '../../config'
 import { t } from '../../i18n'
 import type Keybindings from '../../keyboard/shortcutHandler'
@@ -12,38 +13,27 @@ export default function (
   recentlyUsedFiles: string[]
 ): MenuItemConstructorOptions {
   const { autoSave } = userPreference.getAll() as { autoSave?: boolean }
+  const item = menuAction(keybindings)
+  // Three of these actions take `BrowserWindow | null` rather than undefined.
+  const withNullOrWindow =
+    (run: (browserWindow: BrowserWindow | null) => void): WindowAction =>
+      (bw) =>
+        run(bw ?? null)
+  const exportAs = (
+    labelKey: string,
+    format: Parameters<typeof actions.exportFile>[1],
+    kbKey = ''
+  ): MenuItemConstructorOptions =>
+    item(labelKey, kbKey, (bw) => actions.exportFile(bw as BrowserWindow | undefined, format))
+
   const submenu: MenuItemConstructorOptions[] = [
-    {
-      label: t('menu.file.newTab'),
-      accelerator: keybindings.getAccelerator('file.new-tab') ?? undefined,
-      click(_menuItem, browserWindow) {
-        actions.newBlankTab(browserWindow as BrowserWindow | undefined)
-      }
-    },
-    {
-      label: t('menu.file.newWindow'),
-      accelerator: keybindings.getAccelerator('file.new-window') ?? undefined,
-      click() {
-        actions.newEditorWindow()
-      }
-    },
-    {
-      type: 'separator'
-    },
-    {
-      label: t('menu.file.openFile'),
-      accelerator: keybindings.getAccelerator('file.open-file') ?? undefined,
-      click(_menuItem, browserWindow) {
-        actions.openFile((browserWindow as BrowserWindow | undefined) ?? null)
-      }
-    },
-    {
-      label: t('menu.file.openFolder'),
-      accelerator: keybindings.getAccelerator('file.open-folder') ?? undefined,
-      click(_menuItem, browserWindow) {
-        actions.openFolder((browserWindow as BrowserWindow | undefined) ?? null)
-      }
-    }
+    item('menu.file.newTab', 'file.new-tab', actions.newBlankTab),
+    item('menu.file.newWindow', 'file.new-window', () => {
+      actions.newEditorWindow()
+    }),
+    { type: 'separator' },
+    item('menu.file.openFile', 'file.open-file', withNullOrWindow(actions.openFile)),
+    item('menu.file.openFolder', 'file.open-folder', withNullOrWindow(actions.openFolder))
   ]
 
   const fileMenu: MenuItemConstructorOptions = {
@@ -58,9 +48,9 @@ export default function (
       submenu: recentlyUsedSubmenu
     }
 
-    for (const item of recentlyUsedFiles) {
+    for (const entry of recentlyUsedFiles) {
       recentlyUsedSubmenu.push({
-        label: item,
+        label: entry,
         click(menuItem, browserWindow) {
           if (browserWindow) {
             actions.openFileOrFolder(browserWindow as BrowserWindow, menuItem.label)
@@ -99,23 +89,9 @@ export default function (
   }
 
   submenu.push(
-    {
-      type: 'separator'
-    },
-    {
-      label: t('menu.file.save'),
-      accelerator: keybindings.getAccelerator('file.save') ?? undefined,
-      click(_menuItem, browserWindow) {
-        actions.save(browserWindow as BrowserWindow | undefined)
-      }
-    },
-    {
-      label: t('menu.file.saveAs'),
-      accelerator: keybindings.getAccelerator('file.save-as') ?? undefined,
-      click(_menuItem, browserWindow) {
-        actions.saveAs(browserWindow as BrowserWindow | undefined)
-      }
-    },
+    { type: 'separator' },
+    item('menu.file.save', 'file.save', actions.save),
+    item('menu.file.saveAs', 'file.save-as', actions.saveAs),
     {
       label: t('menu.file.autoSave'),
       type: 'checkbox',
@@ -125,135 +101,47 @@ export default function (
         actions.autoSave(menuItem, browserWindow as BrowserWindow | undefined)
       }
     },
-    {
-      type: 'separator'
-    },
-    {
-      label: t('menu.file.moveTo'),
-      accelerator: keybindings.getAccelerator('file.move-file') ?? undefined,
-      click(_menuItem, browserWindow) {
-        actions.moveTo(browserWindow as BrowserWindow | undefined)
-      }
-    },
-    {
-      label: t('menu.file.rename'),
-      accelerator: keybindings.getAccelerator('file.rename-file') ?? undefined,
-      click(_menuItem, browserWindow) {
-        actions.rename(browserWindow as BrowserWindow | undefined)
-      }
-    },
-    {
-      type: 'separator'
-    },
-    {
-      label: t('menu.file.import'),
-      click(_menuItem, browserWindow) {
-        actions.importFile((browserWindow as BrowserWindow | undefined) ?? null)
-      }
-    },
+    { type: 'separator' },
+    item('menu.file.moveTo', 'file.move-file', actions.moveTo),
+    item('menu.file.rename', 'file.rename-file', actions.rename),
+    { type: 'separator' },
+    item('menu.file.import', '', withNullOrWindow(actions.importFile)),
     {
       label: t('menu.file.export'),
       submenu: [
-        {
-          label: t('menu.file.exportHtml'),
-          click(_menuItem, browserWindow) {
-            actions.exportFile(browserWindow as BrowserWindow | undefined, 'styledHtml')
-          }
-        },
-        {
-          label: t('menu.file.exportPdf'),
-          accelerator: keybindings.getAccelerator('file.export-file.pdf') ?? undefined,
-          click(_menuItem, browserWindow) {
-            actions.exportFile(browserWindow as BrowserWindow | undefined, 'pdf')
-          }
-        },
-        {
-          label: t('menu.file.exportDocx'),
-          click(_menuItem, browserWindow) {
-            actions.exportFile(browserWindow as BrowserWindow | undefined, 'docx')
-          }
-        },
-        {
-          label: t('menu.file.exportImage'),
-          click(_menuItem, browserWindow) {
-            actions.exportFile(browserWindow as BrowserWindow | undefined, 'png')
-          }
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: t('menu.file.exportEpub'),
-          click(_menuItem, browserWindow) {
-            actions.exportFile(browserWindow as BrowserWindow | undefined, 'epub')
-          }
-        },
-        {
-          label: t('menu.file.exportLatex'),
-          click(_menuItem, browserWindow) {
-            actions.exportFile(browserWindow as BrowserWindow | undefined, 'latex')
-          }
-        },
-        {
-          label: t('menu.file.exportRtf'),
-          click(_menuItem, browserWindow) {
-            actions.exportFile(browserWindow as BrowserWindow | undefined, 'rtf')
-          }
-        },
-        {
-          label: t('menu.file.exportOpml'),
-          click(_menuItem, browserWindow) {
-            actions.exportFile(browserWindow as BrowserWindow | undefined, 'opml')
-          }
-        }
+        exportAs('menu.file.exportHtml', 'styledHtml'),
+        exportAs('menu.file.exportPdf', 'pdf', 'file.export-file.pdf'),
+        exportAs('menu.file.exportDocx', 'docx'),
+        exportAs('menu.file.exportImage', 'png'),
+        { type: 'separator' },
+        exportAs('menu.file.exportEpub', 'epub'),
+        exportAs('menu.file.exportLatex', 'latex'),
+        exportAs('menu.file.exportRtf', 'rtf'),
+        exportAs('menu.file.exportOpml', 'opml')
       ]
     },
-    {
-      label: t('menu.file.print'),
-      accelerator: keybindings.getAccelerator('file.print') ?? undefined,
-      click(_menuItem, browserWindow) {
-        actions.printDocument(browserWindow as BrowserWindow | undefined)
-      }
-    },
-    {
-      type: 'separator',
-      visible: !isOsx
-    },
-    {
-      label: t('menu.file.preferences'),
-      accelerator: keybindings.getAccelerator('file.preferences') ?? undefined,
-      visible: !isOsx,
-      click() {
+    item('menu.file.print', 'file.print', actions.printDocument),
+    { type: 'separator', visible: !isOsx },
+    item(
+      'menu.file.preferences',
+      'file.preferences',
+      () => {
         userSetting()
-      }
-    },
-    {
-      type: 'separator'
-    },
-    {
-      label: t('menu.file.closeTab'),
-      accelerator: keybindings.getAccelerator('file.close-tab') ?? undefined,
-      click(_menuItem, browserWindow) {
-        actions.closeTab(browserWindow as BrowserWindow | undefined)
-      }
-    },
-    {
-      label: t('menu.file.closeWindow'),
-      accelerator: keybindings.getAccelerator('file.close-window') ?? undefined,
-      click(_menuItem, browserWindow) {
-        actions.closeWindow(browserWindow as BrowserWindow | undefined)
-      }
-    },
-    {
-      type: 'separator',
-      visible: !isOsx
-    },
-    {
-      label: t('menu.file.quit'),
-      accelerator: keybindings.getAccelerator('file.quit') ?? undefined,
-      visible: !isOsx,
-      click: app.quit
-    }
+      },
+      { visible: !isOsx }
+    ),
+    { type: 'separator' },
+    item('menu.file.closeTab', 'file.close-tab', actions.closeTab),
+    item('menu.file.closeWindow', 'file.close-window', actions.closeWindow),
+    { type: 'separator', visible: !isOsx },
+    item(
+      'menu.file.quit',
+      'file.quit',
+      () => {
+        app.quit()
+      },
+      { visible: !isOsx }
+    )
   )
   return fileMenu
 }

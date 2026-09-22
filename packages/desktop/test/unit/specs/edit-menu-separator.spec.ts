@@ -7,7 +7,20 @@ import { describe, expect, it, vi } from 'vitest'
 // visible separators are adjacent.
 
 vi.mock('electron', () => ({}))
-vi.mock('main_renderer/menu/actions/edit', () => ({}))
+// The template hands its action functions to `menuAction` while it is built, so
+// the mock has to answer for any export name rather than being an empty object.
+vi.mock('main_renderer/menu/actions/edit', () => {
+  const seen = new Set<string>()
+  return new Proxy({} as Record<string, unknown>, {
+    get: (_t, name: string | symbol) => {
+      if (typeof name === 'symbol' || name === 'then' || name === '__esModule') return undefined
+      seen.add(name)
+      return () => {}
+    },
+    has: (_t, name) => typeof name === 'string',
+    ownKeys: () => [...seen]
+  })
+})
 vi.mock('main_renderer/i18n', () => ({ t: (key: string) => key }))
 vi.mock('main_renderer/commands', () => ({
   COMMANDS: new Proxy({}, { get: () => 'cmd' })
