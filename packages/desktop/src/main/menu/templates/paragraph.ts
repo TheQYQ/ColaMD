@@ -1,206 +1,97 @@
-import { type BrowserWindow, type MenuItemConstructorOptions } from 'electron'
+import { type MenuItemConstructorOptions } from 'electron'
 import * as actions from '../actions/paragraph'
+import { menuAction, type WindowAction } from './menuAction'
 import { t } from '../../i18n'
 import type Keybindings from '../../keyboard/shortcutHandler'
 
 export default function (keybindings: Keybindings): MenuItemConstructorOptions {
+  const item = menuAction(keybindings)
+  // Nearly every entry here reflects editor state, so it ticks and unticks.
+  const box = (labelKey: string, kbKey: string, run: WindowAction, id: string) =>
+    item(labelKey, kbKey, run, { id, type: 'checkbox' })
   return {
     id: 'paragraphMenuEntry',
     label: t('menu.paragraph.title'),
     submenu: [
-      {
-        id: 'heading1MenuItem',
-        label: t('menu.paragraph.heading1'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.heading-1') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.heading1(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'heading2MenuItem',
-        label: t('menu.paragraph.heading2'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.heading-2') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.heading2(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'heading3MenuItem',
-        label: t('menu.paragraph.heading3'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.heading-3') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.heading3(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'heading4MenuItem',
-        label: t('menu.paragraph.heading4'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.heading-4') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.heading4(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'heading5MenuItem',
-        label: t('menu.paragraph.heading5'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.heading-5') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.heading5(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'heading6MenuItem',
-        label: t('menu.paragraph.heading6'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.heading-6') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.heading6(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        id: 'upgradeHeadingMenuItem',
-        label: t('menu.paragraph.promoteHeading'),
-        accelerator: keybindings.getAccelerator('paragraph.upgrade-heading') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.increaseHeading(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'degradeHeadingMenuItem',
-        label: t('menu.paragraph.demoteHeading'),
-        accelerator: keybindings.getAccelerator('paragraph.degrade-heading') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.degradeHeading(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        id: 'tableMenuItem',
-        label: t('menu.paragraph.table'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.table') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.table(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'codeFencesMenuItem',
-        label: t('menu.paragraph.codeFences'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.code-fence') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.codeFence(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'quoteBlockMenuItem',
-        label: t('menu.paragraph.quoteBlock'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.quote-block') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.quoteBlock(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'mathBlockMenuItem',
-        label: t('menu.paragraph.mathBlock'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.math-formula') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.mathFormula(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'htmlBlockMenuItem',
-        label: t('menu.paragraph.htmlBlock'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.html-block') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.htmlBlock(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        id: 'orderListMenuItem',
-        label: t('menu.paragraph.orderedList'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.order-list') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.orderedList(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'bulletListMenuItem',
-        label: t('menu.paragraph.bulletList'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.bullet-list') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.bulletList(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'taskListMenuItem',
-        label: t('menu.paragraph.taskList'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.task-list') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.taskList(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        id: 'looseListItemMenuItem',
-        label: t('menu.paragraph.looseListItem'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.loose-list-item') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.looseListItem(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        id: 'paragraphMenuItem',
-        label: t('menu.paragraph.paragraph'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.paragraph') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.paragraph(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'horizontalLineMenuItem',
-        label: t('menu.paragraph.horizontalRule'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.horizontal-line') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.horizontalLine(focusedWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        id: 'frontMatterMenuItem',
-        label: t('menu.paragraph.frontMatter'),
-        type: 'checkbox',
-        accelerator: keybindings.getAccelerator('paragraph.front-matter') ?? undefined,
-        click(_menuItem, focusedWindow) {
-          actions.frontMatter(focusedWindow as BrowserWindow | undefined)
-        }
-      }
+      box('menu.paragraph.heading1', 'paragraph.heading-1', actions.heading1, 'heading1MenuItem'),
+      box('menu.paragraph.heading2', 'paragraph.heading-2', actions.heading2, 'heading2MenuItem'),
+      box('menu.paragraph.heading3', 'paragraph.heading-3', actions.heading3, 'heading3MenuItem'),
+      box('menu.paragraph.heading4', 'paragraph.heading-4', actions.heading4, 'heading4MenuItem'),
+      box('menu.paragraph.heading5', 'paragraph.heading-5', actions.heading5, 'heading5MenuItem'),
+      box('menu.paragraph.heading6', 'paragraph.heading-6', actions.heading6, 'heading6MenuItem'),
+      { type: 'separator' },
+      item('menu.paragraph.promoteHeading', 'paragraph.upgrade-heading', actions.increaseHeading, {
+        id: 'upgradeHeadingMenuItem'
+      }),
+      item('menu.paragraph.demoteHeading', 'paragraph.degrade-heading', actions.degradeHeading, {
+        id: 'degradeHeadingMenuItem'
+      }),
+      { type: 'separator' },
+      box('menu.paragraph.table', 'paragraph.table', actions.table, 'tableMenuItem'),
+      box(
+        'menu.paragraph.codeFences',
+        'paragraph.code-fence',
+        actions.codeFence,
+        'codeFencesMenuItem'
+      ),
+      box(
+        'menu.paragraph.quoteBlock',
+        'paragraph.quote-block',
+        actions.quoteBlock,
+        'quoteBlockMenuItem'
+      ),
+      box(
+        'menu.paragraph.mathBlock',
+        'paragraph.math-formula',
+        actions.mathFormula,
+        'mathBlockMenuItem'
+      ),
+      box(
+        'menu.paragraph.htmlBlock',
+        'paragraph.html-block',
+        actions.htmlBlock,
+        'htmlBlockMenuItem'
+      ),
+      { type: 'separator' },
+      box(
+        'menu.paragraph.orderedList',
+        'paragraph.order-list',
+        actions.orderedList,
+        'orderListMenuItem'
+      ),
+      box(
+        'menu.paragraph.bulletList',
+        'paragraph.bullet-list',
+        actions.bulletList,
+        'bulletListMenuItem'
+      ),
+      box('menu.paragraph.taskList', 'paragraph.task-list', actions.taskList, 'taskListMenuItem'),
+      { type: 'separator' },
+      box(
+        'menu.paragraph.looseListItem',
+        'paragraph.loose-list-item',
+        actions.looseListItem,
+        'looseListItemMenuItem'
+      ),
+      { type: 'separator' },
+      box(
+        'menu.paragraph.paragraph',
+        'paragraph.paragraph',
+        actions.paragraph,
+        'paragraphMenuItem'
+      ),
+      box(
+        'menu.paragraph.horizontalRule',
+        'paragraph.horizontal-line',
+        actions.horizontalLine,
+        'horizontalLineMenuItem'
+      ),
+      box(
+        'menu.paragraph.frontMatter',
+        'paragraph.front-matter',
+        actions.frontMatter,
+        'frontMatterMenuItem'
+      )
     ]
   }
 }
