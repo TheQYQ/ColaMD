@@ -6,7 +6,7 @@ import type { MenuTemplate, MenuTemplateItem, MenuPopupPosition } from '@shared/
 
 // Renderer-side click handler. Receives the optional payload supplied when the
 // popup was opened (e.g. a tab id).
-export type MenuClickHandler = (payload: unknown) => void
+type MenuClickHandler = (payload: unknown) => void
 
 export interface ContextMenuItem {
   id?: string

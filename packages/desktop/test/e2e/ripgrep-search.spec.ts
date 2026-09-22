@@ -24,14 +24,20 @@ test.describe('Ripgrep IPC streaming', () => {
   let page: Page
   let fixtureDir: string | null = null
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     fixtureDir = writeFixtureTree()
-    const launched = await launchElectron()
+    // The fixture is passed as an opened path so main registers it as an
+    // allowed root — which is what a real search scope always is: quick-open
+    // only ever searches folders the user opened. `mt::rg::start` rejects
+    // directories outside that scope (see the case below), so a test that
+    // searched an unopened temp dir would be driving the compromised-renderer
+    // shape by accident.
+    const launched = await launchElectron([fixtureDir])
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close().catch(() => {})
     if (fixtureDir) {
       try {
@@ -40,7 +46,32 @@ test.describe('Ripgrep IPC streaming', () => {
     }
   })
 
-  test('text search streams matches and resolves', async() => {
+  // O7②: `mt::rg::start` answers with file contents and paths, recursively, so
+  // the directories it searches are held to the same scope as mt::fs::read-file
+  // and readdir. This is the case that fails open if the check is removed.
+  test('a search over a directory outside every granted root is rejected', async () => {
+    const other = path.join(os.tmpdir(), 'mt-rg-outside-' + Math.random().toString(36).slice(2, 8))
+    fs.mkdirSync(other, { recursive: true })
+    fs.writeFileSync(path.join(other, 'secret.md'), 'magic-needle-XYZ\n')
+
+    try {
+      await expect(
+        page.evaluate((directory) => {
+          return window.ripgrep.start({
+            searchId: 'rg-outside',
+            mode: 'files',
+            directories: [directory],
+            pattern: '',
+            options: {}
+          })
+        }, other)
+      ).rejects.toThrow(/outside the allowed scope/)
+    } finally {
+      fs.rmSync(other, { recursive: true, force: true })
+    }
+  })
+
+  test('text search streams matches and resolves', async () => {
     interface RgMatch {
       filePath: string
     }
@@ -87,7 +118,7 @@ test.describe('Ripgrep IPC streaming', () => {
     expect(paths.some((p) => p.endsWith('three.md'))).toBe(true)
   })
 
-  test('file search (--files) streams paths', async() => {
+  test('file search (--files) streams paths', async () => {
     const files = await page.evaluate<string[], string>((directory) => {
       return new Promise<string[]>((resolve, reject) => {
         const searchId = 'fs-test-' + Math.random().toString(36).slice(2, 8)

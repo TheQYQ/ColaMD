@@ -7,6 +7,7 @@ import log from 'electron-log'
 import { ensureDirSync } from 'common/filesystem'
 import { IMAGE_EXTENSIONS } from 'common/filesystem/paths'
 import { TypedEmitter } from '@shared/types/typedEmitter'
+import { typedHandle } from '../ipc/typedHandle'
 
 const DATA_CENTER_NAME = 'dataCenter'
 
@@ -98,12 +99,20 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
     return this.store.get(key)
   }
 
-  setItem(key: string, value: unknown): void {
+  /**
+   * Persist one entry, including the folder side effect it owns. Shared by the
+   * single and bulk paths so the rule lives in exactly one place.
+   */
+  _writeEntry(key: string, value: unknown): void {
     if (key === 'screenshotFolderPath') {
       ensureDirSync(value as string)
     }
+    this.store.set(key, value)
+  }
+
+  setItem(key: string, value: unknown): void {
+    this._writeEntry(key, value)
     ipcMain.emit('broadcast-user-data-changed', { [key]: value })
-    return this.store.set(key, value)
   }
 
   /**
@@ -115,32 +124,37 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
       return
     }
 
-    Object.keys(settings).forEach((key) => {
-      this.setItem(key, settings[key])
-    })
+    const keys = Object.keys(settings)
+    for (const key of keys) {
+      this._writeEntry(key, settings[key])
+    }
+
+    // One merged event per bulk update: the payload is forwarded to every window
+    // unchanged, so N keys used to mean N round trips. Emitting after the writes
+    // also means a window that reads back sees the new values.
+    if (keys.length > 0) {
+      ipcMain.emit('broadcast-user-data-changed', { ...settings })
+    }
   }
 
   _listenForIpcMain(): void {
-    ipcMain.on('mt::ask-for-user-data', async(e) => {
+    ipcMain.on('mt::ask-for-user-data', async (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const userData = await this.getAll()
       win.webContents.send('mt::user-preference', userData)
     })
 
-    ipcMain.on('mt::ask-for-modify-image-folder-path', async(e, imagePath?: string) => {
-      if (!imagePath) {
-        const win = BrowserWindow.fromWebContents(e.sender)
-        if (!win) return
-        const { filePaths } = await dialog.showOpenDialog(win, {
-          properties: ['openDirectory', 'createDirectory']
-        })
-        if (filePaths && filePaths[0]) {
-          imagePath = filePaths[0]
-        }
-      }
-      if (imagePath) {
-        this.setItem('imageFolderPath', imagePath)
+    // The caller may ask for the picker but may not supply the result: this
+    // folder is registered as a write-scope root for the guarded fs channels.
+    ipcMain.on('mt::ask-for-modify-image-folder-path', async (e) => {
+      const win = BrowserWindow.fromWebContents(e.sender)
+      if (!win) return
+      const { filePaths } = await dialog.showOpenDialog(win, {
+        properties: ['openDirectory', 'createDirectory']
+      })
+      if (filePaths && filePaths[0]) {
+        this.setItem('imageFolderPath', filePaths[0])
       }
     })
 
@@ -148,7 +162,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
       this.setItems(userData)
     })
 
-    ipcMain.handle('mt::ask-for-image-path', async(e) => {
+    typedHandle('mt::ask-for-image-path', async (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return ''
       const { filePaths } = await dialog.showOpenDialog(win, {

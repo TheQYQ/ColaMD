@@ -1,163 +1,54 @@
-import { type BrowserWindow, type MenuItemConstructorOptions } from 'electron'
+import { type MenuItemConstructorOptions } from 'electron'
 import * as actions from '../actions/edit'
+import { menuAction } from './menuAction'
 import { isOsx } from '../../config'
 import { COMMANDS } from '../../commands'
 import { t } from '../../i18n'
 import type Keybindings from '../../keyboard/shortcutHandler'
 
-export default function(keybindings: Keybindings): MenuItemConstructorOptions {
+export default function (keybindings: Keybindings): MenuItemConstructorOptions {
+  const item = menuAction(keybindings)
   return {
     label: t('menu.edit.edit'),
     submenu: [
-      {
-        label: t('menu.edit.undo'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_UNDO) ?? undefined,
-        click: (_menuItem, browserWindow) => {
-          actions.editorUndo(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        label: t('menu.edit.redo'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_REDO) ?? undefined,
-        click: (_menuItem, browserWindow) => {
-          actions.editorRedo(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: t('menu.edit.cut'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_CUT) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.nativeCut(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        label: t('menu.edit.copy'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_COPY) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.nativeCopy(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        label: t('menu.edit.paste'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_PASTE) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.nativePaste(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: t('menu.edit.copyAsRich'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_COPY_AS_RICH) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.editorCopyAsRich(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        label: t('menu.edit.copyAsHtml'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_COPY_AS_HTML) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.editorCopyAsHtml(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        label: t('menu.edit.pasteAsPlainText'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_PASTE_AS_PLAINTEXT) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.editorPasteAsPlainText(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: t('menu.edit.selectAll'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_SELECT_ALL) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.editorSelectAll(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: t('menu.edit.duplicate'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_DUPLICATE) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.editorDuplicate(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        label: t('menu.edit.createParagraph'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_CREATE_PARAGRAPH) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.editorCreateParagraph(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        label: t('menu.edit.deleteParagraph'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_DELETE_PARAGRAPH) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.editorDeleteParagraph(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: t('menu.edit.find'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_FIND) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.editorFind(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        label: t('menu.edit.findNext'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_FIND_NEXT) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.editorFindNext(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        label: t('menu.edit.findPrevious'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_FIND_PREVIOUS) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.editorFindPrevious(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        label: t('menu.edit.replace'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_REPLACE) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.editorReplace(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: t('menu.edit.findInFolder'),
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_FIND_IN_FOLDER) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.findInFolder(browserWindow as BrowserWindow | undefined)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: t('menu.edit.screenshot'),
+      item('menu.edit.undo', COMMANDS.EDIT_UNDO, actions.editorUndo),
+      item('menu.edit.redo', COMMANDS.EDIT_REDO, actions.editorRedo),
+      { type: 'separator' },
+      item('menu.edit.cut', COMMANDS.EDIT_CUT, actions.nativeCut),
+      item('menu.edit.copy', COMMANDS.EDIT_COPY, actions.nativeCopy),
+      item('menu.edit.paste', COMMANDS.EDIT_PASTE, actions.nativePaste),
+      { type: 'separator' },
+      item('menu.edit.copyAsRich', COMMANDS.EDIT_COPY_AS_RICH, actions.editorCopyAsRich),
+      item('menu.edit.copyAsHtml', COMMANDS.EDIT_COPY_AS_HTML, actions.editorCopyAsHtml),
+      item(
+        'menu.edit.pasteAsPlainText',
+        COMMANDS.EDIT_PASTE_AS_PLAINTEXT,
+        actions.editorPasteAsPlainText
+      ),
+      { type: 'separator' },
+      item('menu.edit.selectAll', COMMANDS.EDIT_SELECT_ALL, actions.editorSelectAll),
+      { type: 'separator' },
+      item('menu.edit.duplicate', COMMANDS.EDIT_DUPLICATE, actions.editorDuplicate),
+      item(
+        'menu.edit.createParagraph',
+        COMMANDS.EDIT_CREATE_PARAGRAPH,
+        actions.editorCreateParagraph
+      ),
+      item(
+        'menu.edit.deleteParagraph',
+        COMMANDS.EDIT_DELETE_PARAGRAPH,
+        actions.editorDeleteParagraph
+      ),
+      { type: 'separator' },
+      item('menu.edit.find', COMMANDS.EDIT_FIND, actions.editorFind),
+      item('menu.edit.findNext', COMMANDS.EDIT_FIND_NEXT, actions.editorFindNext),
+      item('menu.edit.findPrevious', COMMANDS.EDIT_FIND_PREVIOUS, actions.editorFindPrevious),
+      item('menu.edit.replace', COMMANDS.EDIT_REPLACE, actions.editorReplace),
+      { type: 'separator' },
+      item('menu.edit.screenshot', COMMANDS.EDIT_SCREENSHOT, actions.screenshot, {
         id: 'screenshot',
-        visible: isOsx,
-        accelerator: keybindings.getAccelerator(COMMANDS.EDIT_SCREENSHOT) ?? undefined,
-        click(_menuItem, browserWindow) {
-          actions.screenshot(browserWindow as BrowserWindow | undefined)
-        }
-      },
+        visible: isOsx
+      }),
       {
         // Screenshot is macOS-only; hide its trailing separator too so
         // Windows/Linux don't show a doubled divider here (#2997).
@@ -168,22 +59,14 @@ export default function(keybindings: Keybindings): MenuItemConstructorOptions {
         // TODO: Remove this menu entry and add it to the command palette (#1408).
         label: t('menu.edit.lineEnding'),
         submenu: [
-          {
+          item('menu.edit.lineEndingCrlf', '', (bw) => actions.lineEnding(bw, 'crlf'), {
             id: 'crlfLineEndingMenuEntry',
-            label: t('menu.edit.lineEndingCrlf'),
-            type: 'radio',
-            click(_menuItem, browserWindow) {
-              actions.lineEnding(browserWindow as BrowserWindow | undefined, 'crlf')
-            }
-          },
-          {
+            type: 'radio'
+          }),
+          item('menu.edit.lineEndingLf', '', (bw) => actions.lineEnding(bw, 'lf'), {
             id: 'lfLineEndingMenuEntry',
-            label: t('menu.edit.lineEndingLf'),
-            type: 'radio',
-            click(_menuItem, browserWindow) {
-              actions.lineEnding(browserWindow as BrowserWindow | undefined, 'lf')
-            }
-          }
+            type: 'radio'
+          })
         ]
       }
     ]

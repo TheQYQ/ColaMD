@@ -45,7 +45,7 @@
   "fileSortBy": {
     "description": "General--Sort files in opened folder by created time, modified time and title.",
     "enum": ["modified", "created", "title"],
-    "default": "modified"
+    "default": "created"
   },
   "fileSortOrder": {
     "description": "General--Sort order for files in opened folders: ascending or descending.",
@@ -55,7 +55,8 @@
   },
   "lastOpenedFolder": {
     "description": "General--The last folder that was opened in ColaMD.--internal",
-    "type": "string"
+    "type": "string",
+    "default": ""
   },
   "startUpAction": {
     "description": "General--The action after ColaMD startup, open the last opened folder, open the specified folder or blank page",
@@ -64,7 +65,8 @@
   },
   "defaultDirectoryToOpen": {
     "description": "General--The default directory that should be opened on startup when startUp=folder.",
-    "type": "string"
+    "type": "string",
+    "default": ""
   },
   "language": {
     "description": "General--The language ColaMD uses.",
@@ -94,7 +96,7 @@
   "wrapCodeBlocks": {
     "description": "Editor--Wrap text inside code blocks",
     "type": "boolean",
-    "default": true
+    "default": false
   },
   "editorLineWidth": {
     "description": "Editor--Defines the maximum editor area width. An empty string or suffixes of ch (characters), px (pixels) or % (percentage) are allowed.",
@@ -118,7 +120,7 @@
   "codeBlockLineNumbers": {
     "description": "Editor--Whether to show the line numbers",
     "type": "boolean",
-    "default": true
+    "default": false
   },
   "trimUnnecessaryCodeBlockEmptyLines": {
     "description": "Editor--Trim the beginning and ending empty lines in code block",
@@ -311,7 +313,7 @@
   "followSystemTheme": {
     "description": "Theme--Use separate theme in dark mode.",
     "type": "boolean",
-    "default": false
+    "default": true
   },
   "lightModeTheme": {
     "description": "Theme--Theme to use when system is in light mode.",
@@ -398,6 +400,14 @@
     "description": "General--Whether the file tree lists hidden (dot) files and directories.",
     "type": "boolean",
     "default": false
+  },
+  "treePathExcludePatterns": {
+    "description": "General--List of glob patterns of paths the file tree hides.--internal",
+    "type": "array",
+    "items": {
+      "type": "string"
+    },
+    "default": []
   },
   "searchExclusions": {
     "description": "Searcher--List of glob patterns to exclude from search.--internal",

@@ -93,11 +93,7 @@ export const editorReplace = (win: Win): void => {
   edit(win, 'replace')
 }
 
-export const findInFolder = (win: Win): void => {
-  edit(win, 'findInFolder')
-}
-
-export const edit = (win: Win, type: string): void => {
+const edit = (win: Win, type: string): void => {
   if (win && win.webContents) {
     win.webContents.send('mt::editor-edit-action', type)
   }
@@ -142,7 +138,6 @@ export const loadEditCommands = (commandManager: CommandManager): void => {
   commandManager.add(COMMANDS.EDIT_DELETE_PARAGRAPH, editorDeleteParagraph)
   commandManager.add(COMMANDS.EDIT_DUPLICATE, editorDuplicate)
   commandManager.add(COMMANDS.EDIT_FIND, editorFind)
-  commandManager.add(COMMANDS.EDIT_FIND_IN_FOLDER, findInFolder)
   commandManager.add(COMMANDS.EDIT_FIND_NEXT, editorFindNext)
   commandManager.add(COMMANDS.EDIT_FIND_PREVIOUS, editorFindPrevious)
   commandManager.add(COMMANDS.EDIT_PASTE, nativePaste)

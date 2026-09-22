@@ -53,7 +53,6 @@
       "replace": "Vervangen",
       "findNext": "Volgende zoeken",
       "findPrevious": "Vorige zoeken",
-      "findInFolder": "Zoeken in map",
       "screenshot": "Schermafbeelding",
       "lineEnding": "Regeleinde",
       "lineEndingCrlf": "CRLF (Windows)",
@@ -227,66 +226,17 @@
     "replaceAll": "Alles vervangen",
     "replaceSingle": "Enkele vervanging",
     "invalidRegex": "Ongeldige reguliere expressie \"{pattern}\"",
-    "regexMatchEmpty": "Reguliere expressie matcht lege tekenreeks \"{pattern}\"",
-    "searchResultInfo": "{matchCount} resultaten in {fileCount} bestanden",
-    "searchLimited": "Zoeken beperkt tot eerste {count} resultaten"
+    "regexMatchEmpty": "Reguliere expressie matcht lege tekenreeks \"{pattern}\""
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "Zoeken in map...",
-      "noFolderOpen": "Geen map geopend",
-      "noResultsFound": "Geen resultaten gevonden.",
-      "cancel": "Annuleren",
-      "openFolder": "Map openen",
-      "showMoreMatches": "Meer resultaten tonen"
-    },
     "tree": {
-      "openedFiles": "Geopende bestanden",
-      "saveAll": "Alles opslaan",
-      "closeAll": "Alles sluiten",
       "emptyProject": "Leeg project",
       "createFile": "Bestand aanmaken",
-      "openFolder": "Map openen"
-    },
-    "toc": {
-      "title": "Inhoudsopgave",
-      "expandAll": "Alles uitklappen",
-      "collapseAll": "Alles inklappen"
+      "openFile": "Bestand openen..."
     },
     "icons": {
       "files": "Bestanden",
-      "search": "Zoeken",
-      "toc": "Inhoudsopgave",
-      "settings": "Instellingen",
-      "history": "Version History"
-    },
-    "history": {
-      "title": "Version History",
-      "noFile": "No file open",
-      "loading": "Loading...",
-      "nosnapshots": "No version history yet. Snapshots are created automatically when you save.",
-      "restore": "Restore",
-      "delete": "Delete",
-      "clearAll": "Clear All",
-      "close": "Close",
-      "cancel": "Cancel",
-      "previewTitle": "Version Preview",
-      "restoreConfirm": "Restoring this version will replace the current document content. A backup of the current state will be saved first. Continue?",
-      "restoreTitle": "Restore Version",
-      "restoreFailed": "Failed to restore version",
-      "restoreSuccess": "Version restored successfully",
-      "deleteConfirm": "Are you sure you want to delete this version permanently?",
-      "deleteTitle": "Delete Version",
-      "deleteSuccess": "Version deleted",
-      "deleteFailed": "Failed to delete version",
-      "clearConfirm": "Are you sure you want to clear all version history for this file? This cannot be undone.",
-      "clearTitle": "Clear History",
-      "clearSuccess": "History cleared",
-      "clearFailed": "Failed to clear history",
-      "justNow": "Just now",
-      "minutesAgo": "{count} min ago",
-      "hoursAgo": "{count}h ago",
-      "daysAgo": "{count}d ago"
+      "toc": "Inhoudsopgave"
     }
   },
   "commandPalette": {
@@ -838,7 +788,6 @@
       "findNext": "Volgende zoeken",
       "findPrevious": "Vorige zoeken",
       "replace": "Vervangen",
-      "findInFolder": "Zoeken in map",
       "screenshot": "Schermafbeelding"
     },
     "paragraph": {
@@ -954,8 +903,9 @@
     "unsafeFileMessage": "Deze link opent een bestand dat code kan uitvoeren",
     "unsafeFileDetail": "\"{name}\" is een uitvoerbaar bestand of script. Het openen kan programma's op je computer uitvoeren. Ga alleen door als je dit document vertrouwt.",
     "openAnyway": "Toch openen",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "Naam wijzigen mislukt",
+    "moveFailure": "Verplaatsen mislukt",
+    "openFailure": "Fout bij openen"
   },
   "error": {
     "configSchemaViolation": "Configuratieschemaovertreding",
@@ -981,15 +931,13 @@
       "errorLoadingTabTitle": "Fout bij laden tabblad",
       "errorLoadingTabMessage": "Er is een fout opgetreden bij het laden van de bestandswijziging omdat het tabblad niet gevonden kan worden.",
       "mixedLineEndingsNormalized": "\"{name}\" heeft gemengde regeleindes die automatisch genormaliseerd zijn naar {lineEnding}.",
-      "imageDeletionUrlTitle": "Verwijder-URL afbeelding",
-      "imageDeletionUrlMessage": "Klik om de verwijder-URL van de geüploade afbeelding naar het klembord te kopiëren {url}",
       "errorWhileSaving": "Er is een fout opgetreden bij het opslaan: {msg}",
       "exportSuccessTitle": "Succesvol geëxporteerd",
       "exportSuccessMessage": "\"{name}\" is succesvol geëxporteerd!",
       "fileRemovedOnDisk": "\"{name}\" is verwijderd van schijf.",
       "fileChangedOnDisk": "\"{name}\" is gewijzigd op schijf. Wil je het opnieuw laden?",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "Er is een fout opgetreden bij het hernoemen: {msg}",
+      "errorWhileMoving": "Er is een fout opgetreden bij het verplaatsen: {msg}",
       "imageCleanupTitle": "Afbeeldingsbestand verwijderd",
       "imageCleanupMessage": "Niet-referentieerden bestand verwijderd: {name}"
     }

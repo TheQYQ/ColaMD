@@ -11,7 +11,6 @@ import type {
   BootInfo
 } from '@shared/types/ipc'
 import type { MenuTemplate, MenuPopupPosition } from '@shared/types/menu'
-import type { SerializedStat } from '@shared/types/files'
 
 declare global {
   // ---- Build-time defines (electron-vite `define`) ----
@@ -56,7 +55,6 @@ declare global {
 
   interface ElectronWebFrameAPI {
     setZoomFactor(factor: number): void
-    setZoomLevel(level: number): void
   }
 
   interface ElectronWebUtilsAPI {
@@ -67,14 +65,12 @@ declare global {
     minimize(): void
     maximize(): void
     unmaximize(): void
-    toggleMaximize(): void
     close(): void
     setFullScreen(flag: boolean): void
     toggleFullScreen(): void
     isMaximized(): Promise<boolean>
     isFullScreen(): Promise<boolean>
     popupMenu(template: MenuTemplate, position?: MenuPopupPosition): void
-    popupApplicationMenu(position?: MenuPopupPosition): void
   }
 
   interface ElectronDialogAPI {
@@ -131,14 +127,12 @@ declare global {
   interface FileUtilsAPI {
     isFile(p: string): Promise<boolean>
     isDirectory(p: string): Promise<boolean>
-    emptyDir(p: string): Promise<void>
     copy(src: string, dest: string): Promise<void>
     ensureDir(p: string): Promise<void>
     outputFile(p: string, data: string | Uint8Array): Promise<void>
     move(src: string, dest: string): Promise<void>
-    stat(p: string): Promise<SerializedStat>
     writeFile(p: string, data: string | Uint8Array): Promise<void>
-    readFile(p: string, encoding?: string): Promise<string | Uint8Array>
+    readFile(p: string, encoding?: BufferEncoding): Promise<string | Uint8Array>
     pathExists(p: string): Promise<boolean>
     unlink(p: string): Promise<void>
     readdir(p: string): Promise<string[]>

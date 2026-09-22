@@ -44,11 +44,20 @@ const UNSAVED_DOT = '.editor-tabs li.unsaved'
 // item sends (`mt::editor-ask-file-save` -> store FILE_SAVE). The file was
 // opened from a real path so main takes the alreadyExistOnDisk branch: it
 // writes the markdown to disk and replies `mt::tab-saved`, clearing the dot.
-const save = async(app: ElectronApplication): Promise<void> => {
+const save = async (app: ElectronApplication): Promise<void> => {
   await sendIpcToRenderer(app, 'mt::editor-ask-file-save')
 }
 
 const readDisk = (): string => fs.readFileSync(FIXTURE_ABS, 'utf-8')
+
+// The fixture is committed with LF (`git ls-files --eol` says i/lf) but a Windows
+// checkout with core.autocrlf gets CRLF in the working tree, while the engine
+// serializes LF. Comparing the raw bytes therefore made every one of the four
+// byte-stability assertions below fail on Windows and pass on Linux, reporting
+// "the round trip reformats the document" when nothing of the sort happened. The
+// comparison is about content, so it uses the committed form; the file is still
+// put back byte-for-byte on teardown.
+const asCommitted = (text: string): string => text.replace(/\r\n/g, '\n')
 
 const isDirty = (page: Page): Promise<boolean> =>
   page.evaluate((sel) => !!document.querySelector(sel), UNSAVED_DOT)
@@ -57,12 +66,14 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
   let app: ElectronApplication
   let page: Page
   let original: string
+  let originalRaw: string
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     // Snapshot the on-disk bytes BEFORE launching so we can restore them in
     // afterAll (the test saves into the real fixture file) and so we have the
     // exact baseline to compare the serialized + saved content against.
-    original = readDisk()
+    originalRaw = readDisk()
+    original = asCommitted(originalRaw)
     const launched = await launchWithDoc(FIXTURE_REL)
     app = launched.app
     page = launched.page
@@ -71,18 +82,18 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
     await page.waitForTimeout(800)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
     // Restore the fixture to its original bytes regardless of test outcome so
     // the working tree is left untouched.
     try {
-      fs.writeFileSync(FIXTURE_ABS, original, 'utf-8')
+      fs.writeFileSync(FIXTURE_ABS, originalRaw, 'utf-8')
     } catch {
       /* ignore */
     }
   })
 
-  test('every block type renders (sanity that the fixture loaded)', async() => {
+  test('every block type renders (sanity that the fixture loaded)', async () => {
     // Front matter + the structural block types are all present in the DOM.
     await page.waitForSelector('.editor-component h1', { state: 'attached', timeout: 10000 })
     const counts = await page.evaluate(() => {
@@ -111,7 +122,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
     expect(counts.link).toBeGreaterThanOrEqual(1)
   })
 
-  test('the freshly loaded doc is clean and serializes back to the original bytes', async() => {
+  test('the freshly loaded doc is clean and serializes back to the original bytes', async () => {
     // A freshly opened (unedited) file must not be marked dirty.
     expect(await isDirty(page)).toBe(false)
 
@@ -122,7 +133,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
     expect(serialized).toBe(original)
   })
 
-  test('repeated source <-> WYSIWYG toggles do not mutate or reformat the content', async() => {
+  test('repeated source <-> WYSIWYG toggles do not mutate or reformat the content', async () => {
     // Toggle source mode in and out twice; the content must be identical after
     // each handoff and must never diverge from the original.
     for (let i = 0; i < 2; i++) {
@@ -142,7 +153,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
     expect(afterToggles).toBe(original)
   })
 
-  test('saving clears the unsaved indicator and writes the original bytes back to disk', async() => {
+  test('saving clears the unsaved indicator and writes the original bytes back to disk', async () => {
     // The toggles above should not have dirtied the tab, but a pure round trip
     // can legitimately leave the tab clean; either way, force a save and verify
     // the post-save state is clean and the on-disk bytes are unchanged.
@@ -153,13 +164,13 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
 
     // The bytes written to disk equal the original fixture (no reformat on
     // save). Poll because the disk write is async on the main side.
-    await expect.poll(() => readDisk(), { timeout: 5000 }).toBe(original)
+    await expect.poll(() => asCommitted(readDisk()), { timeout: 5000 }).toBe(original)
 
     // And the in-editor serialization still matches.
     expect(await getMarkdownContent(page, app)).toBe(original)
   })
 
-  test('a dirty edit saves through the full IPC path and persists the exact editor serialization', async() => {
+  test('a dirty edit saves through the full IPC path and persists the exact editor serialization', async () => {
     // Genuinely exercise the dirty -> save -> clean transition (test 4 may have
     // saved an already-clean tab). A bulk source-mode edit that appends a
     // paragraph dirties the tab; confirm the unsaved dot appears.
@@ -175,6 +186,6 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
 
     await save(app)
     await expect.poll(() => isDirty(page), { timeout: 5000 }).toBe(false)
-    await expect.poll(() => readDisk(), { timeout: 5000 }).toBe(editorContent)
+    await expect.poll(() => asCommitted(readDisk()), { timeout: 5000 }).toBe(editorContent)
   })
 })

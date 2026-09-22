@@ -17,7 +17,7 @@
       type="text"
       class="rename"
       @click.stop="noop"
-      @keypress.enter="rename"
+      @keydown.enter="rename"
     >
     <span v-else>{{ file.name }}</span>
   </div>
@@ -71,14 +71,20 @@ const focusRenameInput = (): void => {
   nextTick(() => {
     if (renameInput.value) {
       renameInput.value.focus()
-      newName.value = props.file.name
+      // Only show the filename stem in the rename input — extension is
+      // display-only and not user-editable (#2887).
+      const ext = window.path.extname(props.file.name)
+      newName.value = ext ? props.file.name.slice(0, -ext.length) : props.file.name
     }
   })
 }
 
 const rename = (): void => {
+  // newName holds only the stem — re-attach the original extension so the
+  // file keeps its type after rename.
   if (newName.value) {
-    projectStore.RENAME_IN_SIDEBAR(newName.value)
+    const ext = window.path.extname(props.file.name)
+    projectStore.RENAME_IN_SIDEBAR(newName.value + ext)
   }
 }
 
@@ -102,9 +108,11 @@ onMounted(() => {
   align-items: center;
   cursor: default;
   user-select: none;
-  height: 30px;
+  height: 28px;
   box-sizing: border-box;
-  padding-right: 15px;
+  border-radius: 4px;
+  padding-right: 12px;
+  transition: background-color 120ms ease-out;
   &:hover {
     background: var(--sideBarItemHoverBgColor);
   }
@@ -113,37 +121,25 @@ onMounted(() => {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  &::before {
-    content: '';
-    position: absolute;
-    display: block;
-    left: 0;
-    background: var(--themeColor);
-    width: 2px;
-    height: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    transition: all 0.2s ease;
-  }
 }
-.side-bar-file.current::before {
-  height: 100%;
+.side-bar-file.current {
+  background: var(--bg-selected);
 }
 .side-bar-file.current > span {
-  color: var(--themeColor);
+  color: var(--text-primary);
 }
 .side-bar-file.active > span {
-  color: var(--sideBarTitleColor);
+  color: var(--text-primary);
 }
 input.rename {
-  height: 22px;
+  height: 24px;
   outline: none;
   margin: 5px 0;
   padding: 0 8px;
   color: var(--sideBarColor);
-  border: 1px solid var(--floatBorderColor);
-  background: var(--floatBorderColor);
+  border: 1px solid var(--themeColor);
+  background: var(--inputBgColor);
   width: 100%;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 </style>

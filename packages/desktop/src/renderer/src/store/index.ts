@@ -13,10 +13,6 @@ export const useMainStore = defineStore('main', () => {
   // Whether ColaMD is initialized
   const init = ref(false)
 
-  function SET_WIN_STATUS(status: boolean): void {
-    windowActive.value = status
-  }
-
   function SET_INITIALIZED(): void {
     init.value = true
   }
@@ -34,7 +30,6 @@ export const useMainStore = defineStore('main', () => {
     appVersion,
     windowActive,
     init,
-    SET_WIN_STATUS,
     SET_INITIALIZED,
     LISTEN_WIN_STATUS
   }

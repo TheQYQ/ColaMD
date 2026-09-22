@@ -70,7 +70,7 @@ export const t = (key: string, ...args: unknown[]): string => {
 // don't fire duplicate IPCs for the same locale.
 const inflightLoads = new Map<string, Promise<Record<string, unknown> | undefined>>()
 
-export const setLanguage = async(locale: string): Promise<void> => {
+export const setLanguage = async (locale: string): Promise<void> => {
   if (!locale) return
   const globalI18n = i18n.global
   if (!globalI18n.availableLocales.includes(locale)) {

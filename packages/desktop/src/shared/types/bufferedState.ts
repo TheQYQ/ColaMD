@@ -2,17 +2,17 @@
 
 import type { IFileState } from './files'
 
-export interface BufferedEditorState {
+interface BufferedEditorState {
   tabs: IFileState[]
   currentFileId?: string
   [key: string]: unknown
 }
 
-export interface BufferedProjectState {
+interface BufferedProjectState {
   [key: string]: unknown
 }
 
-export interface BufferedLayoutState {
+interface BufferedLayoutState {
   [key: string]: unknown
 }
 

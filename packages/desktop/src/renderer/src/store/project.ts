@@ -1,12 +1,13 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import { addFile, unlinkFile, addDirectory, unlinkDirectory, resortTree, updateFileMtime } from './treeCtrl'
+import { resortTree } from './treeCtrl'
+import { processTreeEvent } from './treeEvents'
+import { registerSidebarPasteHandler } from './sidebarPaste'
 import { usePreferencesStore } from './preferences'
 import bus from '../bus'
-import { create, paste, rename, type FileCreateType, type PasteOptions } from '../util/fileSystem'
+import { create, rename, type FileCreateType } from '../util/fileSystem'
 import { PATH_SEPARATOR } from '../config'
 import notice from '../services/notification'
-import { getFileStateFromData } from './help'
 import { useLayoutStore } from './layout'
 import { useEditorStore } from './editor'
 import { debouncedSendBufferedState } from './bufferedState'
@@ -172,38 +173,21 @@ export const useProjectStore = defineStore('project', () => {
 
   function _processTreeEvent(type: string, change: TreeChange): void {
     const editorStore = useEditorStore()
-    switch (type) {
-      case 'add': {
-        const { pathname, data, isMarkdown } = change
-        addFile(projectTree.value!, change as Parameters<typeof addFile>[1], String(preferencesStore.fileSortBy), String(preferencesStore.fileSortOrder))
-        if (isMarkdown && newFileNameCache.value && pathname === newFileNameCache.value) {
-          const fileState = getFileStateFromData(data as Record<string, unknown>)
-          editorStore.UPDATE_CURRENT_FILE(fileState)
+    processTreeEvent(
+      {
+        tree: projectTree.value!,
+        fileSortBy: String(preferencesStore.fileSortBy),
+        fileSortOrder: String(preferencesStore.fileSortOrder),
+        pendingNewFileName: newFileNameCache.value,
+        adoptCreatedFile: (fileState) => editorStore.UPDATE_CURRENT_FILE(fileState),
+        forgetPendingNewFileName: () => {
           newFileNameCache.value = ''
-        }
-        break
-      }
-      case 'unlink':
-        unlinkFile(projectTree.value!, change)
-        editorStore.SET_SAVE_STATUS_WHEN_REMOVE(change)
-        break
-      case 'addDir':
-        addDirectory(projectTree.value!, change)
-        break
-      case 'unlinkDir':
-        unlinkDirectory(projectTree.value!, change)
-        break
-      case 'change':
-        if (change?.mtimeMs !== undefined) {
-          updateFileMtime(projectTree.value!, change as Parameters<typeof updateFileMtime>[1], String(preferencesStore.fileSortBy), String(preferencesStore.fileSortOrder))
-        }
-        break
-      default:
-        if (window.electron?.process?.env?.NODE_ENV === 'development') {
-          console.log(`Unknown directory watch type: "${type}"`)
-        }
-        break
-    }
+        },
+        fileRemoved: (removed) => editorStore.SET_SAVE_STATUS_WHEN_REMOVE(removed)
+      },
+      type,
+      change
+    )
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -211,12 +195,8 @@ export const useProjectStore = defineStore('project', () => {
     activeItem.value = item
   }
 
-  function CHANGE_CLIPBOARD(data: ClipboardEntry | null): void {
-    clipboard.value = data
-  }
-
-  function ASK_FOR_OPEN_PROJECT(): void {
-    window.electron.ipcRenderer.send('mt::ask-for-open-project-in-sidebar')
+  function ASK_FOR_OPEN_FILE(): void {
+    window.electron.ipcRenderer.send('mt::ask-for-open-file-in-sidebar')
   }
 
   function LISTEN_FOR_SIDEBAR_CONTEXT_MENU(): void {
@@ -244,57 +224,7 @@ export const useProjectStore = defineStore('project', () => {
       const { pathname: src } = activeItem.value
       clipboard.value = { type: String(type), src }
     })
-    bus.on('SIDEBAR::paste', async() => {
-      const cb = clipboard.value
-      const { pathname, isDirectory } = activeItem.value
-      const dirname = isDirectory ? pathname : window.path.dirname(pathname)
-      if (cb && cb.src) {
-        let dest = dirname + PATH_SEPARATOR + window.path.basename(cb.src)
-
-        if (window.path.normalize(cb.src) === window.path.normalize(dest)) {
-          if (cb.type === 'cut') {
-            notice.notify({
-              title: 'Paste Forbidden',
-              type: 'warning',
-              message: 'Source and destination must not be the same.'
-            })
-            return
-          }
-          // Copy in same folder: generate unique name (e.g. "file (copy).md", "file (copy 2).md")
-          const ext = window.path.extname(cb.src)
-          const base = window.path.basename(cb.src, ext)
-          let suffix = 1
-          const MAX_COPIES = 99
-          dest = dirname + PATH_SEPARATOR + base + ' (copy)' + ext
-          while (await window.fileUtils.pathExists(dest)) {
-            suffix++
-            if (suffix > MAX_COPIES) {
-              notice.notify({
-                title: 'Too many copies',
-                type: 'warning',
-                message: `Maximum of ${MAX_COPIES} copies reached. Please clean up first.`
-              })
-              return
-            }
-            dest = dirname + PATH_SEPARATOR + base + ` (copy ${suffix})` + ext
-          }
-        }
-
-        cb.dest = dest
-
-        paste(cb as PasteOptions)
-          .then(() => {
-            clipboard.value = null
-          })
-          .catch((err) => {
-            notice.notify({
-              title: 'Error while pasting',
-              type: 'error',
-              message: err instanceof Error ? err.message : String(err)
-            })
-          })
-      }
-    })
+    registerSidebarPasteHandler({ activeItem, clipboard })
     bus.on('SIDEBAR::rename', () => {
       const { pathname } = activeItem.value
       renameCache.value = pathname
@@ -346,13 +276,17 @@ export const useProjectStore = defineStore('project', () => {
     if (!src) return
     const dirname = window.path.dirname(src)
     const dest = dirname + PATH_SEPARATOR + name
-    rename(src, dest).then(() => {
-      editorStore.RENAME_IF_NEEDED({ src, dest })
-    })
-  }
-
-  function OPEN_SETTING_WINDOW(): void {
-    window.electron.ipcRenderer.send('mt::open-setting-window')
+    rename(src, dest)
+      .then(() => {
+        editorStore.RENAME_IF_NEEDED({ src, dest })
+      })
+      .catch((err) => {
+        notice.notify({
+          title: '重命名失败',
+          type: 'error',
+          message: err instanceof Error ? err.message : String(err)
+        })
+      })
   }
 
   return {
@@ -369,11 +303,9 @@ export const useProjectStore = defineStore('project', () => {
     LISTEN_FOR_LOAD_PROJECT,
     LISTEN_FOR_UPDATE_PROJECT,
     CHANGE_ACTIVE_ITEM,
-    CHANGE_CLIPBOARD,
-    ASK_FOR_OPEN_PROJECT,
+    ASK_FOR_OPEN_FILE,
     LISTEN_FOR_SIDEBAR_CONTEXT_MENU,
     CREATE_FILE_DIRECTORY,
-    RENAME_IN_SIDEBAR,
-    OPEN_SETTING_WINDOW
+    RENAME_IN_SIDEBAR
   }
 })

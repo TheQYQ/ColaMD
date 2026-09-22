@@ -1,11 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from 'playwright'
-import {
-  launchWithMarkdown,
-  waitForMenuReady,
-  enterSourceMode,
-  sendIpcToRenderer
-} from './helpers'
+import { launchWithMarkdown, waitForMenuReady, enterSourceMode, sendIpcToRenderer } from './helpers'
 
 // Issue #781 — Undo/redo while in Source Code mode must act on the CodeMirror
 // editor, not the hidden WYSIWYG (muya) engine. The Edit › Undo menu item and
@@ -47,7 +42,7 @@ const redo = (app: Parameters<typeof sendIpcToRenderer>[0]): Promise<void> =>
   sendIpcToRenderer(app, 'mt::editor-edit-action', 'redo')
 
 test.describe('Issue #781 — undo/redo in source code mode', () => {
-  test('undo reverts a source-mode edit; redo re-applies it', async() => {
+  test('undo reverts a source-mode edit; redo re-applies it', async () => {
     const { app, page } = await launchWithMarkdown('saved baseline\n')
     await waitForMenuReady(app)
 

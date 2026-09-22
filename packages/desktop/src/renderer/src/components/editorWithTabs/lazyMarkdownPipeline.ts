@@ -41,7 +41,7 @@ export interface PipelineEngine {
   getHistory(): unknown
 }
 
-export interface PipelineDispatchPayload {
+interface PipelineDispatchPayload {
   id: string
   markdown: string | null
   edit?: boolean
@@ -76,6 +76,9 @@ export function createLazyMarkdownPipeline(deps: LazyMarkdownPipelineDeps) {
     const engine = deps.getEngine()
     const id = deps.getCurrentId()
     if (!engine || !id) return
+    // The engine serializes only its flushed state, so a snapshot taken without
+    // this would describe the document as it was before the queued ops.
+    engine.flush()
     const markdown = engine.getMarkdownLive()
     pendingMarkdownCommit = false
     deps.dispatch({
@@ -98,6 +101,11 @@ export function createLazyMarkdownPipeline(deps: LazyMarkdownPipelineDeps) {
     // The debounce can outlive its tab: a switch inside the window must not
     // commit the NEW document's content under the OLD tab's id.
     if (!engine || id !== deps.getCurrentId()) return
+    // Same reason as in `commitPendingMarkdown`, and this is the path that was
+    // missing it: the debounced commit cleared `pendingMarkdownCommit` after
+    // serializing an un-flushed document, so every later flush-on-read (entering
+    // source mode, saving) saw a clean flag and read that stale snapshot.
+    engine.flush()
     const markdown = engine.getMarkdownLive()
     pendingMarkdownCommit = false
     deps.dispatch({
@@ -175,7 +183,10 @@ export function createLazyMarkdownPipeline(deps: LazyMarkdownPipelineDeps) {
     },
 
     // Flush-on-read: apply pending engine ops, then serialize once if a
-    // keystroke is still uncommitted. Safe to call repeatedly.
+    // keystroke is still uncommitted. Safe to call repeatedly, and safe to call
+    // when `hasPendingCommit` is false — applying the queue is what makes an
+    // in-flight edit visible, so a caller that checks the flag first will skip
+    // the flush for exactly the edits the flag has not been told about yet.
     flushActive(): void {
       const engine = deps.getEngine()
       if (!engine) return

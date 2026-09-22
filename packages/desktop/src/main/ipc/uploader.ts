@@ -2,9 +2,11 @@ import path from 'path'
 import { tmpdir } from 'os'
 import { execFile } from 'child_process'
 import fs from 'fs-extra'
-import { ipcMain } from 'electron'
 import commandExists from 'command-exists'
+import { isFile } from 'common/filesystem'
 import { isImageFile } from 'common/filesystem/paths'
+import type Accessor from '../app/accessor'
+import { typedHandle } from './typedHandle'
 
 const buildPreferredPathEnv = (): string => {
   const extras =
@@ -110,6 +112,12 @@ const uploadByPicgo = (localPath: string): Promise<string> =>
 
 const uploadByCli = (cliScript: string, localPath: string): Promise<string> =>
   new Promise((resolve, reject) => {
+    // `cliScript` is read from main's own preference store now, but a value
+    // written before that rule existed — or by anything else that can touch the
+    // settings file — still must not mean "exec an arbitrary string".
+    if (!cliScript || !isFile(cliScript)) {
+      return reject(new Error('CLI uploader script is not an existing file'))
+    }
     execFile(
       cliScript,
       [localPath],
@@ -121,7 +129,7 @@ const uploadByCli = (cliScript: string, localPath: string): Promise<string> =>
     )
   })
 
-const writeBinaryToTmp = async(
+const writeBinaryToTmp = async (
   data: Uint8Array | number[] | null | undefined,
   suffix: string = ''
 ): Promise<string> => {
@@ -131,7 +139,7 @@ const writeBinaryToTmp = async(
   return tmpPath
 }
 
-const uploadFromPath = async(
+const uploadFromPath = async (
   imagePath: string,
   options: { currentUploader: string; cliScript: string }
 ): Promise<string> => {
@@ -146,7 +154,7 @@ interface BufferImagePayload {
   name: string
 }
 
-const uploadFromBuffer = async(
+const uploadFromBuffer = async (
   { data, name }: BufferImagePayload,
   options: {
     currentUploader: string
@@ -169,16 +177,18 @@ const uploadFromBuffer = async(
   }
 }
 
-interface UploadRequest {
-  pathname: string
-  image: string | BufferImagePayload
-  isPath: boolean
-  preferences: { currentUploader: string; cliScript: string }
-}
-
-export const registerUploaderHandlers = (): void => {
-  ipcMain.handle('mt::uploader::upload', async(_event, req: UploadRequest) => {
-    const { pathname, image, isPath, preferences } = req
+export const registerUploaderHandlers = (accessor: Accessor): void => {
+  typedHandle('mt::uploader::upload', async (_event, req) => {
+    // The renderer names only *which image* to upload. Which program runs is
+    // main's own setting: `cliScript` used to travel in this payload, which made
+    // the channel arbitrary code execution in the main process — `execFile`
+    // stops shell metacharacters, not "run any file on disk". The preference is
+    // now assigned by a native dialog only (preferences/index.ts) and read here.
+    const { pathname, image, isPath } = req
+    const preferences = {
+      currentUploader: String(accessor.dataCenter.getItem('currentUploader') ?? 'picgo'),
+      cliScript: String(accessor.preferences.getItem('cliScript') ?? '')
+    }
     if (isPath) {
       const dir = path.dirname(pathname)
       const imagePath = path.resolve(dir, image as string)

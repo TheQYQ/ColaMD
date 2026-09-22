@@ -1,18 +1,13 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import {
-  launchWithMarkdown,
-  clickMenuById,
-  enterSourceMode,
-  exitSourceMode
-} from './helpers'
+import { launchWithMarkdown, clickMenuById, enterSourceMode, exitSourceMode } from './helpers'
 
 // Read the live `checked`/`enabled` state of a view-mode menu item straight
 // from the active application menu — the same Menu instance that
 // `viewLayoutChanged` (main/menu/actions/view.ts) mutates after the renderer
 // round-trips `mt::view-layout-changed`. Mirrors menu-sanity.spec.ts:60 and
 // parity-pg1-menu-state.spec.ts:23.
-const viewModeMenuItem = async(
+const viewModeMenuItem = async (
   app: ElectronApplication,
   id: string
 ): Promise<{ checked: boolean; enabled: boolean } | null> =>
@@ -23,7 +18,7 @@ const viewModeMenuItem = async(
 
 // Poll the menu item until its `checked` flag matches `want` (the toggle ->
 // renderer -> `mt::view-layout-changed` -> main round-trip is async).
-const waitForChecked = async(
+const waitForChecked = async (
   app: ElectronApplication,
   id: string,
   want: boolean,
@@ -39,7 +34,7 @@ const waitForChecked = async(
   return last ?? { checked: false, enabled: false }
 }
 
-const waitForEnabled = async(
+const waitForEnabled = async (
   app: ElectronApplication,
   id: string,
   want: boolean,
@@ -59,17 +54,17 @@ test.describe('View modes', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# View modes\n\nBody.\n')
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('Toggle focus mode adds and removes .focus on .editor-wrapper', async() => {
+  test('Toggle focus mode adds and removes .focus on .editor-wrapper', async () => {
     await clickMenuById(app, 'focusModeMenuItem')
     await expect(page.locator('.editor-wrapper')).toHaveClass(/(^|\s)focus(\s|$)/)
     await clickMenuById(app, 'focusModeMenuItem')
@@ -83,7 +78,7 @@ test.describe('View modes', () => {
     )
   })
 
-  test('Toggle typewriter mode adds and removes .typewriter on .editor-wrapper', async() => {
+  test('Toggle typewriter mode adds and removes .typewriter on .editor-wrapper', async () => {
     await clickMenuById(app, 'typewriterModeMenuItem')
     await expect(page.locator('.editor-wrapper')).toHaveClass(/(^|\s)typewriter(\s|$)/)
     await clickMenuById(app, 'typewriterModeMenuItem')
@@ -97,7 +92,7 @@ test.describe('View modes', () => {
     )
   })
 
-  test('Toggle source-code mode swaps editor for CodeMirror', async() => {
+  test('Toggle source-code mode swaps editor for CodeMirror', async () => {
     await clickMenuById(app, 'sourceCodeModeMenuItem')
     await page.waitForSelector('.source-code .CodeMirror', { state: 'attached', timeout: 10000 })
     await expect(page.locator('.editor-wrapper')).toHaveClass(/(^|\s)source(\s|$)/)
@@ -112,7 +107,7 @@ test.describe('View modes', () => {
   // enabled again on exit. `viewLayoutChanged`'s `sourceCode` branch toggles
   // `focusModeMenuItem.enabled` / `typewriterModeMenuItem.enabled` off; nothing
   // else covers this disabled-in-source assertion.
-  test('Item 155: source mode disables Typewriter + Focus menu items, exit re-enables', async() => {
+  test('Item 155: source mode disables Typewriter + Focus menu items, exit re-enables', async () => {
     // Baseline: both enabled in WYSIWYG.
     expect((await waitForEnabled(app, 'typewriterModeMenuItem', true)).enabled).toBe(true)
     expect((await waitForEnabled(app, 'focusModeMenuItem', true)).enabled).toBe(true)
@@ -133,7 +128,7 @@ test.describe('View modes', () => {
   // Item 265 — The three view-mode menu items are checkboxes whose `checked`
   // state must flip with each toggle. view-modes' other tests only assert the
   // `.editor-wrapper` class; menu-sanity only asserts the ids EXIST.
-  test('Item 265: view-mode menu items track their checked state on toggle', async() => {
+  test('Item 265: view-mode menu items track their checked state on toggle', async () => {
     // Source-code mode checkbox.
     expect((await viewModeMenuItem(app, 'sourceCodeModeMenuItem'))?.checked).toBe(false)
     await enterSourceMode(page, app)
@@ -160,7 +155,7 @@ test.describe('View modes', () => {
 // Click into a top-level block the way parity-pg1-menu-state.spec.ts:41 does —
 // a real bubbling click on the content span drives Muya's selection handling,
 // which flips the `.mu-active` ancestor-chain class that focus mode keys off.
-const placeCaretIn = async(page: Page, selector: string): Promise<void> => {
+const placeCaretIn = async (page: Page, selector: string): Promise<void> => {
   await page.evaluate((sel) => {
     const span = document.querySelector(sel) as HTMLElement | null
     if (!span) throw new Error(`no element for ${sel}`)
@@ -184,7 +179,7 @@ test.describe('View modes — focus mode dims non-active blocks (item 250)', () 
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(
       'first paragraph\n\nsecond paragraph\n\nthird paragraph\n'
     )
@@ -192,11 +187,11 @@ test.describe('View modes — focus mode dims non-active blocks (item 250)', () 
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('item 250: active top-level block is full opacity, siblings are dimmed', async() => {
+  test('item 250: active top-level block is full opacity, siblings are dimmed', async () => {
     await clickMenuById(app, 'focusModeMenuItem')
     await expect(page.locator('.editor-component')).toHaveClass(/(^|\s)mu-focus-mode(\s|$)/)
 
@@ -236,7 +231,7 @@ test.describe('View modes — focus mode dims non-active blocks (item 250)', () 
     // 0.25 target rather than catching the animation mid-flight.
     await expect
       .poll(
-        async() => {
+        async () => {
           const o = await readOpacities()
           return o ? o.inactive < 0.5 : false
         },
@@ -272,7 +267,7 @@ test.describe('View modes — typewriter scrolling (item 173)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     // A tall document so the editor actually scrolls.
     const lines: string[] = []
     for (let i = 0; i < 80; i++) lines.push(`line number ${i} of the tall document`)
@@ -281,7 +276,7 @@ test.describe('View modes — typewriter scrolling (item 173)', () => {
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
@@ -311,27 +306,21 @@ test.describe('View modes — typewriter scrolling (item 173)', () => {
   // which xvfb does not reproduce (this passes on a headed display). The
   // `.typewriter` class toggle is covered by the test above, and the checklist
   // classifies typewriter centering as manual QA.
-  test.fixme('item 173: typewriter centers the caret; toggling off keeps it in view (not at the bottom)', async() => {
+  test.fixme('item 173: typewriter centers the caret; toggling off keeps it in view (not at the bottom)', async () => {
     await clickMenuById(app, 'typewriterModeMenuItem')
     await expect(page.locator('.editor-wrapper')).toHaveClass(/(^|\s)typewriter(\s|$)/)
 
     // Place the caret in a middle paragraph and type so the engine re-centers.
-    await placeCaretIn(
-      page,
-      '.mu-container > p.mu-paragraph:nth-of-type(40) .mu-paragraph-content'
-    )
+    await placeCaretIn(page, '.mu-container > p.mu-paragraph:nth-of-type(40) .mu-paragraph-content')
     await page.click('.editor-component')
-    await placeCaretIn(
-      page,
-      '.mu-container > p.mu-paragraph:nth-of-type(40) .mu-paragraph-content'
-    )
+    await placeCaretIn(page, '.mu-container > p.mu-paragraph:nth-of-type(40) .mu-paragraph-content')
     await page.keyboard.type(' typed', { delay: 0 })
 
     // Typewriter re-centers the caret to STANDAR_Y (320) within a tolerance
     // band — layout/scroll settling on xvfb is timing sensitive, so poll.
     await expect
       .poll(
-        async() => {
+        async () => {
           const o = await caretBlockOffset()
           if (!o) return false
           return o.relativeTop > 120 && o.relativeTop < o.containerHeight - 120
@@ -360,7 +349,7 @@ test.describe('View modes — typewriter scrolling (item 173)', () => {
 
     await expect
       .poll(
-        async() => {
+        async () => {
           const o = await caretBlockOffset()
           if (!o) return false
           // In view = top within [0, containerHeight]. The bug pushed the block

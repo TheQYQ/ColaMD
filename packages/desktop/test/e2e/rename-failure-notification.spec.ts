@@ -15,22 +15,34 @@ import { launchWithMarkdown, waitForEditor } from './helpers'
 // involved (unlike mt::move-file, whose identical notification branch sits
 // behind a save dialog).
 
+// The toast title is localized, and the app follows the machine locale, so the
+// assertion accepts any shipped translation of `dialog.renameFailure` — but only
+// those, so a missing key or an unrelated notification still fails the spec.
+const RENAME_FAILURE_TITLES = fs
+  .readdirSync(path.join(__dirname, '../../static/locales'))
+  .filter((f) => f.endsWith('.json') && !f.endsWith('.min.json'))
+  .map(
+    (f) =>
+      JSON.parse(fs.readFileSync(path.join(__dirname, '../../static/locales', f), 'utf8')).dialog
+        .renameFailure as string
+  )
+
 test.describe('Rename failure surfaces an error notification', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# Rename failure\n')
     app = launched.app
     page = launched.page
     await waitForEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('a failed rename shows a Rename failed notification', async() => {
+  test('a failed rename shows a Rename failed notification', async () => {
     const missingSource = path.join(
       fs.mkdtempSync(path.join(os.tmpdir(), 'colamd-e2e-rename-')),
       'ghost.md'
@@ -51,7 +63,8 @@ test.describe('Rename failure surfaces an error notification', () => {
 
     const notice = page.locator('.mt-notification')
     await expect(notice).toBeVisible({ timeout: 10000 })
-    await expect(notice.locator('.title span')).toHaveText('Rename failure')
+    const title = ((await notice.locator('.title span').textContent()) ?? '').trim()
+    expect(RENAME_FAILURE_TITLES).toContain(title)
     // The body carries the OS error message (e.g. ENOENT), not an empty shell.
     await expect(notice.locator('.body .left-text')).not.toBeEmpty()
 

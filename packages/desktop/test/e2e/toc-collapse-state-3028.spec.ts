@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, clickMenuById, waitForEditor, ensureTocVisible, markAllTabsClean } from './helpers'
+import {
+  launchWithMarkdown,
+  clickMenuById,
+  waitForEditor,
+  ensureTocVisible,
+  markAllTabsClean
+} from './helpers'
 
 // #3028 — collapsing a heading in the TOC must survive a document edit.
 //
@@ -46,7 +52,7 @@ const collapseNode = (page: Page, label: string): Promise<void> =>
     icon.click()
   }, label)
 
-const ensureSidebarVisible = async(app: ElectronApplication, page: Page): Promise<void> => {
+const ensureSidebarVisible = async (app: ElectronApplication, page: Page): Promise<void> => {
   const visible = await page.evaluate(() => {
     const el = document.querySelector('.side-bar') as HTMLElement | null
     return !!(el && el.offsetParent !== null)
@@ -68,7 +74,7 @@ test.describe('TOC collapse state survives edits (#3028)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(INITIAL_DOC)
     app = launched.app
     page = launched.page
@@ -82,14 +88,14 @@ test.describe('TOC collapse state survives edits (#3028)', () => {
     )
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) {
       await markAllTabsClean(app, page)
       await app.close()
     }
   })
 
-  test('a collapsed heading stays collapsed after a content edit', async() => {
+  test('a collapsed heading stays collapsed after a content edit', async () => {
     // Everything expanded initially.
     await expect
       .poll(() => readVisibleTocLabels(page), { timeout: 8000 })
@@ -99,7 +105,8 @@ test.describe('TOC collapse state survives edits (#3028)', () => {
     await collapseNode(page, 'B')
     await expect.poll(() => readVisibleTocLabels(page), { timeout: 5000 }).toEqual(['A', 'B', 'C'])
 
-    // Edit a different heading ("C" -> "C2"), triggering UPDATE_TOC.
+    // Edit a different heading ("C" -> "C2"), triggering the content-change tier's
+    // refreshTocIfChanged guard (not the unconditional UPDATE_TOC).
     const cContent = page
       .locator('.mu-container h2 .mu-atxheading-content')
       .filter({ hasText: 'C' })

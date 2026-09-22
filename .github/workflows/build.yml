@@ -83,6 +83,15 @@ jobs:
           npm_config_user_agent: 'pnpm'
           USE_ELECTRON_CLANG: ${{ matrix.platform == 'linux' && '0' || '' }}
 
+      # O14 ①: these five legs were the only place the delivery platforms got
+      # built, and not one of them ran a test, so a Windows- or macOS-only unit
+      # failure could only ever be found by hand. Same command as `test.yml`,
+      # now also on the two platforms that workflow does not cover
+      # (windows-arm64, macos-x64/arm64) — and before packaging, so a red test
+      # does not burn ten minutes producing an installer nobody can merge.
+      - name: Run unit tests
+        run: pnpm test
+
       - name: build-linux
         if: matrix.platform == 'linux'
         run: pnpm run build:linux

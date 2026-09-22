@@ -53,7 +53,6 @@
       "replace": "Reemplazar",
       "findNext": "Buscar Siguiente",
       "findPrevious": "Buscar Anterior",
-      "findInFolder": "Buscar en Carpeta",
       "screenshot": "Captura de Pantalla",
       "lineEnding": "Final de Línea",
       "lineEndingCrlf": "CRLF(Windows)",
@@ -227,66 +226,17 @@
     "replaceAll": "Reemplazar",
     "replaceSingle": "Reemplazar Uno",
     "invalidRegex": "Expresión regular inválida \"{pattern}\"",
-    "regexMatchEmpty": "La expresión regular coincide con la cadena vacía \"{pattern}\"",
-    "searchResultInfo": "{matchCount} coincidencias en {fileCount} archivos",
-    "searchLimited": "Búsqueda limitada a los primeros {count} resultados"
+    "regexMatchEmpty": "La expresión regular coincide con la cadena vacía \"{pattern}\""
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "Buscar en carpeta...",
-      "noFolderOpen": "No hay carpeta abierta",
-      "noResultsFound": "No se encontraron resultados.",
-      "cancel": "Cancelar",
-      "openFolder": "Abrir Carpeta",
-      "showMoreMatches": "Mostrar más coincidencias"
-    },
     "tree": {
-      "openedFiles": "Archivos abiertos",
-      "saveAll": "Guardar",
-      "closeAll": "Cerrar",
       "emptyProject": "Proyecto vacío",
       "createFile": "Crear Archivo",
-      "openFolder": "Abrir Carpeta"
-    },
-    "toc": {
-      "title": "Tabla de Contenidos",
-      "expandAll": "Expandir todo",
-      "collapseAll": "Contraer todo"
+      "openFile": "Abrir archivo..."
     },
     "icons": {
       "files": "Archivos",
-      "search": "Buscar",
-      "toc": "Tabla de Contenidos",
-      "settings": "Configuración",
-      "history": "Version History"
-    },
-    "history": {
-      "title": "Version History",
-      "noFile": "No file open",
-      "loading": "Loading...",
-      "nosnapshots": "No version history yet. Snapshots are created automatically when you save.",
-      "restore": "Restore",
-      "delete": "Delete",
-      "clearAll": "Clear All",
-      "close": "Close",
-      "cancel": "Cancel",
-      "previewTitle": "Version Preview",
-      "restoreConfirm": "Restoring this version will replace the current document content. A backup of the current state will be saved first. Continue?",
-      "restoreTitle": "Restore Version",
-      "restoreFailed": "Failed to restore version",
-      "restoreSuccess": "Version restored successfully",
-      "deleteConfirm": "Are you sure you want to delete this version permanently?",
-      "deleteTitle": "Delete Version",
-      "deleteSuccess": "Version deleted",
-      "deleteFailed": "Failed to delete version",
-      "clearConfirm": "Are you sure you want to clear all version history for this file? This cannot be undone.",
-      "clearTitle": "Clear History",
-      "clearSuccess": "History cleared",
-      "clearFailed": "Failed to clear history",
-      "justNow": "Just now",
-      "minutesAgo": "{count} min ago",
-      "hoursAgo": "{count}h ago",
-      "daysAgo": "{count}d ago"
+      "toc": "Tabla de Contenidos"
     }
   },
   "commandPalette": {
@@ -838,7 +788,6 @@
       "findNext": "Buscar Siguiente",
       "findPrevious": "Buscar Anterior",
       "replace": "Reemplazar",
-      "findInFolder": "Buscar en Carpeta",
       "screenshot": "Captura de Pantalla"
     },
     "paragraph": {
@@ -954,8 +903,9 @@
     "unsafeFileMessage": "Este enlace abre un archivo que puede ejecutar código",
     "unsafeFileDetail": "«{name}» es un archivo ejecutable o de script. Abrirlo podría ejecutar programas en tu equipo. Continúa solo si confías en este documento.",
     "openAnyway": "Abrir de todos modos",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "Error al renombrar",
+    "moveFailure": "Error al mover",
+    "openFailure": "Error al abrir"
   },
   "error": {
     "configSchemaViolation": "Violación del esquema de configuración",
@@ -981,15 +931,13 @@
       "errorLoadingTabTitle": "Error al cargar la pestaña",
       "errorLoadingTabMessage": "Se produjo un error al cargar la modificación del archivo porque no se puede encontrar la pestaña.",
       "mixedLineEndingsNormalized": "«{name}» tiene finales de línea mixtos que se normalizaron automáticamente a {lineEnding}.",
-      "imageDeletionUrlTitle": "URL de eliminación de la imagen",
-      "imageDeletionUrlMessage": "Haz clic para copiar al portapapeles la URL de eliminación de la imagen subida ({url}).",
       "errorWhileSaving": "Se produjo un error al guardar: {msg}",
       "exportSuccessTitle": "Exportado correctamente",
       "exportSuccessMessage": "¡Se exportó «{name}» correctamente!",
       "fileRemovedOnDisk": "«{name}» ha sido eliminado del disco.",
       "fileChangedOnDisk": "«{name}» ha cambiado en el disco. ¿Deseas recargarlo?",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "Se produjo un error al renombrar: {msg}",
+      "errorWhileMoving": "Se produjo un error al mover: {msg}",
       "imageCleanupTitle": "Archivo de imagen eliminado",
       "imageCleanupMessage": "Archivo sin referencia eliminado: {name}"
     }

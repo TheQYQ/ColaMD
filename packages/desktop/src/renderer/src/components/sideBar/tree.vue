@@ -1,64 +1,5 @@
 <template>
   <div class="tree-view">
-    <!-- Opened tabs -->
-    <div
-      v-if="openedFilesInSidebar"
-      class="opened-files"
-    >
-      <div class="title">
-        <el-icon
-          class="icon-arrow"
-          :class="{ fold: !showOpenedFiles }"
-          :size="12"
-          @click.stop="toggleOpenedFiles()"
-        >
-          <ArrowRight />
-        </el-icon>
-        <span
-          class="default-cursor text-overflow"
-          @click.stop="toggleOpenedFiles()"
-        >{{
-          t('sideBar.tree.openedFiles')
-        }}</span>
-        <a
-          href="javascript:;"
-          :title="t('sideBar.tree.saveAll')"
-          @click.stop="saveAll(false)"
-        >
-          <svg
-            class="icon"
-            aria-hidden="true"
-          >
-            <use xlink:href="#icon-save-all" />
-          </svg>
-        </a>
-        <a
-          href="javascript:;"
-          :title="t('sideBar.tree.closeAll')"
-          @click.stop="saveAll(true)"
-        >
-          <svg
-            class="icon"
-            aria-hidden="true"
-          >
-            <use xlink:href="#icon-close-all" />
-          </svg>
-        </a>
-      </div>
-      <div
-        v-show="showOpenedFiles"
-        class="opened-files-list"
-      >
-        <transition-group name="list">
-          <opened-file
-            v-for="tab of tabs"
-            :key="tab.id"
-            :file="tab"
-          />
-        </transition-group>
-      </div>
-    </div>
-
     <!-- Project tree view -->
     <div
       v-if="projectTree"
@@ -100,8 +41,8 @@
           placeholder="Enter .md file name"
           type="text"
           class="new-input"
-          :style="{ 'margin-left': `${depth * 5 + 15}px` }"
-          @keypress.enter="handleInputEnter"
+          :style="{ 'padding-left': `${depth * 6 + 10}px` }"
+          @keydown.enter="handleInputEnter"
         >
         <file
           v-for="file of projectTree.files"
@@ -138,9 +79,9 @@
           text
           bg
           type="primary"
-          @click="openFolder"
+          @click="openFile"
         >
-          {{ t('sideBar.tree.openFolder') }}
+          {{ t('sideBar.tree.openFile') }}
         </el-button>
       </div>
     </div>
@@ -151,16 +92,13 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
-import { useEditorStore } from '@/store/editor'
-import { usePreferencesStore } from '@/store/preferences'
 import Folder from './treeFolder.vue'
 import File from './treeFile.vue'
-import OpenedFile from './treeOpenedTab.vue'
 import bus from '../../bus'
 import { showContextMenu } from '../../contextMenu/sideBar'
 import { useI18n } from 'vue-i18n'
 import { ArrowRight } from '@element-plus/icons-vue'
-import type { TreeNode, TabDescriptor } from './types'
+import type { TreeNode } from './types'
 
 const { t } = useI18n()
 
@@ -170,31 +108,23 @@ const props = defineProps<{
   // `v-if="projectTree"`. Type the prop nullable to match runtime + the
   // template guard.
   projectTree: TreeNode | null
-  openedFiles?: TabDescriptor[]
-  tabs?: TabDescriptor[]
 }>()
 
 const depth = 0
-// Persist the section collapse state (#2421). The tree is rendered under a
-// v-if and is destroyed when the sidebar collapses to its icon strip, so local
-// refs reset to expanded on re-open. Back them with localStorage (like the
-// sidebar width) so the state survives a re-mount and app restart.
+// The tree is rendered under a v-if and is destroyed when the sidebar
+// collapses, so local refs reset to expanded on re-open. Back them with
+// localStorage so the state survives a re-mount and app restart.
 const SHOW_DIRECTORIES_KEY = 'side-bar-show-directories'
-const SHOW_OPENED_FILES_KEY = 'side-bar-show-opened-files'
 const readSectionExpanded = (key: string): boolean => localStorage.getItem(key) !== 'false'
 const showDirectories = ref(readSectionExpanded(SHOW_DIRECTORIES_KEY))
-const showOpenedFiles = ref(readSectionExpanded(SHOW_OPENED_FILES_KEY))
 const createName = ref('')
 const input = ref<HTMLInputElement | null>(null)
 
 const projectStore = useProjectStore()
-const editorStore = useEditorStore()
-const preferencesStore = usePreferencesStore()
 
 // Computed properties
 const { createCache } = storeToRefs(projectStore)
 const { clipboard } = storeToRefs(projectStore)
-const { openedFilesInSidebar } = storeToRefs(preferencesStore)
 
 // The createCache state is `{ dirname, type }` while an input is shown, and
 // `{}` otherwise. Expose a typed accessor for the template so we don't have
@@ -205,12 +135,8 @@ const createCacheDirname = computed<string | undefined>(() => {
 })
 
 // Methods
-const openFolder = (): void => {
-  projectStore.ASK_FOR_OPEN_PROJECT()
-}
-
-const saveAll = (isClose: boolean): void => {
-  editorStore.ASK_FOR_SAVE_ALL(isClose)
+const openFile = (): void => {
+  projectStore.ASK_FOR_OPEN_FILE()
 }
 
 const createFile = (): void => {
@@ -221,11 +147,6 @@ const createFile = (): void => {
 const handleRootContextMenu = (event: MouseEvent): void => {
   projectStore.CHANGE_ACTIVE_ITEM(props.projectTree)
   showContextMenu(event, !!clipboard.value)
-}
-
-const toggleOpenedFiles = (): void => {
-  showOpenedFiles.value = !showOpenedFiles.value
-  localStorage.setItem(SHOW_OPENED_FILES_KEY, String(showOpenedFiles.value))
 }
 
 const toggleDirectories = (): void => {
@@ -279,22 +200,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.list-item {
-  display: inline-block;
-  margin-right: 10px;
-}
-
-.list-enter-active,
-.list-leave-active {
-  transition: all 0.2s;
-}
-.list-enter, .list-leave-to
-  /* .list-leave-active for below version 2.1.8 */ {
-  opacity: 0;
-  transform: translateX(-50px);
-}
 .tree-view {
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--sideBarColor);
   display: flex;
   flex-direction: column;
@@ -313,66 +221,26 @@ onMounted(() => {
   transform: rotate(0);
 }
 
-.opened-files > .title,
 .project-tree > .title {
-  height: 30px;
-  line-height: 30px;
-  font-size: 14px;
-}
-
-.opened-files .title {
+  height: 28px;
+  line-height: 28px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: var(--sideBarTextColor);
   padding-right: 15px;
   display: flex;
   align-items: center;
 }
 
-.opened-files .title > span {
-  flex: 1;
-}
-
-.opened-files .title > a {
-  display: none;
-  text-decoration: none;
-  color: var(--sideBarColor);
-  margin-left: 8px;
-}
-.opened-files div.title:hover > a,
-.opened-files div.title > a:hover {
-  display: block;
-}
-
-.opened-files div.title:hover > a:hover,
-.opened-files div.title > a:hover:hover {
-  color: var(--highlightThemeColor);
-}
-.opened-files {
-  display: flex;
-  flex-direction: column;
-}
 .default-cursor {
   cursor: pointer;
 }
-.opened-files .opened-files-list {
-  max-height: 112px;
-  overflow: auto;
-  flex: 1;
-}
-
-.opened-files .opened-files-list::-webkit-scrollbar:vertical {
-  width: 8px;
-}
-
 .project-tree {
   display: flex;
   flex-direction: column;
   overflow: auto;
   flex: 1;
-}
-
-.project-tree > .title {
-  padding-right: 15px;
-  display: flex;
-  align-items: center;
 }
 
 .project-tree > .title > span {
@@ -412,7 +280,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 8px;
+  padding-top: 32px;
 }
 
 .open-project .centered-group {
@@ -429,6 +297,11 @@ onMounted(() => {
   background-color: var(--buttonPrimaryBgColor);
   color: var(--buttonPrimaryFontColor);
   border-color: transparent;
+  border-radius: var(--radius-md);
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 120ms ease-out;
 }
 .open-project .el-button.is-text.is-has-bg:hover,
 .open-project .el-button.is-text.is-has-bg:focus,
@@ -439,20 +312,22 @@ onMounted(() => {
 }
 .new-input {
   outline: none;
-  height: 22px;
+  height: 24px;
   margin: 5px 0;
   padding: 0 6px;
   color: var(--sideBarColor);
-  border: 1px solid var(--floatBorderColor);
+  border: 1px solid var(--border-strong);
   background: var(--inputBgColor);
-  width: calc(100% - 45px);
-  border-radius: 3px;
+  /* Indent comes from padding here, so the box can fill the row. */
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 4px;
 }
 .tree-wrapper {
   position: relative;
 }
 .empty-project {
-  font-size: 14px;
+  font-size: 12px;
   display: flex;
   flex-direction: column;
   padding-top: 40px;

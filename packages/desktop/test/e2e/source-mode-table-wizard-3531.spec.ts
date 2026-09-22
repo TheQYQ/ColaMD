@@ -19,7 +19,7 @@ test.describe('paragraph edit commands are suppressed in source mode (#3531)', (
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# Doc\n\nsome text\n', {
       suppressErrorDialog: true
     })
@@ -28,11 +28,11 @@ test.describe('paragraph edit commands are suppressed in source mode (#3531)', (
     await focusEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('the Insert Table wizard does not open while in source-code mode', async() => {
+  test('the Insert Table wizard does not open while in source-code mode', async () => {
     await enterSourceMode(page, app)
 
     // Fire the "insert table" paragraph action (menu / shortcut path).

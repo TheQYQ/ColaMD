@@ -10,7 +10,7 @@ import {
 
 // Reset the document to a single empty paragraph and place a collapsed caret
 // inside it, so typing the HTML shortcut runs against a clean, focused block.
-const resetToEmpty = async(page: Page, app: ElectronApplication) => {
+const resetToEmpty = async (page: Page, app: ElectronApplication) => {
   await setSourceMarkdown(page, app, '\n')
   await placeCaretInEditor(page)
 }
@@ -21,7 +21,9 @@ const resetToEmpty = async(page: Page, app: ElectronApplication) => {
 // (offset 6 == `<div>\n`). Prism splits the source into multiple token spans,
 // so we walk the text nodes and accumulate length rather than reading a single
 // anchorOffset.
-const readCaretContext = (page: Page): Promise<{
+const readCaretContext = (
+  page: Page
+): Promise<{
   insideHtmlBlock: boolean
   textBeforeCaret: string | null
 } | null> =>
@@ -57,17 +59,17 @@ test.describe('HTML block typing shortcut and single-image lowering', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('seed paragraph\n')
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('typing "<div>" then Enter opens an html-block with caret between the tags', async() => {
+  test('typing "<div>" then Enter opens an html-block with caret between the tags', async () => {
     await resetToEmpty(page, app)
 
     // Type the open tag into the empty paragraph, then commit with Enter.
@@ -82,14 +84,12 @@ test.describe('HTML block typing shortcut and single-image lowering', () => {
     })
     await expect(page.locator('.editor-component .mu-html-block')).toHaveCount(1)
     // No stray paragraph survives the conversion.
-    await expect(
-      page.locator('.editor-component p.mu-paragraph')
-    ).toHaveCount(0)
+    await expect(page.locator('.editor-component p.mu-paragraph')).toHaveCount(0)
 
     // The block's text content round-trips to the open/blank/close template.
     // (Source-mode serialization appends a trailing newline.)
     await expect
-      .poll(async() => await getMarkdownContent(page, app), { timeout: 5000 })
+      .poll(async () => await getMarkdownContent(page, app), { timeout: 5000 })
       .toBe('<div>\n\n</div>\n')
 
     // The caret sits BETWEEN the tags (engine offset 6 == `<div>\n`). The full
@@ -105,7 +105,7 @@ test.describe('HTML block typing shortcut and single-image lowering', () => {
     expect(caret?.textBeforeCaret).not.toContain('</div>')
   })
 
-  test('"<img src=x>" stays a paragraph, not an html-block', async() => {
+  test('"<img src=x>" stays a paragraph, not an html-block', async () => {
     // Loading a lone <img> exercises the isSingleImage lowering branch in
     // markdownToState: it must remain a paragraph rather than become a block.
     await setSourceMarkdown(page, app, '<img src=x>\n')
@@ -115,17 +115,13 @@ test.describe('HTML block typing shortcut and single-image lowering', () => {
     })
 
     // A paragraph is present and NO html-block was created.
-    await expect(
-      page.locator('.editor-component p.mu-paragraph')
-    ).toHaveCount(1)
-    await expect(
-      page.locator('.editor-component .mu-html-block')
-    ).toHaveCount(0)
+    await expect(page.locator('.editor-component p.mu-paragraph')).toHaveCount(1)
+    await expect(page.locator('.editor-component .mu-html-block')).toHaveCount(0)
 
     // Content round-trips losslessly back to the raw image markup.
     // (Source-mode serialization appends a trailing newline.)
     await expect
-      .poll(async() => await getMarkdownContent(page, app), { timeout: 5000 })
+      .poll(async () => await getMarkdownContent(page, app), { timeout: 5000 })
       .toBe('<img src=x>\n')
   })
 })

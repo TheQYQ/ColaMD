@@ -7,7 +7,7 @@ import type { IIndexCursor } from './selection/offsetCursor';
 import type { IHistorySelection, IPublicCursorInput } from './selection/types';
 import type { ITocItem } from './state/getTOC';
 import type { IBulletListState, IOrderListState, ITableState, ITaskListState, TState } from './state/types';
-import type { IMuyaOptions, Nullable } from './types';
+import type { IMuyaOptions, IMuyaPluginConstructor, IPluginEntry, Nullable } from './types';
 import Format from './block/base/format';
 import { canTurnInto, insertBlockBelowByLabel, insertFrontMatterAtStart, replaceBlockByLabel } from './block/blockTransforms';
 import { ScrollPage } from './block/scrollPage';
@@ -36,20 +36,6 @@ import './assets/styles/blockSyntax.css';
 import './assets/styles/index.css';
 import './assets/styles/inlineSyntax.css';
 import './assets/styles/prismjs/light.theme.css';
-
-// UI plugins (e.g. InlineFormatToolbar, EmojiSelector) follow a common
-// shape: a class with a static `pluginName` and a constructor that takes
-// `(muya: Muya, options: object)`. `Muya.use` records the constructor + an
-// arbitrary options object; `init()` instantiates each plugin.
-export interface IMuyaPluginConstructor {
-    pluginName?: string;
-    new(muya: Muya, options?: Record<string, unknown>): unknown;
-}
-
-interface IPlugin {
-    plugin: IMuyaPluginConstructor;
-    options: Record<string, unknown>;
-}
 
 // A selection reduced to document paths + offsets, with block references
 // dropped so it survives a wholesale tree rebuild (paths are re-resolved
@@ -130,7 +116,7 @@ function endpointPair(
 }
 
 export class Muya {
-    static plugins: IPlugin[] = [];
+    static plugins: IPluginEntry[] = [];
 
     static use(plugin: IMuyaPluginConstructor, options: Record<string, unknown> = {}) {
         this.plugins.push({
@@ -161,7 +147,6 @@ export class Muya {
         this.version = this.options.version ?? globalVersion ?? 'dev';
         this.eventCenter = new EventCenter();
         this.domNode = getContainer(element, this.options);
-        // this.domNode[BLOCK_DOM_PROPERTY] = this;
         this.editor = new Editor(this);
         this.ui = new Ui(this);
         this.i18n = new I18n(this, this.options.locale);
@@ -185,7 +170,7 @@ export class Muya {
         // global ones of the same name, so an embedder can replace or
         // reconfigure a plugin for a single editor instance without affecting
         // others. The merge is name-based: pluginName ?? Plugin.name.
-        const merged = new Map<string, { plugin: IMuyaPluginConstructor; options: Record<string, unknown> }>();
+        const merged = new Map<string, IPluginEntry>();
 
         // Global plugins registered via Muya.use() fill the map first.
         for (const entry of Muya.plugins)
@@ -1675,7 +1660,6 @@ export class Muya {
     destroy() {
         this.eventCenter.detachAllDomEvents();
         this.eventCenter.unsubscribeAll();
-        // this.domNode[BLOCK_DOM_PROPERTY] = null;
         if (this.domNode.remove)
             this.domNode.remove();
 

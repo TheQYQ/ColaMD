@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, clickMenuById, waitForEditor, ensureTocVisible, markAllTabsClean } from './helpers'
+import {
+  launchWithMarkdown,
+  clickMenuById,
+  waitForEditor,
+  ensureTocVisible,
+  markAllTabsClean
+} from './helpers'
 
 // Item 240 — TOC/outline panel CONTENT + live update.
 //
@@ -44,10 +50,10 @@ const readTocTree = (page: Page): Promise<Array<{ label: string; depth: number }
     })
   })
 
-const readTocLabels = async(page: Page): Promise<string[]> =>
+const readTocLabels = async (page: Page): Promise<string[]> =>
   (await readTocTree(page)).map((n) => n.label)
 
-const ensureSidebarVisible = async(app: ElectronApplication, page: Page): Promise<void> => {
+const ensureSidebarVisible = async (app: ElectronApplication, page: Page): Promise<void> => {
   const visible = await page.evaluate(() => {
     const el = document.querySelector('.side-bar') as HTMLElement | null
     return !!(el && el.offsetParent !== null)
@@ -69,7 +75,7 @@ test.describe('TOC panel content + live update', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(INITIAL_DOC)
     app = launched.app
     page = launched.page
@@ -86,19 +92,19 @@ test.describe('TOC panel content + live update', () => {
     )
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) {
       await markAllTabsClean(app, page)
       await app.close()
     }
   })
 
-  test('el-tree labels match the document headings in order', async() => {
+  test('el-tree labels match the document headings in order', async () => {
     const labels = await readTocLabels(page)
     expect(labels).toEqual(['A', 'B', 'B1', 'C'])
   })
 
-  test('el-tree nesting depth matches the heading hierarchy', async() => {
+  test('el-tree nesting depth matches the heading hierarchy', async () => {
     const tree = await readTocTree(page)
     // # A -> depth 1; ## B -> depth 2 (child of A); ### B1 -> depth 3
     // (child of B); ## C -> depth 2 (sibling of B, child of A).
@@ -110,7 +116,7 @@ test.describe('TOC panel content + live update', () => {
     ])
   })
 
-  test('renaming a heading updates its tree label live', async() => {
+  test('renaming a heading updates its tree label live', async () => {
     // Place the caret at the end of the "B1" heading and append " Renamed".
     await page.evaluate(() => {
       const headings = Array.from(
@@ -149,7 +155,7 @@ test.describe('TOC panel content + live update', () => {
     ])
   })
 
-  test('adding a new heading adds a tree node live', async() => {
+  test('adding a new heading adds a tree node live', async () => {
     // Click directly on the last heading ("C") so the engine sets it as the
     // active content block, move the caret to the end, then split with Enter
     // and type a new ATX heading. Clicking the real DOM node (rather than a

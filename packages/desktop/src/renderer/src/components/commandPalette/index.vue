@@ -370,22 +370,33 @@ onBeforeUnmount(() => {
   color: var(--editorColor);
   background: var(--floatBgColor);
   border: 1px solid var(--floatBorderColor);
-  border-radius: 4px;
-  box-shadow: 0 3px 8px 3px var(--floatShadow);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   z-index: 10000;
+  animation: palette-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes palette-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-2px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
 }
 .input-wrapper {
   display: block;
   width: 100%;
-  border: 1px solid var(--inputBgColor);
-  background: var(--inputBgColor);
-  border-radius: 3px;
+  border: 1px solid transparent;
+  background: var(--bg-hover);
+  border-radius: var(--radius-md);
 }
 input.search {
   width: 100%;
-  height: 30px;
+  height: 34px;
   margin: 0 10px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--editorColor);
   background: transparent;
   outline: none;
@@ -420,19 +431,23 @@ ul.commands li {
   justify-content: space-between;
   align-items: center;
   max-width: 100%;
-  height: 35px;
+  height: 30px;
+  margin: 1px 0;
   padding: 0 8px;
-  font-size: 14px;
-  line-height: 35px;
+  font-size: 13px;
+  line-height: 30px;
   text-overflow: ellipsis;
   cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: background-color 120ms ease-out;
 }
 ul.commands li:hover {
-  background: var(--floatHoverColor);
-  opacity: 0.9;
+  background: var(--bg-hover);
 }
 ul.commands li.active {
-  background: var(--floatHoverColor);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-weight: 500;
 }
 ul.commands li span {
   text-overflow: ellipsis;
@@ -446,15 +461,15 @@ ul.commands li span.shortcut {
 ul.commands li span.shortcut > kbd {
   display: inline-block;
   margin-left: 4px;
-  padding: 1px 7px;
+  padding: 1px 6px;
   min-width: 10px;
   text-align: center;
-  font-family: inherit;
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--editorColor);
-  background: var(--floatBgColor);
-  border: 1px solid var(--floatBorderColor);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-strong);
   border-radius: 4px;
 }
 

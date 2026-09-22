@@ -9,6 +9,7 @@ import {
 } from '@element-plus/icons-vue'
 
 import preferences from '../../../../main/preferences/schema.json'
+import bus from '../../bus'
 import { t } from '../../i18n'
 
 interface PrefCategory {
@@ -56,13 +57,10 @@ declare global {
   }
 }
 
-// Function-attached cache shared between getTranslatedSearchContent and
-// setupLanguageChangeListener.
+// Translated search entries are rebuilt on demand from the schema; the
+// language-change broadcast only tells consumers to rebuild them.
 interface CachedTranslator {
   (): TranslatedSearchEntry[]
-  lastLanguage?: string
-  /** Language-polling fallback timer; cleared before a new one is set. */
-  pollTimer?: ReturnType<typeof setInterval> | null
 }
 
 const preferencesSchema = preferences as unknown as Record<string, PreferenceSchemaEntry>
@@ -114,7 +112,9 @@ export const getCategory = (): PrefCategory[] => [
 
 const errMessage = (e: unknown): string => (e instanceof Error ? e.message : String(e))
 
-const resolveGlobal = (container: VueI18nGlobalContainer | undefined): VueI18nGlobal | undefined => {
+const resolveGlobal = (
+  container: VueI18nGlobalContainer | undefined
+): VueI18nGlobal | undefined => {
   if (!container) return undefined
   return typeof container.global === 'function' ? container.global() : container.global
 }
@@ -225,7 +225,7 @@ export const getTranslatedSearchContent: CachedTranslator = (() => {
 })()
 
 // Add language change listener
-export const setupLanguageChangeListener = (): void => {
+const setupLanguageChangeListener = (): void => {
   // Listen for language change events
   const handleLanguageChange = () => {
     // Trigger search content refresh
@@ -246,291 +246,12 @@ export const setupLanguageChangeListener = (): void => {
     }
   }
 
-  // Listen for locale changes in the i18n instance
-  if (window.__VUE_I18N__) {
-    try {
-      const g = resolveGlobal(window.__VUE_I18N__)
-      if (g && g.locale && typeof g.locale !== 'string' && g.locale.value !== undefined) {
-        // Use Vue's reactive system to listen for language changes
-      }
-    } catch (e) {
-      console.warn('⚠️ Failed to set up language change listener:', e)
-    }
-  }
-
-  // Add a polling fallback mechanism as a backup. The settings page can be
-  // mounted repeatedly, so tear down the previous timer first (it used to
-  // leak on every mount).
-  if (getTranslatedSearchContent.pollTimer) {
-    clearInterval(getTranslatedSearchContent.pollTimer)
-  }
-  getTranslatedSearchContent.pollTimer = setInterval(() => {
-    try {
-      if (window.__VUE_I18N__) {
-        const g = resolveGlobal(window.__VUE_I18N__)
-        const currentLanguage = resolveLocale(g)
-        if (currentLanguage !== getTranslatedSearchContent.lastLanguage) {
-          getTranslatedSearchContent.lastLanguage = currentLanguage
-          handleLanguageChange()
-        }
-      }
-    } catch {
-      // Ignore errors and continue checking
-    }
-  }, 1000) // Check once per second
-
-  // Record the initial language
-  try {
-    if (window.__VUE_I18N__) {
-      const g = resolveGlobal(window.__VUE_I18N__)
-      getTranslatedSearchContent.lastLanguage = resolveLocale(g)
-    }
-  } catch {
-    getTranslatedSearchContent.lastLanguage = 'en'
-  }
+  // src/i18n already owns the `language-changed` IPC subscription and re-emits
+  // it on the bus after resolving the new locale, so listen there — same as the
+  // command palette, export settings and editor do. This replaces a
+  // once-per-second poll of window.__VUE_I18N__ that ran for the window's life.
+  bus.on('language-changed', handleLanguageChange)
 }
 
 // Initialize the language change listener
 setupLanguageChangeListener()
-
-// Add manual refresh function
-export const refreshSearchContent = (): TranslatedSearchEntry[] => {
-  // Clear the language cache to force re-fetch
-  if (getTranslatedSearchContent.lastLanguage) {
-    delete getTranslatedSearchContent.lastLanguage
-  }
-
-  // Trigger the language change event
-  window.dispatchEvent(
-    new CustomEvent('languageChanged', {
-      detail: { language: 'force-refresh' }
-    })
-  )
-
-  return getTranslatedSearchContent()
-}
-
-// Creates the debug popup (ensures the close button is visible)
-function createDebugPopup(): HTMLDivElement {
-  // Remove any existing popup
-  const existingPopup = document.getElementById('debugPopup')
-  if (existingPopup && existingPopup.parentNode) {
-    existingPopup.parentNode.removeChild(existingPopup)
-  }
-
-  // Create new popup
-  const popup = document.createElement('div')
-  popup.id = 'debugPopup'
-  popup.style.cssText = `
-    position: fixed;
-    top: 50px;
-    right: 20px;
-    width: 400px;
-    height: 300px;
-    background: white;
-    border: 2px solid #333;
-    padding: 15px;
-    overflow: auto;
-    z-index: 10000;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  `
-
-  // Create the title bar and close button
-  const titleBar = document.createElement('div')
-  titleBar.style.cssText = `
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 10px;
-  `
-
-  const title = document.createElement('h3')
-  title.textContent = '🛠️ Debug Info'
-  title.style.cssText = 'margin: 0; color: #333;'
-
-  const closeButton = document.createElement('button')
-  closeButton.textContent = '✕ Close'
-  closeButton.style.cssText = `
-    background: #ff4444;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 12px;
-  `
-
-  // Add close event
-  closeButton.onclick = () => {
-    if (popup && popup.parentNode) {
-      popup.parentNode.removeChild(popup)
-    }
-  }
-
-  // Assemble the title bar
-  titleBar.appendChild(title)
-  titleBar.appendChild(closeButton)
-
-  // Create the content area
-  const content = document.createElement('div')
-  content.id = 'debugContent'
-
-  // Assemble the popup
-  popup.appendChild(titleBar)
-  popup.appendChild(content)
-
-  document.body.appendChild(popup)
-  return popup
-}
-
-// General method to get the i18n instance (fixes API access issues)
-function getI18nInstance(): VueI18nGlobal | VueI18nGlobalContainer | null {
-  if (!window.__VUE_I18N__) {
-    return null
-  }
-
-  const i18n = window.__VUE_I18N__
-
-  // Try different access methods
-  if (typeof i18n.global === 'function') {
-    return i18n.global()
-  } else if (i18n.global && typeof i18n.global.t === 'function') {
-    return i18n.global
-  } else if (typeof i18n.t === 'function') {
-    return i18n
-  } else if (i18n.$i18n && typeof i18n.$i18n.t === 'function') {
-    return i18n.$i18n
-  }
-
-  return null
-}
-
-// Enhanced debug function (fixes API access issues)
-export const debugLanguageState = (): void => {
-  // Ensure the popup exists and is visible
-  let popup = document.getElementById('debugPopup') as HTMLDivElement | null
-  if (!popup) {
-    popup = createDebugPopup()
-    popup.style.zIndex = '10000'
-  }
-
-  // Ensure the content area exists
-  let debugContent = popup.querySelector('#debugContent') as HTMLDivElement | null
-  if (!debugContent) {
-    const newContent = document.createElement('div')
-    newContent.id = 'debugContent'
-    popup.appendChild(newContent)
-    debugContent = newContent
-  }
-
-  // Clear and populate debug information
-  debugContent.innerHTML = '<div id="debugDetails">Loading debug info...</div>'
-
-  // Populate debug details
-  const details = debugContent.querySelector('#debugDetails') as HTMLDivElement | null
-  if (!details) return
-
-  // Simulate delayed loading
-  setTimeout(() => {
-    try {
-      // Show detailed information about the i18n instance
-      let debugInfo = '<h4>🔍 i18n instance details:</h4>'
-
-      if (!window.__VUE_I18N__) {
-        debugInfo += '<p style="color:red;">❌ __VUE_I18N__ does not exist</p>'
-      } else {
-        const i18n = window.__VUE_I18N__
-        debugInfo += `
-          <p><strong>__VUE_I18N__ type:</strong> ${typeof i18n}</p>
-          <p><strong>__VUE_I18N__ keys:</strong> ${Object.keys(i18n).slice(0, 10).join(', ')}</p>
-          <p><strong>global type:</strong> ${typeof i18n.global}</p>
-        `
-
-        // Safely display global info
-        try {
-          if (i18n.global) {
-            const globalKeys = Object.keys(i18n.global).slice(0, 5)
-            debugInfo += `<p><strong>global keys:</strong> ${globalKeys.join(', ')}</p>`
-
-            // Check if translation function is available
-            if (typeof (i18n.global as VueI18nGlobal).t === 'function') {
-              debugInfo += '<p style="color:green;">✅ global.t function available</p>'
-            } else {
-              debugInfo += '<p style="color:orange;">⚠️ global.t function unavailable</p>'
-            }
-          }
-        } catch (e) {
-          debugInfo += `<p style="color:red;">❌ Error checking global: ${errMessage(e)}</p>`
-        }
-
-        // Try to get the i18n instance
-        const i18nInstance = getI18nInstance()
-        if (i18nInstance) {
-          debugInfo += '<p style="color:green;">✅ Successfully got i18n instance</p>'
-
-          // Get the current language
-          let currentLanguage = 'unknown'
-          const inst = i18nInstance as VueI18nGlobal
-          if (inst.locale && typeof inst.locale !== 'string' && inst.locale.value) {
-            currentLanguage = inst.locale.value
-          } else if (typeof inst.locale === 'string') {
-            currentLanguage = inst.locale
-          }
-
-          debugInfo += `<p><strong>🌍 Current language:</strong> ${currentLanguage}</p>`
-
-          // Test translation
-          try {
-            const tFn = (i18nInstance as VueI18nGlobal).t
-            const testTranslation = tFn
-              ? tFn('preferences.general.window.titleBarStyle.custom')
-              : ''
-            debugInfo += `<p><strong>🔄 Test translation:</strong> ${testTranslation}</p>`
-          } catch (e) {
-            debugInfo += `<p style="color:red;"><strong>🔄 Test translation failed:</strong> ${errMessage(e)}</p>`
-          }
-        } else {
-          debugInfo += '<p style="color:red;">❌ Could not get a valid i18n instance</p>'
-        }
-      }
-
-      details.innerHTML = debugInfo
-    } catch (e) {
-      details.innerHTML = `<p style="color:red;">❌ Debug failed: ${errMessage(e)}</p>`
-    }
-  }, 500)
-}
-/*
-// Add debug buttons to the page (visible in development environment only)
-if (typeof document !== 'undefined') {
-  const isDev = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) ||
-    (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development');
-  if (isDev) {
-    // Ensure the button container exists
-    const buttonContainer = document.createElement('div');
-    buttonContainer.id = 'debugButtonContainer';
-    buttonContainer.style.cssText = 'position:fixed;top:10px;right:10px;z-index:999;';
-
-    // Create the debug button
-    const debugButton = document.createElement('button');
-    debugButton.textContent = '🛠️ Debug';
-    debugButton.style.cssText = 'padding:8px 15px;margin:5px;background:#f0f0f0;border:1px solid #ddd;border-radius:4px;cursor:pointer;';
-    debugButton.onclick = debugLanguageState;
-
-    // Create the refresh button
-    const refreshButton = document.createElement('button');
-    refreshButton.textContent = '🔁 Refresh';
-    refreshButton.style.cssText = 'padding:8px 15px;margin:5px;background:#f0f0f0;border:1px solid #ddd;border-radius:4px;cursor:pointer;';
-    refreshButton.onclick = () => window.dispatchEvent(new CustomEvent('languageChanged'));
-
-    // Add buttons to the container
-    buttonContainer.appendChild(debugButton);
-    buttonContainer.appendChild(refreshButton);
-
-    // Add to document
-    document.body.appendChild(buttonContainer);
-  }
-}
-*/

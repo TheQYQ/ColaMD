@@ -18,6 +18,7 @@ import { dockMenu } from '../menu/templates'
 import registerSpellcheckerListeners from '../spellchecker'
 import { watchers } from '../utils/imagePathAutoComplement'
 import { onInternalChannel } from '../utils/internalIpc'
+import { resolveStartupPlan } from '../utils/startupPlan'
 import { WindowType } from '../windows/base'
 import EditorWindow from '../windows/editor'
 import SettingWindow from '../windows/setting'
@@ -25,6 +26,7 @@ import { setLanguage } from '../i18n'
 import { getNativeThemeSource, isDarkApplicationTheme } from './nativeTheme'
 import type Accessor from './accessor'
 import type WindowManager from './windowManager'
+import { typedHandle } from '../ipc/typedHandle'
 
 interface CliArgs {
   _: string[]
@@ -217,7 +219,7 @@ class App {
 
         // An empty locale (offline environment, unavailable before ready, …)
         // must fall back to 'en' and never hit the map below.
-        currentLanguage = systemLanguage ? (languageMap[systemLanguage] || 'en') : 'en'
+        currentLanguage = systemLanguage ? languageMap[systemLanguage] || 'en' : 'en'
 
         // If the detected language is not in the supported list, use English
         if (!supportedLanguages.includes(currentLanguage)) {
@@ -244,17 +246,16 @@ class App {
     return path.join(screenshotFolderPath, fileName)
   }
 
-  ready = async(): Promise<void> => {
+  ready = async (): Promise<void> => {
     // Detect/store the language before any window exists so the renderer
     // starts with the right locale on its startup language query.
     await this._initializeLanguage()
 
     const { _args: args, _openFilesCache } = this
-    const { preferences, editorBufferStore } = this._accessor
+    const { preferences, editorBufferStore, dataCenter } = this._accessor
 
     // Initialize language settings
-    const { startUpAction, defaultDirectoryToOpen, theme, language, imageFolderPath } =
-      preferences.getAll()
+    const { startUpAction, defaultDirectoryToOpen, theme, language } = preferences.getAll()
     const followSystemTheme = preferences.getItem<boolean>('followSystemTheme')
     const lastOpenedFolder = preferences.getItem<string>('lastOpenedFolder')
     const lightModeTheme = preferences.getItem<string>('lightModeTheme')
@@ -266,7 +267,9 @@ class App {
 
     // Grant mutation scope for app-managed locations: the user data dir is
     // always allowed (it is the app's own config/storage area); the configured
-    // image folder when set (renderer may write uploaded images there).
+    // image folder when set (renderer may write uploaded images there). The
+    // folder lives in DataCenter because only its dialog may assign it.
+    const imageFolderPath = dataCenter.getItem('imageFolderPath') as string | undefined
     addAllowedRoot(app.getPath('userData'))
     if (imageFolderPath) addAllowedRoot(imageFolderPath)
 
@@ -287,16 +290,12 @@ class App {
     // We should NOT restore the previous buffer or open a folder if the user just wants to double click to open a file
     let isRestorePathway = false
     if (_openFilesCache.length === 0) {
-      if (startUpAction === 'restoreAll') {
+      const plan = resolveStartupPlan(startUpAction, { defaultDirectoryToOpen, lastOpenedFolder })
+      if (plan.kind === 'restore') {
         // Restore based off the previous buffer
         isRestorePathway = true
-      } else if (startUpAction === 'folder' && defaultDirectoryToOpen) {
-        const info = normalizeMarkdownPath(defaultDirectoryToOpen)
-        if (info) {
-          _openFilesCache.unshift(info as PathInfo)
-        }
-      } else if (startUpAction === 'openLastFolder' && lastOpenedFolder) {
-        const info = normalizeMarkdownPath(lastOpenedFolder)
+      } else if (plan.kind === 'open') {
+        const info = normalizeMarkdownPath(plan.path)
         if (info) {
           _openFilesCache.unshift(info as PathInfo)
         }
@@ -323,11 +322,6 @@ class App {
         ...change
       }
       nativeTheme.themeSource = getNativeThemeSource(nextPreferences)
-
-      // Keep the image-folder write scope in sync with the preference.
-      if (typeof change.imageFolderPath === 'string' && change.imageFolderPath) {
-        addAllowedRoot(change.imageFolderPath)
-      }
 
       // When followSystemTheme is enabled, immediately switch to match system
       if (change.followSystemTheme === true) {
@@ -367,6 +361,13 @@ class App {
         selectTheme(newTheme)
         preferences.setItem('theme', newTheme)
       }
+    })
+
+    // The image folder is stored by DataCenter (only its dialog assigns it) and
+    // it doubles as a write-scope root, so the grant follows this broadcast.
+    onInternalChannel('broadcast-user-data-changed', (userData: Record<string, unknown>) => {
+      const folder = userData.imageFolderPath
+      if (typeof folder === 'string' && folder) addAllowedRoot(folder)
     })
 
     // Listen for system theme changes and auto-switch if enabled
@@ -710,11 +711,11 @@ class App {
       this._createEditorWindow()
     })
 
-    onInternalChannel('screen-capture', async(win: BrowserWindow) => {
+    onInternalChannel('screen-capture', async (win: BrowserWindow) => {
       if (isOsx) {
         // Use macOs `screencapture` command line when in macOs system.
         const screenshotFileName = await this.getScreenshotFileName()
-        exec('screencapture -i -c', async(err) => {
+        exec('screencapture -i -c', async (err) => {
           if (err) {
             log.error(err)
             return
@@ -828,7 +829,7 @@ class App {
       }
     })
 
-    ipcMain.on('mt::select-default-directory-to-open', async(e) => {
+    ipcMain.on('mt::select-default-directory-to-open', async (e) => {
       const { preferences } = this._accessor
       const { defaultDirectoryToOpen } = preferences.getAll()
       const win = BrowserWindow.fromWebContents(e.sender)
@@ -860,19 +861,14 @@ class App {
       win.webContents.send('mt::keybindings-response', Object.fromEntries(keybindings.keys))
     })
 
-    ipcMain.on('mt::open-keybindings-config', () => {
-      const { keybindings } = this._accessor
-      keybindings.openConfigInFileManager()
-    })
-
-    ipcMain.handle('mt::keybinding-get-pref-keybindings', () => {
+    typedHandle('mt::keybinding-get-pref-keybindings', () => {
       const { keybindings } = this._accessor
       const defaultKeybindings = keybindings.getDefaultKeybindings()
       const userKeybindings = keybindings.getUserKeybindings()
       return { defaultKeybindings, userKeybindings }
     })
 
-    ipcMain.handle('mt::keybinding-save-user-keybindings', async(_event, userKeybindings) => {
+    typedHandle('mt::keybinding-save-user-keybindings', async (_event, userKeybindings) => {
       const { keybindings, menu } = this._accessor
       const editorWindows = this._windowManager
         .getWindowsByType(WindowType.EDITOR)
@@ -889,7 +885,7 @@ class App {
       return saved
     })
 
-    ipcMain.handle('mt::fs-trash-item', async(_event, fullPath: string) => {
+    typedHandle('mt::fs-trash-item', async (_event, fullPath: string) => {
       await assertPathInScope(fullPath)
       return shell.trashItem(fullPath)
     })

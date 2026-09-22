@@ -59,7 +59,7 @@ const toolShown = (page: Page): Promise<boolean> =>
 // Reset the editor to a single empty paragraph and dismiss any open edit tool,
 // so each test starts from a clean state. The tool is launched in beforeAll;
 // resetting via source mode also moves focus out of any prior float.
-const resetToEmpty = async(page: Page, app: ElectronApplication): Promise<void> => {
+const resetToEmpty = async (page: Page, app: ElectronApplication): Promise<void> => {
   // A document `click` outside the float hides it (baseFloat attaches a
   // document-level click → hide). Escape only fires the hide when the keydown
   // lands on the editor `domNode`, but focus is in the float's input, so a
@@ -77,21 +77,21 @@ test.describe('Format -> Image edit tool wiring', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('\n', { suppressErrorDialog: true })
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test.beforeEach(async() => {
+  test.beforeEach(async () => {
     await resetToEmpty(page, app)
   })
 
-  test('IPC mt::editor-format-action {image} opens the edit tool with a focused src input', async() => {
+  test('IPC mt::editor-format-action {image} opens the edit tool with a focused src input', async () => {
     await sendIpcToRenderer(app, 'mt::editor-format-action', { type: 'image' })
 
     // The empty `![]()` placeholder is inserted and the edit tool float renders
@@ -106,7 +106,7 @@ test.describe('Format -> Image edit tool wiring', () => {
     await expectNoRendererErrors(app)
   })
 
-  test('Format -> Image menu item opens the edit tool with a focused src input', async() => {
+  test('Format -> Image menu item opens the edit tool with a focused src input', async () => {
     await clickMenuById(app, 'imageMenuItem')
 
     await page.waitForSelector(srcInput, { state: 'attached', timeout: 5000 })
@@ -121,23 +121,25 @@ test.describe('Format -> Image edit tool wiring', () => {
     await expectNoRendererErrors(app)
   })
 
-  test('The opened edit tool is the empty link/embed editor (src input, no value)', async() => {
+  test('The opened edit tool is the empty link/embed editor (src input, no value)', async () => {
     await sendIpcToRenderer(app, 'mt::editor-format-action', { type: 'image' })
 
     await page.waitForSelector(srcInput, { state: 'attached', timeout: 5000 })
     await expect.poll(() => toolShown(page), { timeout: 5000 }).toBe(true)
 
     // A freshly inserted `![]()` has no source, so the src input starts empty.
-    await expect.poll(
-      () =>
-        page.evaluate(() => {
-          const input = document.querySelector(
-            '.mu-image-selector input.src'
-          ) as HTMLInputElement | null
-          return input ? input.value : null
-        }),
-      { timeout: 5000 }
-    ).toBe('')
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const input = document.querySelector(
+              '.mu-image-selector input.src'
+            ) as HTMLInputElement | null
+            return input ? input.value : null
+          }),
+        { timeout: 5000 }
+      )
+      .toBe('')
 
     await expectNoRendererErrors(app)
   })

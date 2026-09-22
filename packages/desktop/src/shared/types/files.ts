@@ -6,14 +6,6 @@
 
 export type LineEnding = 'lf' | 'crlf'
 
-export interface SerializedStat {
-  size: number
-  mtimeMs: number
-  isFile: boolean
-  isDirectory: boolean
-  isSymbolicLink?: boolean
-}
-
 export interface MarkdownDocument {
   markdown: string
   filename: string
@@ -25,7 +17,7 @@ export interface MarkdownDocument {
   isMixedLineEndings?: boolean
 }
 
-export interface FileHistory {
+interface FileHistory {
   stack: HistoryStackEntry[]
   index: number
   // Tracked by Muya to know which history frame represents the last edit
@@ -36,12 +28,12 @@ export interface FileHistory {
 
 // Individual frames pushed by Muya's history. Shape is opaque to the
 // renderer store; we only key off the id for the saved-snapshot check.
-export interface HistoryStackEntry {
+interface HistoryStackEntry {
   id: number | string
   [key: string]: unknown
 }
 
-export interface FileEncoding {
+interface FileEncoding {
   encoding: string
   isBom: boolean
 }
@@ -53,7 +45,7 @@ export interface FileWordCount {
   all: number
 }
 
-export interface FileSearchMatches {
+interface FileSearchMatches {
   index: number
   matches: unknown[]
   value: string
@@ -101,8 +93,6 @@ export interface FileNotification {
   exclusiveType: string
   action: (status?: unknown) => void
 }
-
-export type ITab = IFileState
 
 export interface FileChangeDetail {
   pathname: string
@@ -168,14 +158,14 @@ export interface PageOptions {
   [key: string]: unknown
 }
 
-export type ExportType
-  = | 'pdf'
-    | 'html'
-    | 'styledHtml'
-    | 'png'
-    | 'jpeg'
-    | 'docx'
-    | 'epub'
-    | 'latex'
-    | 'rtf'
-    | 'opml'
+export type ExportType =
+  | 'pdf'
+  | 'html'
+  | 'styledHtml'
+  | 'png'
+  | 'jpeg'
+  | 'docx'
+  | 'epub'
+  | 'latex'
+  | 'rtf'
+  | 'opml'

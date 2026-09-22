@@ -48,6 +48,7 @@
     "perf:inspect-brk": "cross-env PERF_TESTING=true electron-vite preview -- --inspect-brk=5858",
     "test": "vitest run",
     "test:unit": "vitest run test/unit",
+    "test:coverage": "vitest run --coverage --coverage.include=\"src/**/*.ts\"",
     "test:e2e": "playwright test --config=test/e2e/playwright.config.ts test/e2e",
     "typecheck": "vue-tsc --noEmit -p tsconfig.json",
     "typecheck:watch": "vue-tsc --noEmit -p tsconfig.json --watch"
@@ -61,7 +62,6 @@
     "@muyajs/core": "workspace:*",
     "@vscode/ripgrep": "^1.18.0",
     "arg": "^5.0.2",
-    "axios": "^1.18.0",
     "ced": "^2.0.0",
     "chokidar": "^5.0.0",
     "codemirror": "^5.65.21",

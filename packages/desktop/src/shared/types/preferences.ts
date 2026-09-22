@@ -1,10 +1,21 @@
 // User preferences shape. The canonical schema lives in
-// src/main/preferences/schema.json + src/main/preferences/index.js — this
+// src/main/preferences/schema.json + src/main/preferences/index.ts — this
 // interface is the renderer-facing mirror that lets the preferences store
 // (Commit 7) and the preferences pane (Commit 8) consume typed values.
 //
 // Kept intentionally open with `[key: string]: unknown` until the schema
 // is mechanically derived from schema.json in a follow-up.
+
+/** Startup behaviour; must stay in step with schema.json's startUpAction enum. */
+export type StartUpAction = 'blank' | 'restoreAll' | 'folder' | 'openLastFolder'
+
+/** Runtime view of `StartUpAction`, so the schema and the enum can be compared. */
+export const START_UP_ACTIONS: readonly StartUpAction[] = [
+  'blank',
+  'restoreAll',
+  'folder',
+  'openLastFolder'
+]
 
 export interface IUserPreferences {
   autoSave?: boolean
@@ -16,7 +27,7 @@ export interface IUserPreferences {
   sidebarColumn?: number
   fileSortBy?: string
   fileSortOrder?: string
-  startUpAction?: string
+  startUpAction?: StartUpAction
   defaultDirectoryToOpen?: string
   language?: string
   editorFontFamily?: string
@@ -54,7 +65,8 @@ export interface IUserPreferences {
   spellcheckerLanguage?: string
   imageInsertAction?: 'upload' | 'folder' | 'path'
   imagePreferRelativePath?: boolean
-  imageFolderPath?: string
+  // `imageFolderPath` is deliberately absent: the folder is stored by DataCenter,
+  // whose dialog is the only writer, because it also grants write scope.
   deleteUnreferencedImages?: boolean
   screenshotFolderPath?: string
   imageBed?: { selected?: string; [key: string]: unknown }
@@ -74,12 +86,5 @@ export interface IUserPreferences {
   treePathExcludePatterns?: string[]
   treeShowNonMarkdownFiles?: boolean
   treeShowHiddenFiles?: boolean
-  [key: string]: unknown
-}
-
-export interface LayoutState {
-  rightColumn: 'files' | 'search' | 'toc'
-  showSideBar: boolean
-  showTabBar: boolean
   [key: string]: unknown
 }

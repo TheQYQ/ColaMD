@@ -38,7 +38,7 @@ beforeEach(() => {
 })
 
 describe('exportViaPandoc', () => {
-  it('spawns pandoc with markdown source, target format and -o output', async() => {
+  it('spawns pandoc with markdown source, target format and -o output', async () => {
     mockPandoc()
 
     await exportViaPandoc('# T\n\ntext\n', 'epub', 'C:/out/document.epub')
@@ -46,14 +46,22 @@ describe('exportViaPandoc', () => {
     expect(mockedSpawn).toHaveBeenCalledTimes(1)
     const [command, args] = mockedSpawn.mock.calls[0] as unknown as [string, string[]]
     expect(command).toBe('pandoc')
-    expect(args.slice(0, 7)).toEqual(['-s', '-f', 'markdown', '-t', 'epub', '-o', 'C:/out/document.epub'])
+    expect(args.slice(0, 7)).toEqual([
+      '-s',
+      '-f',
+      'markdown',
+      '-t',
+      'epub',
+      '-o',
+      'C:/out/document.epub'
+    ])
     // The last argument is the temp markdown file, cleaned up afterwards.
     const tmpMarkdown = args.at(-1) as string
     expect(tmpMarkdown.endsWith('.md')).toBe(true)
     expect(existsSync(tmpMarkdown)).toBe(false)
   })
 
-  it('passes the document title as pandoc metadata', async() => {
+  it('passes the document title as pandoc metadata', async () => {
     mockPandoc()
 
     await exportViaPandoc('body', 'epub', 'C:/out/doc.epub', { title: 'My Book' })
@@ -63,7 +71,7 @@ describe('exportViaPandoc', () => {
     expect(args).toContain('title:My Book')
   })
 
-  it('omits the metadata flag when no title is given', async() => {
+  it('omits the metadata flag when no title is given', async () => {
     mockPandoc()
 
     await exportViaPandoc('body', 'latex', 'C:/out/doc.tex')
@@ -72,23 +80,21 @@ describe('exportViaPandoc', () => {
     expect(args).not.toContain('--metadata')
   })
 
-  it('rejects with pandoc stderr when the conversion fails', async() => {
+  it('rejects with pandoc stderr when the conversion fails', async () => {
     mockPandoc({ exitCode: 1, stderr: 'bad markdown' })
 
-    await expect(
-      exportViaPandoc('body', 'rtf', 'C:/out/doc.rtf')
-    ).rejects.toThrow('bad markdown')
+    await expect(exportViaPandoc('body', 'rtf', 'C:/out/doc.rtf')).rejects.toThrow('bad markdown')
 
     // Temp file is cleaned up even on failure.
     const [, args] = mockedSpawn.mock.calls[0] as unknown as [string, string[]]
     expect(existsSync(args.at(-1) as string)).toBe(false)
   })
 
-  it('falls back to the exit-code message when stderr is empty', async() => {
+  it('falls back to the exit-code message when stderr is empty', async () => {
     mockPandoc({ exitCode: 2 })
 
-    await expect(
-      exportViaPandoc('body', 'opml', 'C:/out/doc.opml')
-    ).rejects.toThrow('pandoc exited with code 2')
+    await expect(exportViaPandoc('body', 'opml', 'C:/out/doc.opml')).rejects.toThrow(
+      'pandoc exited with code 2'
+    )
   })
 })

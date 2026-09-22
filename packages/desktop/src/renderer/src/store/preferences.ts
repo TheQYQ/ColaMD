@@ -1,23 +1,23 @@
 import { defineStore } from 'pinia'
 import bus from '../bus'
 import { setLanguage } from '../i18n'
+import type { StartUpAction } from '@shared/types/preferences'
 
 // Finite-value unions where the runtime currently constrains the field.
 // We keep these as plain strings everywhere else to avoid forcing prematurely
 // narrow casts on consumers that read raw values from disk.
-export type EndOfLine = 'default' | 'lf' | 'crlf'
-export type TitleBarStyle = 'custom' | 'native'
-export type StartUpAction = 'restoreAll' | 'lastSession' | 'blank'
-export type TextDirection = 'ltr' | 'rtl'
-export type BulletListMarker = '*' | '+' | '-'
-export type OrderListDelimiter = '.' | ')'
-export type PreferHeadingStyle = 'atx' | 'setext'
-export type FrontmatterType = '-' | ';' | '{' | '+'
-export type SequenceTheme = 'hand' | 'simple'
-export type ImageInsertAction = 'folder' | 'path' | 'upload'
-export type ImageRelativeDirectoryBase = 'file' | 'root'
-export type FileSortBy = 'created' | 'modified' | 'title'
-export type FileSortOrder = 'asc' | 'desc'
+type EndOfLine = 'default' | 'lf' | 'crlf'
+type TitleBarStyle = 'custom' | 'native'
+type TextDirection = 'ltr' | 'rtl'
+type BulletListMarker = '*' | '+' | '-'
+type OrderListDelimiter = '.' | ')'
+type PreferHeadingStyle = 'atx' | 'setext'
+type FrontmatterType = '-' | ';' | '{' | '+'
+type SequenceTheme = 'hand' | 'simple'
+type ImageInsertAction = 'folder' | 'path' | 'upload'
+type ImageRelativeDirectoryBase = 'file' | 'root'
+type FileSortBy = 'created' | 'modified' | 'title'
+type FileSortOrder = 'asc' | 'desc'
 
 export interface PreferencesState {
   // ----- General -----
@@ -31,7 +31,7 @@ export interface PreferencesState {
   wordWrapInToc: boolean
   fileSortBy: FileSortBy | string
   fileSortOrder: FileSortOrder | string
-  startUpAction: StartUpAction | string
+  startUpAction: StartUpAction
   restoreLayoutState: boolean
   defaultDirectoryToOpen: string
   lastOpenedFolder: string
@@ -167,7 +167,7 @@ export const usePreferencesStore = defineStore('preferences', {
 
     editorFontFamily: 'Open Sans',
     fontSize: 16,
-    lineHeight: 1.6,
+    lineHeight: 1.7,
     codeFontSize: 14,
     codeFontFamily: 'DejaVu Sans Mono',
     codeBlockLineNumbers: false,
@@ -311,8 +311,15 @@ export const usePreferencesStore = defineStore('preferences', {
       window.electron.ipcRenderer.send('mt::set-user-data', { [type]: value })
     },
 
-    SET_IMAGE_FOLDER_PATH(value?: string): void {
-      window.electron.ipcRenderer.send('mt::ask-for-modify-image-folder-path', value)
+    SET_IMAGE_FOLDER_PATH(): void {
+      // Main answers with `mt::user-preference` once the user picked a folder.
+      window.electron.ipcRenderer.send('mt::ask-for-modify-image-folder-path')
+    },
+
+    SET_CLI_SCRIPT(): void {
+      // Same rule as the image folder: the value names a program the main
+      // process executes, so only a native file dialog may assign it.
+      window.electron.ipcRenderer.send('mt::ask-for-modify-cli-script')
     },
 
     SELECT_DEFAULT_DIRECTORY_TO_OPEN(): void {

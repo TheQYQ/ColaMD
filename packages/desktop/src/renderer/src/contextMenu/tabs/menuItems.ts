@@ -66,12 +66,3 @@ export const getShowInFolder = () => ({
     contextMenu.showInFolder(menuItem._tabId)
   }
 })
-
-// Retained for backward compatibility
-export const CLOSE_THIS = getCloseThis()
-export const CLOSE_OTHERS = getCloseOthers()
-export const CLOSE_SAVED = getCloseSaved()
-export const CLOSE_ALL = getCloseAll()
-export const RENAME = getRENAME()
-export const COPY_PATH = getCopyPath()
-export const SHOW_IN_FOLDER = getShowInFolder()

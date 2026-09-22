@@ -1,13 +1,36 @@
-import bus from '../bus'
+import bus, { listenBoth } from '../bus'
 import { getUniqueId, deepClone } from '../util'
+import { byteLengthUtf8 } from '../util/byteLengthUtf8'
 import listToTree, { type ListItem, type TreeNode } from '../util/listToTree'
 import {
   createDocumentState,
   getOptionsFromState,
   getBlankFileState,
-  defaultFileState
+  adjustTrailingNewlines,
+  createBufferedEditorState
 } from './help'
 import notice from '../services/notification'
+import {
+  createApplicationMenuState,
+  createSelectionFormatState,
+  type ApplicationMenuState,
+  type SelectionChange,
+  type SelectionFormat
+} from '../services/applicationMenuState'
+import {
+  createFileChangedEvent,
+  exchangeTargetIndex,
+  initialTabsToOpen,
+  moveItem,
+  nextCycleIndex,
+  selectTabAfterClose
+} from './tabOps'
+import {
+  historyFrameId,
+  historyMarksDirty,
+  isNewlineOnlyFromEmpty,
+  takeReloadBoundary
+} from './contentChange'
 import {
   FileEncodingCommand,
   LineEndingCommand,
@@ -21,9 +44,14 @@ import { useLayoutStore } from './layout'
 import { useMainStore } from '.'
 import { t } from '../i18n'
 import { debouncedSendBufferedState, sendBufferedState } from './bufferedState'
-import { isImageUnreferenced, resolveCleanupCandidate, type CleanupCandidate } from '../util/imageCleanup'
-import type { VersionSnapshot } from '@shared/types/ipc'
+import {
+  isImageUnreferenced,
+  resolveCleanupCandidate,
+  type CleanupCandidate
+} from '../util/imageCleanup'
+import type { IpcMainEventChannels, VersionSnapshot } from '@shared/types/ipc'
 import type {
+  BootstrapEditorConfig,
   IFileState,
   FileNotification,
   LineEnding,
@@ -63,30 +91,7 @@ type TocTreeNode = TreeNode<TocItem>
 // had. (Verified: getTOC() returned content "C2"/githubSlug "c2" while the
 // signature still read `2:mu-7`.)
 const tocSignature = (toc: TocItem[]): string =>
-  toc
-    .map(
-      (item) => `${item.lvl ?? ''}:${item.githubSlug ?? ''}:${item.content ?? ''}`
-    )
-    .join('|')
-
-// Renderer-safe UTF-8 byte length. `Buffer.byteLength()` must not be used here:
-// the renderer runs with `nodeIntegration: false` and context isolation on, so
-// `Buffer` is undefined (asserted by test/e2e/context-isolation.spec.ts). Using
-// it threw `Buffer is not defined` inside SAVE_VERSION_SNAPSHOT — which FILE_SAVE
-// runs BEFORE sending `mt::response-file-save` — silently aborting every manual
-// and auto save in the production build (the unsaved dot never cleared).
-// `TextEncoder.encode().length` is byte-identical to `Buffer.byteLength(s, 'utf8')`.
-const utf8Encoder = new TextEncoder()
-const byteLengthUtf8 = (text: string): number => utf8Encoder.encode(text).length
-
-interface RestoreWarning {
-  tabId?: string | null
-  pathname?: string
-  msg: string
-  showConfirm?: boolean
-  style?: string
-  exclusiveType?: string
-}
+  toc.map((item) => `${item.lvl ?? ''}:${item.githubSlug ?? ''}:${item.content ?? ''}`).join('|')
 
 interface PushTabNotificationPayload {
   tabId: string
@@ -153,32 +158,6 @@ interface ContentChangePayload {
   blocks?: unknown | null
 }
 
-interface AffiliationEntry {
-  type: string
-  functionType?: string
-  listType?: string
-  listItemType?: string
-  isLooseListItem?: boolean
-  [key: string]: unknown
-}
-
-interface SelectionChange {
-  start: {
-    key: string
-    offset: number
-    block?: { text?: string; functionType?: string }
-    type?: string
-  }
-  end: { key: string; offset: number; block?: { functionType?: string }; type?: string }
-  affiliation?: AffiliationEntry[]
-  hasFrontMatter?: boolean
-}
-
-interface SelectionFormat {
-  type: string
-  [key: string]: unknown
-}
-
 interface ProjectStoreLike {
   projectTree: { pathname?: string } | null
 }
@@ -201,11 +180,42 @@ export interface EditorState {
 
 const autoSaveTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
+/**
+ * Drop a tab's pending auto-save. Three paths need it — the tab closed, a newer
+ * edit re-arms it, or the disk version takes over — and in all three a timer left
+ * armed would write content the user has already moved past.
+ */
+const clearAutoSaveTimer = (id: string | undefined): void => {
+  if (!id) return
+  const timer = autoSaveTimers.get(id)
+  if (timer !== undefined) clearTimeout(timer)
+  autoSaveTimers.delete(id)
+}
+
 // Pending unreferenced-image cleanup checks, keyed by absolute path. The
 // delay gives undo (or a cut followed by an immediate paste-back) a window to
 // restore the reference before the file is unlinked.
 const imageCleanupTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const IMAGE_CLEANUP_DELAY_MS = 5000
+
+// The "this tab has never been written to disk, so saving it *is* the answer to
+// Move-to / Rename" request. Both actions opened with twenty identical lines
+// (flush, read the tab, clone its options, resolve the default folder, send
+// `mt::response-file-save` with the same seven arguments) and only their
+// else-branches differed, so any change to that payload had to be made twice —
+// and `test/unit/specs/flush-before-save.spec.ts` pins the flushed markdown on
+// both paths precisely because they were easy to drift.
+const sendSaveForUntitledFile = (tab: IFileState, defaultPath: string): void => {
+  window.electron.ipcRenderer.send(
+    'mt::response-file-save',
+    tab.id,
+    tab.filename,
+    tab.pathname,
+    tab.markdown,
+    deepClone(getOptionsFromState(tab)),
+    defaultPath
+  )
+}
 
 export const useEditorStore = defineStore('editor', {
   state: (): EditorState => ({
@@ -405,22 +415,7 @@ export const useEditorStore = defineStore('editor', {
       const oldNotifications = tab.notifications
       // Preserve scroll across external reload so the editor stays put.
       const oldScrollTop = tab.scrollTop
-      let oldHistory: IFileState['history'] | null = null
-      const histIndex = tab.history.index
-      if (histIndex >= 0 && tab.history.stack.length >= 1) {
-        const entry = tab.history.stack[histIndex]
-        if (entry) {
-          // Allow to restore the old document.
-          oldHistory = {
-            stack: [entry],
-            index: 0
-          }
-        }
-
-        // Free reference from array
-        tab.history.index--
-        tab.history.stack.pop()
-      }
+      const oldHistory = takeReloadBoundary(tab.history)
 
       // Update file content and restore some entries.
       Object.assign(tab, newFileState)
@@ -536,19 +531,6 @@ export const useEditorStore = defineStore('editor', {
       this.currentFile.searchMatches = deepClone(value) // deep clone to trigger state changes
     },
 
-    SHOW_IMAGE_DELETION_URL(deletionUrl: string): void {
-      notice
-        .notify({
-          title: t('store.editor.imageDeletionUrlTitle'),
-          message: t('store.editor.imageDeletionUrlMessage', { url: deletionUrl }),
-          showConfirm: true,
-          time: 20000
-        })
-        .then(() => {
-          window.electron.clipboard.writeText(deletionUrl)
-        })
-    },
-
     // IMG.2: the engine removed the last markdown reference to an image.
     // Schedule a debounced cleanup — the reference check re-runs at fire time
     // so an undo restores cleanliness, and the file is only unlinked when it
@@ -560,10 +542,15 @@ export const useEditorStore = defineStore('editor', {
       if (!tab?.pathname) return
 
       const documentDir = window.path.dirname(tab.pathname)
-      const candidate = resolveCleanupCandidate(src, documentDir, preferencesStore.imageFolderPath, {
-        path: window.path,
-        isChildOfDirectory: window.fileUtils.isChildOfDirectory
-      })
+      const candidate = resolveCleanupCandidate(
+        src,
+        documentDir,
+        preferencesStore.imageFolderPath,
+        {
+          path: window.path,
+          isChildOfDirectory: window.fileUtils.isChildOfDirectory
+        }
+      )
       if (!candidate) return
 
       const existing = imageCleanupTimers.get(candidate.absolutePath)
@@ -648,10 +635,7 @@ export const useEditorStore = defineStore('editor', {
 
     // need pass some data to main process when `save` menu item clicked
     LISTEN_FOR_SAVE(): void {
-      window.electron.ipcRenderer.on('mt::editor-ask-file-save', () => {
-        this.FILE_SAVE()
-      })
-      bus.on('mt::editor-ask-file-save', () => {
+      listenBoth('mt::editor-ask-file-save', () => {
         this.FILE_SAVE()
       })
     },
@@ -680,83 +664,89 @@ export const useEditorStore = defineStore('editor', {
 
     // need pass some data to main process when `save as` menu item clicked
     LISTEN_FOR_SAVE_AS(): void {
-      window.electron.ipcRenderer.on('mt::editor-ask-file-save-as', () => {
-        this.FILE_SAVE_AS()
-      })
-      bus.on('mt::editor-ask-file-save-as', () => {
+      listenBoth('mt::editor-ask-file-save-as', () => {
         this.FILE_SAVE_AS()
       })
     },
 
+    /**
+     * A tab acquired a real path (save-as or a dialog save). A tab already open
+     * on that path is closed first, since two tabs on one file would fight over
+     * it; the surviving tab keeps its id so undo and watchers stay attached.
+     */
+    SET_PATHNAME(fileInfo: IpcMainEventChannels['mt::set-pathname'][0]): void {
+      const { tabs } = this
+      const { pathname, id, filename } = fileInfo
+      const tab = tabs.find((f) => f.id === id)
+      if (!tab) {
+        console.error('[ERROR] Cannot change file path from unknown tab.')
+        return
+      }
+
+      const existingTab = tabs.find(
+        (t) => t.id !== id && window.fileUtils.isSamePathSync(t.pathname, pathname)
+      )
+      if (existingTab) {
+        this.CLOSE_TAB(existingTab)
+      }
+
+      if (id === this.currentFile?.id && pathname) {
+        window.DIRNAME = window.path.dirname(pathname)
+      }
+      Object.assign(tab, { filename, pathname, isSaved: true })
+      debouncedSendBufferedState()
+    },
+
+    /**
+     * Main finished writing the tab. Remember which history frame that was: the
+     * saved flag is re-derived from it later, so an undo back to this exact
+     * content clears the dot again without comparing text.
+     */
+    MARK_TAB_SAVED(tabId: string): void {
+      const tab = this.tabs.find((f) => f.id === tabId)
+      if (!tab) return
+
+      const frameId = historyFrameId(tab.history)
+      if (frameId !== undefined) {
+        tab.lastSavedHistoryId = frameId
+      }
+      tab.isSaved = true
+      debouncedSendBufferedState()
+    },
+
+    TAB_SAVE_FAILURE(tabId: string, msg: string): void {
+      const tab = this.tabs.find((t) => t.id === tabId)
+      if (!tab) {
+        notice.notify({
+          title: t('dialog.saveFailure'),
+          message: msg,
+          type: 'error',
+          time: 20000,
+          showConfirm: false
+        })
+        return
+      }
+
+      tab.isSaved = false
+      this.pushTabNotification({
+        tabId,
+        msg: t('store.editor.errorWhileSaving', { msg }),
+        style: 'crit'
+      })
+      debouncedSendBufferedState()
+    },
+
     LISTEN_FOR_SET_PATHNAME(): void {
       window.electron.ipcRenderer.on('mt::set-pathname', (_, fileInfo) => {
-        const { tabs } = this
-        const { pathname, id } = fileInfo
-        const tab = tabs.find((f) => f.id === id)
-        if (!tab) {
-          console.error('[ERROR] Cannot change file path from unknown tab.')
-          return
-        }
-
-        // If a tab with the same file path already exists we need to close the tab.
-        // The existing tab is overwritten by this tab.
-        const existingTab = tabs.find(
-          (t) => t.id !== id && window.fileUtils.isSamePathSync(t.pathname, pathname)
-        )
-        if (existingTab) {
-          this.CLOSE_TAB(existingTab)
-        }
-
-        // SET_PATHNAME
-        const { filename } = fileInfo
-        if (id === this.currentFile?.id && pathname) {
-          window.DIRNAME = window.path.dirname(pathname)
-        }
-        if (tab) {
-          Object.assign(tab, { filename, pathname, isSaved: true })
-          debouncedSendBufferedState()
-        }
+        this.SET_PATHNAME(fileInfo)
       })
 
       window.electron.ipcRenderer.on('mt::tab-saved', (_, tabId) => {
-        const tab = this.tabs.find((f) => f.id === tabId)
-        if (tab) {
-          const lastEditIndex = tab.history.lastEditIndex
-          if (
-            typeof lastEditIndex === 'number' &&
-            lastEditIndex >= 0 &&
-            lastEditIndex < tab.history.stack.length
-          ) {
-            const entry = tab.history.stack[lastEditIndex]
-            if (entry && typeof entry.id === 'number') {
-              tab.lastSavedHistoryId = entry.id
-            }
-          }
-          tab.isSaved = true
-          debouncedSendBufferedState()
-        }
+        this.MARK_TAB_SAVED(tabId)
       })
 
       window.electron.ipcRenderer.on('mt::tab-save-failure', (_, tabId, msg) => {
-        const tab = this.tabs.find((t) => t.id === tabId)
-        if (!tab) {
-          notice.notify({
-            title: t('dialog.saveFailure'),
-            message: msg,
-            type: 'error',
-            time: 20000,
-            showConfirm: false
-          })
-          return
-        }
-
-        tab.isSaved = false
-        this.pushTabNotification({
-          tabId,
-          msg: t('store.editor.errorWhileSaving', { msg }),
-          style: 'crit'
-        })
-        debouncedSendBufferedState()
+        this.TAB_SAVE_FAILURE(tabId, msg)
       })
     },
 
@@ -856,42 +846,24 @@ export const useEditorStore = defineStore('editor', {
     MOVE_FILE_TO(): void {
       if (!this.currentFile) return
       this.flushActiveEditor()
-      const projectStore = useProjectStore()
-      const { id, filename, pathname, markdown } = this.currentFile
-      const options = getOptionsFromState(this.currentFile)
-      const defaultPath = getRootFolderFromState(projectStore)
+      const { id, pathname } = this.currentFile
       if (!id) return
       if (!pathname) {
-        // if current file is a newly created file, just save it!
-        window.electron.ipcRenderer.send(
-          'mt::response-file-save',
-          id,
-          filename,
-          pathname,
-          markdown,
-          deepClone(options),
-          defaultPath
-        )
+        // A newly created file has nowhere to move to — saving it is the answer.
+        sendSaveForUntitledFile(this.currentFile, getRootFolderFromState(useProjectStore()))
       } else {
-        // if not, move to a new(maybe) folder
         window.electron.ipcRenderer.send('mt::response-file-move-to', { id, pathname })
       }
     },
 
     LISTEN_FOR_MOVE_TO(): void {
-      window.electron.ipcRenderer.on('mt::editor-move-file', () => {
-        this.MOVE_FILE_TO()
-      })
-      bus.on('mt::editor-move-file', () => {
+      listenBoth('mt::editor-move-file', () => {
         this.MOVE_FILE_TO()
       })
     },
 
     LISTEN_FOR_RENAME(): void {
-      window.electron.ipcRenderer.on('mt::editor-rename-file', () => {
-        this.RESPONSE_FOR_RENAME()
-      })
-      bus.on('mt::editor-rename-file', () => {
+      listenBoth('mt::editor-rename-file', () => {
         this.RESPONSE_FOR_RENAME()
       })
     },
@@ -899,22 +871,11 @@ export const useEditorStore = defineStore('editor', {
     RESPONSE_FOR_RENAME(): void {
       if (!this.currentFile) return
       this.flushActiveEditor()
-      const projectStore = useProjectStore()
-      const { id, filename, pathname, markdown } = this.currentFile
-      const options = getOptionsFromState(this.currentFile)
-      const defaultPath = getRootFolderFromState(projectStore)
+      const { id, pathname } = this.currentFile
       if (!id) return
       if (!pathname) {
-        // if current file is a newly created file, just save it!
-        window.electron.ipcRenderer.send(
-          'mt::response-file-save',
-          id,
-          filename,
-          pathname,
-          markdown,
-          deepClone(options),
-          defaultPath
-        )
+        // Same reasoning as MOVE_FILE_TO: an unsaved tab is saved, not renamed.
+        sendSaveForUntitledFile(this.currentFile, getRootFolderFromState(useProjectStore()))
       } else {
         bus.emit('rename')
       }
@@ -994,11 +955,44 @@ export const useEditorStore = defineStore('editor', {
     },
 
     // This events are only used during window creation.
-    LISTEN_FOR_BOOTSTRAP_WINDOW(): void {
+    /**
+     * The first message from a freshly loaded window: fold the launch config into
+     * the other stores, then open whatever tabs it asks for. Kept apart from the
+     * registration below so the sequence can be driven from a test.
+     */
+    APPLY_BOOTSTRAP_EDITOR(config: BootstrapEditorConfig): void {
+      const {
+        welcomeMarkdown,
+        addBlankTab,
+        markdownList,
+        lineEnding,
+        sideBarVisibility,
+        tabBarVisibility,
+        sourceCodeModeEnabled
+      } = config
+
       const preferencesStore = usePreferencesStore()
       const layoutStore = useLayoutStore()
-      const projectStore = useProjectStore()
       const mainStore = useMainStore()
+
+      mainStore.SET_INITIALIZED()
+      preferencesStore.SET_USER_PREFERENCE({ endOfLine: lineEnding })
+      layoutStore.SET_LAYOUT({
+        rightColumn: 'files',
+        showSideBar: !!sideBarVisibility,
+        showTabBar: !!tabBarVisibility
+      })
+      layoutStore.DISPATCH_LAYOUT_MENU_ITEMS()
+      preferencesStore.SET_MODE({ type: 'sourceCode', checked: !!sourceCodeModeEnabled })
+
+      for (const request of initialTabsToOpen({ welcomeMarkdown, addBlankTab, markdownList })) {
+        this.NEW_UNTITLED_TAB(request)
+      }
+    },
+
+    LISTEN_FOR_BOOTSTRAP_WINDOW(): void {
+      const projectStore = useProjectStore()
+      const preferencesStore = usePreferencesStore()
 
       // Delay load runtime commands and initialize commands.
       setTimeout(() => {
@@ -1021,43 +1015,7 @@ export const useEditorStore = defineStore('editor', {
       }, 400)
 
       window.electron.ipcRenderer.on('mt::bootstrap-editor', (_, config) => {
-        const {
-          addBlankTab,
-          welcomeMarkdown,
-          markdownList,
-          lineEnding,
-          sideBarVisibility,
-          tabBarVisibility,
-          sourceCodeModeEnabled
-        } = config
-
-        mainStore.SET_INITIALIZED()
-        preferencesStore.SET_USER_PREFERENCE({ endOfLine: lineEnding })
-        layoutStore.SET_LAYOUT({
-          rightColumn: 'files',
-          showSideBar: !!sideBarVisibility,
-          showTabBar: !!tabBarVisibility
-        })
-        layoutStore.DISPATCH_LAYOUT_MENU_ITEMS()
-        preferencesStore.SET_MODE({
-          type: 'sourceCode',
-          checked: !!sourceCodeModeEnabled
-        })
-
-        if (welcomeMarkdown) {
-          this.NEW_UNTITLED_TAB({ markdown: String(welcomeMarkdown), selected: true })
-        } else if (addBlankTab) {
-          this.NEW_UNTITLED_TAB({ selected: true })
-        } else if (markdownList.length) {
-          let isFirst = true
-          for (const md of markdownList) {
-            this.NEW_UNTITLED_TAB({
-              markdown: md,
-              selected: isFirst
-            })
-            isFirst = false
-          }
-        }
+        this.APPLY_BOOTSTRAP_EDITOR(config)
       })
     },
 
@@ -1102,25 +1060,16 @@ export const useEditorStore = defineStore('editor', {
     },
 
     LISTEN_FOR_CLOSE_TAB(): void {
-      window.electron.ipcRenderer.on('mt::editor-close-tab', () => {
-        this.CLOSE_TAB()
-      })
-      bus.on('mt::editor-close-tab', () => {
+      listenBoth('mt::editor-close-tab', () => {
         this.CLOSE_TAB()
       })
     },
 
     LISTEN_FOR_TAB_CYCLE(): void {
-      window.electron.ipcRenderer.on('mt::tabs-cycle-left', () => {
+      listenBoth('mt::tabs-cycle-left', () => {
         this.CYCLE_TABS(false)
       })
-      window.electron.ipcRenderer.on('mt::tabs-cycle-right', () => {
-        this.CYCLE_TABS(true)
-      })
-      bus.on('mt::tabs-cycle-left', () => {
-        this.CYCLE_TABS(false)
-      })
-      bus.on('mt::tabs-cycle-right', () => {
+      listenBoth('mt::tabs-cycle-right', () => {
         this.CYCLE_TABS(true)
       })
     },
@@ -1150,11 +1099,7 @@ export const useEditorStore = defineStore('editor', {
         this.updateTabIdToIndex()
       }
 
-      if (file.id && autoSaveTimers.has(file.id)) {
-        const timer = autoSaveTimers.get(file.id)
-        if (timer) clearTimeout(timer)
-        autoSaveTimers.delete(file.id)
-      }
+      clearAutoSaveTimer(file.id)
 
       // Snapshot on close so the user can recover unsaved work from the
       // history panel even if they chose "Don't Save".
@@ -1165,23 +1110,11 @@ export const useEditorStore = defineStore('editor', {
       this.updateTabIdToIndex() // Update before sending it out to prevent stale mappings.
 
       if (currentFile && file.id === currentFile.id) {
-        const fileState: IFileState | null =
-          this.tabs[index] ?? this.tabs[index - 1] ?? this.tabs[0] ?? null
+        const fileState = selectTabAfterClose(this.tabs, index)
         this.currentFile = fileState
         if (fileState && typeof fileState.markdown === 'string') {
-          const { id, markdown, cursor, history, pathname, scrollTop, blocks, muyaIndexCursor } =
-            fileState
-          window.DIRNAME = pathname ? window.path.dirname(pathname) : ''
-          bus.emit('file-changed', {
-            id,
-            markdown,
-            cursor,
-            muyaIndexCursor,
-            renderCursor: true,
-            history,
-            scrollTop,
-            blocks
-          })
+          window.DIRNAME = fileState.pathname ? window.path.dirname(fileState.pathname) : ''
+          bus.emit('file-changed', createFileChangedEvent(fileState))
         } else {
           window.DIRNAME = ''
         }
@@ -1263,21 +1196,11 @@ export const useEditorStore = defineStore('editor', {
       this.updateTabIdToIndex() // Update before sending it out to prevent stale mappings.
 
       if (this.currentFile == null && this.tabs.length > 0) {
-        this.currentFile = this.tabs[tabIndex] ?? this.tabs[tabIndex - 1] ?? this.tabs[0] ?? null
-        if (this.currentFile && typeof this.currentFile.markdown === 'string') {
-          const { id, markdown, cursor, history, pathname, scrollTop, blocks, muyaIndexCursor } =
-            this.currentFile
-          window.DIRNAME = pathname ? window.path.dirname(pathname) : ''
-          bus.emit('file-changed', {
-            id,
-            markdown,
-            cursor,
-            muyaIndexCursor,
-            renderCursor: true,
-            history,
-            scrollTop,
-            blocks
-          })
+        this.currentFile = selectTabAfterClose(this.tabs, tabIndex)
+        const current = this.currentFile
+        if (current && typeof current.markdown === 'string') {
+          window.DIRNAME = current.pathname ? window.path.dirname(current.pathname) : ''
+          bus.emit('file-changed', createFileChangedEvent(current))
         }
       }
 
@@ -1291,15 +1214,6 @@ export const useEditorStore = defineStore('editor', {
     EXCHANGE_TABS_BY_ID(tabIDs: { fromId: string; toId: string | null }): void {
       const { fromId, toId } = tabIDs
       const { tabs } = this
-      const moveItem = <T>(arr: T[], from: number, to: number): boolean => {
-        if (from === to) return true
-        const len = arr.length
-        const item = arr.splice(from, 1)
-        if (item.length === 0) return false
-
-        arr.splice(to, 0, item[0]!)
-        return arr.length === len
-      }
 
       const fromIndex = tabs.findIndex((t) => t.id === fromId)
       if (fromIndex === -1) return
@@ -1309,8 +1223,7 @@ export const useEditorStore = defineStore('editor', {
       } else {
         const toIndex = tabs.findIndex((t) => t.id === toId)
         if (toIndex === -1) return
-        const realToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex
-        moveItem(tabs, fromIndex, realToIndex)
+        moveItem(tabs, fromIndex, exchangeTargetIndex(fromIndex, toIndex))
       }
       this.updateTabIdToIndex()
       debouncedSendBufferedState()
@@ -1334,14 +1247,7 @@ export const useEditorStore = defineStore('editor', {
         return
       }
 
-      let nextTabIndex = 0
-      if (!direction) {
-        // Switch tab to the left.
-        nextTabIndex = currentIndex === 0 ? tabs.length - 1 : currentIndex - 1
-      } else {
-        // Switch tab to the right.
-        nextTabIndex = (currentIndex + 1) % tabs.length
-      }
+      const nextTabIndex = nextCycleIndex(currentIndex, tabs.length, direction)
 
       const nextTab = tabs[nextTabIndex]
       if (!nextTab || !nextTab.id) {
@@ -1542,6 +1448,20 @@ export const useEditorStore = defineStore('editor', {
       this.toc = listToTree<TocItem>(toc ?? [])
     },
 
+    /**
+     * PERFORMANCE: both content-change tiers guarded this with the cheap
+     * `lvl:githubSlug:content` signature (see `tocSignature` above) before
+     * rebuilding, because most typing keystrokes touch no heading and the tree
+     * rebuild is not free. Unlike UPDATE_TOC this refreshes only the tab on
+     * screen, and only when the signature actually moved.
+     */
+    refreshTocIfChanged(id: string, toc: TocItem[] | null | undefined): void {
+      if (id === this.currentFile?.id && toc && tocSignature(toc) !== tocSignature(this.listToc)) {
+        this.listToc = toc
+        this.toc = listToTree<TocItem>(toc)
+      }
+    },
+
     // Content change from realtime preview editor and source code editor
     // There is a chance that this event is fired AFTER the tab is switched.
     //
@@ -1572,7 +1492,7 @@ export const useEditorStore = defineStore('editor', {
         return
       }
 
-      const tab = this.tabs[this.tabIdToIndex[id]!]
+      const tab = this.tabs[this.tabIdToIndex[id]]
       if (!tab) return
 
       const preferencesStore = usePreferencesStore()
@@ -1611,17 +1531,7 @@ export const useEditorStore = defineStore('editor', {
         // wordCount rides this debounced tier too (sidebar counter only —
         // see the json-change callback in editor.vue); apply it when present.
         if (wordCount) tab.wordCount = wordCount
-        // PERFORMANCE: Cheap signature check first — if the `lvl:slug`
-        // signature hasn't changed, skip the expensive deep-equal and tree
-        // rebuild. Most typing keystrokes don't modify headings.
-        if (
-          id === this.currentFile?.id &&
-          toc &&
-          tocSignature(toc) !== tocSignature(this.listToc)
-        ) {
-          this.listToc = toc
-          this.toc = listToTree<TocItem>(toc)
-        }
+        this.refreshTocIfChanged(id, toc)
         return
       }
 
@@ -1630,7 +1540,7 @@ export const useEditorStore = defineStore('editor', {
       markdown = adjustTrailingNewlines(markdown, trimTrailingNewline)
       tab.markdown = markdown
 
-      if (oldMarkdown.length === 0 && markdown.length === 1 && markdown[0] === '\n') {
+      if (isNewlineOnlyFromEmpty(oldMarkdown, markdown)) {
         debouncedSendBufferedState()
         return
       }
@@ -1642,28 +1552,12 @@ export const useEditorStore = defineStore('editor', {
       if (blocks) tab.blocks = blocks
 
       // Only update TOC if it's the current file
-      // PERFORMANCE: Cheap signature check first — if the `lvl:slug`
-      // signature hasn't changed, skip the expensive deep-equal and tree
-      // rebuild. Most typing keystrokes don't modify headings.
-      if (id === this.currentFile?.id && toc && tocSignature(toc) !== tocSignature(this.listToc)) {
-        this.listToc = toc
-        this.toc = listToTree<TocItem>(toc)
-      }
+      this.refreshTocIfChanged(id, toc)
 
-      const lastEditIndex = tab.history.lastEditIndex
-      const editEntry =
-        typeof lastEditIndex === 'number' && lastEditIndex >= 0
-          ? tab.history.stack[lastEditIndex]
-          : undefined
-      const historyMarksDirty =
-        (typeof lastEditIndex === 'number' &&
-          lastEditIndex >= 0 &&
-          editEntry !== undefined &&
-          editEntry.id !== tab.lastSavedHistoryId) ||
-        (lastEditIndex === -1 &&
-          tab.lastSavedHistoryId !== -1 &&
-          tab.lastSavedHistoryId !== tab.history.lastInitIndex) // Edge Case: Undo to original content (lastEditIndex === -1) after saving means we cant use the lastEditIndex. Compare it against the lastInitIndex instead.
-      const isDirty = history === undefined ? markdown !== oldMarkdown : historyMarksDirty
+      const isDirty =
+        history === undefined
+          ? markdown !== oldMarkdown
+          : historyMarksDirty(tab.history, tab.lastSavedHistoryId)
       if (isDirty) {
         tab.isSaved = false
         if (pathname && autoSave) {
@@ -1692,11 +1586,7 @@ export const useEditorStore = defineStore('editor', {
       const projectStore = useProjectStore()
       const { autoSaveDelay } = preferencesStore
 
-      if (autoSaveTimers.has(id)) {
-        const timer = autoSaveTimers.get(id)
-        clearTimeout(timer)
-        autoSaveTimers.delete(id)
-      }
+      clearAutoSaveTimer(id)
 
       const timer = setTimeout(() => {
         autoSaveTimers.delete(id)
@@ -1742,11 +1632,7 @@ export const useEditorStore = defineStore('editor', {
       const menuState = createApplicationMenuState(changes)
       this.selectionMenuState = menuState
       const { windowId } = window.colamd?.env ?? { windowId: -1 }
-      window.electron.ipcRenderer.send(
-        'mt::editor-selection-changed',
-        windowId,
-        menuState
-      )
+      window.electron.ipcRenderer.send('mt::editor-selection-changed', windowId, menuState)
     },
 
     // Persist the caret for a tab without the heavy content-change pipeline. A
@@ -1768,11 +1654,7 @@ export const useEditorStore = defineStore('editor', {
       const formatState = createSelectionFormatState(formats)
       this.selectionFormatState = formatState
       const { windowId } = window.colamd?.env ?? { windowId: -1 }
-      window.electron.ipcRenderer.send(
-        'mt::update-format-menu',
-        windowId,
-        formatState
-      )
+      window.electron.ipcRenderer.send('mt::update-format-menu', windowId, formatState)
     },
 
     EXPORT({ type, content, bytes, markdown, pageOptions }: ExportPayload): void {
@@ -1846,10 +1728,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     LISTEN_FOR_SET_LINE_ENDING(): void {
-      window.electron.ipcRenderer.on('mt::set-line-ending', (_, lineEnding) => {
-        this.SET_LINE_ENDING(lineEnding)
-      })
-      bus.on('mt::set-line-ending', (lineEnding) => {
+      listenBoth('mt::set-line-ending', (lineEnding) => {
         this.SET_LINE_ENDING(lineEnding as LineEnding)
       })
     },
@@ -1879,83 +1758,93 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
-    LISTEN_FOR_FILE_CHANGE(): void {
+    /**
+     * A tab's file moved on disk — deleted, or rewritten by something outside the
+     * app (git checkout, an editor, a formatter). Either stay quiet, reload from
+     * disk, or ask the user first; the branches below are that decision.
+     *
+     * `change.data` is `unknown` in the cross-process contract, so the two places
+     * that need the loaded-document shape cast it; main fills it from
+     * `loadMarkdownFile`.
+     */
+    HANDLE_DISK_CHANGE(payload: IpcMainEventChannels['mt::update-file'][0]): void {
       const preferencesStore = usePreferencesStore()
-      window.electron.ipcRenderer.on('mt::update-file', (_, payload) => {
-        const { type, change } = payload
-        const { tabs } = this
-        const { pathname } = change
-        const tab = tabs.find((t) => window.fileUtils.isSamePathSync(t.pathname, pathname))
-        if (tab) {
-          const { id, isSaved, filename } = tab
-          switch (type) {
-            case 'unlink': {
-              tab.isSaved = false
-              this.pushTabNotification({
-                tabId: id,
-                msg: t('store.editor.fileRemovedOnDisk', { name: filename }),
-                style: 'warn',
-                showConfirm: false,
-                exclusiveType: 'file_changed'
-              })
-              debouncedSendBufferedState()
-              break
-            }
-            case 'add':
-            case 'change': {
-              // Flush the active tab first: its `tab.markdown` lags the live
-              // engine until a flush, and comparing against a stale value
-              // would falsely report a content change and warn/reload (#1861).
-              if (tab.id === this.currentFile?.id) {
-                this.flushActiveEditor()
-              }
-              // Only the file's metadata changed on disk (e.g. a git checkout
-              // that left the content byte-identical) — there is nothing to
-              // reload and no reason to warn the user (#1861).
-              const newMarkdown = (change as unknown as FileChangePayload).data?.markdown
-              if (typeof newMarkdown === 'string' && newMarkdown === tab.markdown) {
-                break
-              }
+      const { type, change } = payload
+      const { tabs } = this
+      const { pathname } = change
+      const tab = tabs.find((t) => window.fileUtils.isSamePathSync(t.pathname, pathname))
+      if (!tab) {
+        console.error(`HANDLE_DISK_CHANGE: Cannot find tab for path "${pathname}".`)
+        return
+      }
 
-              const { autoSave } = preferencesStore
-              if (autoSave) {
-                if (autoSaveTimers.has(id)) {
-                  const timer = autoSaveTimers.get(id)
-                  if (timer) clearTimeout(timer)
-                  autoSaveTimers.delete(id)
-                }
-
-                if (isSaved) {
-                  this.loadChange(change as unknown as FileChangePayload)
-                  return
-                }
-              }
-
-              tab.isSaved = false
-              this.pushTabNotification({
-                tabId: id,
-                msg: t('store.editor.fileChangedOnDisk', { name: filename }),
-                showConfirm: true,
-                exclusiveType: 'file_changed',
-                action: (status) => {
-                  if (status) {
-                    this.loadChange(change as unknown as FileChangePayload)
-                  }
-                }
-              })
-              debouncedSendBufferedState()
-              break
-            }
-            default:
-              console.error(`LISTEN_FOR_FILE_CHANGE: Invalid type "${type}"`)
-          }
-        } else {
-          console.error(`LISTEN_FOR_FILE_CHANGE: Cannot find tab for path "${pathname}".`)
+      const { id, isSaved, filename } = tab
+      switch (type) {
+        case 'unlink': {
+          tab.isSaved = false
+          this.pushTabNotification({
+            tabId: id,
+            msg: t('store.editor.fileRemovedOnDisk', { name: filename }),
+            style: 'warn',
+            showConfirm: false,
+            exclusiveType: 'file_changed'
+          })
+          debouncedSendBufferedState()
+          break
         }
+        case 'add':
+        case 'change': {
+          // Flush the active tab first: its `tab.markdown` lags the live
+          // engine until a flush, and comparing against a stale value
+          // would falsely report a content change and warn/reload (#1861).
+          if (tab.id === this.currentFile?.id) {
+            this.flushActiveEditor()
+          }
+          // Only the file's metadata changed on disk (e.g. a git checkout
+          // that left the content byte-identical) — there is nothing to
+          // reload and no reason to warn the user (#1861).
+          const newMarkdown = (change as unknown as FileChangePayload).data?.markdown
+          if (typeof newMarkdown === 'string' && newMarkdown === tab.markdown) {
+            break
+          }
+
+          const { autoSave } = preferencesStore
+          if (autoSave) {
+            clearAutoSaveTimer(id)
+
+            if (isSaved) {
+              this.loadChange(change as unknown as FileChangePayload)
+              return
+            }
+          }
+
+          tab.isSaved = false
+          this.pushTabNotification({
+            tabId: id,
+            msg: t('store.editor.fileChangedOnDisk', { name: filename }),
+            showConfirm: true,
+            exclusiveType: 'file_changed',
+            action: (status) => {
+              if (status) {
+                this.loadChange(change as unknown as FileChangePayload)
+              }
+            }
+          })
+          debouncedSendBufferedState()
+          break
+        }
+        default:
+          console.error(`HANDLE_DISK_CHANGE: Invalid type "${type}"`)
+      }
+    },
+
+    LISTEN_FOR_FILE_CHANGE(): void {
+      window.electron.ipcRenderer.on('mt::update-file', (_, payload) => {
+        this.HANDLE_DISK_CHANGE(payload)
       })
     },
 
-    ASK_FOR_IMAGE_PATH(): Promise<string[]> {
+    ASK_FOR_IMAGE_PATH(): Promise<string> {
       return window.electron.ipcRenderer.invoke('mt::ask-for-image-path')
     },
 
@@ -1970,10 +1859,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     LISTEN_WINDOW_ZOOM(): void {
-      window.electron.ipcRenderer.on('mt::window-zoom', (_, zoomFactor) => {
-        this.EDIT_ZOOM(zoomFactor)
-      })
-      bus.on('mt::window-zoom', (zoomFactor) => {
+      listenBoth('mt::window-zoom', (zoomFactor) => {
         this.EDIT_ZOOM(zoomFactor as number)
       })
     },
@@ -2084,307 +1970,4 @@ const getRootFolderFromState = (projectStore: ProjectStoreLike): string => {
     return openedFolder.pathname ?? ''
   }
   return ''
-}
-
-/**
- * Trim the final newlines according `trimTrailingNewlineOption`.
- *
- * @param markdown The text to trim.
- * @param trimTrailingNewlineOption The option how we should trim the final newlines.
- */
-const adjustTrailingNewlines = (markdown: string, trimTrailingNewlineOption: number): string => {
-  if (!markdown) {
-    return ''
-  }
-
-  switch (trimTrailingNewlineOption) {
-    // Trim trailing newlines.
-    case 0: {
-      return trimTrailingNewlines(markdown)
-    }
-    // Ensure single trailing newline.
-    case 1: {
-      // Muya will always add a final new line to the markdown text. Check first whether
-      // only one newline exist to prevent copying the string.
-      const lastIndex = markdown.length - 1
-      if (markdown[lastIndex] === '\n') {
-        if (markdown.length === 1) {
-          // Just return nothing because adding a final new line makes no sense.
-          return ''
-        } else if (markdown[lastIndex - 1] !== '\n') {
-          return markdown
-        }
-      }
-
-      // Otherwise trim trailing newlines and add one.
-      markdown = trimTrailingNewlines(markdown)
-      if (markdown.length === 0) {
-        // Just return nothing because adding a final new line makes no sense.
-        return ''
-      }
-      return markdown + '\n'
-    }
-    // Disabled, use text as it is.
-    default:
-      return markdown
-  }
-}
-
-/**
- * Trim trailing newlines from `text`.
- *
- * @param {string} text The text to trim.
- */
-const trimTrailingNewlines = (text: string): string => {
-  return text.replace(/[\r?\n]+$/, '')
-}
-
-export interface ApplicationMenuState {
-  isDisabled: boolean
-  isMultiline: boolean
-  isLooseListItem: boolean
-  isTaskList: boolean
-  isCodeFences: boolean
-  isCodeContent: boolean
-  isTable: boolean
-  hasFrontMatter: boolean
-  affiliation: Record<string, boolean>
-}
-
-/**
- * Creates a object that contains the application menu state.
- *
- * @param {*} selection The selection.
- * @returns A object that represents the application menu state.
- */
-const createApplicationMenuState = ({
-  start,
-  end,
-  affiliation,
-  hasFrontMatter
-}: SelectionChange): ApplicationMenuState => {
-  const state: ApplicationMenuState = {
-    isDisabled: false,
-    // Whether multiple lines are selected.
-    isMultiline: start.key !== end.key,
-    // List information - a list must be selected.
-    isLooseListItem: false,
-    isTaskList: false,
-    // Whether the selection is code block like (math, html or code block).
-    isCodeFences: false,
-    // Whether a code block line is selected.
-    isCodeContent: false,
-    // Whether the selection contains a table.
-    isTable: false,
-    hasFrontMatter: !!hasFrontMatter,
-    // Contains keys about the selection type(s) (string, boolean) like "ul: true".
-    affiliation: {}
-  }
-  const { isMultiline } = state
-  const aff: AffiliationEntry[] = affiliation ?? []
-  const startBlock: { text?: string; functionType?: string } = start.block ?? {}
-  const endBlock: { functionType?: string } = end.block ?? {}
-
-  // Get code block information from selection.
-  if (
-    (startBlock.functionType === 'cellContent' && endBlock.functionType === 'cellContent') ||
-    (start.type === 'span' && startBlock.functionType === 'codeContent') ||
-    (end.type === 'span' && endBlock.functionType === 'codeContent')
-  ) {
-    // A code block like block is selected (code, math, ...).
-    state.isCodeFences = true
-
-    // A code block line is selected.
-    if (startBlock.functionType === 'codeContent' || endBlock.functionType === 'codeContent') {
-      state.isCodeContent = true
-    }
-  }
-
-  // Check every list level in the affiliation chain — nested lists show all
-  // levels (e.g. a ul wrapping an ol checks both). Scanning the full chain (not
-  // just the depth-3 loop below) keeps a deeply nested inner list checked. The
-  // loose/task flags come from the INNERMOST list (the one the cursor is in);
-  // the chain is outermost-first, so that is the last ul/ol entry.
-  const listEntries = aff.filter((b) => b.type === 'ul' || b.type === 'ol')
-  for (const entry of listEntries) {
-    // Task and bullet lists are both `type: 'ul'`; distinguish by listType so a
-    // chain with several kinds (e.g. ol > task > ul) checks each list menu item.
-    const kind = entry.type === 'ol' ? 'ol' : entry.listType === 'task' ? 'task' : 'ul'
-    state.affiliation[kind] = true
-  }
-  const innerList = listEntries[listEntries.length - 1]
-  if (innerList) {
-    // The engine's affiliation entry carries the loose flag on the list block
-    // itself (derived from `meta.loose`), not via a `children` chain.
-    state.isLooseListItem = !!innerList.isLooseListItem
-    state.isTaskList = innerList.listType === 'task'
-  }
-
-  // Search with block depth 3 (e.g. "ul -> li -> p" where p is the actually paragraph inside the list (item)).
-  for (const b of aff.slice(0, 3)) {
-    if (b.type === 'pre' && b.functionType) {
-      if (/frontmatter|html|multiplemath|code$/.test(b.functionType)) {
-        state.isCodeFences = true
-        state.affiliation[b.functionType] = true
-      }
-      break
-    } else if (b.type === 'figure' && b.functionType) {
-      if (b.functionType === 'table') {
-        state.isTable = true
-        state.isDisabled = true
-        state.affiliation[b.type] = true
-      } else if (b.functionType === 'diagram') {
-        // Diagrams are atomic, non-formattable blocks: disable the whole
-        // paragraph + format menus like a code fence, but they are not tables.
-        state.isCodeFences = true
-        state.affiliation[b.functionType] = true
-      }
-      break
-    } else if (isMultiline && /^h{1,6}$/.test(b.type)) {
-      // Multiple block elements are selected.
-      state.affiliation = {}
-      break
-    } else if (b.type !== 'ul' && b.type !== 'ol') {
-      // Lists are handled above (innermost only); the depth-limited scan must
-      // not re-add an outer list type and check two list kinds at once.
-      if (!state.affiliation[b.type]) {
-        state.affiliation[b.type] = true
-      }
-    }
-  }
-
-  if (Object.getOwnPropertyNames(state.affiliation).length >= 2 && state.affiliation.p) {
-    delete state.affiliation.p
-  }
-  if ((state.affiliation.ul || state.affiliation.ol) && state.affiliation.li) {
-    delete state.affiliation.li
-  }
-  return state
-}
-
-/**
- * Creates a object that contains the formats selection state.
- */
-export const createSelectionFormatState = (formats: SelectionFormat[]): Record<string, boolean> => {
-  const state: Record<string, boolean> = {}
-  for (const item of formats) {
-    // Underline/superscript/subscript/highlight are carried as `html_tag`
-    // tokens whose `tag` (u/sup/sub/mark) is the real format key the menu
-    // map keys off — the bare `type` would only ever yield `html_tag`.
-    const key = item.type === 'html_tag' ? (item.tag as string) : item.type
-    if (key) state[key] = true
-  }
-  return state
-}
-
-/*
- * Convert a Pinia Proxy Object to a serializable value by applying JSON stringify and parse.
- */
-function toSerializableValue<T>(value: T | null | undefined, fallback: T): T
-function toSerializableValue<T>(value: T | null | undefined, fallback: null): T | null
-function toSerializableValue<T>(value: T | null | undefined, fallback: T | null = null): T | null {
-  if (value == null) return fallback
-
-  try {
-    return deepClone(value) as T
-  } catch (err) {
-    console.warn('Unable to serialize editor buffer value:', err)
-    return fallback
-  }
-}
-
-interface BufferedTabState {
-  id: string
-  pathname: string
-  filename: string
-  markdown: string
-  isSaved: boolean
-  encoding: IFileState['encoding']
-  lineEnding: IFileState['lineEnding']
-  trimTrailingNewline: number
-  adjustLineEndingOnSave: boolean
-  cursor: unknown
-  wordCount: IFileState['wordCount']
-  muyaIndexCursor: unknown
-  scrollTop: number
-}
-
-const createBufferedTabState = (tab: Partial<IFileState> & { id: string }): BufferedTabState => {
-  return {
-    id: tab.id,
-    pathname: tab.pathname ?? defaultFileState.pathname,
-    filename: tab.filename ?? defaultFileState.filename,
-    markdown: typeof tab.markdown === 'string' ? tab.markdown : defaultFileState.markdown,
-    isSaved: tab.isSaved ?? defaultFileState.isSaved,
-    encoding: toSerializableValue(tab.encoding, defaultFileState.encoding),
-    lineEnding: tab.lineEnding ?? defaultFileState.lineEnding,
-    trimTrailingNewline:
-      typeof tab.trimTrailingNewline === 'number'
-        ? tab.trimTrailingNewline
-        : defaultFileState.trimTrailingNewline,
-    adjustLineEndingOnSave: tab.adjustLineEndingOnSave ?? defaultFileState.adjustLineEndingOnSave,
-    cursor: toSerializableValue(tab.cursor, defaultFileState.cursor),
-    wordCount: toSerializableValue(tab.wordCount, defaultFileState.wordCount),
-    muyaIndexCursor: toSerializableValue(tab.muyaIndexCursor, defaultFileState.muyaIndexCursor),
-    scrollTop: tab.scrollTop ?? defaultFileState.scrollTop
-  }
-}
-
-interface BufferedRestoreWarning {
-  tabId: string | null
-  pathname: string
-  msg: string
-  showConfirm: boolean
-  style: string
-  exclusiveType: string
-}
-
-const createBufferedRestoreWarning = (
-  warning: RestoreWarning | null | undefined
-): BufferedRestoreWarning | null => {
-  if (!warning) return null
-
-  const { tabId, pathname, msg, showConfirm, style, exclusiveType } = warning
-  if (!tabId && !pathname) return null
-  if (!msg) return null
-
-  return {
-    tabId: tabId || null,
-    pathname: pathname || '',
-    msg,
-    showConfirm: !!showConfirm,
-    style: style || 'info',
-    exclusiveType: exclusiveType || ''
-  }
-}
-
-interface BufferedEditorState {
-  currentFileId: string | null
-  tabs: BufferedTabState[]
-  restoreWarnings: BufferedRestoreWarning[]
-}
-
-const createBufferedEditorState = (state: unknown): BufferedEditorState | null => {
-  const s = state as
-    | {
-      tabs?: unknown
-      currentFileId?: string
-      currentFile?: { id?: string } | null
-      restoreWarnings?: unknown
-    }
-    | null
-    | undefined
-  if (!s || !Array.isArray(s.tabs)) {
-    return null
-  }
-
-  return {
-    currentFileId: s.currentFileId || s.currentFile?.id || null,
-    tabs: (s.tabs as Array<Partial<IFileState> & { id: string }>).map(createBufferedTabState),
-    restoreWarnings: Array.isArray(s.restoreWarnings)
-      ? (s.restoreWarnings as RestoreWarning[])
-        .map(createBufferedRestoreWarning)
-        .filter((w): w is BufferedRestoreWarning => w !== null)
-      : []
-  }
 }

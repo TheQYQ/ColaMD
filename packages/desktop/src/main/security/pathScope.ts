@@ -24,22 +24,25 @@ import { realpath } from 'fs/promises'
 //   4. checks the (symlink-resolved) path is exactly, or is a subpath of, a
 //      registered root — using case-insensitive comparison on Windows/macOS.
 //
-// Read-only channels (read-file / readdir / stat / …) are intentionally out of
-// scope: they are gated elsewhere and excluding them keeps the blast radius of
-// this module contained to *mutation*. The residual risk — a compromised
-// renderer mutating files inside an already-granted root — is bounded by
-// construction (it requires a root the user already opened).
+// Disclosure of *contents* and *names* goes through this module too:
+// `mt::fs::read-file` and `mt::fs::readdir` are scope-checked (ipc/fs.ts), so a
+// renderer can only read what the user opened or picked. The boolean probes
+// (`is-file`, `is-directory`, `path-exists`, `is-executable`, `paths::is-image`)
+// stay open by decision, not oversight — see the comment at their registration
+// site. The residual risk — a compromised renderer mutating files inside an
+// already-granted root — is bounded by construction (it requires a root the user
+// already opened).
 //
 // NOTE: root grants only happen at provably-trusted sites (dialog/argv/menu
 // flows). Channels a compromised renderer can forge directly (e.g.
 // mt::open-file-by-window-id) do NOT grant roots; they only open tabs. This
 // prevents a renderer from widening its own mutation scope by "opening" an
-// arbitrary file. Documented residual risk: the image-folder preference is
-// renderer-settable via the generic set-user-preference IPC channel, so a
-// compromised renderer could in principle widen its write scope by flipping
-// that preference. That is materially smaller than the status quo (write
-// anywhere with NO scope) and is accepted for this batch — future hardening
-// should route folder picks through a dedicated dialog-verified channel.
+// arbitrary file. The image-folder preference used to be the documented hole —
+// it was renderer-settable through the generic preference channel while also
+// granting a root. That is closed: DataCenter assigns the key from its folder
+// dialog only (ignoring any path a caller sends), and `mt::set-user-preference`
+// drops it. What remains is the risk above — mutating files inside a root the
+// user already opened.
 // =============================================================================
 
 export class PathScopeError extends Error {
@@ -88,7 +91,7 @@ export function clearAllowedRootsForTest(): void {
 // canonicalize consistently with an existing one, and applies the same
 // junction/symlink-following transformation to both candidate and root so the
 // comparison below is source-consistent (platform volume-case form included).
-const canonicalize = async(p: string): Promise<string> => {
+const canonicalize = async (p: string): Promise<string> => {
   const abs = path.resolve(p)
   const tail: string[] = []
   let cursor = abs
@@ -112,7 +115,7 @@ const canonicalize = async(p: string): Promise<string> => {
 // The cache avoids re-running realpath on every assertion against a stable root.
 const canonicalRootCache = new Map<string, string>()
 
-const getCanonicalRoots = async(): Promise<string[]> => {
+const getCanonicalRoots = async (): Promise<string[]> => {
   const out: string[] = []
   for (const root of allowedRoots) {
     let c = canonicalRootCache.get(root)

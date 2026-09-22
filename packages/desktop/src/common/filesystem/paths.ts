@@ -2,26 +2,13 @@ import fs from 'fs'
 import path from 'path'
 import { isFile, isFile2, isSymbolicLink } from './index'
 import { minimatch } from 'minimatch'
+import {
+  MARKDOWN_EXTENSIONS,
+  MARKDOWN_INCLUSIONS,
+  hasMarkdownExtension
+} from './markdownExtensions'
 
-const isOsx = process.platform === 'darwin'
-
-export const MARKDOWN_EXTENSIONS: readonly string[] = Object.freeze([
-  'markdown',
-  'mdown',
-  'mkdn',
-  'md',
-  'mkd',
-  'mdwn',
-  'mdtxt',
-  'mdtext',
-  'mdx',
-  'text',
-  'txt'
-])
-
-export const MARKDOWN_INCLUSIONS: readonly string[] = Object.freeze(
-  MARKDOWN_EXTENSIONS.map((x) => '*.' + x)
-)
+export { MARKDOWN_EXTENSIONS, MARKDOWN_INCLUSIONS, hasMarkdownExtension }
 
 export const IMAGE_EXTENSIONS: readonly string[] = Object.freeze([
   'jpeg',
@@ -37,7 +24,7 @@ export const IMAGE_EXTENSIONS: readonly string[] = Object.freeze([
 // pointing at a co-located script/executable must be confirmed first (#3575).
 // The vulnerable path is cross-platform, so the list covers Windows, macOS and
 // Linux launchers — not just Windows.
-export const DANGEROUS_EXECUTABLE_EXTENSIONS: readonly string[] = Object.freeze([
+const DANGEROUS_EXECUTABLE_EXTENSIONS: readonly string[] = Object.freeze([
   // Windows — native executables, installers and control-panel items
   'exe',
   'com',
@@ -96,16 +83,11 @@ export const isDangerousExecutableFile = (filepath: string): boolean => {
   // Windows strips trailing dots/spaces during ShellExecute canonicalization,
   // so `update.js.` / `<./update.js >` still run `update.js` — strip them
   // before reading the extension or the guard is trivially bypassed.
-  const ext = path.extname(filepath.replace(/[ .]+$/, '')).slice(1).toLowerCase()
+  const ext = path
+    .extname(filepath.replace(/[ .]+$/, ''))
+    .slice(1)
+    .toLowerCase()
   return !!ext && DANGEROUS_EXECUTABLE_EXTENSIONS.includes(ext)
-}
-
-/**
- * Returns true if the filename matches one of the markdown extensions.
- */
-export const hasMarkdownExtension = (filename: string): boolean => {
-  if (!filename || typeof filename !== 'string') return false
-  return MARKDOWN_EXTENSIONS.some((ext) => filename.toLowerCase().endsWith(`.${ext}`))
 }
 
 /**
@@ -163,20 +145,6 @@ export const isChildOfDirectory = (dir: string, child: string): boolean => {
   if (!dir || !child) return false
   const relative = path.relative(dir, child)
   return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative)
-}
-
-export const getResourcesPath = (): string => {
-  let resPath = process.resourcesPath
-  if (process.env.NODE_ENV === 'development') {
-    // Default locations:
-    //   Linux/Windows: node_modules/electron/dist/resources/
-    //   macOS: node_modules/electron/dist/Electron.app/Contents/Resources
-    if (isOsx) {
-      resPath = path.join(resPath, '../..')
-    }
-    resPath = path.join(resPath, '../../../../resources')
-  }
-  return resPath
 }
 
 /**

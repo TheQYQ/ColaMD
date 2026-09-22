@@ -53,7 +53,6 @@
       "replace": "取代",
       "findNext": "尋找下一個",
       "findPrevious": "尋找上一個",
-      "findInFolder": "在資料夾中尋找",
       "screenshot": "螢幕截圖",
       "lineEnding": "行結束符",
       "lineEndingCrlf": "CRLF(Windows)",
@@ -227,66 +226,17 @@
     "replaceAll": "全部取代",
     "replaceSingle": "單一取代",
     "invalidRegex": "無效的正規表示式 \"{pattern}\"",
-    "regexMatchEmpty": "正規表示式 \"{pattern}\" 符合空字串",
-    "searchResultInfo": "在 {fileCount} 個檔案中找到 {matchCount} 個符合項目",
-    "searchLimited": "搜尋僅限前 {count} 個結果"
+    "regexMatchEmpty": "正規表示式 \"{pattern}\" 符合空字串"
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "在資料夾中搜尋…",
-      "noFolderOpen": "沒有開啟的資料夾",
-      "noResultsFound": "找不到結果。",
-      "cancel": "取消",
-      "openFolder": "開啟資料夾",
-      "showMoreMatches": "顯示更多符合項目"
-    },
     "tree": {
-      "openedFiles": "已開啟的檔案",
-      "saveAll": "全部儲存",
-      "closeAll": "全部關閉",
       "emptyProject": "空專案",
       "createFile": "建立檔案",
-      "openFolder": "開啟資料夾"
-    },
-    "toc": {
-      "title": "目錄",
-      "expandAll": "全部展開",
-      "collapseAll": "全部折疊"
+      "openFile": "開啟檔案..."
     },
     "icons": {
       "files": "檔案",
-      "search": "搜尋",
-      "toc": "目錄",
-      "settings": "設定",
-      "history": "Version History"
-    },
-    "history": {
-      "title": "Version History",
-      "noFile": "No file open",
-      "loading": "Loading...",
-      "nosnapshots": "No version history yet. Snapshots are created automatically when you save.",
-      "restore": "Restore",
-      "delete": "Delete",
-      "clearAll": "Clear All",
-      "close": "Close",
-      "cancel": "Cancel",
-      "previewTitle": "Version Preview",
-      "restoreConfirm": "Restoring this version will replace the current document content. A backup of the current state will be saved first. Continue?",
-      "restoreTitle": "Restore Version",
-      "restoreFailed": "Failed to restore version",
-      "restoreSuccess": "Version restored successfully",
-      "deleteConfirm": "Are you sure you want to delete this version permanently?",
-      "deleteTitle": "Delete Version",
-      "deleteSuccess": "Version deleted",
-      "deleteFailed": "Failed to delete version",
-      "clearConfirm": "Are you sure you want to clear all version history for this file? This cannot be undone.",
-      "clearTitle": "Clear History",
-      "clearSuccess": "History cleared",
-      "clearFailed": "Failed to clear history",
-      "justNow": "Just now",
-      "minutesAgo": "{count} min ago",
-      "hoursAgo": "{count}h ago",
-      "daysAgo": "{count}d ago"
+      "toc": "目錄"
     }
   },
   "commandPalette": {
@@ -838,7 +788,6 @@
       "findNext": "尋找下一個",
       "findPrevious": "尋找上一個",
       "replace": "取代",
-      "findInFolder": "在資料夾中尋找",
       "screenshot": "螢幕截圖"
     },
     "paragraph": {
@@ -954,8 +903,9 @@
     "unsafeFileMessage": "此連結將開啟一個可執行程式碼的檔案",
     "unsafeFileDetail": "「{name}」是可執行檔或指令碼檔案。開啟它可能會在你的電腦上執行程式。請僅在信任此文件時繼續。",
     "openAnyway": "仍要開啟",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "重新命名失敗",
+    "moveFailure": "移動失敗",
+    "openFailure": "開啟失敗"
   },
   "error": {
     "configSchemaViolation": "設定結構違規",
@@ -981,15 +931,13 @@
       "errorLoadingTabTitle": "載入標籤頁發生錯誤",
       "errorLoadingTabMessage": "載入檔案變更時發生錯誤，因為找不到該標籤頁。",
       "mixedLineEndingsNormalized": "「{name}」含有混合換行字元，已自動正規化為 {lineEnding}。",
-      "imageDeletionUrlTitle": "圖片刪除連結",
-      "imageDeletionUrlMessage": "點擊將已上傳圖片的刪除連結複製到剪貼簿（{url}）。",
       "errorWhileSaving": "儲存時發生錯誤：{msg}",
       "exportSuccessTitle": "匯出成功",
       "exportSuccessMessage": "已成功匯出「{name}」！",
       "fileRemovedOnDisk": "「{name}」已在磁碟上被刪除。",
       "fileChangedOnDisk": "「{name}」已在磁碟上發生變更。是否重新載入？",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "重新命名時發生錯誤：{msg}",
+      "errorWhileMoving": "移動時發生錯誤：{msg}",
       "imageCleanupTitle": "圖片檔案已刪除",
       "imageCleanupMessage": "已刪除未引用的檔案：{name}"
     }

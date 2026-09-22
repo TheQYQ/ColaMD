@@ -6,7 +6,7 @@
 // the source folder.
 const IMAGE_EXT_REG = /\.(?:jpeg|jpg|png|gif|svg|webp)(?=\?|$)/i
 
-export function localPathToFileUrl(src: string): string {
+function localPathToFileUrl(src: string): string {
   const normalized = src.replace(/\\/g, '/')
 
   if (/^\/\/[^/]+\/[^/]+/.test(normalized)) {

@@ -3,6 +3,9 @@ import path from 'path'
 import { ipcMain, type WebContents } from 'electron'
 import log from 'electron-log'
 import { rgPath as bundledRgPath } from '@vscode/ripgrep'
+import { assertPathInScope } from '../security/pathScope'
+import { typedHandle } from './typedHandle'
+import type { RipgrepSearchOptions as SearchOptions } from '@shared/types/ripgrep'
 
 const resolveRgPath = (): string => {
   if (process.env.COLAMD_RIPGREP_PATH) return process.env.COLAMD_RIPGREP_PATH
@@ -157,20 +160,6 @@ const prepareRegexp = (regexpStr: string): string => {
 }
 
 const isMultilineRegexp = (regexpStr: string): boolean => regexpStr.includes('\\n')
-
-interface SearchOptions {
-  isRegexp?: boolean
-  isCaseSensitive?: boolean
-  isWholeWord?: boolean
-  followSymlinks?: boolean
-  maxFileSize?: number | string
-  includeHidden?: boolean
-  noIgnore?: boolean
-  leadingContextLineCount?: number
-  trailingContextLineCount?: number
-  inclusions?: string[]
-  exclusions?: string[]
-}
 
 const startTextSearch = (
   sender: WebContents,
@@ -431,21 +420,23 @@ const startFileSearch = (
   }
 }
 
-interface RipgrepRequest {
-  searchId: string
-  mode: 'files' | 'text'
-  directories: string[]
-  pattern: string
-  options: SearchOptions
-}
-
 export const registerRipgrepHandlers = (): void => {
-  ipcMain.handle('mt::rg::start', (event, req: RipgrepRequest) => {
+  // The payload shape lives in `@shared/types/ripgrep`, so this channel can go
+  // through the typed wrapper: the renderer's object and main's destructure are
+  // now checked against one declaration instead of each keeping its own copy.
+  typedHandle('mt::rg::start', async (event, req) => {
     const { searchId, mode, directories, pattern, options } = req
     cleanupAtSenderDestroy(event.sender)
+    // A search answers with file contents and paths, so it discloses the same
+    // kind of data as `mt::fs::read-file` / `readdir` — recursively, which makes
+    // it the widest one. Every directory the renderer names must therefore sit
+    // inside a granted root; real callers only ever name an opened folder or a
+    // document's own directory, both registered when the window opens them.
+    for (const dir of directories ?? []) {
+      await assertPathInScope(dir)
+    }
     if (mode === 'files') startFileSearch(event.sender, searchId, directories, options || {})
     else startTextSearch(event.sender, searchId, directories, pattern, options || {})
-    return true
   })
   ipcMain.on('mt::rg::cancel', (_event, searchId: string) => {
     const entry = activeSearches.get(searchId)

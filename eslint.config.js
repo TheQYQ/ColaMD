@@ -24,7 +24,8 @@ export default [
       'packages/desktop/src/renderer/src/assets/symbolIcon/index.js',
       '**/*.min.json',
       '**/test-results/**',
-      '**/playwright-report/**'
+      '**/playwright-report/**',
+      '**/coverage/**'
     ]
   },
 
@@ -84,7 +85,10 @@ export default [
       'no-extra-semi': 'off',
       '@stylistic/indent': ['error', 2, { SwitchCase: 1, ignoreComments: true }],
       '@stylistic/semi': ['error', 'never'],
-      '@stylistic/space-before-function-paren': ['error', 'never'],
+      '@stylistic/space-before-function-paren': [
+        'error',
+        { named: 'never', anonymous: 'always', asyncArrow: 'always' },
+      ],
       '@stylistic/arrow-parens': 'off',
       '@stylistic/no-mixed-operators': 'off'
     }
@@ -148,7 +152,10 @@ export default [
     rules: {
       '@stylistic/indent': ['error', 2, { SwitchCase: 1, ignoreComments: true }],
       '@stylistic/semi': ['error', 'never'],
-      '@stylistic/space-before-function-paren': ['error', 'never'],
+      '@stylistic/space-before-function-paren': [
+        'error',
+        { named: 'never', anonymous: 'always', asyncArrow: 'always' },
+      ],
       '@stylistic/arrow-parens': 'off',
       '@stylistic/no-mixed-operators': 'off',
       'no-return-await': 'error',
@@ -234,6 +241,68 @@ export default [
           message:
             'require() is unavailable in the renderer. Use a static ESM import instead.'
         }
+      ]
+    }
+  },
+
+  // 11. Main-process `invoke` handlers go through the shared contract.
+  //
+  // `shared/types/ipc.ts` types the preload side of every channel, but a bare
+  // `ipcMain.handle('mt::…', …)` was unchecked: Electron hands the listener
+  // `any[]`, so name, argument tuple and return type could drift and only fail
+  // at run time. Wrapping registration in `typedHandle` (src/main/ipc/typedHandle.ts)
+  // makes the contract load-bearing; this rule stops new bypasses.
+  //
+  // Converting all 41 channels surfaced eight declarations that were already
+  // wrong — e.g. `mt::ask-for-image-path` was typed `string[]` while the handler
+  // answers a single path — so the two remaining exemptions below are payload
+  // ownership questions, not type errors. See docs/OPTIMIZATION_ROADMAP.md O8.
+  {
+    files: ['packages/desktop/src/main/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "CallExpression[callee.object.name='ipcMain'][callee.property.name='handle']",
+          message:
+            'Register invoke handlers through typedHandle() from src/main/ipc/typedHandle.ts so the channel stays checked against shared/types/ipc.ts.'
+        }
+      ]
+    }
+  },
+
+  // 12. Desktop size gates (O21).
+  //
+  // The engine package has always warned on `complexity` and
+  // `max-lines-per-function`; the desktop package had neither, which is why the
+  // oversized functions counted in docs/PROJECT_GUIDE.md §13 — a 313-line Pinia
+  // setup, a 279-line onMounted, a 240-line app-ready handler — were never
+  // reported by the tooling that should have noticed them. Thresholds sit just
+  // above the worst offender that exists today, so the pair warns on nothing
+  // until the tree grows past it again; each step of O12 lowers them a notch.
+  //
+  // 37: measured, not guessed, and it has moved twice. O12(4) took
+  // `LISTEN_FOR_CONTENT_CHANGE` from 44 to 26, which left `util/theme.ts:61` (a
+  // 33-case theme switch, 43) as the binder. Turning that switch into the
+  // `BUILT_IN_THEME_CSS` table cleared it, and re-probing the package at the
+  // floor turned the worst remaining function into `util/docx/document.ts:346`
+  // at 36 — so the ceiling comes down to just above that.
+  //
+  // 205: the length ceiling moved twice since. It bound on `store/project.ts`'s setup
+  // at 277 until the directory-watch reducer came out into `store/treeEvents.ts`
+  // (250); the sidebar paste handler then came out into `store/sidebarPaste.ts`
+  // (204). Runners-up are 202 (`useEngineOptionSync.ts`) and 173
+  // (`main/windows/editor.ts`), so 205 sits just above the binder — measured by
+  // probing the whole package at a floor of 120 and reading the lengths eslint
+  // reports, never by guessing.
+  {
+    files: ['packages/desktop/src/**/*.ts', 'packages/desktop/src/**/*.vue'],
+    rules: {
+      complexity: ['warn', 37],
+      'max-lines-per-function': [
+        'warn',
+        { max: 205, skipBlankLines: true, skipComments: true }
       ]
     }
   }

@@ -31,7 +31,7 @@ class TrailingNewlineCommand {
     this._editorState = editorState
   }
 
-  run = async(): Promise<void> => {
+  run = async (): Promise<void> => {
     const { currentFile } = this._editorState
     if (!currentFile) return
     const { trimTrailingNewline } = currentFile
@@ -61,13 +61,13 @@ class TrailingNewlineCommand {
     this.subcommandSelectedIndex = index
   }
 
-  execute = async(): Promise<void> => {
+  execute = async (): Promise<void> => {
     // Timeout to hide the command palette and then show again to prevent issues.
     await delay(100)
     bus.emit('show-command-palette', this)
   }
 
-  executeSubcommand = async(_: string, value: number): Promise<void> => {
+  executeSubcommand = async (_: string, value: number): Promise<void> => {
     bus.emit('mt::set-final-newline', value)
   }
 

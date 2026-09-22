@@ -73,9 +73,6 @@ if (!process.mas && process.env.NODE_ENV !== 'development') {
   }
 }
 
-// Register sandbox-safe IPC handlers used by the contextBridge preload
-registerSandboxIpcHandlers()
-
 // Windows-specific AppUserModelID
 electronApp.setAppUserModelId('com.electron.colamd')
 
@@ -105,6 +102,11 @@ try {
   }
   process.exit(1)
 }
+// Register sandbox-safe IPC handlers used by the contextBridge preload. After
+// the accessor exists, because the uploader handler reads main's own image
+// uploader settings instead of accepting them from the renderer.
+registerSandboxIpcHandlers(accessor)
+
 const appController = new App(accessor, args as unknown as { _: string[] })
 appController.init()
 

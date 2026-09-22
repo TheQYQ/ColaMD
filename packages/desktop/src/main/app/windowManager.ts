@@ -63,7 +63,7 @@ class WindowActivityList {
  * dispatched whenever the focused (or otherwise active) window switches; the
  * payload is the new active window id (or `null` when no windows remain).
  */
-export interface WindowManagerEvents {
+interface WindowManagerEvents {
   activeWindowChanged: [windowId: number | null]
 }
 
@@ -76,10 +76,7 @@ interface AppMenuLike {
 }
 
 interface EditorBufferStoreLike {
-  handleClose(
-    restoreBufferId: string | undefined,
-    windows: { id: number; win: BaseWindow }[]
-  ): void
+  handleClose(restoreBufferId: string | undefined, windows: { id: number; win: BaseWindow }[]): void
 }
 
 class WindowManager extends TypedEmitter<WindowManagerEvents> {
@@ -365,18 +362,6 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
   // --- private --------------------------------
 
   private _listenForIpcMain(): void {
-    // HACK: Don't use this event! Please see #1034 and #1035
-    ipcMain.on('mt::window-add-file-path', (e, filePath: string) => {
-      const win = BrowserWindow.fromWebContents(e.sender)
-      if (!win) return
-      const editor = this.get(win.id) as EditorWindow | undefined
-      if (!editor) {
-        log.error(`Cannot find window id "${win.id}" to add opened file.`)
-        return
-      }
-      editor.addToOpenedFiles(filePath)
-    })
-
     // Force close a BrowserWindow
     ipcMain.on('mt::close-window', (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
@@ -485,7 +470,7 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
       ]
       if (TREE_FILTER_KEYS.some((key) => key in prefs)) {
         // Fire-and-forget rescan; deliberately unawaited so the preference handler
-        (async() => {
+        ;(async () => {
           for (const { browserWindow } of this._windows.values()) {
             if (!browserWindow) continue
             const editor = this.get(browserWindow.id) as EditorWindow | undefined

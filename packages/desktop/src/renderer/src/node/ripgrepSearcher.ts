@@ -1,19 +1,18 @@
 // Thin renderer wrapper over the main-process ripgrep IPC bridge.
 // Returns a cancellable thenable with the same public shape as the legacy
-// in-renderer searcher (so call sites in search.vue and quickOpen don't need
-// to change).
+// in-renderer searcher (so call sites in quickOpen don't need to change).
 
 import { deepClone } from '../util'
 
-export type RipgrepMode = 'text' | 'files'
+type RipgrepMode = 'text' | 'files'
 
-export interface RipgrepSearchOptions {
+interface RipgrepSearchOptions {
   didMatch?: (payload: unknown) => void
   didSearchPaths?: (num: unknown) => void
   [key: string]: unknown
 }
 
-export interface CancellableSearch extends Promise<void> {
+interface CancellableSearch extends Promise<void> {
   cancel: () => void
 }
 
@@ -126,21 +125,6 @@ const startSearch = ({ mode, directories, pattern, options }: StartArgs): Cancel
   }
   return promise
 }
-
-class RipgrepDirectorySearcher {
-  rgPath: string
-
-  constructor() {
-    const colamd = window.colamd
-    this.rgPath = colamd?.paths?.ripgrepBinaryPath || window.rgPath || ''
-  }
-
-  search(directories: string[], pattern: string, options: RipgrepSearchOptions): CancellableSearch {
-    return startSearch({ mode: 'text', directories, pattern, options })
-  }
-}
-
-export default RipgrepDirectorySearcher
 
 export class FileSearcher {
   search(

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, clickMenuById, markAllTabsClean } from './helpers'
+import { launchWithMarkdown, launchElectron, clickMenuById, markAllTabsClean } from './helpers'
 
 // #2421 — toggling the sidebar must not lose state.
 // Two bugs (fixed against the old icon-strip sidebar, re-locked here against
@@ -9,9 +9,11 @@ import { launchWithMarkdown, clickMenuById, markAllTabsClean } from './helpers'
 // (2) the tree's collapsed sections reset when the sidebar was toggled.
 // Toggle mechanism now: clicking the active text tab closes the sidebar
 // (`v-show`), clicking a tab re-opens it. These drive the real built app.
+// V1 sidebar notes: the width animates over 240ms on re-open, so width
+// assertions poll instead of reading once; the only collapsible tree section
+// is the project-tree root, and it only renders when a folder is open.
 
-const filesTab = (page: Page) =>
-  page.locator('.side-bar .side-bar-tab').first()
+const filesTab = (page: Page) => page.locator('.side-bar .side-bar-tab').first()
 
 const sideBarWidth = (page: Page) =>
   page.evaluate(() => {
@@ -29,7 +31,7 @@ test.describe('#2421 sidebar state survives toggle', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# Doc\n\n## A\n\n## B\n')
     app = launched.app
     page = launched.page
@@ -46,14 +48,14 @@ test.describe('#2421 sidebar state survives toggle', () => {
     )
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) {
       await markAllTabsClean(app, page)
       await app.close()
     }
   })
 
-  test('collapsing then re-expanding preserves a widened sidebar width', async() => {
+  test('collapsing then re-expanding preserves a widened sidebar width', async () => {
     // Widen the sidebar past the 220px minimum by dragging the drag-bar, so a
     // width loss on collapse is observable (the default already sits at 220).
     const dragBar = page.locator('.side-bar .drag-bar')
@@ -91,42 +93,56 @@ test.describe('#2421 sidebar state survives toggle', () => {
 
     const reExpanded = await sideBarWidth(page)
     // The widened width must survive the collapse round-trip (it was reset to
-    // the clamped 220px before the fix).
-    expect(Math.abs(reExpanded - widened)).toBeLessThanOrEqual(3)
+    // the clamped 220px before the fix). Poll: the re-open animates width over
+    // 240ms, so an immediate read lands mid-transition.
+    await expect
+      .poll(sideBarWidth.bind(null, page), { timeout: 5000 })
+      .toBeGreaterThanOrEqual(widened - 3)
+    expect(reExpanded).toBeGreaterThan(0)
   })
 
-  test('a collapsed tree section stays collapsed after toggling the sidebar', async() => {
-    const arrow = page.locator('.side-bar .opened-files > .title .icon-arrow').first()
-    await expect(arrow).toBeVisible()
+  test('a collapsed tree section stays collapsed after toggling the sidebar', async () => {
+    // The collapsible section is the project-tree root, which only renders
+    // when a folder (not just a file) is open — launch a second instance with
+    // the desktop package folder.
+    const { app: projectApp, page: projectPage } = await launchElectron()
+    try {
+      const arrow = projectPage!.locator('.side-bar .project-tree > .title .icon-arrow').first()
+      await expect(arrow).toBeVisible()
 
-    // Collapse the "Opened files" section.
-    await arrow.click()
-    await page.waitForFunction(
-      () => {
-        const a = document.querySelector('.side-bar .opened-files .icon-arrow')
+      // Collapse the project-tree section.
+      await arrow.click()
+      await projectPage!.waitForFunction(
+        () => {
+          const a = document.querySelector('.side-bar .project-tree > .title .icon-arrow')
+          return !!(a && a.classList.contains('fold'))
+        },
+        null,
+        { timeout: 5000 }
+      )
+
+      // Toggle the whole sidebar off (active tab click) and back on (View menu).
+      const filesTab2 = projectPage!.locator('.side-bar .side-bar-tab').first()
+      await filesTab2.click()
+      await expect.poll(sideBarVisible.bind(null, projectPage!)).toBe(false)
+      await clickMenuById(projectApp, 'sideBarMenuItem')
+      await projectPage!.waitForFunction(
+        () => {
+          const el = document.querySelector('.side-bar .project-tree') as HTMLElement | null
+          return !!(el && el.offsetParent !== null)
+        },
+        null,
+        { timeout: 5000 }
+      )
+
+      const stillCollapsed = await projectPage!.evaluate(() => {
+        const a = document.querySelector('.side-bar .project-tree > .title .icon-arrow')
         return !!(a && a.classList.contains('fold'))
-      },
-      null,
-      { timeout: 5000 }
-    )
-
-    // Toggle the whole sidebar off (active tab click) and back on (View menu).
-    await filesTab(page).click()
-    await expect.poll(sideBarVisible.bind(null, page)).toBe(false)
-    await clickMenuById(app, 'sideBarMenuItem')
-    await page.waitForFunction(
-      () => {
-        const el = document.querySelector('.side-bar .opened-files') as HTMLElement | null
-        return !!(el && el.offsetParent !== null)
-      },
-      null,
-      { timeout: 5000 }
-    )
-
-    const stillCollapsed = await page.evaluate(() => {
-      const a = document.querySelector('.side-bar .opened-files .icon-arrow')
-      return !!(a && a.classList.contains('fold'))
-    })
-    expect(stillCollapsed).toBe(true)
+      })
+      expect(stillCollapsed).toBe(true)
+    } finally {
+      await markAllTabsClean(projectApp, projectPage!)
+      await projectApp.close()
+    }
   })
 })

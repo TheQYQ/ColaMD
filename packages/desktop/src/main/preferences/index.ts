@@ -1,14 +1,23 @@
 import fs from 'fs'
 import path from 'path'
 import Store, { type Schema } from 'electron-store'
-import { BrowserWindow, ipcMain, nativeTheme } from 'electron'
+import { BrowserWindow, dialog, ipcMain, nativeTheme } from 'electron'
 import log from 'electron-log'
 import { isWindows } from '../config'
 import { hasSameKeys } from '../utils'
 import { onInternalChannel } from '../utils/internalIpc'
 import { TypedEmitter } from '@shared/types/typedEmitter'
-import type { IUserPreferences } from '@shared/types/preferences'
+import type { IUserPreferences, StartUpAction } from '@shared/types/preferences'
 import schema from './schema.json'
+
+// Retired value, accepted only to be rewritten by the 0.18.6 migration below.
+const LEGACY_LAST_STATE = 'lastState'
+
+// The migration target is written through the shared union rather than as a
+// loose string: if `openLastFolder` is ever renamed or dropped, this line fails
+// to compile instead of persisting a value that `resolveStartupPlan` would then
+// treat as "no plan" — which is exactly how the two sides drifted before O3.
+const START_UP_ACTION_AFTER_LAST_STATE: StartUpAction = 'openLastFolder'
 
 const PREFERENCES_FILE_NAME = 'preferences'
 
@@ -33,7 +42,10 @@ class Preference extends TypedEmitter<PreferenceEvents> {
    * NOTE: This throws an exception when validation fails.
    */
   constructor(paths: AppPaths) {
-    // TODO: Preferences should not loaded if global.COLAMD_SAFE_MODE is set.
+    // NOTE: `--safe` does not skip this file. `init` below writes (defaults for a
+    // first run, `store.delete` for outdated keys), so ignoring user settings
+    // needs a read-only store mode first — otherwise safe mode would rewrite the
+    // user's preferences instead of only shadowing them.
     super()
 
     const { preferencesPath } = paths
@@ -46,8 +58,8 @@ class Preference extends TypedEmitter<PreferenceEvents> {
       name: PREFERENCES_FILE_NAME,
       migrations: {
         '0.18.6': (store) => {
-          if (store.get('startUpAction') === 'lastState') {
-            store.set('startUpAction', 'openLastFolder')
+          if ((store.get('startUpAction') as string) === LEGACY_LAST_STATE) {
+            store.set('startUpAction', START_UP_ACTION_AFTER_LAST_STATE)
           }
         }
       },
@@ -150,9 +162,18 @@ class Preference extends TypedEmitter<PreferenceEvents> {
       return
     }
 
-    Object.keys(settings).forEach((key) => {
-      this.setItem(key, settings[key])
-    })
+    // Storage keeps writing per key, exactly as before; only the notification
+    // is merged. Subscribers fold the payload over getAll(), so looping the
+    // emit woke each of them N times — a { theme, autoSave } pair rebuilt the
+    // native menu twice.
+    const keys = Object.keys(settings)
+    for (const key of keys) {
+      this.store.set(key, settings[key])
+    }
+
+    if (keys.length > 0) {
+      ipcMain.emit('broadcast-preferences-changed', { ...settings })
+    }
   }
 
   getPreferredEol(): 'lf' | 'crlf' {
@@ -163,14 +184,6 @@ class Preference extends TypedEmitter<PreferenceEvents> {
     return endOfLine === 'crlf' || isWindows ? 'crlf' : 'lf'
   }
 
-  exportJSON(): void {
-    // todo
-  }
-
-  importJSON(): void {
-    // todo
-  }
-
   _listenForIpcMain(): void {
     ipcMain.on('mt::ask-for-user-preference', (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
@@ -178,8 +191,30 @@ class Preference extends TypedEmitter<PreferenceEvents> {
         win.webContents.send('mt::user-preference', this.getAll())
       }
     })
+    // `imageFolderPath` doubles as a write-scope grant: App registers it with
+    // `addAllowedRoot`, so letting the renderer assign it would let a compromised
+    // renderer widen its own mutation scope. Only the folder dialog in DataCenter
+    // assigns that key, and the grant follows the user-data broadcast instead.
     ipcMain.on('mt::set-user-preference', (_e, settings: Record<string, unknown>) => {
-      this.setItems(settings)
+      const { imageFolderPath, cliScript, ...rest } = settings || {}
+      if (imageFolderPath !== undefined || cliScript !== undefined) {
+        log.warn(
+          'Rejected a renderer-side write of imageFolderPath and/or cliScript; both are assigned by a main-process dialog only.'
+        )
+      }
+      this.setItems(rest)
+    })
+    // `cliScript` is the program `mt::uploader::upload` runs, so a value the
+    // renderer can type is arbitrary code execution in the main process — same
+    // class of hole as the write-scope root above, same fix: only a native file
+    // dialog assigns it, and `setItem` broadcasts the result like any preference.
+    ipcMain.on('mt::ask-for-modify-cli-script', async (e) => {
+      const win = BrowserWindow.fromWebContents(e.sender)
+      if (!win) return
+      const { filePaths } = await dialog.showOpenDialog(win, { properties: ['openFile'] })
+      if (filePaths && filePaths[0]) {
+        this.setItem('cliScript', filePaths[0])
+      }
     })
     ipcMain.on('mt::cmd-toggle-autosave', () => {
       this.setItem('autoSave', !this.getItem('autoSave'))

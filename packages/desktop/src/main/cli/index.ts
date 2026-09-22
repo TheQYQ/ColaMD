@@ -22,7 +22,7 @@ const cli = (): ParsedArgs => {
   Available commands:
 
         --debug                   Enable debug mode
-        --safe                    Disable plugins and other user configuration
+        --safe                    Ignore user keybinding overrides
     -n, --new-window              Open a new window on second-instance
         --user-data-dir           Change the user data directory
         --disable-gpu             Disable GPU hardware acceleration

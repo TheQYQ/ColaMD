@@ -27,7 +27,7 @@ test.describe('Path scope enforcement (M2 security package)', () => {
   let docDir: string
   let docFile: string
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     docFile = writeTempMarkdown('# scope test\n')
     docDir = path.dirname(docFile)
     const { app: a, page: p } = await launchElectron([docFile])
@@ -37,11 +37,11 @@ test.describe('Path scope enforcement (M2 security package)', () => {
     await waitForMenuReady(app)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('write-file INSIDE the allowed root succeeds', async() => {
+  test('write-file INSIDE the allowed root succeeds', async () => {
     const target = path.join(docDir, 'in-scope.md')
     const result = await page.evaluate(
       ([p, data]) => window.fileUtils.writeFile(p, data) as Promise<void>,
@@ -52,7 +52,7 @@ test.describe('Path scope enforcement (M2 security package)', () => {
     expect(fs.readFileSync(target, 'utf-8')).toBe('allowed write')
   })
 
-  test('write-file OUTSIDE the allowed root is rejected', async() => {
+  test('write-file OUTSIDE the allowed root is rejected', async () => {
     const otherDir = makeTempDir()
     const target = path.join(otherDir, 'out-of-scope.md')
     await expect(
@@ -64,7 +64,31 @@ test.describe('Path scope enforcement (M2 security package)', () => {
     expect(fs.existsSync(target)).toBe(false)
   })
 
-  test('output-file OUTSIDE the allowed root is rejected', async() => {
+  test('a forged imageFolderPath preference grants nothing', async () => {
+    // O7(1): this key used to be writable through the generic preference channel,
+    // and App registered whatever arrived as an allowed root — so one XSS could
+    // pick its own write scope. It must now neither persist nor grant.
+    const otherDir = makeTempDir()
+    const target = path.join(otherDir, 'forged-scope.md')
+
+    await page.evaluate(
+      ([p]) =>
+        window.electron.ipcRenderer.send('mt::set-user-preference', { imageFolderPath: p }) as void,
+      [otherDir]
+    )
+    // Let the (rejected) write and any broadcast round-trip settle first.
+    await page.waitForTimeout(200)
+
+    await expect(
+      page.evaluate(
+        ([p, data]) => window.fileUtils.writeFile(p, data) as Promise<void>,
+        [target, 'must not land']
+      )
+    ).rejects.toThrow()
+    expect(fs.existsSync(target)).toBe(false)
+  })
+
+  test('output-file OUTSIDE the allowed root is rejected', async () => {
     const otherDir = makeTempDir()
     const target = path.join(otherDir, 'nested', 'out.md')
     await expect(
@@ -76,7 +100,7 @@ test.describe('Path scope enforcement (M2 security package)', () => {
     expect(fs.existsSync(target)).toBe(false)
   })
 
-  test('move with destination OUTSIDE the allowed root is rejected', async() => {
+  test('move with destination OUTSIDE the allowed root is rejected', async () => {
     // Create a file inside the allowed root, then try to move it elsewhere.
     const otherDir = makeTempDir()
     const src = path.join(docDir, 'move-src.md')
@@ -91,7 +115,7 @@ test.describe('Path scope enforcement (M2 security package)', () => {
     expect(fs.existsSync(dest)).toBe(false)
   })
 
-  test('trash-item OUTSIDE the allowed root is rejected', async() => {
+  test('trash-item OUTSIDE the allowed root is rejected', async () => {
     // Create a throwaway file outside the root and confirm the renderer cannot
     // trash it (the call must reject, and the file must survive).
     const otherDir = makeTempDir()
@@ -107,7 +131,7 @@ test.describe('Path scope enforcement (M2 security package)', () => {
     expect(fs.existsSync(target)).toBe(true)
   })
 
-  test('open-path OUTSIDE the allowed root is rejected', async() => {
+  test('open-path OUTSIDE the allowed root is rejected', async () => {
     // openPath on an executable would launch it — effectively exec. Even for a
     // non-executable, an out-of-scope openPath must be blocked.
     const otherDir = makeTempDir()

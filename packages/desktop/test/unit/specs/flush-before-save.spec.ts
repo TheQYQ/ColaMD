@@ -150,6 +150,25 @@ describe('editor store — flush pending edits before saving (#3803)', () => {
     expect(call?.[MARKDOWN_ARG]).toBe(FLUSHED)
   })
 
+  // The two untitled paths used to be twenty copied lines apiece. They now share
+  // one helper, so the two requests are asserted *equal* instead of being kept
+  // in sync by hand — a divergence in either payload fails here.
+  it('MOVE_FILE_TO and RESPONSE_FOR_RENAME send the identical save request', () => {
+    const store = useEditorStore()
+    seedCurrentFile(store, { pathname: '' })
+    const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
+
+    store.MOVE_FILE_TO()
+    const fromMove = sendSpy.mock.calls.find((c) => c[0] === 'mt::response-file-save')
+    sendSpy.mockClear()
+
+    store.RESPONSE_FOR_RENAME()
+    const fromRename = sendSpy.mock.calls.find((c) => c[0] === 'mt::response-file-save')
+
+    expect(fromMove).toBeDefined()
+    expect(fromRename).toEqual(fromMove)
+  })
+
   // The existing-file rename branch emits 'rename' (no markdown payload); guard
   // that the flush still precedes it so it can't be silently dropped later.
   it('RESPONSE_FOR_RENAME (existing file) flushes before emitting rename', () => {
@@ -233,7 +252,7 @@ describe('editor store — flush pending edits on the remaining read paths', () 
     expect(call?.[MARKDOWN_ARG]).toBe(FLUSHED)
   })
 
-  it('FORCE_CLOSE_TAB snapshots the flushed markdown (Session End)', async() => {
+  it('FORCE_CLOSE_TAB snapshots the flushed markdown (Session End)', async () => {
     const store = useEditorStore()
     seedTabs(store)
     detach = onFlushCommit(store)

@@ -6,6 +6,9 @@
 > **审查方法**：三路并行深度探查（主进程 / 渲染器 / 引擎与工具链）+ 定量扫描 + 人工交叉验证关键结论（本文所有 file:line 均经过实际核对，非推断）
 > **代码规模**：desktop 主进程约 10.8k LOC（79 文件）；渲染器 editor.vue 单文件 2147 行、editor store 2099 行；muya 引擎 428 个 TS 文件、213 个单元 spec
 
+> [!IMPORTANT]
+> **本文基线已过时（审查基线 `cd9ab53`，2026-09-07）。** Top-10 中 7 项已修、2 项部分完成、1 项遗留，逐条判定与本轮实测优化清单见 **[`docs/OPTIMIZATION_ROADMAP.md`](docs/OPTIMIZATION_ROADMAP.md)**；项目结构与模块地图见 [`docs/PROJECT_GUIDE.md`](docs/PROJECT_GUIDE.md)。正文按原样保留作为历史证据，不再更新。
+
 ---
 
 ## 目录

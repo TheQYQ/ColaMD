@@ -22,7 +22,7 @@
         type="text"
         class="rename"
         @click.stop="noop"
-        @keypress.enter="rename"
+        @keydown.enter="rename"
       >
       <span
         v-else
@@ -45,8 +45,8 @@
         v-model="createName"
         type="text"
         class="new-input"
-        :style="{ 'margin-left': `${depth * 5 + 15}px` }"
-        @keypress.enter="handleInputEnter"
+        :style="{ 'padding-left': `${depth * 6 + 10}px` }"
+        @keydown.enter="handleInputEnter"
       >
       <File
         v-for="file of folder.files"
@@ -151,13 +151,16 @@ onMounted(() => {
     user-select: none;
     display: flex;
     align-items: center;
-    height: 30px;
-    padding-right: 15px;
+    height: 28px;
+    border-radius: 4px;
+    padding-right: 12px;
+    transition: background-color 120ms ease-out;
     & > .icon-arrow {
       flex-shrink: 0;
       color: var(--sideBarIconColor);
       margin-right: 5px;
-      transition: transform 0.25s ease-out;
+      /* V1 guide §四: 160ms ease-out (not 250ms). */
+      transition: transform 160ms ease-out;
       transform: rotate(90deg);
     }
     & > .icon-arrow.fold {
@@ -171,13 +174,20 @@ onMounted(() => {
 .new-input,
 input.rename {
   outline: none;
-  height: 22px;
+  height: 24px;
   margin: 5px 0;
   padding: 0 6px;
   color: var(--sideBarColor);
-  border: 1px solid var(--floatBorderColor);
-  background: var(--floatBorderColor);
+  border: 1px solid var(--themeColor);
+  background: var(--inputBgColor);
+  border-radius: 4px;
+}
+/* Indent comes from padding here, so the box can fill the row. */
+.new-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+input.rename {
   width: 70%;
-  border-radius: 3px;
 }
 </style>

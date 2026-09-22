@@ -4,8 +4,7 @@ import path from 'path'
 import writeFileAtomic from 'write-file-atomic'
 import { ipcMain } from 'electron'
 import type { VersionSnapshot } from '@shared/types/ipc'
-
-export type { VersionSnapshot }
+import { typedHandle } from '../ipc/typedHandle'
 
 interface VersionHistoryFile {
   pathname: string
@@ -13,7 +12,7 @@ interface VersionHistoryFile {
 }
 
 /** Snapshot capture reasons — used as the human-readable label. */
-export const SnapshotLabel = {
+const SnapshotLabel = {
   ManualSave: 'Manual Save',
   AutoSave: 'Auto-save',
   SessionEnd: 'Session End',
@@ -53,24 +52,11 @@ class VersionHistoryStore {
   registerIpcHandlers(): void {
     if (typeof ipcMain === 'undefined' || !ipcMain.handle) return
 
-    ipcMain.handle('mt::version-history:save', (_e, snapshot: VersionSnapshot) => {
+    // Only `save` is wired to the renderer today — the renderer's version
+    // history UI is read-side disabled. The storage methods (getSnapshots,
+    // deleteSnapshot, …) remain as a tested public API on this class.
+    typedHandle('mt::version-history:save', (_e, snapshot: VersionSnapshot) => {
       return this.saveSnapshot(snapshot)
-    })
-
-    ipcMain.handle('mt::version-history:get', (_e, pathname: string) => {
-      return this.getSnapshots(pathname)
-    })
-
-    ipcMain.handle('mt::version-history:get-content', (_e, pathname: string, id: string) => {
-      return this.getSnapshotContent(pathname, id)
-    })
-
-    ipcMain.handle('mt::version-history:delete', (_e, pathname: string, id: string) => {
-      return this.deleteSnapshot(pathname, id)
-    })
-
-    ipcMain.handle('mt::version-history:clear', (_e, pathname: string) => {
-      return this.clearHistory(pathname)
     })
   }
 

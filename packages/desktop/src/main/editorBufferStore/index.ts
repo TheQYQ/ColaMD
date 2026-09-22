@@ -1,9 +1,10 @@
 import fs from 'fs'
 import path from 'path'
 import writeFileAtomic from 'write-file-atomic'
-import { BrowserWindow, ipcMain, type IpcMainInvokeEvent } from 'electron'
+import { BrowserWindow, type IpcMainInvokeEvent } from 'electron'
 import { TypedEmitter } from '@shared/types/typedEmitter'
 import type BaseWindow from '../windows/base'
+import { typedHandle } from '../ipc/typedHandle'
 
 interface EditorBufferStorePaths {
   editorBufferStorePath: string
@@ -185,7 +186,13 @@ class EditorBufferStore extends TypedEmitter<EditorBufferStoreEvents> {
       .catch((err) => {
         console.error('Failed to write editor buffer state:', err)
       })
-    bufferWriteQueues.set(filePath, next.then(() => {}, () => {}))
+    bufferWriteQueues.set(
+      filePath,
+      next.then(
+        () => {},
+        () => {}
+      )
+    )
     return next
   }
 
@@ -222,7 +229,7 @@ class EditorBufferStore extends TypedEmitter<EditorBufferStoreEvents> {
   }
 
   _listenForIpcMain(): void {
-    ipcMain.handle('update-buffer-state', (e, newState) => {
+    typedHandle('update-buffer-state', (e, newState) => {
       return this.updateBufferState(e, newState)
     })
   }

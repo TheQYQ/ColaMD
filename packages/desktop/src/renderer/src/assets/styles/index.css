@@ -1,60 +1,60 @@
 /* Common CSS use by both light and dark themes */
 :root {
-  --titleBarHeight: 32px;
+  --titleBarHeight: 36px;
   /* Rendered by the frameless menu bar (menuBar component); 0 elsewhere. */
   --menuBarHeight: 0px;
-  --statusBarHeight: 24px;
-  --editorAreaWidth: 750px;
+  --statusBarHeight: 26px;
+  --editorAreaWidth: 800px;
 
   /*editor*/
   /*Theme color cluster*/
-  --themeColor: rgba(33, 181, 111, 1);
-  --themeColor90: rgba(33, 181, 111, 0.9);
-  --themeColor80: rgba(33, 181, 111, 0.8);
-  --themeColor70: rgba(33, 181, 111, 0.7);
-  --themeColor60: rgba(33, 181, 111, 0.6);
-  --themeColor50: rgba(33, 181, 111, 0.5);
-  --themeColor40: rgba(33, 181, 111, 0.4);
-  --themeColor30: rgba(33, 181, 111, 0.3);
-  --themeColor20: rgba(33, 181, 111, 0.2);
-  --themeColor10: rgba(33, 181, 111, 0.1);
+  --themeColor: #5B67C7;
+  --themeColor90: rgba(91, 103, 199, 0.9);
+  --themeColor80: rgba(91, 103, 199, 0.8);
+  --themeColor70: rgba(91, 103, 199, 0.7);
+  --themeColor60: rgba(91, 103, 199, 0.6);
+  --themeColor50: rgba(91, 103, 199, 0.5);
+  --themeColor40: rgba(91, 103, 199, 0.4);
+  --themeColor30: rgba(91, 103, 199, 0.3);
+  --themeColor20: rgba(91, 103, 199, 0.2);
+  --themeColor10: rgba(91, 103, 199, 0.1);
   --highlightThemeColor: var(--themeColor);
 
-  --highlightColor: rgba(33, 181, 111, 0.4);
-  --selectionColor: rgba(0, 0, 0, 0.1);
-  --editorColor: #4d4d4d;
-  --editorColor80: #333333;
-  --editorColor60: #666666;
-  --editorColor50: #808080;
-  --editorColor40: #999999;
-  --editorColor30: #b3b3b3;
-  --editorColor10: #e6e6e6;
-  --editorColor04: #f7f7f7;
-  --editorBgColor: rgba(255, 255, 255, 1);
-  --deleteColor: #ff6969;
-  --iconColor: #6b737b;
-  --codeBgColor: #d8d8d869;
-  --codeBlockBgColor: rgba(0, 0, 0, 0.03);
-  --footnoteBgColor: rgba(0, 0, 0, 0.03);
-  --inputBgColor: rgba(0, 0, 0, 0.06);
+  --highlightColor: rgba(91, 103, 199, 0.4);
+  --selectionColor: rgba(91, 103, 199, 0.18);
+  --editorColor: #1F2328;
+  --editorColor80: #42464E;
+  --editorColor60: #59636E;
+  --editorColor50: #6E7681;
+  --editorColor40: #8B949E;
+  --editorColor30: #A5ADB5;
+  --editorColor10: #E4E7EB;
+  --editorColor04: #F4F5F7;
+  --editorBgColor: #FCFCFC;
+  --deleteColor: #C4402F;
+  --iconColor: #59636E;
+  --codeBgColor: rgba(15, 18, 25, 0.06);
+  --codeBlockBgColor: rgba(15, 18, 25, 0.04);
+  --footnoteBgColor: rgba(15, 18, 25, 0.04);
+  --inputBgColor: rgba(15, 18, 25, 0.06);
   --focusColor: var(--themeColor);
 
   --buttonFontColor: var(--editorColor);
   --buttonBgColor: #ffffff;
-  --buttonBorder: 1px solid #dcdfe6;
+  --buttonBorder: 1px solid #DDE1E6;
   --buttonShadow: none;
   --buttonFontColorHover: var(--buttonFontColor);
-  --buttonBgColorHover: linear-gradient(#f9f9f9, #f2f2f2);
+  --buttonBgColorHover: #F5F6F8;
   --buttonBorderHover: var(--buttonBorder);
   --buttonFontColorActive: var(--buttonFontColor);
-  --buttonBgColorActive: #f0f0f0;
+  --buttonBgColorActive: #EDEEF2;
   --buttonBorderActive: var(--buttonBorder);
   --buttonFocusBorder: 1px solid var(--themeColor);
 
   --buttonPrimaryFontColor: #ffffff;
   --buttonPrimaryBgColor: var(--themeColor);
   --buttonPrimaryBorder: none;
-  --buttonPrimaryShadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
+  --buttonPrimaryShadow: none;
   --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
   --buttonPrimaryBgColorHover: var(--buttonPrimaryBgColor);
   --buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
@@ -62,7 +62,7 @@
   --buttonPrimaryBgColorActive: var(--buttonPrimaryBgColor);
   --buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
   --buttonPrimaryFocusBorder: none;
-  --buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(13, 91, 55, 0.5), 0 0 0 1px var(--themeColor);
+  --buttonPrimaryFocusShadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
   --tableBorderColor: #e5e5e5;
 
   /* Markdown element colors */
@@ -82,22 +82,21 @@
   --listMarkerColor: var(--editorColor50);
 
   /*colamd*/
-  --sideBarColor: rgba(0, 0, 0, 0.6);
+  --sideBarColor: #59636E;
   --sideBarIconColor: var(--iconColor);
-  --sideBarTitleColor: rgba(0, 0, 0, 1);
-  --sideBarTextColor: rgba(0, 0, 0, 0.4);
-  --sideBarBgColor: rgba(242, 242, 242, 0.9);
-  --sideBarItemHoverBgColor: rgba(0, 0, 0, 0.03);
-  --itemBgColor: rgba(255, 255, 255, 0.6);
+  --sideBarTitleColor: #1F2328;
+  --sideBarTextColor: #8B949E;
+  --sideBarBgColor: #F5F6F8;
+  --sideBarItemHoverBgColor: rgba(15, 18, 25, 0.04);
+  --itemBgColor: #FCFCFC;
 
-  --floatFontColor: rgba(0, 0, 0, 0.6);
+  --floatFontColor: #59636E;
   --floatBgColor: #fff;
-  --floatHoverColor: rgba(0, 0, 0, 0.04);
-  --floatBorderColor: rgba(0, 0, 0, 0.1);
+  --floatHoverColor: rgba(15, 18, 25, 0.04);
+  --floatBorderColor: rgba(15, 18, 25, 0.08);
   --floatShadow:
-    rgba(15, 15, 15, 0.03) 0px 0px 0px 1px, rgba(15, 15, 15, 0.04) 0px 3px 6px,
-    rgba(15, 15, 15, 0.05) 0px 9px 24px;
-  --maskColor: rgba(232, 232, 232, 0.8);
+    0 4px 16px rgba(18, 20, 26, 0.1), 0 0 0 1px rgba(15, 18, 25, 0.06);
+  --maskColor: rgba(245, 246, 248, 0.75);
 
   /* Notification colors */
   --notificationPrimaryColor: #ffffff;
@@ -222,7 +221,7 @@ body {
 
 .el-dialog,
 .el-dialog.ag-dialog-table {
-  border-radius: 8px;
+  border-radius: 10px;
   box-shadow: 0 4px 8px 0 var(--floatBorderColor);
   border: solid 1px var(--floatBorderColor);
   background-color: var(--floatBgColor);
@@ -287,7 +286,7 @@ div.el-tab-pane {
   color: var(--buttonFontColor);
   background: var(--buttonBgColor);
   border: var(--buttonBorder);
-  border-radius: 5px;
+  border-radius: 6px;
   box-shadow: var(--buttonShadow);
   padding: 7px 14px;
 }
@@ -320,7 +319,7 @@ div.el-tab-pane {
   color: var(--buttonPrimaryFontColor);
   background: var(--buttonPrimaryBgColor);
   border: var(--buttonPrimaryBorder);
-  border-radius: 5px;
+  border-radius: 6px;
   box-shadow: var(--buttonPrimaryShadow);
   padding: 7px 14px;
 }
@@ -436,4 +435,58 @@ button.button-primary:not(.custom):focus,
 
 .el-tabs__active-bar {
   background-color: var(--themeColor);
+}
+
+
+/* ============================================================
+   ColaMD V1 redesign - semantic design tokens (theme-adaptive)
+   Values follow docs/UI_REDESIGN_GUIDE.md. Derived via color-mix()
+   from the primitive vars so every built-in and custom theme
+   (light or dark) gets correct hover/selected/border ramps.
+   ============================================================ */
+:root {
+  --bg-app: var(--sideBarBgColor);
+  --bg-editor: var(--editorBgColor);
+  --bg-elevated: var(--floatBgColor);
+  --bg-hover: color-mix(in srgb, var(--editorColor) 4%, transparent);
+  --bg-active: color-mix(in srgb, var(--editorColor) 7%, transparent);
+  --bg-selected: color-mix(in srgb, var(--themeColor) 10%, transparent);
+  --text-primary: var(--editorColor);
+  --text-secondary: var(--editorColor60);
+  --text-tertiary: var(--editorColor40);
+  --border-subtle: color-mix(in srgb, var(--editorColor) 8%, transparent);
+  --border-strong: color-mix(in srgb, var(--editorColor) 22%, transparent);
+  --accent: var(--themeColor);
+  --accent-hover: color-mix(in srgb, var(--themeColor) 90%, #000);
+  --accent-subtle: color-mix(in srgb, var(--themeColor) 8%, transparent);
+  --danger: var(--deleteColor);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --shadow-sm: 0 1px 2px rgba(18, 20, 26, 0.06);
+  --shadow-md: 0 4px 16px rgba(18, 20, 26, 0.1);
+  --shadow-lg: 0 12px 32px rgba(18, 20, 26, 0.16);
+  --focus-ring: 0 0 0 2px color-mix(in srgb, var(--themeColor) 35%, transparent);
+  --font-ui: system-ui, -apple-system, 'Segoe UI Variable Text', 'Segoe UI',
+    'PingFang SC', 'Microsoft YaHei UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Consolas, monospace;
+}
+
+/* Keyboard focus ring: visible, accent-tinted, consistent offset. */
+button:focus-visible,
+[role='button']:focus-visible,
+input:focus-visible,
+.side-bar-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Motion discipline: everything respects reduced-motion (guide §4). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

@@ -2,7 +2,9 @@
 import { CLASS_NAMES } from '../config';
 import { isElement } from '../utils';
 
-export function isContentDOM(element: HTMLElement) {
+// Local helper (not exported — no external callers): true for the editor's
+// content span (`span.mu-content`).
+function isContentDOM(element: HTMLElement) {
     return (
         element
         && element.tagName === 'SPAN'

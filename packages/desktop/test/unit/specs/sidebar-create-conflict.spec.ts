@@ -7,8 +7,16 @@ import { createPinia, setActivePinia } from 'pinia'
 vi.hoisted(() => {
   const w = globalThis as unknown as {
     window?: {
-      path?: { sep: string; normalize: (p: string) => string; basename: (p: string) => string; dirname: (p: string) => string }
-      fileUtils?: { hasMarkdownExtension: (n: string) => boolean; pathExists: (p: string) => Promise<boolean> }
+      path?: {
+        sep: string
+        normalize: (p: string) => string
+        basename: (p: string) => string
+        dirname: (p: string) => string
+      }
+      fileUtils?: {
+        hasMarkdownExtension: (n: string) => boolean
+        pathExists: (p: string) => Promise<boolean>
+      }
       electron?: { ipcRenderer: { send: (...a: unknown[]) => void; on: (...a: unknown[]) => void } }
     }
   }
@@ -26,7 +34,7 @@ vi.mock('@/services/notification', () => ({
 }))
 
 // Spy on the actual filesystem create so we can assert it never runs on a conflict.
-vi.mock('@/util/fileSystem', async(orig) => {
+vi.mock('@/util/fileSystem', async (orig) => {
   const actual = await orig<typeof FileSystemModule>()
   return { ...actual, create: vi.fn(() => Promise.resolve()) }
 })
@@ -41,7 +49,7 @@ describe('CREATE_FILE_DIRECTORY — name conflict guard (#1946)', () => {
     vi.clearAllMocks()
   })
 
-  it('does not create (overwrite) when a file with the same name exists; notifies instead', async() => {
+  it('does not create (overwrite) when a file with the same name exists; notifies instead', async () => {
     window.fileUtils.pathExists = vi.fn(() => Promise.resolve(true))
     const store = useProjectStore()
     store.createCache = { dirname: '/docs', type: 'file' }
@@ -52,7 +60,7 @@ describe('CREATE_FILE_DIRECTORY — name conflict guard (#1946)', () => {
     expect(notice.notify).toHaveBeenCalledTimes(1)
   })
 
-  it('creates the file when there is no conflict', async() => {
+  it('creates the file when there is no conflict', async () => {
     window.fileUtils.pathExists = vi.fn(() => Promise.resolve(false))
     const store = useProjectStore()
     store.createCache = { dirname: '/docs', type: 'file' }

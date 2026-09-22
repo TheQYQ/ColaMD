@@ -1,13 +1,9 @@
 import fs from 'fs'
 import path from 'path'
 
-export type Translations = Record<string, unknown>
+type Translations = Record<string, unknown>
 
-const SUPPORTED_LANGUAGES = ['en', 'zh-CN', 'zh-TW', 'es', 'fr', 'de', 'ja', 'ko', 'nl', 'pt', 'tr'] as const
-
-export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
-
-let translationsCache: Record<string, Translations> = {}
+const translationsCache: Record<string, Translations> = {}
 
 /**
  * Loads the translation file for the specified language. Falls back to English
@@ -89,27 +85,4 @@ function getTranslation(
   return result
 }
 
-function getSupportedLanguages(): string[] {
-  return [...SUPPORTED_LANGUAGES]
-}
-
-function isLanguageSupported(language: string): boolean {
-  return (SUPPORTED_LANGUAGES as readonly string[]).includes(language)
-}
-
-function clearCache(): void {
-  translationsCache = {}
-}
-
-function getAllTranslations(language: string): Translations | null {
-  return loadTranslations(language)
-}
-
-export {
-  getTranslation,
-  getSupportedLanguages,
-  isLanguageSupported,
-  clearCache,
-  getAllTranslations,
-  loadTranslations
-}
+export { getTranslation, loadTranslations }

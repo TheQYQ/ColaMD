@@ -20,17 +20,17 @@ test.describe('Layout panel toggles', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# Layout\n\n## Section A\n\n## Section B\n')
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('Sidebar toggle changes .side-bar visibility', async() => {
+  test('Sidebar toggle changes .side-bar visibility', async () => {
     const sideBar = page.locator('.side-bar')
     const initial = await sideBar.isVisible()
     await clickMenuById(app, 'sideBarMenuItem')
@@ -40,7 +40,7 @@ test.describe('Layout panel toggles', () => {
     await clickMenuById(app, 'sideBarMenuItem')
   })
 
-  test('Tab bar toggle flips .editor-tabs visibility', async() => {
+  test('Tab bar toggle flips .editor-tabs visibility', async () => {
     const tabBar = page.locator('.editor-tabs')
     const initial = await tabBar.isVisible()
     await clickMenuById(app, 'tabBarMenuItem')
@@ -50,7 +50,7 @@ test.describe('Layout panel toggles', () => {
     await clickMenuById(app, 'tabBarMenuItem')
   })
 
-  test('TOC menu toggles ToC panel without throwing', async() => {
+  test('TOC menu toggles ToC panel without throwing', async () => {
     // Ensure sidebar is visible so TOC has somewhere to render.
     const sideBar = page.locator('.side-bar')
     if (!(await sideBar.isVisible())) {
@@ -76,7 +76,7 @@ test.describe('Layout panel toggles', () => {
   // fully shown (≥220px) or hidden (0px) — the old 45px icon strip no longer
   // exists. The editor must fill the full viewport width when the sidebar is
   // hidden via the View menu toggle.
-  test('Editor fills width after hiding the sidebar', async() => {
+  test('Editor fills width after hiding the sidebar', async () => {
     // Ensure sidebar is visible first.
     const sideBar = page.locator('.side-bar')
     if (!(await sideBar.isVisible())) {

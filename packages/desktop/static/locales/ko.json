@@ -53,7 +53,6 @@
       "replace": "바꾸기",
       "findNext": "다음 찾기",
       "findPrevious": "이전 찾기",
-      "findInFolder": "폴더에서 찾기",
       "screenshot": "스크린샷",
       "lineEnding": "줄 끝",
       "lineEndingCrlf": "CRLF(Windows)",
@@ -227,66 +226,17 @@
     "replaceAll": "모두 바꾸기",
     "replaceSingle": "하나 바꾸기",
     "invalidRegex": "잘못된 정규식 \"{pattern}\"",
-    "regexMatchEmpty": "정규식이 빈 문자열 \"{pattern}\"과 일치",
-    "searchResultInfo": "{fileCount}개의 파일에서 {matchCount}개 일치",
-    "searchLimited": "처음 {count}개의 결과까지만 검색"
+    "regexMatchEmpty": "정규식이 빈 문자열 \"{pattern}\"과 일치"
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "폴더에서 검색...",
-      "noFolderOpen": "열린 폴더 없음",
-      "noResultsFound": "결과를 찾을 수 없습니다.",
-      "cancel": "취소",
-      "openFolder": "폴더 열기",
-      "showMoreMatches": "더 많은 일치 항목 보기"
-    },
     "tree": {
-      "openedFiles": "열린 파일",
-      "saveAll": "모두 저장",
-      "closeAll": "모두 닫기",
       "emptyProject": "빈 프로젝트",
       "createFile": "파일 만들기",
-      "openFolder": "폴더 열기"
-    },
-    "toc": {
-      "title": "목차",
-      "expandAll": "모두 펼치기",
-      "collapseAll": "모두 접기"
+      "openFile": "파일 열기..."
     },
     "icons": {
       "files": "파일",
-      "search": "검색",
-      "toc": "목차",
-      "settings": "설정",
-      "history": "Version History"
-    },
-    "history": {
-      "title": "Version History",
-      "noFile": "No file open",
-      "loading": "Loading...",
-      "nosnapshots": "No version history yet. Snapshots are created automatically when you save.",
-      "restore": "Restore",
-      "delete": "Delete",
-      "clearAll": "Clear All",
-      "close": "Close",
-      "cancel": "Cancel",
-      "previewTitle": "Version Preview",
-      "restoreConfirm": "Restoring this version will replace the current document content. A backup of the current state will be saved first. Continue?",
-      "restoreTitle": "Restore Version",
-      "restoreFailed": "Failed to restore version",
-      "restoreSuccess": "Version restored successfully",
-      "deleteConfirm": "Are you sure you want to delete this version permanently?",
-      "deleteTitle": "Delete Version",
-      "deleteSuccess": "Version deleted",
-      "deleteFailed": "Failed to delete version",
-      "clearConfirm": "Are you sure you want to clear all version history for this file? This cannot be undone.",
-      "clearTitle": "Clear History",
-      "clearSuccess": "History cleared",
-      "clearFailed": "Failed to clear history",
-      "justNow": "Just now",
-      "minutesAgo": "{count} min ago",
-      "hoursAgo": "{count}h ago",
-      "daysAgo": "{count}d ago"
+      "toc": "목차"
     }
   },
   "commandPalette": {
@@ -838,7 +788,6 @@
       "findNext": "다음 찾기",
       "findPrevious": "이전 찾기",
       "replace": "바꾸기",
-      "findInFolder": "폴더에서 찾기",
       "screenshot": "스크린샷"
     },
     "paragraph": {
@@ -954,8 +903,9 @@
     "unsafeFileMessage": "이 링크는 코드를 실행할 수 있는 파일을 엽니다",
     "unsafeFileDetail": "\"{name}\"은(는) 실행 파일 또는 스크립트 파일입니다. 열면 컴퓨터에서 프로그램이 실행될 수 있습니다. 이 문서를 신뢰하는 경우에만 계속하세요.",
     "openAnyway": "그래도 열기",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "이름 변경 실패",
+    "moveFailure": "이동 실패",
+    "openFailure": "열기 실패"
   },
   "error": {
     "configSchemaViolation": "구성 스키마 위반",
@@ -981,15 +931,13 @@
       "errorLoadingTabTitle": "탭 로드 오류",
       "errorLoadingTabMessage": "파일 변경을 로드하는 동안 오류가 발생했습니다. 탭을 찾을 수 없습니다.",
       "mixedLineEndingsNormalized": "“{name}”에 혼합 줄 끝이 포함되어 있으며 {lineEnding}(으)로 자동 정규화되었습니다.",
-      "imageDeletionUrlTitle": "이미지 삭제 URL",
-      "imageDeletionUrlMessage": "업로드된 이미지의 삭제 URL을 클립보드에 복사합니다 ({url}).",
       "errorWhileSaving": "저장 중 오류가 발생했습니다: {msg}",
       "exportSuccessTitle": "내보내기 성공",
       "exportSuccessMessage": "“{name}”을(를) 성공적으로 내보냈습니다!",
       "fileRemovedOnDisk": "“{name}”이(가) 디스크에서 삭제되었습니다.",
       "fileChangedOnDisk": "“{name}”이(가) 디스크에서 변경되었습니다. 다시 로드하시겠습니까?",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "이름 변경 중 오류가 발생했습니다: {msg}",
+      "errorWhileMoving": "이동 중 오류가 발생했습니다: {msg}",
       "imageCleanupTitle": "이미지 파일이 삭제됨",
       "imageCleanupMessage": "참조되지 않은 파일이 삭제됨: {name}"
     }

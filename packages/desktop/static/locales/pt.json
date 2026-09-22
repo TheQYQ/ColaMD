@@ -53,7 +53,6 @@
       "replace": "Substituir",
       "findNext": "Localizar Próximo",
       "findPrevious": "Localizar Anterior",
-      "findInFolder": "Localizar na Pasta",
       "screenshot": "Captura de Tela",
       "lineEnding": "Terminação de Linha",
       "lineEndingCrlf": "CRLF(Windows)",
@@ -227,66 +226,17 @@
     "replaceAll": "Substituir Todos",
     "replaceSingle": "Substituir Um",
     "invalidRegex": "Expressão regular inválida \"{pattern}\"",
-    "regexMatchEmpty": "Expressão regular corresponde à string vazia \"{pattern}\"",
-    "searchResultInfo": "{matchCount} correspondências em {fileCount} arquivos",
-    "searchLimited": "Pesquisa limitada aos primeiros {count} resultados"
+    "regexMatchEmpty": "Expressão regular corresponde à string vazia \"{pattern}\""
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "Pesquisar na pasta...",
-      "noFolderOpen": "Nenhuma pasta aberta",
-      "noResultsFound": "Nenhum resultado encontrado.",
-      "cancel": "Cancelar",
-      "openFolder": "Abrir Pasta",
-      "showMoreMatches": "Mostrar mais correspondências"
-    },
     "tree": {
-      "openedFiles": "Arquivos abertos",
-      "saveAll": "Salvar Todos",
-      "closeAll": "Fechar Todos",
       "emptyProject": "Projeto vazio",
       "createFile": "Criar Arquivo",
-      "openFolder": "Abrir Pasta"
-    },
-    "toc": {
-      "title": "Índice",
-      "expandAll": "Expandir tudo",
-      "collapseAll": "Recolher tudo"
+      "openFile": "Abrir Arquivo..."
     },
     "icons": {
       "files": "Arquivos",
-      "search": "Pesquisar",
-      "toc": "Índice",
-      "settings": "Configurações",
-      "history": "Version History"
-    },
-    "history": {
-      "title": "Version History",
-      "noFile": "No file open",
-      "loading": "Loading...",
-      "nosnapshots": "No version history yet. Snapshots are created automatically when you save.",
-      "restore": "Restore",
-      "delete": "Delete",
-      "clearAll": "Clear All",
-      "close": "Close",
-      "cancel": "Cancel",
-      "previewTitle": "Version Preview",
-      "restoreConfirm": "Restoring this version will replace the current document content. A backup of the current state will be saved first. Continue?",
-      "restoreTitle": "Restore Version",
-      "restoreFailed": "Failed to restore version",
-      "restoreSuccess": "Version restored successfully",
-      "deleteConfirm": "Are you sure you want to delete this version permanently?",
-      "deleteTitle": "Delete Version",
-      "deleteSuccess": "Version deleted",
-      "deleteFailed": "Failed to delete version",
-      "clearConfirm": "Are you sure you want to clear all version history for this file? This cannot be undone.",
-      "clearTitle": "Clear History",
-      "clearSuccess": "History cleared",
-      "clearFailed": "Failed to clear history",
-      "justNow": "Just now",
-      "minutesAgo": "{count} min ago",
-      "hoursAgo": "{count}h ago",
-      "daysAgo": "{count}d ago"
+      "toc": "Índice"
     }
   },
   "commandPalette": {
@@ -838,7 +788,6 @@
       "findNext": "Localizar Próximo",
       "findPrevious": "Localizar Anterior",
       "replace": "Substituir",
-      "findInFolder": "Localizar na Pasta",
       "screenshot": "Captura de Tela"
     },
     "paragraph": {
@@ -954,8 +903,9 @@
     "unsafeFileMessage": "Este link abre um arquivo que pode executar código",
     "unsafeFileDetail": "\"{name}\" é um arquivo executável ou de script. Abri-lo pode executar programas no seu computador. Continue apenas se confiar neste documento.",
     "openAnyway": "Abrir mesmo assim",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "Falha ao renomear",
+    "moveFailure": "Falha ao mover",
+    "openFailure": "Falha ao abrir"
   },
   "error": {
     "configSchemaViolation": "Violação do esquema de configuração",
@@ -981,15 +931,13 @@
       "errorLoadingTabTitle": "Erro ao carregar a aba",
       "errorLoadingTabMessage": "Ocorreu um erro ao carregar a alteração do arquivo porque a aba não pôde ser encontrada.",
       "mixedLineEndingsNormalized": "“{name}” possui finais de linha mistos que foram normalizados automaticamente para {lineEnding}.",
-      "imageDeletionUrlTitle": "URL de exclusão da imagem",
-      "imageDeletionUrlMessage": "Clique para copiar para a área de transferência a URL de exclusão da imagem enviada ({url}).",
       "errorWhileSaving": "Ocorreu um erro ao salvar: {msg}",
       "exportSuccessTitle": "Exportado com sucesso",
       "exportSuccessMessage": "“{name}” foi exportado com sucesso!",
       "fileRemovedOnDisk": "“{name}” foi removido no disco.",
       "fileChangedOnDisk": "“{name}” foi alterado no disco. Deseja recarregar?",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "Ocorreu um erro ao renomear: {msg}",
+      "errorWhileMoving": "Ocorreu um erro ao mover: {msg}",
       "imageCleanupTitle": "Arquivo de imagem excluído",
       "imageCleanupMessage": "Arquivo não referenciado excluído: {name}"
     }

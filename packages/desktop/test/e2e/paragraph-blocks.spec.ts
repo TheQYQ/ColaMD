@@ -11,7 +11,7 @@ import {
   getMarkdownContent
 } from './helpers'
 
-const resetTo = async(page: Page, app: ElectronApplication, text: string) => {
+const resetTo = async (page: Page, app: ElectronApplication, text: string) => {
   await setSourceMarkdown(page, app, text + '\n')
   await placeCaretInEditor(page)
 }
@@ -20,46 +20,46 @@ test.describe('Paragraph block transforms', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('seed paragraph\n')
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test.beforeEach(async() => {
+  test.beforeEach(async () => {
     await resetTo(page, app, 'sample text')
   })
 
-  test('Heading 1', async() => {
+  test('Heading 1', async () => {
     await clickMenuById(app, 'heading1MenuItem')
     await page.waitForSelector('.editor-component h1', { state: 'attached', timeout: 5000 })
   })
 
-  test('Heading 2', async() => {
+  test('Heading 2', async () => {
     await clickMenuById(app, 'heading2MenuItem')
     await page.waitForSelector('.editor-component h2', { state: 'attached', timeout: 5000 })
   })
 
-  test('Heading 3', async() => {
+  test('Heading 3', async () => {
     await clickMenuById(app, 'heading3MenuItem')
     await page.waitForSelector('.editor-component h3', { state: 'attached', timeout: 5000 })
   })
 
-  test('Bullet list', async() => {
+  test('Bullet list', async () => {
     await clickMenuById(app, 'bulletListMenuItem')
     await page.waitForSelector('.editor-component ul li', { state: 'attached', timeout: 5000 })
   })
 
-  test('Ordered list', async() => {
+  test('Ordered list', async () => {
     await clickMenuById(app, 'orderListMenuItem')
     await page.waitForSelector('.editor-component ol li', { state: 'attached', timeout: 5000 })
   })
 
-  test('Task list', async() => {
+  test('Task list', async () => {
     await clickMenuById(app, 'taskListMenuItem')
     await page.waitForSelector('.editor-component input[type="checkbox"]', {
       state: 'attached',
@@ -67,12 +67,12 @@ test.describe('Paragraph block transforms', () => {
     })
   })
 
-  test('Block quote', async() => {
+  test('Block quote', async () => {
     await clickMenuById(app, 'quoteBlockMenuItem')
     await page.waitForSelector('.editor-component blockquote', { state: 'attached', timeout: 5000 })
   })
 
-  test('Code fence', async() => {
+  test('Code fence', async () => {
     await clickMenuById(app, 'codeFencesMenuItem')
     const present = await page
       .locator('.editor-component pre, .editor-component .mu-code-block')
@@ -89,7 +89,7 @@ test.describe('Paragraph block transforms', () => {
   // xvfb — the menu invocation reaches Muya but Muya's contentState.cursor
   // is not pointing at an empty block. Skip until Muya exposes a test hook;
   // smoke-coverage that the menu id exists is in menu-sanity.spec.js.
-  test.skip('Horizontal rule', async() => {
+  test.skip('Horizontal rule', async () => {
     await resetTo(page, app, '')
     await clickMenuById(app, 'horizontalLineMenuItem')
     const present = await page
@@ -101,7 +101,7 @@ test.describe('Paragraph block transforms', () => {
     expect(present).toBe(true)
   })
 
-  test('Math block', async() => {
+  test('Math block', async () => {
     await clickMenuById(app, 'mathBlockMenuItem')
     const ok = await page
       .locator('.editor-component .mu-math-block, .editor-component figure.mu-math-block')
@@ -112,7 +112,7 @@ test.describe('Paragraph block transforms', () => {
     expect(ok).toBe(true)
   })
 
-  test('HTML block', async() => {
+  test('HTML block', async () => {
     await clickMenuById(app, 'htmlBlockMenuItem')
     const ok = await page
       .locator('.editor-component .mu-html-block, .editor-component figure.mu-html-block')
@@ -123,7 +123,7 @@ test.describe('Paragraph block transforms', () => {
     expect(ok).toBe(true)
   })
 
-  test.skip('Insert table dialog opens and accepts default', async() => {
+  test.skip('Insert table dialog opens and accepts default', async () => {
     // Same constraint as HR — needs empty paragraph + live cursor in Muya.
     await resetTo(page, app, '')
     await clickMenuById(app, 'tableMenuItem')
@@ -158,17 +158,17 @@ test.describe('Insert table dialog (item 73)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('seed paragraph\n')
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('opens the picker dialog, confirms, and inserts the 4x3 default table', async() => {
+  test('opens the picker dialog, confirms, and inserts the 4x3 default table', async () => {
     // Start from an empty paragraph with a live engine cursor in it.
     await setSourceMarkdown(page, app, '\n')
     await placeCaretInEditor(page)
@@ -229,7 +229,7 @@ test.describe('Table source-mode round-trip + modified indicator (item 89)', () 
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithDoc('test/e2e/data/table.md')
     app = launched.app
     page = launched.page
@@ -237,11 +237,11 @@ test.describe('Table source-mode round-trip + modified indicator (item 89)', () 
     await page.waitForSelector('.editor-component table', { state: 'attached', timeout: 10000 })
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('source mode preserves the left/center/right alignment markers', async() => {
+  test('source mode preserves the left/center/right alignment markers', async () => {
     await enterSourceMode(page, app)
     const md = await page.evaluate(() => {
       const cm = document.querySelector('.source-code .CodeMirror') as
@@ -270,11 +270,11 @@ test.describe('Table source-mode round-trip + modified indicator (item 89)', () 
     expect(md).toContain('Ada')
   })
 
-  test('editing a table cell marks the tab as unsaved', async() => {
+  test('editing a table cell marks the tab as unsaved', async () => {
     // Sanity: a freshly loaded file starts clean.
-    expect(
-      await page.evaluate(() => !!document.querySelector('.editor-tabs li.unsaved'))
-    ).toBe(false)
+    expect(await page.evaluate(() => !!document.querySelector('.editor-tabs li.unsaved'))).toBe(
+      false
+    )
 
     // Click into the first table cell so the engine's active block is a cell,
     // then type into it.
@@ -286,10 +286,9 @@ test.describe('Table source-mode round-trip + modified indicator (item 89)', () 
     // The edit dirties the tab; poll because the indicator flips on the
     // async json-change.
     await expect
-      .poll(
-        () => page.evaluate(() => !!document.querySelector('.editor-tabs li.unsaved')),
-        { timeout: 5000 }
-      )
+      .poll(() => page.evaluate(() => !!document.querySelector('.editor-tabs li.unsaved')), {
+        timeout: 5000
+      })
       .toBe(true)
 
     // The modified content is observable through the source-mode round-trip.

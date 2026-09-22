@@ -16,26 +16,26 @@ test.describe('Editor input and source-mode roundtrip', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# Hello\n\nStarting paragraph.\n')
     app = launched.app
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) {
       await markAllTabsClean(app, page)
       await app.close()
     }
   })
 
-  test('Initial markdown is loaded into the editor', async() => {
+  test('Initial markdown is loaded into the editor', async () => {
     const markdown = await getMarkdownContent(page, app)
     expect(markdown).toContain('# Hello')
     expect(markdown).toContain('Starting paragraph.')
   })
 
-  test('Toggling source mode preserves content', async() => {
+  test('Toggling source mode preserves content', async () => {
     await enterSourceMode(page, app)
     const md = await page.evaluate(() => {
       const cm = document.querySelector('.source-code .CodeMirror') as
@@ -49,9 +49,9 @@ test.describe('Editor input and source-mode roundtrip', () => {
     expect(stillThere).toBe(true)
   })
 
-  test('Typing into the editor appends content', async() => {
+  test('Typing into the editor appends content', async () => {
     await typeIntoEditor(page, ' typed-token')
-    await expect.poll(async() => await getMarkdownContent(page, app)).toContain('typed-token')
+    await expect.poll(async () => await getMarkdownContent(page, app)).toContain('typed-token')
   })
 })
 
@@ -72,11 +72,10 @@ test.describe('Editor input and source-mode roundtrip', () => {
 const WORD_COUNT_TEXT = '.status-bar .word-count .text-center-vertical'
 
 // Read the status-bar counter text, e.g. "12 Words". Returns the trimmed string.
-const counterText = (page: Page): Promise<string> =>
-  page.locator(WORD_COUNT_TEXT).innerText()
+const counterText = (page: Page): Promise<string> => page.locator(WORD_COUNT_TEXT).innerText()
 
 // Parse the leading integer off a counter label like "12 Words" / "3 Paragraphs".
-const counterValue = async(page: Page): Promise<number> => {
+const counterValue = async (page: Page): Promise<number> => {
   const text = await counterText(page)
   const match = text.trim().match(/^(\d+)\s/)
   return match ? Number(match[1]) : NaN
@@ -88,7 +87,9 @@ const counterValue = async(page: Page): Promise<number> => {
 // algorithm itself is already unit-covered in
 // packages/muya/src/utils/__tests__/wordCount.spec.ts; this is only used to
 // pin the desktop status-bar's value/mode wiring to the live document.
-const expectedCount = (markdown: string): { word: number; paragraph: number; character: number; all: number } => {
+const expectedCount = (
+  markdown: string
+): { word: number; paragraph: number; character: number; all: number } => {
   const paragraph = markdown.split(/\n{2,}/).filter((line) => line).length
   const removedChinese = markdown.replace(/[一-龥]/g, '')
   const tokens = removedChinese.split(/\s+/).filter((t) => t)
@@ -103,27 +104,27 @@ test.describe('Status-bar word counter (item 24)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('# Counter\n\nOne two three.\n')
     app = launched.app
     page = launched.page
     await placeCaretInEditor(page)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) {
       await markAllTabsClean(app, page)
       await app.close()
     }
   })
 
-  test('the counter is mounted and starts in word mode', async() => {
+  test('the counter is mounted and starts in word mode', async () => {
     const counter = page.locator(WORD_COUNT_TEXT)
     await expect(counter).toBeVisible({ timeout: 5000 })
     await expect.poll(() => counterText(page)).toMatch(/^\d+\s/)
   })
 
-  test('typing ASCII words + CJK characters raises the word count to the engine value', async() => {
+  test('typing ASCII words + CJK characters raises the word count to the engine value', async () => {
     const before = await counterValue(page)
 
     // Place the caret at the end of the "One two three." paragraph and append a
@@ -135,16 +136,16 @@ test.describe('Status-bar word counter (item 24)', () => {
 
     // The counter updates async after the json-change round-trip; it must have
     // strictly increased over the pre-typing baseline.
-    await expect.poll(() => counterValue(page), { timeout: 5000 }).toBeGreaterThan(before)
+    await expect.poll(() => counterValue(page)).toBeGreaterThan(before)
 
     // The displayed value matches the engine's wordCount over the exact markdown
     // that is now loaded (verifies the status bar tracks the live document, and
     // that the CJK chars each counted as a word).
     const markdown = await getMarkdownContent(page, app)
-    await expect.poll(() => counterValue(page), { timeout: 5000 }).toBe(expectedCount(markdown).word)
+    await expect.poll(() => counterValue(page)).toBe(expectedCount(markdown).word)
   })
 
-  test('the counter follows the active display mode as it is cycled', async() => {
+  test('the counter follows the active display mode as it is cycled', async () => {
     // Seed a deterministic two-paragraph document via source mode so each mode
     // reads a known value independent of earlier typing in this shared app.
     await setSourceMarkdown(page, app, 'alpha beta\n\ngamma 字数\n')
@@ -198,7 +199,7 @@ test.describe('Edit > Select All (item 169)', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown(
       'First paragraph alpha.\n\nMiddle paragraph beta.\n\nLast paragraph gamma.\n'
     )
@@ -206,24 +207,23 @@ test.describe('Edit > Select All (item 169)', () => {
     page = launched.page
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
-  test('Select All escalates the selection to the whole WYSIWYG document', async() => {
+  test('Select All escalates the selection to the whole WYSIWYG document', async () => {
     // Start from a collapsed caret inside the first block. The engine's
     // selectAll escalates (caret -> whole block -> whole document), and the
     // application menu invokes it repeatedly, so we invoke until the selection
     // spans every block (text from the first AND the last paragraph present).
     await placeCaretInEditor(page)
 
-    const wholeDoc = async(): Promise<boolean> => {
+    const wholeDoc = async (): Promise<boolean> => {
       await sendIpcToRenderer(app, 'mt::editor-edit-action', 'selectAll')
       await page.waitForTimeout(120)
       const selected = await page.evaluate(() => window.getSelection()?.toString() ?? '')
       return (
-        selected.includes('First paragraph alpha.') &&
-        selected.includes('Last paragraph gamma.')
+        selected.includes('First paragraph alpha.') && selected.includes('Last paragraph gamma.')
       )
     }
 
@@ -235,15 +235,18 @@ test.describe('Edit > Select All (item 169)', () => {
     expect(selected).toContain('Last paragraph gamma.')
   })
 
-  test('Select All while focus is in the search input leaves the editor selection alone', async() => {
+  test('Select All while focus is in the search input leaves the editor selection alone', async () => {
     // Establish a known whole-document editor selection first (escalate fully).
     await placeCaretInEditor(page)
     await expect
-      .poll(async() => {
-        await sendIpcToRenderer(app, 'mt::editor-edit-action', 'selectAll')
-        await page.waitForTimeout(120)
-        return page.evaluate(() => window.getSelection()?.toString() ?? '')
-      }, { timeout: 5000 })
+      .poll(
+        async () => {
+          await sendIpcToRenderer(app, 'mt::editor-edit-action', 'selectAll')
+          await page.waitForTimeout(120)
+          return page.evaluate(() => window.getSelection()?.toString() ?? '')
+        },
+        { timeout: 5000 }
+      )
       .toContain('Last paragraph gamma.')
 
     // Open the find bar and move focus into its search input. handleSelectAll

@@ -9,6 +9,7 @@
 import { contextBridge, ipcRenderer, webFrame, webUtils } from 'electron'
 import type { IpcRendererEvent } from 'electron'
 import pathe from 'pathe'
+import { MARKDOWN_INCLUSIONS, hasMarkdownExtension } from 'common/filesystem/markdownExtensions'
 
 import type {
   IpcInvokeChannels,
@@ -89,9 +90,6 @@ const dialogAPI = {
 const webFrameAPI = {
   setZoomFactor: (factor: number): void => {
     if (typeof factor === 'number' && factor > 0) webFrame.setZoomFactor(factor)
-  },
-  setZoomLevel: (level: number): void => {
-    if (typeof level === 'number') webFrame.setZoomLevel(level)
   }
 }
 
@@ -103,41 +101,21 @@ const windowControlAPI = {
   minimize: () => send('mt::win::minimize'),
   maximize: () => send('mt::win::maximize'),
   unmaximize: () => send('mt::win::unmaximize'),
-  toggleMaximize: () => send('mt::win::toggle-maximize'),
   close: () => send('mt::win::close'),
   setFullScreen: (flag: boolean) => send('mt::win::set-fullscreen', flag),
   toggleFullScreen: () => send('mt::win::toggle-fullscreen'),
   isMaximized: () => invoke('mt::win::is-maximized'),
   isFullScreen: () => invoke('mt::win::is-fullscreen'),
   popupMenu: (template: unknown, position?: { x: number; y: number }) =>
-    send('mt::menu::popup', template as never, position),
-  popupApplicationMenu: (position?: { x: number; y: number }) =>
-    send('mt::menu::popup-application', position)
+    send('mt::menu::popup', template as never, position)
 }
 
-// These three predicates are pure path-string operations: implementing them
-// in the preload keeps them synchronous so existing call sites like
-// `tabs.find(t => isSamePathSync(t.pathname, ...))` keep returning the right
-// item instead of a truthy Promise.
-const MARKDOWN_EXTENSIONS = [
-  'markdown',
-  'mdown',
-  'mkdn',
-  'md',
-  'mkd',
-  'mdwn',
-  'mdtxt',
-  'mdtext',
-  'mdx',
-  'text',
-  'txt'
-] as const
-
-const hasMarkdownExtension = (filename: string): boolean => {
-  if (!filename || typeof filename !== 'string') return false
-  return MARKDOWN_EXTENSIONS.some((ext) => filename.toLowerCase().endsWith(`.${ext}`))
-}
-
+// These predicates are pure path-string operations: implementing them locally
+// (or in a dependency-free shared module) keeps them synchronous so existing
+// call sites like `tabs.find(t => isSamePathSync(t.pathname, ...))` keep
+// returning the right item instead of a truthy Promise. The markdown extension
+// list comes from `common/filesystem/markdownExtensions`, which imports nothing,
+// so main / preload / renderer share one definition instead of racing copies.
 const isChildOfDirectory = (dir: string, child: string): boolean => {
   if (!dir || !child) return false
   const relative = pathe.relative(dir, child)
@@ -165,14 +143,12 @@ const isSamePathSync = (pathA: string, pathB: string, isNormalized: boolean = fa
 const fileUtilsAPI = {
   isFile: (p: string) => invoke('mt::fs::is-file', p),
   isDirectory: (p: string) => invoke('mt::fs::is-directory', p),
-  emptyDir: (p: string) => invoke('mt::fs::empty-dir', p),
   copy: (src: string, dest: string) => invoke('mt::fs::copy', src, dest),
   ensureDir: (p: string) => invoke('mt::fs::ensure-dir', p),
   outputFile: (p: string, data: string | Uint8Array) => invoke('mt::fs::output-file', p, data),
   move: (src: string, dest: string) => invoke('mt::fs::move', src, dest),
-  stat: (p: string) => invoke('mt::fs::stat', p),
   writeFile: (p: string, data: string | Uint8Array) => invoke('mt::fs::write-file', p, data),
-  readFile: (p: string, encoding?: string) => invoke('mt::fs::read-file', p, encoding),
+  readFile: (p: string, encoding?: BufferEncoding) => invoke('mt::fs::read-file', p, encoding),
   pathExists: (p: string) => invoke('mt::fs::path-exists', p),
   unlink: (p: string) => invoke('mt::fs::unlink', p),
   readdir: (p: string) => invoke('mt::fs::readdir', p),
@@ -183,7 +159,7 @@ const fileUtilsAPI = {
   isSamePathSync,
   // isImageFile needs an fs.statSync; keep it async via IPC.
   isImageFile: (p: string) => invoke('mt::paths::is-image', p),
-  MARKDOWN_INCLUSIONS: bootInfo?.MARKDOWN_INCLUSIONS || []
+  MARKDOWN_INCLUSIONS
 }
 
 const commandAPI = {
@@ -196,7 +172,7 @@ const i18nAPI = {
 
 type RipgrepHandler = (payload: unknown) => void
 const ripgrepAPI = {
-  start: (req: unknown) => invoke('mt::rg::start', req),
+  start: (req: unknown) => invoke('mt::rg::start', req as never),
   cancel: (searchId: string) => send('mt::rg::cancel', searchId),
   onMatch: (handler: RipgrepHandler) => {
     const sub = (_e: IpcRendererEvent, payload: unknown) => handler(payload)
@@ -226,7 +202,7 @@ const ripgrepAPI = {
 }
 
 const uploaderAPI = {
-  uploadImage: (req: unknown) => invoke('mt::uploader::upload', req)
+  uploadImage: (req: unknown) => invoke('mt::uploader::upload', req as never)
 }
 
 const versionHistoryAPI = {
@@ -237,12 +213,7 @@ const versionHistoryAPI = {
     markdown: string
     label: string
     byteLength: number
-  }) => invoke('mt::version-history:save', snapshot),
-  get: (pathname: string) => invoke('mt::version-history:get', pathname),
-  getContent: (pathname: string, id: string) =>
-    invoke('mt::version-history:get-content', pathname, id),
-  delete: (pathname: string, id: string) => invoke('mt::version-history:delete', pathname, id),
-  clear: (pathname: string) => invoke('mt::version-history:clear', pathname)
+  }) => invoke('mt::version-history:save', snapshot)
 }
 
 const fontsAPI = {

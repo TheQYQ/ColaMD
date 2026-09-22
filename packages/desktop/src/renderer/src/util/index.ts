@@ -135,7 +135,7 @@ export const adjustCursor = (
   return newCursor
 }
 
-export const animatedScrollTo = function(
+export const animatedScrollTo = function (
   element: HTMLElement,
   to: number,
   duration: number,
@@ -151,14 +151,14 @@ export const animatedScrollTo = function(
     return
   }
 
-  const easeInOutQuad = function(t: number, b: number, c: number, d: number): number {
+  const easeInOutQuad = function (t: number, b: number, c: number, d: number): number {
     t /= d / 2
     if (t < 1) return (c / 2) * t * t + b
     t--
     return (-c / 2) * (t * (t - 2) - 1) + b
   }
 
-  const animateScroll = function(): void {
+  const animateScroll = function (): void {
     const now = +new Date()
     const val = Math.floor(easeInOutQuad(now - animationStart, start, change, duration))
 
@@ -181,18 +181,6 @@ export const getUniqueId = (): string => {
   return `${ID_PREFIX}${id++}`
 }
 
-export const hasKeys = (obj: object): boolean => Object.keys(obj).length > 0
-
-/**
- * Shallow clone the given object.
- *
- * @param obj Object to clone
- * @param inheritFromObject Whether the clone should inherit from `Object`
- */
-export const cloneObject = <T extends object>(obj: T, inheritFromObject = true): T => {
-  return Object.assign(inheritFromObject ? {} : Object.create(null), obj)
-}
-
 /**
  * Deep clone the given object.
  *
@@ -209,5 +197,4 @@ const platform =
     window.electron.process.platform) ||
   ''
 export const isOsx = platform === 'darwin'
-export const isWindows = platform === 'win32'
 export const isLinux = platform === 'linux'

@@ -27,7 +27,7 @@ describe('renderer i18n language loading', () => {
     delete win.i18nUtils
   })
 
-  it('does not reload the default English locale', async() => {
+  it('does not reload the default English locale', async () => {
     const { setLanguage, getCurrentLanguage } = await import('../../../src/renderer/src/i18n')
 
     setLanguage('en')
@@ -36,7 +36,7 @@ describe('renderer i18n language loading', () => {
     expect(getCurrentLanguage()).to.equal('en')
   })
 
-  it('loads an unavailable locale only once', async() => {
+  it('loads an unavailable locale only once', async () => {
     const { setLanguage } = await import('../../../src/renderer/src/i18n')
 
     setLanguage('zh-CN')
@@ -68,7 +68,7 @@ describe('renderer i18n malformed-message resilience (issue #4046)', () => {
     t: (key: string, named?: Record<string, unknown>) => string
   }
 
-  it('does not throw when a registered message contains a nested placeholder', async() => {
+  it('does not throw when a registered message contains a nested placeholder', async () => {
     const { i18n } = await import('../../../src/renderer/src/i18n')
     const composer = i18n.global as unknown as TestComposer
 
@@ -79,7 +79,7 @@ describe('renderer i18n malformed-message resilience (issue #4046)', () => {
     expect(composer.t('export.failed', { type: 'PDF' })).toBe('Failed {{type}} export')
   })
 
-  it('still interpolates well-formed messages', async() => {
+  it('still interpolates well-formed messages', async () => {
     const { i18n } = await import('../../../src/renderer/src/i18n')
     const composer = i18n.global as unknown as TestComposer
 

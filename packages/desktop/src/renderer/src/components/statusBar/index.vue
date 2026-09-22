@@ -92,13 +92,13 @@ const toggleSourceCode = (): void => {
   align-items: center;
   justify-content: space-between;
   height: var(--statusBarHeight);
-  padding: 0 8px;
+  padding: 0 12px;
   box-sizing: border-box;
-  border-top: 1px solid var(--floatBorderColor);
-  /* Themed like the editor chrome so dark themes don't bleed white. */
-  background: var(--editorBgColor);
-  color: var(--editorColor30);
-  font-size: 12px;
+  border-top: 1px solid var(--border-subtle);
+  /* Themed like the sidebar chrome (guide §3.7): a quiet gauge strip. */
+  background: var(--sideBarBgColor);
+  color: var(--text-tertiary);
+  font-size: 11px;
   user-select: none;
   flex: none;
 }
@@ -112,14 +112,14 @@ const toggleSourceCode = (): void => {
   justify-content: center;
   width: 26px;
   height: 20px;
-  border-radius: 3px;
+  border-radius: 4px;
   cursor: pointer;
-  color: var(--editorColor30);
-  transition: all 0.15s ease-in-out;
+  color: var(--text-tertiary);
+  transition: color 120ms ease-out, background-color 120ms ease-out;
 }
 .status-btn:hover {
-  background: var(--floatHoverColor);
-  color: var(--editorColor60);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
 }
 .status-btn.active {
   color: var(--themeColor);
@@ -131,13 +131,13 @@ const toggleSourceCode = (): void => {
 .word-count {
   cursor: pointer;
   padding: 1px 6px;
-  border-radius: 3px;
-  color: var(--editorColor30);
-  transition: all 0.15s ease-in-out;
+  border-radius: 4px;
+  color: var(--text-tertiary);
+  transition: color 120ms ease-out, background-color 120ms ease-out;
 }
 .word-count:hover {
-  background: var(--floatHoverColor);
-  color: var(--editorColor60);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
 }
 .text-center-vertical {
   display: inline-block;

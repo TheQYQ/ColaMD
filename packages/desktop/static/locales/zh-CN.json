@@ -53,7 +53,6 @@
       "replace": "替换",
       "findNext": "查找下一个",
       "findPrevious": "查找上一个",
-      "findInFolder": "在文件夹中查找",
       "screenshot": "截图",
       "lineEnding": "行结束符",
       "lineEndingCrlf": "CRLF (Windows)",
@@ -227,66 +226,17 @@
     "replaceAll": "全部替换",
     "replaceSingle": "单个替换",
     "invalidRegex": "无效的正则表达式 \"{pattern}\"",
-    "regexMatchEmpty": "正则表达式 \"{pattern}\" 匹配到了空字符串",
-    "searchResultInfo": "在 {fileCount} 个文件中找到 {matchCount} 个匹配项",
-    "searchLimited": "仅搜索前 {count} 个结果"
+    "regexMatchEmpty": "正则表达式 \"{pattern}\" 匹配到了空字符串"
   },
   "sideBar": {
-    "search": {
-      "searchInFolder": "在文件夹中搜索…",
-      "noFolderOpen": "没有打开的文件夹",
-      "noResultsFound": "未找到结果。",
-      "cancel": "取消",
-      "openFolder": "打开文件夹",
-      "showMoreMatches": "显示更多匹配"
-    },
     "tree": {
-      "openedFiles": "已打开的文件",
-      "saveAll": "保存全部",
-      "closeAll": "关闭全部",
       "emptyProject": "空项目",
       "createFile": "创建文件",
-      "openFolder": "打开文件夹"
-    },
-    "toc": {
-      "title": "目录",
-      "expandAll": "全部展开",
-      "collapseAll": "全部折叠"
-    },
-    "history": {
-      "title": "版本历史",
-      "noFile": "未打开文件",
-      "loading": "加载中…",
-      "nosnapshots": "暂无版本历史。保存文件时会自动创建快照。",
-      "restore": "恢复",
-      "delete": "删除",
-      "clearAll": "全部清除",
-      "close": "关闭",
-      "cancel": "取消",
-      "previewTitle": "版本预览",
-      "restoreConfirm": "恢复此版本将替换当前文档内容。会先保存当前状态的备份。是否继续？",
-      "restoreTitle": "恢复版本",
-      "restoreFailed": "恢复版本失败",
-      "restoreSuccess": "版本恢复成功",
-      "deleteConfirm": "确定要永久删除此版本吗？",
-      "deleteTitle": "删除版本",
-      "deleteSuccess": "版本已删除",
-      "deleteFailed": "删除版本失败",
-      "clearConfirm": "确定要清空此文件的全部版本历史吗？此操作无法撤销。",
-      "clearTitle": "清空历史",
-      "clearSuccess": "历史已清空",
-      "clearFailed": "清空历史失败",
-      "justNow": "刚刚",
-      "minutesAgo": "{count} 分钟前",
-      "hoursAgo": "{count} 小时前",
-      "daysAgo": "{count} 天前"
+      "openFile": "打开文件..."
     },
     "icons": {
       "files": "文件",
-      "search": "搜索",
-      "toc": "目录",
-      "history": "历史记录",
-      "settings": "设置"
+      "toc": "目录"
     }
   },
   "commandPalette": {
@@ -838,7 +788,6 @@
       "findNext": "查找下一个",
       "findPrevious": "查找上一个",
       "replace": "替换",
-      "findInFolder": "在文件夹中查找",
       "screenshot": "截图"
     },
     "paragraph": {
@@ -954,8 +903,9 @@
     "unsafeFileMessage": "此链接将打开一个可执行代码的文件",
     "unsafeFileDetail": "“{name}”是可执行文件或脚本文件。打开它可能会在你的计算机上运行程序。请仅在信任此文档时继续。",
     "openAnyway": "仍然打开",
-    "renameFailure": "Rename failure",
-    "moveFailure": "Move failure"
+    "renameFailure": "重命名失败",
+    "moveFailure": "移动失败",
+    "openFailure": "打开失败"
   },
   "error": {
     "configSchemaViolation": "配置架构违规",
@@ -981,15 +931,13 @@
       "errorLoadingTabTitle": "加载标签页出错",
       "errorLoadingTabMessage": "加载文件变更时发生错误，因为找不到该标签页。",
       "mixedLineEndingsNormalized": "“{name}” 含有混合换行符，已自动规范化为 {lineEnding}。",
-      "imageDeletionUrlTitle": "图片删除链接",
-      "imageDeletionUrlMessage": "点击将已上传图片的删除链接复制到剪贴板 ({url})。",
       "errorWhileSaving": "保存时发生错误：{msg}",
       "exportSuccessTitle": "导出成功",
       "exportSuccessMessage": "已成功导出“{name}”！",
       "fileRemovedOnDisk": "“{name}” 已在磁盘上被删除。",
       "fileChangedOnDisk": "“{name}” 已在磁盘上发生变更。是否重新加载？",
-      "errorWhileRenaming": "There was an error while renaming: {msg}",
-      "errorWhileMoving": "There was an error while moving: {msg}",
+      "errorWhileRenaming": "重命名时发生错误：{msg}",
+      "errorWhileMoving": "移动时发生错误：{msg}",
       "imageCleanupTitle": "图片文件已删除",
       "imageCleanupMessage": "已删除未引用的文件：{name}"
     }

@@ -7,7 +7,7 @@ import { launchElectron, launchWithMarkdown } from './helpers'
 // locks that contract — it replaces auto-show-toc.spec.ts, which asserted
 // the removed behavior.
 test.describe('TOC panel does not auto-open on file open', () => {
-  test('opening a markdown file keeps the files panel, not the TOC', async() => {
+  test('opening a markdown file keeps the files panel, not the TOC', async () => {
     const { app, page } = await launchWithMarkdown('# Heading One\n\ncontent\n\n## Heading Two\n')
 
     try {
@@ -20,7 +20,7 @@ test.describe('TOC panel does not auto-open on file open', () => {
     }
   })
 
-  test('stays hidden when only a blank untitled tab opens', async() => {
+  test('stays hidden when only a blank untitled tab opens', async () => {
     const { app, page } = await launchElectron()
 
     try {

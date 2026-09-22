@@ -33,14 +33,14 @@ test.describe('Loose/tight list-item toggle', () => {
   let app: ElectronApplication
   let page: Page
 
-  test.beforeAll(async() => {
+  test.beforeAll(async () => {
     const launched = await launchWithMarkdown('seed\n')
     app = launched.app
     page = launched.page
     await waitForMenuReady(app)
   })
 
-  test.afterAll(async() => {
+  test.afterAll(async () => {
     if (app) await app.close()
   })
 
@@ -51,7 +51,7 @@ test.describe('Loose/tight list-item toggle', () => {
   // gains/loses the blank line. Passes on a headed display. The toggle ACTION
   // itself is unit-covered in packages/muya/src/__tests__/updateParagraph.spec.ts
   // ('toggles loose/tight on the current list').
-  test.fixme('menu click toggles a tight list loose (blank line) and back to tight', async() => {
+  test.fixme('menu click toggles a tight list loose (blank line) and back to tight', async () => {
     // Start from a tight 2-item bullet list — no blank line between items.
     await setSourceMarkdown(page, app, '- one\n- two\n')
     await expect(page.locator('.mu-bullet-list .mu-paragraph-content').first()).toBeAttached()
@@ -66,7 +66,7 @@ test.describe('Loose/tight list-item toggle', () => {
 
     // The serialized source now separates the items with a blank line.
     await expect
-      .poll(async() => getMarkdownContent(page, app), { timeout: 5000 })
+      .poll(async () => getMarkdownContent(page, app), { timeout: 5000 })
       .toMatch(/- one\n\n- two/)
 
     // Toggle again → tight: the blank line between items is removed.
@@ -74,7 +74,7 @@ test.describe('Loose/tight list-item toggle', () => {
     await clickMenuById(app, 'looseListItemMenuItem')
 
     await expect
-      .poll(async() => getMarkdownContent(page, app), { timeout: 5000 })
+      .poll(async () => getMarkdownContent(page, app), { timeout: 5000 })
       .toMatch(/- one\n- two/)
     // And it is genuinely tight again (no blank line slipped through).
     const tightAgain = await getMarkdownContent(page, app)

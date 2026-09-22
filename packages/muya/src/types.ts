@@ -15,7 +15,9 @@ import type { TState } from './state/types';
  */
 export interface IMuyaPluginConstructor {
     pluginName?: string;
-    new (muya: unknown, options?: unknown): unknown;
+    // Inline type-only import: `Muya` is defined in muya.ts which imports this
+    // file, so a top-level import would create a module cycle.
+    new (muya: import('./muya').Muya, options?: Record<string, unknown>): unknown;
 }
 
 /** A single per-instance plugin entry: constructor + options bag. */

@@ -18,6 +18,7 @@
  */
 
 import type { IKeyboardLayoutInfo, IKeyboardMapping } from 'native-keymap'
+import type { RipgrepRequest } from './ripgrep'
 import type {
   MarkdownDocument,
   TabOptions,
@@ -25,7 +26,6 @@ import type {
   PageOptions,
   ExportType,
   SaveOptions,
-  SerializedStat,
   LineEnding,
   FileChangeDetail,
   UnsavedFile
@@ -59,15 +59,13 @@ export interface VersionSnapshot {
 // =================================================================
 
 export interface IpcInvokeChannels {
-  'mt::ask-for-image-path': { args: []; ret: string[] }
-  'mt::boot-info-async': { args: []; ret: BootInfo }
+  'mt::ask-for-image-path': { args: []; ret: string }
   'mt::clipboard::guess-file-path': { args: []; ret: string | null }
   'mt::clipboard::read-text': { args: []; ret: string }
   'mt::cmd::exists': { args: [name: string]; ret: boolean }
   'mt::fonts::list': { args: []; ret: string[] }
   'mt::fs-trash-item': { args: [pathname: string]; ret: void }
   'mt::fs::copy': { args: [src: string, dest: string]; ret: void }
-  'mt::fs::empty-dir': { args: [path: string]; ret: void }
   'mt::fs::ensure-dir': { args: [path: string]; ret: void }
   'mt::fs::is-directory': { args: [path: string]; ret: boolean }
   'mt::fs::is-executable': { args: [path: string]; ret: boolean }
@@ -75,37 +73,39 @@ export interface IpcInvokeChannels {
   'mt::fs::move': { args: [src: string, dest: string]; ret: void }
   'mt::fs::output-file': { args: [path: string, data: string | Uint8Array]; ret: void }
   'mt::fs::path-exists': { args: [path: string]; ret: boolean }
-  'mt::fs::read-file': { args: [path: string, encoding?: string]; ret: string | Uint8Array }
+  'mt::fs::read-file': { args: [path: string, encoding?: BufferEncoding]; ret: string | Uint8Array }
   'mt::fs::readdir': { args: [path: string]; ret: string[] }
-  'mt::fs::stat': { args: [path: string]; ret: SerializedStat }
   'mt::fs::unlink': { args: [path: string]; ret: void }
   'mt::fs::write-file': { args: [path: string, data: string | Uint8Array]; ret: void }
-  'mt::i18n::is-supported': { args: [lang: string]; ret: boolean }
-  'mt::i18n::load': { args: [language: string]; ret: Record<string, unknown> }
-  'mt::i18n::supported': { args: []; ret: string[] }
+  'mt::i18n::load': { args: [language: string]; ret: Record<string, unknown> | null }
   'mt::keybinding-get-keyboard-info': { args: []; ret: KeyboardInfo }
   'mt::keybinding-get-pref-keybindings': {
     args: []
     ret: { defaultKeybindings: Map<string, string>; userKeybindings: Map<string, string> }
   }
-  'mt::keybinding-save-user-keybindings': { args: [bindings: unknown]; ret: boolean }
+  'mt::keybinding-save-user-keybindings': { args: [bindings: Map<string, string>]; ret: boolean }
   'mt::menu::get-recent-documents': { args: []; ret: string[] }
   'mt::paths::is-image': { args: [path: string]; ret: boolean }
-  'mt::rg::start': { args: [req: unknown]; ret: { searchId: string } }
-  'mt::shell::open-external': { args: [url: string]; ret: void }
+  'mt::rg::start': { args: [req: RipgrepRequest]; ret: void }
+  'mt::shell::open-external': { args: [url: string]; ret: boolean }
   'mt::shell::open-path': { args: [fullPath: string]; ret: string }
   'mt::spellchecker-get-available-dictionaries': { args: []; ret: string[] }
   'mt::spellchecker-get-custom-dictionary-words': { args: []; ret: string[] }
   'mt::spellchecker-remove-word': { args: [word: string]; ret: boolean }
-  'mt::spellchecker-set-enabled': { args: [enabled: boolean]; ret: void }
+  'mt::spellchecker-set-enabled': { args: [enabled: boolean]; ret: boolean }
   'mt::spellchecker-switch-language': { args: [language: string]; ret: void }
-  'mt::uploader::upload': { args: [req: unknown]; ret: unknown }
-  'mt::version-history:clear': { args: [pathname: string]; ret: boolean }
-  'mt::version-history:delete': { args: [pathname: string, id: string]; ret: boolean }
-  'mt::version-history:get': { args: [pathname: string]; ret: VersionSnapshot[] }
-  'mt::version-history:get-content': {
-    args: [pathname: string, id: string]
-    ret: string | null
+  // The contract owns this shape, and the renderer's `uploadImage` must satisfy
+  // it: `cliScript` used to ride along here, i.e. the message named the program
+  // the main process would exec.
+  'mt::uploader::upload': {
+    args: [
+      req: {
+        pathname: string
+        image: string | { data: Uint8Array | number[]; name: string }
+        isPath: boolean
+      }
+    ]
+    ret: unknown
   }
   'mt::version-history:save': {
     args: [snapshot: VersionSnapshot]
@@ -126,7 +126,7 @@ export interface IpcInvokeChannels {
   'mt::dialog::error-box': { args: [title: string, content: string]; ret: void }
   // Main derives the BrowserWindow via BrowserWindow.fromWebContents(e.sender);
   // no need to pass windowId. Payload is the editor+project+layout snapshot.
-  'update-buffer-state': { args: [payload: unknown]; ret: void }
+  'update-buffer-state': { args: [payload: unknown]; ret: boolean }
 }
 
 // =================================================================
@@ -145,11 +145,13 @@ export interface IpcSendChannels {
   'menu-add-recently-used': [filePath: string]
   'menu-clear-recently-used': []
   'mt::NEED_UPDATE': [payload?: unknown]
-  'mt::add-recently-used-document': [filePath: string]
   'mt::app-try-quit': []
   'mt::ask-for-image-auto-path': [payload: unknown]
-  'mt::ask-for-modify-image-folder-path': [imagePath?: string]
-  'mt::ask-for-open-project-in-sidebar': []
+  // No argument: main opens the picker and assigns the result itself, because
+  // this folder is also a write-scope root (see security/pathScope.ts).
+  'mt::ask-for-modify-image-folder-path': []
+  'mt::ask-for-modify-cli-script': []
+  'mt::ask-for-open-file-in-sidebar': []
   'mt::ask-for-user-data': []
   'mt::ask-for-user-preference': []
   'mt::check-for-update': []
@@ -169,14 +171,14 @@ export interface IpcSendChannels {
   'mt::keybinding-debug-dump-keyboard-info': []
   'mt::make-screenshot': []
   'mt::menu::popup': [template: MenuTemplate, position?: MenuPopupPosition]
-  'mt::menu::popup-application': [position?: MenuPopupPosition]
   // Frameless HTML menu bar (menuBar component) support channels.
   'mt::menu::native-clipboard': [op: 'cut' | 'copy' | 'paste']
+  // Opens in ColaMD (a recently-used entry), unlike `mt::shell::open-path`,
+  // which asks the OS handler and answers with an error string.
   'mt::menu::open-path': [pathname: string]
   'mt::unsaved-dialog-response': [result: { needSave: boolean } | null]
   'mt::open-file': [filePath: string, options?: unknown]
   'mt::open-file-by-window-id': [windowId: number, filePath: string, options?: unknown]
-  'mt::open-keybindings-config': []
   'mt::open-setting-window': []
   'mt::rename': [
     payload: { id: string; pathname: string; newPathname: string; currentFile?: unknown }
@@ -232,9 +234,7 @@ export interface IpcSendChannels {
   'mt::win::minimize': []
   'mt::win::set-fullscreen': [flag: boolean]
   'mt::win::toggle-fullscreen': []
-  'mt::win::toggle-maximize': []
   'mt::win::unmaximize': []
-  'mt::window-add-file-path': [windowId: number, filePath: string]
   'mt::window-tab-closed': [pathname: string]
   'mt::window-toggle-always-on-top': []
   'mt::window::drop': [payload: unknown]
@@ -290,7 +290,6 @@ export interface IpcMainEventChannels {
   'mt::editor-rename-file': []
   'mt::execute-command-by-id': [commandId: string]
   'mt::export-success': [payload: { type: string; filePath: string }]
-  'mt::file-saved': [tabId: string]
   'mt::force-close-tabs-by-id': [tabIds: string[]]
   'mt::discard-unsaved-tabs-and-close': [tabIds: string[]]
   'mt::show-unsaved-dialog': []
@@ -352,7 +351,7 @@ export interface IpcMainEventChannels {
  * `mt::keybinding-get-keyboard-info`. Mirrors the runtime shape produced
  * by `native-keymap` (see `src/main/keyboard/index.ts#getKeyboardInfo`).
  */
-export interface KeyboardInfo {
+interface KeyboardInfo {
   layout: IKeyboardLayoutInfo
   keymap: IKeyboardMapping
 }
@@ -369,19 +368,4 @@ export interface BootInfo {
     ripgrepBinary: string
   }
   isUpdatable: boolean
-  MARKDOWN_INCLUSIONS: string[]
 }
-
-// =================================================================
-// Helper types for the preload bridge generic wrappers
-// =================================================================
-
-export type InvokeArgs<K extends keyof IpcInvokeChannels> = IpcInvokeChannels[K]['args']
-export type InvokeRet<K extends keyof IpcInvokeChannels> = IpcInvokeChannels[K]['ret']
-
-export type SyncArgs<K extends keyof IpcSyncChannels> = IpcSyncChannels[K]['args']
-export type SyncRet<K extends keyof IpcSyncChannels> = IpcSyncChannels[K]['ret']
-
-export type SendArgs<K extends keyof IpcSendChannels> = IpcSendChannels[K]
-
-export type EventArgs<K extends keyof IpcMainEventChannels> = IpcMainEventChannels[K]
