@@ -690,9 +690,18 @@ watch(
         // M1.2b: sourceCode.vue reads `tab.markdown` at mount — commit any
         // uncommitted keystrokes first, or the source editor opens on stale
         // content and the exit `replaceContent` drops them.
-        if (lazyPipeline.hasPendingCommit) {
-          lazyPipeline.flushActive()
-        }
+        // Not gated on `hasPendingCommit`: the engine batches a keystroke's op
+        // until the next animation frame and only emits `json-change` from there
+        // (muya/src/state/index.ts:252-272), so the flag cannot be true within the
+        // frame the edit happened in -- and this watch runs synchronously in that
+        // frame. Checking it first therefore skips the flush for exactly the
+        // keystrokes made moments ago (measured on mac: 8 of 9 entries saw
+        // `pending=false`, and the stale text they mounted on was then written
+        // back over the edit). `flushActive()` is the same flush-on-read every
+        // other markdown consumer uses: it applies the queue, which is what
+        // reports the edit, and serializes only if something is then uncommitted,
+        // so a read of an unedited document still costs no serialization.
+        lazyPipeline.flushActive()
         if (currentFile.value) {
           currentFile.value.muyaIndexCursor = editor.value.getCursorOffset() ?? null
         }

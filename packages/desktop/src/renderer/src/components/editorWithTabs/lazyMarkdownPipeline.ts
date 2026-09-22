@@ -183,7 +183,10 @@ export function createLazyMarkdownPipeline(deps: LazyMarkdownPipelineDeps) {
     },
 
     // Flush-on-read: apply pending engine ops, then serialize once if a
-    // keystroke is still uncommitted. Safe to call repeatedly.
+    // keystroke is still uncommitted. Safe to call repeatedly, and safe to call
+    // when `hasPendingCommit` is false — applying the queue is what makes an
+    // in-flight edit visible, so a caller that checks the flag first will skip
+    // the flush for exactly the edits the flag has not been told about yet.
     flushActive(): void {
       const engine = deps.getEngine()
       if (!engine) return
