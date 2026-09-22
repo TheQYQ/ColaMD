@@ -289,20 +289,23 @@ export default [
   // floor turned the worst remaining function into `util/docx/document.ts:346`
   // at 36 — so the ceiling comes down to just above that.
   //
-  // 205: the length ceiling moved twice since. It bound on `store/project.ts`'s setup
-  // at 277 until the directory-watch reducer came out into `store/treeEvents.ts`
-  // (250); the sidebar paste handler then came out into `store/sidebarPaste.ts`
-  // (204). Runners-up are 202 (`useEngineOptionSync.ts`) and 173
-  // (`main/windows/editor.ts`), so 205 sits just above the binder — measured by
-  // probing the whole package at a floor of 120 and reading the lengths eslint
-  // reports, never by guessing.
+  // 173: the length ceiling has moved three times. It bound on `store/project.ts`'s
+  // setup at 277 until the directory-watch reducer came out into
+  // `store/treeEvents.ts` (250); the sidebar paste handler then came out into
+  // `store/sidebarPaste.ts` (204); the rest of the context-menu wiring came out
+  // into `store/sidebarContextMenu.ts`, taking the setup to 167 and moving the
+  // binder to `main/windows/editor.ts:84` `createWindow` at 173. Measured, not
+  // guessed: probe the whole package at a floor of 120 and read the lengths
+  // eslint reports. (An earlier note here claimed a 202 runner-up in
+  // `useEngineOptionSync.ts` — the probe shows no function above 173 in the
+  // package today, and that file is 152 lines in total, so the figure was wrong.)
   {
     files: ['packages/desktop/src/**/*.ts', 'packages/desktop/src/**/*.vue'],
     rules: {
       complexity: ['warn', 37],
       'max-lines-per-function': [
         'warn',
-        { max: 205, skipBlankLines: true, skipComments: true }
+        { max: 173, skipBlankLines: true, skipComments: true }
       ]
     }
   }

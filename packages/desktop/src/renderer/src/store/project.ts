@@ -2,9 +2,10 @@ import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { resortTree } from './treeCtrl'
 import { processTreeEvent } from './treeEvents'
-import { registerSidebarPasteHandler } from './sidebarPaste'
+import { registerSidebarContextMenuHandlers, type SidebarCreateCache } from './sidebarContextMenu'
+import { sidebarFail } from './sidebarFeedback'
+import type { SidebarClipboardEntry } from './sidebarPaste'
 import { usePreferencesStore } from './preferences'
-import bus from '../bus'
 import { create, rename, type FileCreateType } from '../util/fileSystem'
 import { PATH_SEPARATOR } from '../config'
 import notice from '../services/notification'
@@ -57,16 +58,10 @@ interface OpenProjectOptions {
   scheduleBufferUpdate?: boolean
 }
 
-interface CreateCacheEntry {
-  dirname: string
-  type: 'file' | 'directory' | string
-}
-
-interface ClipboardEntry {
-  type: 'copy' | 'cut' | string
-  src: string
-  dest?: string
-}
+// The shapes live with the modules that write them; the store only reads them
+// back out of its own refs.
+type CreateCacheEntry = SidebarCreateCache
+type ClipboardEntry = SidebarClipboardEntry
 
 interface PendingEvent {
   type: string
@@ -200,36 +195,7 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   function LISTEN_FOR_SIDEBAR_CONTEXT_MENU(): void {
-    bus.on('SIDEBAR::show-in-folder', () => {
-      const { pathname } = activeItem.value
-      window.electron.shell.showItemInFolder(pathname)
-    })
-    bus.on('SIDEBAR::new', (type: unknown) => {
-      const { pathname, isDirectory } = activeItem.value
-      const dirname = isDirectory ? pathname : window.path.dirname(pathname)
-      createCache.value = { dirname, type: String(type) }
-      bus.emit('SIDEBAR::show-new-input')
-    })
-    bus.on('SIDEBAR::remove', () => {
-      const { pathname } = activeItem.value
-      window.electron.ipcRenderer.invoke('mt::fs-trash-item', pathname).catch((err) => {
-        notice.notify({
-          title: 'Error while deleting',
-          type: 'error',
-          message: err instanceof Error ? err.message : String(err)
-        })
-      })
-    })
-    bus.on('SIDEBAR::copy-cut', (type: unknown) => {
-      const { pathname: src } = activeItem.value
-      clipboard.value = { type: String(type), src }
-    })
-    registerSidebarPasteHandler({ activeItem, clipboard })
-    bus.on('SIDEBAR::rename', () => {
-      const { pathname } = activeItem.value
-      renameCache.value = pathname
-      bus.emit('SIDEBAR::show-rename-input')
-    })
+    registerSidebarContextMenuHandlers({ activeItem, createCache, clipboard, renameCache })
   }
 
   async function CREATE_FILE_DIRECTORY(name: string): Promise<void> {
@@ -262,11 +228,7 @@ export const useProjectStore = defineStore('project', () => {
         }
       })
       .catch((err) => {
-        notice.notify({
-          title: 'Error in Side Bar',
-          type: 'error',
-          message: err instanceof Error ? err.message : String(err)
-        })
+        sidebarFail('Error in Side Bar', err)
       })
   }
 
@@ -281,11 +243,7 @@ export const useProjectStore = defineStore('project', () => {
         editorStore.RENAME_IF_NEEDED({ src, dest })
       })
       .catch((err) => {
-        notice.notify({
-          title: '重命名失败',
-          type: 'error',
-          message: err instanceof Error ? err.message : String(err)
-        })
+        sidebarFail('重命名失败', err)
       })
   }
 
