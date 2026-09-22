@@ -38,6 +38,14 @@ vi.mock('../../../src/main/i18n', () => ({
   setLanguage: () => {}
 }))
 
+// `menu/actions/file` reaches `filesystem/markdown`, whose `./encoding` loads the
+// native `ced` addon -- its binary only exists where Electron's ABI was built, so
+// on a plain Node runner (CI's `test` legs) this file failed to collect at all.
+// Encoding detection is not what this test is about.
+vi.mock('../../../src/main/filesystem/encoding', () => ({
+  guessEncoding: () => 'UTF-8'
+}))
+
 import type { BrowserWindow } from 'electron'
 import { openFileOrFolder } from '../../../src/main/menu/actions/file'
 
