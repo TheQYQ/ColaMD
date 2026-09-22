@@ -267,11 +267,13 @@ export default [
   // `utils/internalIpc.ts`, whose channel argument is a runtime string.
   //
   // The third selector is the push direction (`typedSend`, src/main/ipc/typedSend.ts):
-  // 91 of the 97 `X.webContents.send` / `X.sender.send` sites are bound now and
+  // 93 of the 99 `X.webContents.send` / `sender.send` sites are bound now, and
   // checked both ways. The six exemptions are channels built at runtime — three
   // `mt::response-of-image-path-${id}` reply addresses, `EVENT_NAME[type]` in the
   // filesystem watcher, and `mt::window-${channel}` in the window-event bridge —
-  // where no static contract key exists to check against.
+  // where no static contract key exists to check against. The selector also covers a
+  // bare `sender.send(…)`: two sites keep the WebContents in a local variable
+  // instead of behind a property access, and the first pass missed both.
   {
     files: ['packages/desktop/src/main/**/*.ts'],
     rules: {
@@ -291,7 +293,7 @@ export default [
         {
           // The push direction: `X.webContents.send(…)` / `X.sender.send(…)`.
           selector:
-            "CallExpression[callee.object.property.name='webContents'][callee.property.name='send'], CallExpression[callee.object.property.name='sender'][callee.property.name='send']",
+            "CallExpression[callee.object.property.name='webContents'][callee.property.name='send'], CallExpression[callee.object.property.name='sender'][callee.property.name='send'], CallExpression[callee.object.name='sender'][callee.property.name='send']",
           message:
             'Push to a renderer through typedSend() from src/main/ipc/typedSend.ts so the channel and its payload stay checked against shared/types/ipc.ts.'
         }
