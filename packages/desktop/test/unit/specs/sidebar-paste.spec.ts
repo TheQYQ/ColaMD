@@ -39,7 +39,9 @@ import {
 const exists = async (p: string): Promise<boolean> => h.taken.has(p)
 
 const fire = async (): Promise<void> => {
-  await h.handlers.get('SIDEBAR::paste')!()
+  const handler = h.handlers.get('SIDEBAR::paste')
+  if (!handler) throw new Error('SIDEBAR::paste was never registered')
+  await handler()
   await Promise.resolve()
   await Promise.resolve()
 }
