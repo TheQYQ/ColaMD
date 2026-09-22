@@ -1,7 +1,7 @@
 import bus from '../bus'
 import { paste, type PasteOptions } from '../util/fileSystem'
 import { PATH_SEPARATOR } from '../config'
-import notice from '../services/notification'
+import { sidebarFail, sidebarWarn } from './sidebarFeedback'
 
 export const MAX_COPIES = 99
 
@@ -14,18 +14,6 @@ export interface SidebarClipboardEntry {
 export interface SidebarPasteContext {
   activeItem: { value: { pathname: string; isDirectory?: boolean } }
   clipboard: { value: SidebarClipboardEntry | null }
-}
-
-const warn = (title: string, message: string): void => {
-  notice.notify({ title, type: 'warning', message })
-}
-
-const fail = (title: string, err: unknown): void => {
-  notice.notify({
-    title,
-    type: 'error',
-    message: err instanceof Error ? err.message : String(err)
-  })
 }
 
 /**
@@ -72,14 +60,14 @@ export function registerSidebarPasteHandler(ctx: SidebarPasteContext): void {
 
     if (window.path.normalize(cb.src) === window.path.normalize(dest)) {
       if (cb.type === 'cut') {
-        warn('Paste Forbidden', 'Source and destination must not be the same.')
+        sidebarWarn('Paste Forbidden', 'Source and destination must not be the same.')
         return
       }
       const resolved = await resolveCopyDestination(cb.src, dirname, (p) =>
         window.fileUtils.pathExists(p)
       )
       if (resolved.failure) {
-        warn('Too many copies', resolved.failure)
+        sidebarWarn('Too many copies', resolved.failure)
         return
       }
       dest = resolved.dest
@@ -92,7 +80,7 @@ export function registerSidebarPasteHandler(ctx: SidebarPasteContext): void {
         ctx.clipboard.value = null
       })
       .catch((err: unknown) => {
-        fail('Error while pasting', err)
+        sidebarFail('Error while pasting', err)
       })
   })
 }
