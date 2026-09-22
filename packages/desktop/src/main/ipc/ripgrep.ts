@@ -1,11 +1,12 @@
 import { spawn, type ChildProcess } from 'child_process'
 import path from 'path'
-import { ipcMain, type WebContents } from 'electron'
+import { type WebContents } from 'electron'
 import log from 'electron-log'
 import { rgPath as bundledRgPath } from '@vscode/ripgrep'
 import { assertPathInScope } from '../security/pathScope'
 import { typedHandle } from './typedHandle'
 import type { RipgrepSearchOptions as SearchOptions } from '@shared/types/ripgrep'
+import { typedOn } from './typedOn'
 
 const resolveRgPath = (): string => {
   if (process.env.COLAMD_RIPGREP_PATH) return process.env.COLAMD_RIPGREP_PATH
@@ -438,7 +439,7 @@ export const registerRipgrepHandlers = (): void => {
     if (mode === 'files') startFileSearch(event.sender, searchId, directories, options || {})
     else startTextSearch(event.sender, searchId, directories, pattern, options || {})
   })
-  ipcMain.on('mt::rg::cancel', (_event, searchId: string) => {
+  typedOn('mt::rg::cancel', (_event, searchId: string) => {
     const entry = activeSearches.get(searchId)
     if (entry) entry.cancel()
   })

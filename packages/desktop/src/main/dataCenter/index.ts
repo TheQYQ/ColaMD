@@ -8,6 +8,7 @@ import { ensureDirSync } from 'common/filesystem'
 import { IMAGE_EXTENSIONS } from 'common/filesystem/paths'
 import { TypedEmitter } from '@shared/types/typedEmitter'
 import { typedHandle } from '../ipc/typedHandle'
+import { typedOn } from '../ipc/typedOn'
 
 const DATA_CENTER_NAME = 'dataCenter'
 
@@ -138,7 +139,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
   }
 
   _listenForIpcMain(): void {
-    ipcMain.on('mt::ask-for-user-data', async (e) => {
+    typedOn('mt::ask-for-user-data', async (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const userData = await this.getAll()
@@ -147,7 +148,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
 
     // The caller may ask for the picker but may not supply the result: this
     // folder is registered as a write-scope root for the guarded fs channels.
-    ipcMain.on('mt::ask-for-modify-image-folder-path', async (e) => {
+    typedOn('mt::ask-for-modify-image-folder-path', async (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const { filePaths } = await dialog.showOpenDialog(win, {
@@ -158,7 +159,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
       }
     })
 
-    ipcMain.on('mt::set-user-data', (_e, userData: Record<string, unknown>) => {
+    typedOn('mt::set-user-data', (_e, userData: Record<string, unknown>) => {
       this.setItems(userData)
     })
 

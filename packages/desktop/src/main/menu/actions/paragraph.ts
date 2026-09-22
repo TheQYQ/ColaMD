@@ -1,6 +1,12 @@
 import { type BrowserWindow, type Menu, type MenuItem } from 'electron'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
+import type { SelectionState } from '@shared/types/ipc'
+
+// The selection-state shape lives in the shared contract now, so the channel
+// that carries it can be checked by `typedOn`; re-exported for the importers
+// that have always taken it from this module.
+export type { SelectionState }
 
 type Win = BrowserWindow | null | undefined
 
@@ -161,21 +167,9 @@ const setMultipleStatus = (
   status: boolean
 ): void => {
   const paragraphMenuItem = applicationMenu.getMenuItemById('paragraphMenuEntry')!
-  paragraphMenuItem.submenu!.items
-    .filter((item: MenuItem) => item.id && list.includes(item.id))
+  paragraphMenuItem
+    .submenu!.items.filter((item: MenuItem) => item.id && list.includes(item.id))
     .forEach((item: MenuItem) => (item.enabled = status))
-}
-
-export interface SelectionState {
-  affiliation: Record<string, boolean>
-  isTable?: boolean
-  isLooseListItem?: boolean
-  isTaskList?: boolean
-  isDisabled?: boolean
-  isMultiline?: boolean
-  isCodeFences?: boolean
-  isCodeContent?: boolean
-  hasFrontMatter?: boolean
 }
 
 const setCheckedMenuItem = (
@@ -213,10 +207,7 @@ const setCheckedMenuItem = (
  * @param applicationMenu The application menu instance.
  * @param state The selection information.
  */
-export const updateSelectionMenus = (
-  applicationMenu: Menu,
-  state: SelectionState
-): void => {
+export const updateSelectionMenus = (applicationMenu: Menu, state: SelectionState): void => {
   const {
     // Key/boolean object like "ul: true" of block elements that are selected.
     // This may be an empty object when multiple block elements are selected.
@@ -254,8 +245,10 @@ export const updateSelectionMenus = (
     }
   } else if (isMultiline) {
     // Format: link/image are meaningless across a multi-block selection.
-    formatMenuItem.submenu!.items
-      .filter((item: MenuItem) => item.id === 'hyperlinkMenuItem' || item.id === 'imageMenuItem')
+    formatMenuItem
+      .submenu!.items.filter(
+      (item: MenuItem) => item.id === 'hyperlinkMenuItem' || item.id === 'imageMenuItem'
+    )
       .forEach((item: MenuItem) => (item.enabled = false))
     // Paragraph: enable only the items that have a defined cross-block action.
     const paragraphMenu = applicationMenu.getMenuItemById('paragraphMenuEntry')!

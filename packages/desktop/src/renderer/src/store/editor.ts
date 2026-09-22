@@ -49,7 +49,7 @@ import {
   resolveCleanupCandidate,
   type CleanupCandidate
 } from '../util/imageCleanup'
-import type { IpcMainEventChannels, VersionSnapshot } from '@shared/types/ipc'
+import type { FormatLinkPayload, IpcMainEventChannels, VersionSnapshot } from '@shared/types/ipc'
 import type {
   BootstrapEditorConfig,
   IFileState,
@@ -115,12 +115,9 @@ interface FileChangePayload {
   }
 }
 
-interface FormatLinkClickPayload {
-  // muya's getLinkInfo yields `href: null` when the rendered link carries no
-  // usable href (e.g. an unsupported protocol stripped by sanitizeHyperlink).
-  data: { href: string | null; [key: string]: unknown }
-  dirname: string
-}
+// The payload shape is owned by the shared contract: `mt::format-link-click`
+// crosses to the main process, and both ends now check against one declaration.
+type FormatLinkClickPayload = FormatLinkPayload
 
 interface ExportPayload {
   type: string

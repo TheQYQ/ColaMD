@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { app, Menu, ipcMain, type BrowserWindow } from 'electron'
+import { app, Menu, type BrowserWindow } from 'electron'
 import log from 'electron-log'
 import { ensureDirSync } from 'common/filesystem'
 import { isLinux, isOsx, isWindows } from '../config'
@@ -19,6 +19,7 @@ import { setLanguage } from '../i18n.js'
 import type Preference from '../preferences'
 import type Keybindings from '../keyboard/shortcutHandler'
 import type { IUserPreferences } from '@shared/types/preferences'
+import { typedOn } from '../ipc/typedOn'
 
 const MenuType = {
   DEFAULT: 0,
@@ -448,27 +449,24 @@ class AppMenu {
   }
 
   _listenForIpcMain(): void {
-    ipcMain.on('mt::update-line-ending-menu', (_e, windowId: number, lineEnding: string) => {
+    typedOn('mt::update-line-ending-menu', (_e, windowId: number, lineEnding: string) => {
       this.updateLineEndingMenu(windowId, lineEnding)
     })
-    ipcMain.on(
-      'mt::update-format-menu',
-      (_e, windowId: number, formats: Record<string, boolean>) => {
-        if (!this.has(windowId)) {
-          log.error(`UpdateApplicationMenu: Cannot find window menu for window id ${windowId}.`)
-          return
-        }
-        updateFormatMenu(this.getWindowMenuById(windowId), formats)
+    typedOn('mt::update-format-menu', (_e, windowId: number, formats: Record<string, boolean>) => {
+      if (!this.has(windowId)) {
+        log.error(`UpdateApplicationMenu: Cannot find window menu for window id ${windowId}.`)
+        return
       }
-    )
-    ipcMain.on('mt::update-sidebar-menu', (_e, windowId: number, value: unknown) => {
+      updateFormatMenu(this.getWindowMenuById(windowId), formats)
+    })
+    typedOn('mt::update-sidebar-menu', (_e, windowId: number, value: unknown) => {
       if (!this.has(windowId)) {
         log.error(`UpdateApplicationMenu: Cannot find window menu for window id ${windowId}.`)
         return
       }
       updateSidebarMenu(this.getWindowMenuById(windowId), value)
     })
-    ipcMain.on(
+    typedOn(
       'mt::view-layout-changed',
       (_e, windowId: number, viewSettings: Record<string, unknown>) => {
         if (!this.has(windowId)) {
@@ -478,7 +476,7 @@ class AppMenu {
         viewLayoutChanged(this.getWindowMenuById(windowId), viewSettings)
       }
     )
-    ipcMain.on('mt::editor-selection-changed', (_e, windowId: number, changes: SelectionState) => {
+    typedOn('mt::editor-selection-changed', (_e, windowId: number, changes: SelectionState) => {
       if (!this.has(windowId)) {
         log.error(`UpdateApplicationMenu: Cannot find window menu for window id ${windowId}.`)
         return
@@ -489,7 +487,7 @@ class AppMenu {
     // In source-code mode the Paragraph and Format commands act on the hidden
     // WYSIWYG engine, so grey them out; on return to WYSIWYG they are re-enabled
     // and the next selection change refines them (#3531).
-    ipcMain.on('mt::set-editor-format-menus-enabled', (_e, windowId: number, enabled: boolean) => {
+    typedOn('mt::set-editor-format-menus-enabled', (_e, windowId: number, enabled: boolean) => {
       if (!this.has(windowId)) return
       const menu = this.getWindowMenuById(windowId)
       for (const id of ['paragraphMenuEntry', 'formatMenuItem']) {
@@ -501,7 +499,7 @@ class AppMenu {
     onInternalChannel('menu-add-recently-used', (pathname: string) => {
       this.addRecentlyUsedDocument(pathname)
     })
-    ipcMain.on('menu-clear-recently-used', () => {
+    typedOn('menu-clear-recently-used', () => {
       this.clearRecentlyUsedDocuments()
     })
 

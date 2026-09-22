@@ -245,7 +245,7 @@ export default [
     }
   },
 
-  // 11. Main-process `invoke` handlers go through the shared contract.
+  // 11. Main-process `invoke` and `on` handlers go through the shared contract.
   //
   // `shared/types/ipc.ts` types the preload side of every channel, but a bare
   // `ipcMain.handle('mt::…', …)` was unchecked: Electron hands the listener
@@ -257,6 +257,12 @@ export default [
   // wrong — e.g. `mt::ask-for-image-path` was typed `string[]` while the handler
   // answers a single path — so the two remaining exemptions below are payload
   // ownership questions, not type errors. See docs/OPTIMIZATION_ROADMAP.md O8.
+  //
+  // The `ipcMain.on` selector is the fire-and-forget sibling (`typedOn` /
+  // `typedSyncOn`, src/main/ipc/typedOn.ts). Binding those 64 channels surfaced
+  // twelve declarations written as `unknown` while both ends already knew the
+  // shape; they are typed now and the rule leaves exactly one exemption:
+  // `utils/internalIpc.ts`, whose channel argument is a runtime string.
   {
     files: ['packages/desktop/src/main/**/*.ts'],
     rules: {
@@ -267,6 +273,11 @@ export default [
             "CallExpression[callee.object.name='ipcMain'][callee.property.name='handle']",
           message:
             'Register invoke handlers through typedHandle() from src/main/ipc/typedHandle.ts so the channel stays checked against shared/types/ipc.ts.'
+        },
+        {
+          selector: "CallExpression[callee.object.name='ipcMain'][callee.property.name='on']",
+          message:
+            'Register listeners through typedOn()/typedSyncOn() from src/main/ipc/typedOn.ts so the channel and its argument tuple stay checked against shared/types/ipc.ts.'
         }
       ]
     }

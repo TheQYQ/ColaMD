@@ -29,6 +29,8 @@ import pandoc, { exportViaPandoc } from '../../utils/pandoc'
 import { exportDocumentImage } from '../../utils/imageExport'
 import { t } from '../../i18n'
 import type { UnsavedFile } from '@shared/types/files'
+import type { FormatLinkPayload } from '@shared/types/ipc'
+import { typedOn } from '../../ipc/typedOn'
 
 type Win = BrowserWindow | null | undefined
 
@@ -343,7 +345,7 @@ const showUnsavedFilesMessage = async (
     }
     const onClosed = (): void => finish(null)
 
-    ipcMain.on('mt::unsaved-dialog-response', onResponse)
+    typedOn('mt::unsaved-dialog-response', onResponse)
     win.once('closed', onClosed)
     win.webContents.send('mt::show-unsaved-dialog', files.length)
   })
@@ -375,7 +377,7 @@ const removePrintServiceFromWindow = (win: BrowserWindow): void => {
 
 // --- events -----------------------------------
 
-ipcMain.on('mt::save-tabs', (e, unsavedFiles: UnsavedFile[]) => {
+typedOn('mt::save-tabs', (e, unsavedFiles: UnsavedFile[]) => {
   Promise.all(
     unsavedFiles.map((file) =>
       handleResponseForSave(
@@ -391,7 +393,7 @@ ipcMain.on('mt::save-tabs', (e, unsavedFiles: UnsavedFile[]) => {
   ).catch(log.error)
 })
 
-ipcMain.on('mt::save-and-close-tabs', async (e, unsavedFiles: UnsavedFile[]) => {
+typedOn('mt::save-and-close-tabs', async (e, unsavedFiles: UnsavedFile[]) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return
@@ -429,7 +431,7 @@ ipcMain.on('mt::save-and-close-tabs', async (e, unsavedFiles: UnsavedFile[]) => 
   }
 })
 
-ipcMain.on(
+typedOn(
   'mt::response-file-save-as',
   async (
     e: IpcMainEvent,
@@ -497,7 +499,7 @@ ipcMain.on(
   }
 )
 
-ipcMain.on('mt::close-window-confirm', async (e, unsavedFiles: UnsavedFile[]) => {
+typedOn('mt::close-window-confirm', async (e, unsavedFiles: UnsavedFile[]) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return
@@ -554,13 +556,13 @@ ipcMain.on('mt::close-window-confirm', async (e, unsavedFiles: UnsavedFile[]) =>
   }
 })
 
-ipcMain.on('mt::response-file-save', handleResponseForSave as Parameters<typeof ipcMain.on>[1])
+typedOn('mt::response-file-save', handleResponseForSave as Parameters<typeof ipcMain.on>[1])
 
-ipcMain.on('mt::response-export', handleResponseForExport as Parameters<typeof ipcMain.on>[1])
+typedOn('mt::response-export', handleResponseForExport as Parameters<typeof ipcMain.on>[1])
 
-ipcMain.on('mt::response-print', handleResponseForPrint as Parameters<typeof ipcMain.on>[1])
+typedOn('mt::response-print', handleResponseForPrint as Parameters<typeof ipcMain.on>[1])
 
-ipcMain.on('mt::window::drop', async (e, fileList: string[]) => {
+typedOn('mt::window::drop', async (e, fileList: string[]) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return
@@ -590,7 +592,7 @@ interface RenamePayload {
   newPathname: string
 }
 
-ipcMain.on('mt::rename', async (e, { id, pathname, newPathname }: RenamePayload) => {
+typedOn('mt::rename', async (e, { id, pathname, newPathname }: RenamePayload) => {
   if (pathname === newPathname) return
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
@@ -636,7 +638,7 @@ ipcMain.on('mt::rename', async (e, { id, pathname, newPathname }: RenamePayload)
   }
 })
 
-ipcMain.on(
+typedOn(
   'mt::response-file-move-to',
   async (e, { id, pathname }: { id: string; pathname: string }) => {
     const win = BrowserWindow.fromWebContents(e.sender)
@@ -674,7 +676,7 @@ ipcMain.on(
 
 // Empty-state "Open File" button in the sidebar — picker filtered to markdown
 // and text files. Grants mutation scope for the file's parent directory.
-ipcMain.on('mt::ask-for-open-file-in-sidebar', async (e) => {
+typedOn('mt::ask-for-open-file-in-sidebar', async (e) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return
@@ -695,12 +697,7 @@ ipcMain.on('mt::ask-for-open-file-in-sidebar', async (e) => {
   }
 })
 
-interface FormatLinkPayload {
-  data: { href?: string; text?: string }
-  dirname?: string
-}
-
-ipcMain.on('mt::format-link-click', async (e, { data, dirname }: FormatLinkPayload) => {
+typedOn('mt::format-link-click', async (e, { data, dirname }: FormatLinkPayload) => {
   if (!data || (!data.href && !data.text)) {
     return
   }
@@ -770,28 +767,28 @@ ipcMain.on('mt::format-link-click', async (e, { data, dirname }: FormatLinkPaylo
 
 // --- commands -------------------------------------
 
-ipcMain.on('mt::cmd-open-file', (e) => {
+typedOn('mt::cmd-open-file', (e) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   openFile(win)
 })
 
-ipcMain.on('mt::cmd-new-editor-window', () => {
+typedOn('mt::cmd-new-editor-window', () => {
   newEditorWindow()
 })
 
-ipcMain.on('mt::cmd-open-folder', (e) => {
+typedOn('mt::cmd-open-folder', (e) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   openFolder(win)
 })
 
-ipcMain.on('mt::cmd-close-window', (e) => {
+typedOn('mt::cmd-close-window', (e) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (win) {
     win.close()
   }
 })
 
-ipcMain.on('mt::cmd-import-file', (e) => {
+typedOn('mt::cmd-import-file', (e) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (win) {
     importFile(win)

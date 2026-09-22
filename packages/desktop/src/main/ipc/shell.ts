@@ -1,8 +1,9 @@
-import { ipcMain, shell, clipboard } from 'electron'
+import { shell, clipboard } from 'electron'
 import log from 'electron-log'
 import * as plist from 'plist'
 import { assertPathInScope } from '../security/pathScope'
 import { typedHandle } from './typedHandle'
+import { typedOn } from './typedOn'
 
 // Defense-in-depth: the renderer renders untrusted markdown, so only web
 // links may leave the app. file:// / smb:// / custom schemes stay blocked.
@@ -24,10 +25,10 @@ const openExternalSafe = async (url: string): Promise<boolean> => {
 
 export const registerShellHandlers = (): void => {
   typedHandle('mt::shell::open-external', (_e, url: string) => openExternalSafe(url))
-  ipcMain.on('mt::shell::open-external', (_e, url: string) => {
+  typedOn('mt::shell::open-external', (_e, url: string) => {
     openExternalSafe(url).catch((err) => log.error('shell.openExternal failed:', err))
   })
-  ipcMain.on('mt::shell::show-item', async (_e, fullPath: string) => {
+  typedOn('mt::shell::show-item', async (_e, fullPath: string) => {
     try {
       await assertPathInScope(fullPath)
       shell.showItemInFolder(fullPath)
@@ -46,7 +47,7 @@ export const registerShellHandlers = (): void => {
     }
   })
 
-  ipcMain.on('mt::clipboard::write-text', (_e, text: string) => {
+  typedOn('mt::clipboard::write-text', (_e, text: string) => {
     try {
       clipboard.writeText(text)
     } catch (err) {

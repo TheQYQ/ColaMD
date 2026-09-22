@@ -3,6 +3,7 @@ import { BrowserWindow, Menu, ipcMain } from 'electron'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
 import { isOsx } from '../../config'
+import { typedOn } from '../../ipc/typedOn'
 
 let runningUpdate = false
 let win: BrowserWindow | null = null
@@ -51,7 +52,7 @@ autoUpdater.on('update-downloaded', (_event) => {
   setImmediate(() => autoUpdater.quitAndInstall())
 })
 
-ipcMain.on('mt::NEED_UPDATE', (_e, { needUpdate }: { needUpdate: boolean }) => {
+typedOn('mt::NEED_UPDATE', (_e, { needUpdate }: { needUpdate: boolean }) => {
   if (needUpdate) {
     autoUpdater.downloadUpdate()
   } else {
@@ -59,7 +60,7 @@ ipcMain.on('mt::NEED_UPDATE', (_e, { needUpdate }: { needUpdate: boolean }) => {
   }
 })
 
-ipcMain.on('mt::check-for-update', (e) => {
+typedOn('mt::check-for-update', (e) => {
   const senderWin = BrowserWindow.fromWebContents(e.sender)
   checkUpdates(senderWin)
 })
