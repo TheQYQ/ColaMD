@@ -86,23 +86,25 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 ### A 组·正确性回归（有实锤 bug，优先）
 
-**O1 · 快速打开退化为全文搜索** — 成本 XS，影响 高
+**O1 · 快速打开退化为全文搜索** — 成本 XS，影响 高 — **已完成（第一批 PR-1；本轮复核：`test/unit/specs/quick-open-file-name-search.spec.ts` 在树里，它钉的就是发出的检索载荷为 `mode: files`）**
 `commands/quickOpen.ts:3` 用的是**默认导入** `import FileSearcher from '@/node/ripgrepSearcher'`，而该文件默认导出是 `RipgrepDirectorySearcher`（`node/ripgrepSearcher.ts:129-142`，`mode: 'text'`）；做文件名检索的具名 `export class FileSearcher`（`:144-152`，`mode: 'files'`）当前无人引用。根因：`409188a` 删了 `node/fileSearcher.ts`——那 4 行是 `export { FileSearcher as default } from './ripgrepSearcher'` 的转发垫片，被误判为死代码。
 
 - 改法：`import { FileSearcher } from '@/node/ripgrepSearcher'`。
 - 验收：新增/复用一个 E2E——打开含 `alpha.md`/`beta.md` 的目录，`Ctrl+P` 输入 `alph` 应命中文件名；当前实现会去搜正文里的 `alph`，空正文时结果为 0。
 - 回滚点：单文件单行。
 
-**O2 · 拼写检查可用性判断恒真** — 成本 XS，影响 低（只影响告警可见性）
+**O2 · 拼写检查可用性判断恒真** — 成本 XS，影响 低（只影响告警可见性）— **已完成（第一批 PR-2；本轮复核：`main/spellchecker/index.ts:51` 现在只在"确实不可用却被要字典"时告警，同文件 :43-:57 走 `availableSpellCheckerLanguages` 与 macOS 分支）**
 `main/spellchecker/index.ts:46` 写成 `if (!win.webContents.session.isSpellCheckerEnabled)`，缺 `()`，属性对象恒真 → "拼写检查不可用"的降级提示永不触发。
 
 - 验收：临时关掉 spellcheck，确认日志出现；补一条断言该分支的单测。
 
-**O3 · `startUpAction` 跨进程枚举不重合** — 成本 S，影响 中（启动恢复行为）
+**O3 · `startUpAction` 跨进程枚举不重合** — 成本 S，影响 中（启动恢复行为）— **已完成（第一批 PR-3；本轮复核并补最后一处，见下）**
 渲染端类型 `'restoreAll' | 'lastSession' | 'blank'`（`store/preferences.ts:10`），主进程实际比较 `'restoreAll' | 'folder' | 'openLastFolder'`（`main/app/index.ts:288-299`），`'lastState'` 靠迁移改写（`main/preferences/index.ts:49-50`）。因为字段声明成 `StartUpAction | string`，编译器不会拦。`'lastSession'` 是死值，`'folder'`/`'openLastFolder'` 未被类型覆盖。
 
 - 改法：值域移到 `src/shared/types/preferences.ts` 单一声明，两进程共读；去掉 `| string`；迁移表也引用同一常量。
 - 验收：`pnpm typecheck` 通过即为门；再加一个纯函数测试覆盖"每个合法枚举值在主进程分支上都有归属"。
+- **本轮复核结果（这一条其实早已落地，只是标题上缺状态标记）**：值域现在单点在 `src/shared/types/preferences.ts`（`StartUpAction` 联合 + `START_UP_ACTIONS` 数组），渲染端 `store/preferences.ts:4` 直接 import 它、字段声明是 `startUpAction?: StartUpAction` 没有 `| string` 兜底，主进程改走 `main/utils/startupPlan.ts:25 resolveStartupPlan`，`schema.json:63` 的 enum 与四个值一致。验收要求的那个测试不但存在，还比原计划严：`test/unit/specs/startup-action.spec.ts` 5 例覆盖"每个存储值恰好映射到一个 plan"、"集合与 schema enum 相同"、"引用目录缺失时回落为无 plan"、"未知值/未迁移值/空值一律不算恢复"、"出厂默认在 enum 里"。
+- **本轮补的最后一处**：`main/preferences/index.ts` 里 0.18.6 迁移的目标值原来是裸字符串 `'openLastFolder'`。改成经 `StartUpAction` 类型声明的常量 `START_UP_ACTION_AFTER_LAST_STATE`，于是这个值一旦被改名或删除，编译就失败，而不是悄悄写进一个 `resolveStartupPlan` 只认作"无 plan"的值——两侧当初正是这样漂开的。
 
 **O4 · 两处空实现与一个名不副实的开关** — 成本 S，影响 低（原为"中"）— **已完成 `f3e13be`（分支 `fix/open-failure-visible`）**
 
@@ -112,7 +114,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 验收：`pnpm typecheck` 通过 + 单测全绿；knip 未用导出基数 −2。
 - 遗留：`--safe` 若要真覆盖"other user configuration"，前置条件是给 `electron-store` 加只读模式（原 `TODO(fxha)` 注释也指向同一处），本轮不做。
 
-**O5 · 最近文档逻辑两份实现** — 成本 XS
+**O5 · 最近文档逻辑两份实现** — 成本 XS — **已完成（第一批 PR-2；本轮复核：`src/main/utils/recentDocuments.ts` 存在且是唯一实现，常量不再各写一份）**
 `main/menu/index.ts:18-19` 与 `main/ipc/menu.ts:14-15` 各有一份读取逻辑与一份 `MAX_RECENTLY_USED_DOCUMENTS`，改一处会漏另一处（原生菜单 vs 自绘菜单）。
 
 - 改法：抽 `main/utils/recentDocuments.ts`，常量唯一。
@@ -185,8 +187,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 撤下理由：原改法（把规范化结果缓存进 `window.colamd.paths`）要给一个非热点加一层路径缓存与其失效逻辑，属于用复杂度换一个测不到的收益；`docs/PROJECT_GUIDE.md` §11.1-8 已同步改写为"离散动作的同步回落"。
 - 若将来真有证据（PERF_TESTING 采样里出现阻塞计数）再重开，判据是"同一秒内 `mt::paths::is-same-sync` 调用次数"，不是读代码猜。
 
-**O11 · 设置页语言轮询** — 成本 XS
-`prefComponents/sideBar/config.ts:269` 每秒轮询 `window.__VUE_I18N__` 取 locale，只在下次 setup 时清（`:267`），组件卸载后仍常驻。已有事件通道 `language-changed`（`src/main/i18n.ts:23`，且已在契约 `shared/types/ipc.ts:252`）可替掉它。
+**O11 · 设置页语言轮询** — 成本 XS — **已完成（第一批 PR-2；本轮复核：`grep setInterval` 在 `src/renderer/src/prefComponents/**/\*.vue`下已零命中）**`prefComponents/sideBar/config.ts:269`每秒轮询`window.**VUE_I18N**` 取 locale，只在下次 setup 时清（`:267`），组件卸载后仍常驻。已有事件通道 `language-changed`（`src/main/i18n.ts:23`，且已在契约 `shared/types/ipc.ts:252`）可替掉它。
 
 - 验收：删掉定时器，切语言仍能刷新文案；`onBeforeUnmount` 断言无遗留 timer。
 
@@ -308,14 +309,14 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 顺带把缺口的真实大小量出来：两条补丁只影响**打包与原生运行**（`native-keymap/binding.gyp` 的 C++20 开关、`ced/index.js` 的二进制加载兜底），`lint.yml`（eslint/knip/prettier）与 `validate-licenses.yml` 读的都不是这两个包的行为；desktop 单测里碰到这两个包的一共 3 个文件（`encoding.spec.ts:7`、`watcher-await-write-finish.spec.ts:33`、`watcher-tree-filter.spec.ts:13`）**全部 `vi.mock('ced', …)`**，真实模块从不加载，`native-keymap` 在单测里零引用（它只被 `src/main/keyboard/index.ts:12` 与一处 `import type` 使用）。所以"三条腿没打补丁"目前**不产生假绿**，它只是让 O14 加平台腿时少一层保障——原写"PR-14 的前置"依然成立，但不是因为 CI 现在是错的。
 - **要谁来做**：在允许重装的环境上按 `pnpm patch native-keymap@3.3.9` → 套用现有 diff → `pnpm patch-commit <dir>`（`ced@2.0.0` 再来一遍）→ 删 `postinstall.ts:151-152` 与 `patch-package` 依赖 → 删 `knip.json` 的 ignore → `pnpm install && pnpm rebuild-native && pnpm test:e2e`。
 
-**O16 · 工具脚本自身的小坏点** — 成本 S
+**O16 · 工具脚本自身的小坏点** — 成本 S — **已完成（第一批 PR-4；本轮复核：`scripts/check-md-links.py:10` 的 ROOT 已指仓库根且 `lint.yml` 有它一步（本地跑退出 0），`@eslint/js` 与 `globals` 已显式写进根 `package.json`（9.39.4 / 17.6.0），`packages/desktop/dev-app-update.yml` 已存在；剩下的只有"大版本分裂=记录+对齐计划"那一支，本就约定不强行升）**
 `scripts/check-md-links.py:10` 的 `ROOT = dirname(abspath(__file__))` 指向 `scripts/` 而非仓库根，一跑即 `FileNotFoundError`（且只覆盖 README 与 `docs/i18n`，这解释了为何无工作流引用它）；`scripts/generateThirdPartyLicense.ts:7` 与 `validateLicenses.ts:6` `require('./thirdPartyChecker.js')` 而实文件是 `.ts`，全靠 tsx 后缀改写才没炸；`eslint.config.js:1-8` 直接 import 未声明在 `devDependencies` 的 `@eslint/js` 与 `globals`，靠 `shamefully-hoist` 兜住；`electron-builder.yml:11` 排除了两个不存在的文件（`eslint.config.mjs`、`dev-app-update.yml`）；根 ESLint ^9.39.4 与引擎 ^10.5.0、desktop Vite ^7.3.5 与引擎 ^8.0.16 大版本分裂。
 
 - 改法：`check-md-links.py` 的 ROOT 改仓库根并接进 `lint.yml`；显式声明 eslint 插件依赖；补 `dev-app-update.yml`（`electron-updater` 已接在 `main/menu/actions/colamd.ts`，缺它无法本地验证更新流）；版本分裂先只做"记录 + 对齐计划"，不强行升。
 
 ### E 组·梯队复核新增（来自 §7）
 
-**O17 · 新建文件行的缩进与兄弟行不一致** — 成本 XS，影响 低（视觉）
+**O17 · 新建文件行的缩进与兄弟行不一致** — 成本 XS，影响 低（视觉）— **代码已完成 `50bc907`（第一批），仍等实机看一眼**
 原判"45px 是已删除的侧栏图标条残留"——**误判**。真实成因：`.folder-name`（`treeFolder.vue:6`）与 `.side-bar-file`（`treeFile.vue:6`）都用 `padding-left: depth * 6 + 10` 缩进，唯独新建输入框自己用 `margin-left: depth * 5 + 15`——**属性和公式都不同**，于是必须再配一个魔数宽度去吸收 margin：`tree.vue` 用 `calc(100% - 45px)`（该处 `const depth = 0`，实际只吃 15px），`treeFolder.vue` 用 `70%`。
 
 - 已排除的假阳性：`services/notification/index.css:152` 的 `calc(100% - 45px)` 与侧栏无关，属于 `.mt-confirm` 对话框，45px 是紧邻 `.confirm` 按钮区的预留。

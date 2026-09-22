@@ -7,11 +7,17 @@ import { isWindows } from '../config'
 import { hasSameKeys } from '../utils'
 import { onInternalChannel } from '../utils/internalIpc'
 import { TypedEmitter } from '@shared/types/typedEmitter'
-import type { IUserPreferences } from '@shared/types/preferences'
+import type { IUserPreferences, StartUpAction } from '@shared/types/preferences'
 import schema from './schema.json'
 
 // Retired value, accepted only to be rewritten by the 0.18.6 migration below.
 const LEGACY_LAST_STATE = 'lastState'
+
+// The migration target is written through the shared union rather than as a
+// loose string: if `openLastFolder` is ever renamed or dropped, this line fails
+// to compile instead of persisting a value that `resolveStartupPlan` would then
+// treat as "no plan" — which is exactly how the two sides drifted before O3.
+const START_UP_ACTION_AFTER_LAST_STATE: StartUpAction = 'openLastFolder'
 
 const PREFERENCES_FILE_NAME = 'preferences'
 
@@ -53,7 +59,7 @@ class Preference extends TypedEmitter<PreferenceEvents> {
       migrations: {
         '0.18.6': (store) => {
           if ((store.get('startUpAction') as string) === LEGACY_LAST_STATE) {
-            store.set('startUpAction', 'openLastFolder')
+            store.set('startUpAction', START_UP_ACTION_AFTER_LAST_STATE)
           }
         }
       },
