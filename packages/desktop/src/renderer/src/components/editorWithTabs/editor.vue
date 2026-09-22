@@ -78,27 +78,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch, onMounted, onBeforeUnmount, nextTick, markRaw } from 'vue'
 import log from 'electron-log'
-import {
-  Muya,
-  CodeBlockLanguageSelector,
-  EmojiSelector,
-  FootnoteTool,
-  ImageEditTool,
-  ImagePathPicker,
-  ImageResizeBar,
-  ImageToolBar,
-  InlineFormatToolbar,
-  LinkTools,
-  ParagraphFrontButton,
-  ParagraphFrontMenu,
-  ParagraphQuickInsertMenu,
-  PreviewToolBar,
-  TableChessboard,
-  TableColumnToolbar,
-  TableDragBar,
-  TableRowColumMenu,
-  wordCount as muyaWordCount
-} from '@muyajs/core'
+import { Muya, wordCount as muyaWordCount } from '@muyajs/core'
 import { exportStyledHTML, type HeaderFooterPart } from '@/util/exportHtml'
 import { exportDocx } from '@/util/exportDocx'
 import { applyCursor, isIndexCursor } from '@/util/cursor'
@@ -113,6 +93,8 @@ import { isOsx, animatedScrollTo } from '@/util'
 import { STANDAR_Y, useEditorScroll } from './useEditorScroll'
 import { useEditorImages } from './useEditorImages'
 import { createMuyaOptions, getMuyaLocale, resolveCodeFont, resolveEditorFont } from './muyaOptions'
+import { registerMuyaPlugins } from './muyaPlugins'
+import { bindEditorBus, unbindEditorBus, type EditorBusHandlers } from './muyaBusEvents'
 import { moveImageToFolder, uploadImage } from '@/util/fileSystem'
 import { guessClipboardFilePath } from '@/util/clipboard'
 import { dataURLToFile } from '@/util/dataURLToFile'
@@ -137,14 +119,6 @@ import { Close as CloseIcon } from '@element-plus/icons-vue'
 import { type InputNumberInstance } from 'element-plus'
 
 const { t } = useI18n()
-
-// `Muya.use(...)` appends to the static `Muya.plugins` array, and every
-// `init()` instantiates the full list. Registration is process-global, so guard
-// it with a module-level flag — otherwise remounting this component in the same
-// renderer (window reuse / HMR) would register duplicate plugins and spawn
-// duplicate UI handlers. The per-plugin option closures (imageAction/jumpClick)
-// only read app-singleton Pinia stores, so capturing them once is correct.
-let muyaPluginsRegistered = false
 
 // The `@muyajs/core` `Muya` surface is deliberately permissive (`[key: string]:
 // any` in muya-core.d.ts); everything that crosses the editor boundary leans on
@@ -1437,40 +1411,56 @@ const handleLanguageChanged = (newLocale?: unknown) => {
 }
 const resizeObserverForEditor = new ResizeObserver(handleResetPaddingBottom)
 
+// Every bus event the WYSIWYG editor answers, with its handler. Bound on mount
+// and released on unmount from this one object (see `muyaBusEvents.ts`).
+const editorBusHandlers: EditorBusHandlers = {
+  'file-loaded': setMarkdownToEditor,
+  'invalidate-image-cache': handleInvalidateImageCache,
+  undo: handleUndo,
+  redo: handleRedo,
+  selectAll: handleSelectAll,
+  export: handleExport,
+  'print-service-clearup': handlePrintServiceClearup,
+  paragraph: handleEditParagraph,
+  format: handleInlineFormat,
+  searchValue: handleSearch,
+  replaceValue: handReplace,
+  'find-action': handleFindAction,
+  'file-changed': handleFileChange,
+  'flush-active-editor': flushActiveEditor,
+  'editor-blur': blurEditor,
+  'editor-focus': focusEditor,
+  copyAsRich: handleCopyPaste,
+  copyAsHtml: handleCopyPaste,
+  pasteAsPlainText: handleCopyPaste,
+  duplicate: handleParagraph,
+  createParagraph: handleParagraph,
+  deleteParagraph: handleParagraph,
+  insertParagraph: handleInsertParagraph,
+  'scroll-to-header': scrollToHeader,
+  'scroll-to-anchor-element': scrollToAnchorElement,
+  'screenshot-captured': handleScreenShot,
+  'show-command-palette': handleModalOpening,
+  'switch-spellchecker-language': switchSpellcheckLanguage,
+  'open-command-spellchecker-switch-language': openSpellcheckerLanguageCommand,
+  'replace-misspelling': replaceMisspelling,
+  'language-changed': handleLanguageChanged
+}
+
 onMounted(() => {
   printer = new Printer()
   const ele = editorRef.value
   if (!ele) return
 
   // Register the engine UI plugins once per renderer process (see
-  // `muyaPluginsRegistered`). The image-edit tool receives the desktop's image
+  // `muyaPlugins.ts`). The image-edit tool receives the desktop's image
   // callbacks; LinkTools receives the ctrl/cmd-click jump handler.
-  if (!muyaPluginsRegistered) {
-    muyaPluginsRegistered = true
-    Muya.use(TableChessboard)
-    Muya.use(ParagraphQuickInsertMenu)
-    Muya.use(CodeBlockLanguageSelector)
-    Muya.use(EmojiSelector)
-    Muya.use(ImagePathPicker)
-    Muya.use(ImageEditTool, {
-      imageAction: muyaImageAction,
-      imagePathPicker,
-      imagePathAutoComplete
-    })
-    Muya.use(ImageResizeBar)
-    Muya.use(ImageToolBar)
-    Muya.use(InlineFormatToolbar)
-    Muya.use(ParagraphFrontButton)
-    Muya.use(ParagraphFrontMenu)
-    Muya.use(PreviewToolBar)
-    Muya.use(LinkTools, {
-      jumpClick
-    })
-    Muya.use(FootnoteTool)
-    Muya.use(TableColumnToolbar)
-    Muya.use(TableDragBar)
-    Muya.use(TableRowColumMenu)
-  }
+  registerMuyaPlugins({
+    imageAction: muyaImageAction,
+    imagePathPicker,
+    imagePathAutoComplete,
+    jumpClick
+  })
 
   const options = createMuyaOptions(props.markdown)
 
@@ -1498,9 +1488,6 @@ onMounted(() => {
 
   const container = getScrollContainer()!
 
-  // Listen for language changes and update the engine locale.
-  bus.on('language-changed', handleLanguageChanged)
-
   // Create spell check wrapper and enable spell checking if preferred.
   spellchecker = new SpellChecker(spellcheckerEnabled.value, spellcheckerLanguage.value)
 
@@ -1516,36 +1503,7 @@ onMounted(() => {
   nextTick(updateActiveTocEntry)
 
   // listen for bus events.
-  bus.on('file-loaded', setMarkdownToEditor)
-  bus.on('invalidate-image-cache', handleInvalidateImageCache)
-  bus.on('undo', handleUndo)
-  bus.on('redo', handleRedo)
-  bus.on('selectAll', handleSelectAll)
-  bus.on('export', handleExport)
-  bus.on('print-service-clearup', handlePrintServiceClearup)
-  bus.on('paragraph', handleEditParagraph)
-  bus.on('format', handleInlineFormat)
-  bus.on('searchValue', handleSearch)
-  bus.on('replaceValue', handReplace)
-  bus.on('find-action', handleFindAction)
-  bus.on('file-changed', handleFileChange)
-  bus.on('flush-active-editor', flushActiveEditor)
-  bus.on('editor-blur', blurEditor)
-  bus.on('editor-focus', focusEditor)
-  bus.on('copyAsRich', handleCopyPaste)
-  bus.on('copyAsHtml', handleCopyPaste)
-  bus.on('pasteAsPlainText', handleCopyPaste)
-  bus.on('duplicate', handleParagraph)
-  bus.on('createParagraph', handleParagraph)
-  bus.on('deleteParagraph', handleParagraph)
-  bus.on('insertParagraph', handleInsertParagraph)
-  bus.on('scroll-to-header', scrollToHeader)
-  bus.on('scroll-to-anchor-element', scrollToAnchorElement)
-  bus.on('screenshot-captured', handleScreenShot)
-  bus.on('show-command-palette', handleModalOpening)
-  bus.on('switch-spellchecker-language', switchSpellcheckLanguage)
-  bus.on('open-command-spellchecker-switch-language', openSpellcheckerLanguageCommand)
-  bus.on('replace-misspelling', replaceMisspelling)
+  bindEditorBus(editorBusHandlers)
 
   // The engine emits a low-level `json-change` ({ op, source, prevDoc, doc })
   // on every document mutation. `lazyMarkdownPipeline` (created at setup scope
@@ -1662,37 +1620,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   lazyPipeline.dispose()
-  bus.off('file-loaded', setMarkdownToEditor)
-  bus.off('invalidate-image-cache', handleInvalidateImageCache)
-  bus.off('undo', handleUndo)
-  bus.off('redo', handleRedo)
-  bus.off('selectAll', handleSelectAll)
-  bus.off('export', handleExport)
-  bus.off('print-service-clearup', handlePrintServiceClearup)
-  bus.off('paragraph', handleEditParagraph)
-  bus.off('format', handleInlineFormat)
-  bus.off('searchValue', handleSearch)
-  bus.off('replaceValue', handReplace)
-  bus.off('find-action', handleFindAction)
-  bus.off('file-changed', handleFileChange)
-  bus.off('flush-active-editor', flushActiveEditor)
-  bus.off('editor-blur', blurEditor)
-  bus.off('editor-focus', focusEditor)
-  bus.off('copyAsRich', handleCopyPaste)
-  bus.off('copyAsHtml', handleCopyPaste)
-  bus.off('pasteAsPlainText', handleCopyPaste)
-  bus.off('duplicate', handleParagraph)
-  bus.off('createParagraph', handleParagraph)
-  bus.off('deleteParagraph', handleParagraph)
-  bus.off('insertParagraph', handleInsertParagraph)
-  bus.off('scroll-to-header', scrollToHeader)
-  bus.off('scroll-to-anchor-element', scrollToAnchorElement)
-  bus.off('screenshot-captured', handleScreenShot)
-  bus.off('show-command-palette', handleModalOpening)
-  bus.off('switch-spellchecker-language', switchSpellcheckLanguage)
-  bus.off('open-command-spellchecker-switch-language', openSpellcheckerLanguageCommand)
-  bus.off('replace-misspelling', replaceMisspelling)
-  bus.off('language-changed', handleLanguageChanged)
+  unbindEditorBus(editorBusHandlers)
 
   document.removeEventListener('keyup', keyup)
 
