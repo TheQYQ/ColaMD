@@ -1,8 +1,9 @@
 import path from 'path'
 import fs from 'fs-extra'
-import { app, ipcMain } from 'electron'
+import { app } from 'electron'
 import { rgPath } from '@vscode/ripgrep'
 import type { BootInfo } from '@shared/types/ipc'
+import { typedSyncOn } from './typedOn'
 
 const ENV_ALLOWLIST = [
   'NODE_ENV',
@@ -71,7 +72,7 @@ const buildBootInfo = (): BootInfo => ({
 let cached: BootInfo | null = null
 
 export const registerBootInfo = (): void => {
-  ipcMain.on('mt::boot-info', (event) => {
+  typedSyncOn('mt::boot-info', (event) => {
     if (!cached) cached = buildBootInfo()
     event.returnValue = cached
   })

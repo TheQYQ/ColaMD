@@ -4,11 +4,12 @@ import log from 'electron-log'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
 import { searchFilesAndDir } from '../../utils/imagePathAutoComplement'
+import { typedOn } from '../../ipc/typedOn'
 
 type Win = BrowserWindow | null | undefined
 
 // TODO(Refactor): Move to filesystem and provide generic API to search files in directories.
-ipcMain.on('mt::ask-for-image-auto-path', (e, { pathname, src, id }) => {
+typedOn('mt::ask-for-image-auto-path', (e, { pathname, src, id }) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return

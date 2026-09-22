@@ -6,11 +6,13 @@
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import { app, clipboard, crashReporter, dialog, ipcMain } from 'electron'
+import { app, clipboard, crashReporter, dialog } from 'electron'
 import os from 'os'
 import log from 'electron-log'
 import { createAndOpenGitHubIssueUrl } from './utils/createGitHubIssue'
 import { t } from './i18n'
+import { typedOn } from './ipc/typedOn'
+import type { RendererErrorCopy } from '@shared/types/ipc'
 
 type ErrorType = 'main' | 'renderer'
 type Logger = (s: string) => void
@@ -38,7 +40,11 @@ const exceptionToString = (error: Error, type: ErrorType): string => {
   )
 }
 
-const handleError = async (title: string, error: Error, type: ErrorType): Promise<void> => {
+const handleError = async (
+  title: string,
+  error: Error | RendererErrorCopy,
+  type: ErrorType
+): Promise<void> => {
   const { message, stack } = error
 
   // Write error into file
@@ -121,7 +127,7 @@ const setupExceptionHandler = (): void => {
   })
 
   // renderer process error handler
-  ipcMain.on('mt::handle-renderer-error', (_e, error: Error) => {
+  typedOn('mt::handle-renderer-error', (_e, error: RendererErrorCopy) => {
     handleError(ERROR_MSG_RENDERER(), error, 'renderer')
   })
 

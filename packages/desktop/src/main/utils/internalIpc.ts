@@ -9,5 +9,6 @@ export function onInternalChannel<TArgs extends unknown[]>(
   channel: string,
   listener: (...args: TArgs) => void
 ): void {
+  // eslint-disable-next-line no-restricted-syntax -- the channel is a runtime string here, so there is no contract key to bind it to
   ipcMain.on(channel, listener as unknown as (event: IpcMainEvent, ...args: unknown[]) => void)
 }

@@ -27,6 +27,7 @@ import { getNativeThemeSource, isDarkApplicationTheme } from './nativeTheme'
 import type Accessor from './accessor'
 import type WindowManager from './windowManager'
 import { typedHandle } from '../ipc/typedHandle'
+import { typedOn } from '../ipc/typedOn'
 
 interface CliArgs {
   _: string[]
@@ -702,12 +703,12 @@ class App {
     registerSpellcheckerListeners()
 
     // Handle language setting requests
-    ipcMain.on('mt::get-current-language', (event) => {
+    typedOn('mt::get-current-language', (event) => {
       const { language } = this._accessor.preferences.getAll()
       event.reply('mt::current-language', language || 'en')
     })
 
-    ipcMain.on('app-create-editor-window', () => {
+    typedOn('app-create-editor-window', () => {
       this._createEditorWindow()
     })
 
@@ -811,11 +812,11 @@ class App {
 
     // --- renderer -------------------
 
-    ipcMain.on('mt::app-try-quit', () => {
+    typedOn('mt::app-try-quit', () => {
       app.quit()
     })
 
-    ipcMain.on('mt::open-file-by-window-id', (_e, windowId: number, filePath: string) => {
+    typedOn('mt::open-file-by-window-id', (_e, windowId: number, filePath: string) => {
       const resolvedPath = normalizeAndResolvePath(filePath)
       const openFilesInNewWindow =
         this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
@@ -829,7 +830,7 @@ class App {
       }
     })
 
-    ipcMain.on('mt::select-default-directory-to-open', async (e) => {
+    typedOn('mt::select-default-directory-to-open', async (e) => {
       const { preferences } = this._accessor
       const { defaultDirectoryToOpen } = preferences.getAll()
       const win = BrowserWindow.fromWebContents(e.sender)
@@ -844,16 +845,16 @@ class App {
       }
     })
 
-    ipcMain.on('mt::open-setting-window', () => {
+    typedOn('mt::open-setting-window', () => {
       this._openSettingsWindow()
     })
 
-    ipcMain.on('mt::make-screenshot', (e) => {
+    typedOn('mt::make-screenshot', (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       ipcMain.emit('screen-capture', win)
     })
 
-    ipcMain.on('mt::request-keybindings', (e) => {
+    typedOn('mt::request-keybindings', (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const { keybindings } = this._accessor
