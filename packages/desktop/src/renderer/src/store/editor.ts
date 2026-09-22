@@ -198,6 +198,25 @@ const clearAutoSaveTimer = (id: string | undefined): void => {
 const imageCleanupTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const IMAGE_CLEANUP_DELAY_MS = 5000
 
+// The "this tab has never been written to disk, so saving it *is* the answer to
+// Move-to / Rename" request. Both actions opened with twenty identical lines
+// (flush, read the tab, clone its options, resolve the default folder, send
+// `mt::response-file-save` with the same seven arguments) and only their
+// else-branches differed, so any change to that payload had to be made twice —
+// and `test/unit/specs/flush-before-save.spec.ts` pins the flushed markdown on
+// both paths precisely because they were easy to drift.
+const sendSaveForUntitledFile = (tab: IFileState, defaultPath: string): void => {
+  window.electron.ipcRenderer.send(
+    'mt::response-file-save',
+    tab.id,
+    tab.filename,
+    tab.pathname,
+    tab.markdown,
+    deepClone(getOptionsFromState(tab)),
+    defaultPath
+  )
+}
+
 export const useEditorStore = defineStore('editor', {
   state: (): EditorState => ({
     currentFile: null,
@@ -827,24 +846,12 @@ export const useEditorStore = defineStore('editor', {
     MOVE_FILE_TO(): void {
       if (!this.currentFile) return
       this.flushActiveEditor()
-      const projectStore = useProjectStore()
-      const { id, filename, pathname, markdown } = this.currentFile
-      const options = getOptionsFromState(this.currentFile)
-      const defaultPath = getRootFolderFromState(projectStore)
+      const { id, pathname } = this.currentFile
       if (!id) return
       if (!pathname) {
-        // if current file is a newly created file, just save it!
-        window.electron.ipcRenderer.send(
-          'mt::response-file-save',
-          id,
-          filename,
-          pathname,
-          markdown,
-          deepClone(options),
-          defaultPath
-        )
+        // A newly created file has nowhere to move to — saving it is the answer.
+        sendSaveForUntitledFile(this.currentFile, getRootFolderFromState(useProjectStore()))
       } else {
-        // if not, move to a new(maybe) folder
         window.electron.ipcRenderer.send('mt::response-file-move-to', { id, pathname })
       }
     },
@@ -864,22 +871,11 @@ export const useEditorStore = defineStore('editor', {
     RESPONSE_FOR_RENAME(): void {
       if (!this.currentFile) return
       this.flushActiveEditor()
-      const projectStore = useProjectStore()
-      const { id, filename, pathname, markdown } = this.currentFile
-      const options = getOptionsFromState(this.currentFile)
-      const defaultPath = getRootFolderFromState(projectStore)
+      const { id, pathname } = this.currentFile
       if (!id) return
       if (!pathname) {
-        // if current file is a newly created file, just save it!
-        window.electron.ipcRenderer.send(
-          'mt::response-file-save',
-          id,
-          filename,
-          pathname,
-          markdown,
-          deepClone(options),
-          defaultPath
-        )
+        // Same reasoning as MOVE_FILE_TO: an unsaved tab is saved, not renamed.
+        sendSaveForUntitledFile(this.currentFile, getRootFolderFromState(useProjectStore()))
       } else {
         bus.emit('rename')
       }
