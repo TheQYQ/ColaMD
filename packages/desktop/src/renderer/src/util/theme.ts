@@ -58,6 +58,84 @@ const getEmojiPickerPatch = (): string => {
     : ''
 }
 
+// One entry per built-in theme: the theme's CSS generator. This table used to
+// be a 33-case switch inside `addThemeStyle` (complexity 43 — the highest in
+// the package); the cases differed only in which generator they called, so the
+// whole thing is one lookup now. Adding a theme means adding a line here, and
+// `test/unit/specs/theme-style-injection.spec.ts` pins that every key really
+// produces CSS.
+export const BUILT_IN_THEME_CSS: Readonly<Record<string, () => string>> = {
+  light: () =>
+    ':root {\n  --link-color: var(--linkColor);\n  --blockquote-border-color: var(--blockquoteBorderColor);\n}',
+  dark,
+  'material-dark': materialDark,
+  ulysses,
+  graphite,
+  'one-dark': oneDark,
+  // New gogh themes - Dark
+  dracula,
+  nord,
+  'catppuccin-mocha': catppuccinMocha,
+  'gruvbox-dark': gruvboxDark,
+  'tokyo-night': tokyoNight,
+  'tokyo-night-storm': tokyoNightStorm,
+  'solarized-dark': solarizedDark,
+  'ayu-dark': ayuDark,
+  'ayu-mirage': ayuMirage,
+  'everforest-dark': everforestDark,
+  'rose-pine': rosePine,
+  'rose-pine-moon': rosePineMoon,
+  'monokai-pro': monokaiPro,
+  'synthwave-84': synthwave84,
+  'horizon-dark': horizonDark,
+  palenight,
+  'oxocarbon-dark': oxocarbonDark,
+  kanagawa,
+  nightfox,
+  cyberdream,
+  // New gogh themes - Light
+  'catppuccin-latte': catppuccinLatte,
+  'gruvbox-light': gruvboxLight,
+  'tokyo-night-light': tokyoNightLight,
+  'solarized-light': solarizedLight,
+  'ayu-light': ayuLight,
+  'everforest-light': everforestLight,
+  'rose-pine-dawn': rosePineDawn
+}
+
+// Installed `.colamd-theme` packages fall through the table above; they resolve
+// here so they follow the same body-class and CodeMirror-class paths as
+// built-ins. Returns whether the custom theme asked for dark chrome.
+const applyCustomTheme = (theme: string, styleEle: HTMLStyleElement): boolean => {
+  if (!isCustomTheme(theme)) return false
+  const manifest = getCustomTheme(theme)
+  if (!manifest) return false
+  styleEle.innerHTML = patchTheme(buildThemeCss(manifest))
+  return manifest.type === 'dark'
+}
+
+// Dark chrome: the body class drives the native-looking icons, and CodeMirror
+// needs one of its three skins to match the editor.
+const applyDarkChrome = (isDarkTheme: boolean, isCmOneDark: boolean, isCmRailscasts: boolean) => {
+  document.body.classList.remove('dark')
+  if (isDarkTheme) {
+    document.body.classList.add('dark')
+  }
+
+  const cm = document.querySelector('.CodeMirror')
+  if (!cm) return
+  cm.classList.remove('cm-s-default')
+  cm.classList.remove('cm-s-one-dark')
+  cm.classList.remove('cm-s-railscasts')
+  if (isCmOneDark) {
+    cm.classList.add('cm-s-one-dark')
+  } else if (isCmRailscasts) {
+    cm.classList.add('cm-s-railscasts')
+  } else {
+    cm.classList.add('cm-s-default')
+  }
+}
+
 export const addThemeStyle = (theme: string): void => {
   const isCmRailscasts = railscastsThemes.includes(theme)
   const isCmOneDark = oneDarkThemes.includes(theme)
@@ -69,147 +147,15 @@ export const addThemeStyle = (theme: string): void => {
     document.head.appendChild(themeStyleEle)
   }
 
-  switch (theme) {
-    case 'light':
-      themeStyleEle.innerHTML = patchTheme(
-        ':root {\n  --link-color: var(--linkColor);\n  --blockquote-border-color: var(--blockquoteBorderColor);\n}'
-      )
-      break
-    case 'dark':
-      themeStyleEle.innerHTML = patchTheme(dark())
-      break
-    case 'material-dark':
-      themeStyleEle.innerHTML = patchTheme(materialDark())
-      break
-    case 'ulysses':
-      themeStyleEle.innerHTML = patchTheme(ulysses())
-      break
-    case 'graphite':
-      themeStyleEle.innerHTML = patchTheme(graphite())
-      break
-    case 'one-dark':
-      themeStyleEle.innerHTML = patchTheme(oneDark())
-      break
-    // New gogh themes - Dark
-    case 'dracula':
-      themeStyleEle.innerHTML = patchTheme(dracula())
-      break
-    case 'nord':
-      themeStyleEle.innerHTML = patchTheme(nord())
-      break
-    case 'catppuccin-mocha':
-      themeStyleEle.innerHTML = patchTheme(catppuccinMocha())
-      break
-    case 'gruvbox-dark':
-      themeStyleEle.innerHTML = patchTheme(gruvboxDark())
-      break
-    case 'tokyo-night':
-      themeStyleEle.innerHTML = patchTheme(tokyoNight())
-      break
-    case 'tokyo-night-storm':
-      themeStyleEle.innerHTML = patchTheme(tokyoNightStorm())
-      break
-    case 'solarized-dark':
-      themeStyleEle.innerHTML = patchTheme(solarizedDark())
-      break
-    case 'ayu-dark':
-      themeStyleEle.innerHTML = patchTheme(ayuDark())
-      break
-    case 'ayu-mirage':
-      themeStyleEle.innerHTML = patchTheme(ayuMirage())
-      break
-    case 'everforest-dark':
-      themeStyleEle.innerHTML = patchTheme(everforestDark())
-      break
-    case 'rose-pine':
-      themeStyleEle.innerHTML = patchTheme(rosePine())
-      break
-    case 'rose-pine-moon':
-      themeStyleEle.innerHTML = patchTheme(rosePineMoon())
-      break
-    case 'monokai-pro':
-      themeStyleEle.innerHTML = patchTheme(monokaiPro())
-      break
-    case 'synthwave-84':
-      themeStyleEle.innerHTML = patchTheme(synthwave84())
-      break
-    case 'horizon-dark':
-      themeStyleEle.innerHTML = patchTheme(horizonDark())
-      break
-    case 'palenight':
-      themeStyleEle.innerHTML = patchTheme(palenight())
-      break
-    case 'oxocarbon-dark':
-      themeStyleEle.innerHTML = patchTheme(oxocarbonDark())
-      break
-    case 'kanagawa':
-      themeStyleEle.innerHTML = patchTheme(kanagawa())
-      break
-    case 'nightfox':
-      themeStyleEle.innerHTML = patchTheme(nightfox())
-      break
-    case 'cyberdream':
-      themeStyleEle.innerHTML = patchTheme(cyberdream())
-      break
-    // New gogh themes - Light
-    case 'catppuccin-latte':
-      themeStyleEle.innerHTML = patchTheme(catppuccinLatte())
-      break
-    case 'gruvbox-light':
-      themeStyleEle.innerHTML = patchTheme(gruvboxLight())
-      break
-    case 'tokyo-night-light':
-      themeStyleEle.innerHTML = patchTheme(tokyoNightLight())
-      break
-    case 'solarized-light':
-      themeStyleEle.innerHTML = patchTheme(solarizedLight())
-      break
-    case 'ayu-light':
-      themeStyleEle.innerHTML = patchTheme(ayuLight())
-      break
-    case 'everforest-light':
-      themeStyleEle.innerHTML = patchTheme(everforestLight())
-      break
-    case 'rose-pine-dawn':
-      themeStyleEle.innerHTML = patchTheme(rosePineDawn())
-      break
-    default:
-      break
+  const buildCss = BUILT_IN_THEME_CSS[theme]
+  if (buildCss) {
+    themeStyleEle.innerHTML = patchTheme(buildCss())
+  }
+  if (applyCustomTheme(theme, themeStyleEle)) {
+    isDarkTheme = true
   }
 
-  // Custom themes (installed via .colamd-theme packages) fall through the
-  // switch above. Resolve and apply them here so they follow the same
-  // body-class + CodeMirror-class paths as built-ins.
-  if (isCustomTheme(theme)) {
-    const manifest = getCustomTheme(theme)
-    if (manifest) {
-      themeStyleEle.innerHTML = patchTheme(buildThemeCss(manifest))
-      if (manifest.type === 'dark') {
-        isDarkTheme = true
-      }
-    }
-  }
-
-  // workaround: use dark icons
-  document.body.classList.remove('dark')
-  if (isDarkTheme) {
-    document.body.classList.add('dark')
-  }
-
-  // change CodeMirror theme
-  const cm = document.querySelector('.CodeMirror')
-  if (cm) {
-    cm.classList.remove('cm-s-default')
-    cm.classList.remove('cm-s-one-dark')
-    cm.classList.remove('cm-s-railscasts')
-    if (isCmOneDark) {
-      cm.classList.add('cm-s-one-dark')
-    } else if (isCmRailscasts) {
-      cm.classList.add('cm-s-railscasts')
-    } else {
-      cm.classList.add('cm-s-default')
-    }
-  }
+  applyDarkChrome(isDarkTheme, isCmOneDark, isCmRailscasts)
 }
 
 export const setEditorWidth = (value: string): void => {
