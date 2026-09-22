@@ -4,6 +4,7 @@ import { isOsx } from '../../config'
 import { addToDictionary } from '../../spellchecker'
 import { SEPARATOR } from './menuItems'
 import { t } from '../../i18n'
+import { typedSend } from '../../ipc/typedSend'
 
 /**
  * Build the spell checker menu depending on input.
@@ -26,7 +27,10 @@ export default (
       visible: !isOsx,
       click(_menuItem, targetWindow) {
         if (targetWindow) {
-          ;(targetWindow as BrowserWindow).webContents.send('mt::spelling-show-switch-language')
+          typedSend(
+            (targetWindow as BrowserWindow).webContents,
+            'mt::spelling-show-switch-language'
+          )
         }
       }
     })
@@ -55,7 +59,8 @@ export default (
           label: word,
           click(_menuItem, targetWindow) {
             if (targetWindow) {
-              ;(targetWindow as BrowserWindow).webContents.send(
+              typedSend(
+                (targetWindow as BrowserWindow).webContents,
                 'mt::spelling-replace-misspelling',
                 {
                   word: misspelledWord,

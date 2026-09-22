@@ -1,6 +1,7 @@
 import { ipcMain, type BrowserWindow, type Menu, type MenuItem } from 'electron'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
+import { typedSend } from '../../ipc/typedSend'
 
 type Win = BrowserWindow | null | undefined
 
@@ -9,19 +10,19 @@ const focusModeMenuItemId = 'focusModeMenuItem'
 
 const toggleTypeMode = (win: Win, type: string): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::toggle-view-mode-entry', type)
+    typedSend(win.webContents, 'mt::toggle-view-mode-entry', type)
   }
 }
 
 const setLayout = (win: Win, type: string, value: unknown): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::set-view-layout', { [type]: value })
+    typedSend(win.webContents, 'mt::set-view-layout', { [type]: value })
   }
 }
 
 const toggleLayout = (win: Win, type: string): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::toggle-view-layout-entry', type)
+    typedSend(win.webContents, 'mt::toggle-view-layout-entry', type)
   }
 }
 
@@ -39,7 +40,7 @@ export const debugReloadWindow = (win: Win): void => {
 
 export const showCommandPalette = (win: Win): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::show-command-palette')
+    typedSend(win.webContents, 'mt::show-command-palette')
   }
 }
 
@@ -73,7 +74,7 @@ export const toggleTypewriterMode = (win: Win): void => {
 
 export const reloadImageCache = (win: Win): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::invalidate-image-cache')
+    typedSend(win.webContents, 'mt::invalidate-image-cache')
   }
 }
 

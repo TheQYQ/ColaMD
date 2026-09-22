@@ -28,6 +28,7 @@ import type Accessor from './accessor'
 import type WindowManager from './windowManager'
 import { typedHandle } from '../ipc/typedHandle'
 import { typedOn } from '../ipc/typedOn'
+import { typedSend } from '../ipc/typedSend'
 
 interface CliArgs {
   _: string[]
@@ -687,7 +688,7 @@ class App {
     if (settingWins.length >= 1) {
       // A setting window is already created
       const browserSettingWindow = settingWins[0].win.browserWindow!
-      browserSettingWindow.webContents.send('settings::change-tab', category)
+      typedSend(browserSettingWindow.webContents, 'settings::change-tab', category)
       if (isLinux) {
         browserSettingWindow.focus()
       } else {
@@ -737,7 +738,7 @@ class App {
           } catch (writeErr) {
             log.error(writeErr)
           }
-          win.webContents.send('mt::screenshot-captured', savedPath)
+          typedSend(win.webContents, 'mt::screenshot-captured', savedPath)
         })
       } else {
         // TODO: Do nothing, maybe we'll add screenCapture later on Linux and Windows.
@@ -859,7 +860,7 @@ class App {
       if (!win) return
       const { keybindings } = this._accessor
       // Convert map to object
-      win.webContents.send('mt::keybindings-response', Object.fromEntries(keybindings.keys))
+      typedSend(win.webContents, 'mt::keybindings-response', Object.fromEntries(keybindings.keys))
     })
 
     typedHandle('mt::keybinding-get-pref-keybindings', () => {
@@ -880,7 +881,7 @@ class App {
       menu.updateKeybindings()
       const keybindingMap = Object.fromEntries(keybindings.keys)
       for (const win of editorWindows) {
-        win.webContents.send('mt::keybindings-response', keybindingMap)
+        typedSend(win.webContents, 'mt::keybindings-response', keybindingMap)
       }
 
       return saved

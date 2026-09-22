@@ -4,6 +4,7 @@ import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
 import { isOsx } from '../../config'
 import { typedOn } from '../../ipc/typedOn'
+import { typedSend } from '../../ipc/typedSend'
 
 let runningUpdate = false
 let win: BrowserWindow | null = null
@@ -15,7 +16,8 @@ autoUpdater.on('error', (error: Error) => {
     // Preserve the JS behavior: it tolerated `null` here; the typed event
     // shape doesn't, but the same defensive code below stays in place.
     const err = error as Error | null
-    win.webContents.send(
+    typedSend(
+      win.webContents,
       'mt::UPDATE_ERROR',
       err === null ? 'Error: unknown' : (err.message || err).toString()
     )
@@ -24,7 +26,8 @@ autoUpdater.on('error', (error: Error) => {
 
 autoUpdater.on('update-available', (_info) => {
   if (win) {
-    win.webContents.send(
+    typedSend(
+      win.webContents,
       'mt::UPDATE_AVAILABLE',
       'Found an update, do you want download and install now?'
     )
@@ -34,7 +37,7 @@ autoUpdater.on('update-available', (_info) => {
 
 autoUpdater.on('update-not-available', (_info) => {
   if (win) {
-    win.webContents.send('mt::UPDATE_NOT_AVAILABLE', 'Current version is up-to-date.')
+    typedSend(win.webContents, 'mt::UPDATE_NOT_AVAILABLE', 'Current version is up-to-date.')
   }
   runningUpdate = false
 })
@@ -44,7 +47,8 @@ autoUpdater.on('update-downloaded', (_event) => {
   // not just force close the application.
 
   if (win) {
-    win.webContents.send(
+    typedSend(
+      win.webContents,
       'mt::UPDATE_DOWNLOADED',
       'Update downloaded, application will be quit for update...'
     )

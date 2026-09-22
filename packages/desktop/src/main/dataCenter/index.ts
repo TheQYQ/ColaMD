@@ -9,6 +9,7 @@ import { IMAGE_EXTENSIONS } from 'common/filesystem/paths'
 import { TypedEmitter } from '@shared/types/typedEmitter'
 import { typedHandle } from '../ipc/typedHandle'
 import { typedOn } from '../ipc/typedOn'
+import { typedSend } from '../ipc/typedSend'
 
 const DATA_CENTER_NAME = 'dataCenter'
 
@@ -143,7 +144,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const userData = await this.getAll()
-      win.webContents.send('mt::user-preference', userData)
+      typedSend(win.webContents, 'mt::user-preference', userData)
     })
 
     // The caller may ask for the picker but may not supply the result: this

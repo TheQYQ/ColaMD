@@ -1,23 +1,24 @@
 import type { BrowserWindow } from 'electron'
 import { COMMANDS, type CommandManager, type CommandCallback } from './index'
+import { typedSend } from '../ipc/typedSend'
 
 type MaybeWin = BrowserWindow | null | undefined
 
 const switchToLeftTab = (win: MaybeWin): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::tabs-cycle-left')
+    typedSend(win.webContents, 'mt::tabs-cycle-left')
   }
 }
 
 const switchToRightTab = (win: MaybeWin): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::tabs-cycle-right')
+    typedSend(win.webContents, 'mt::tabs-cycle-right')
   }
 }
 
 const switchTabByIndex = (win: MaybeWin, index: number): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::switch-tab-by-index', index)
+    typedSend(win.webContents, 'mt::switch-tab-by-index', index)
   }
 }
 
