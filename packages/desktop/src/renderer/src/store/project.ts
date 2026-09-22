@@ -2,6 +2,7 @@ import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { resortTree } from './treeCtrl'
 import { processTreeEvent } from './treeEvents'
+import { registerSidebarPasteHandler } from './sidebarPaste'
 import { usePreferencesStore } from './preferences'
 import bus from '../bus'
 import { create, paste, rename, type FileCreateType, type PasteOptions } from '../util/fileSystem'
@@ -223,57 +224,7 @@ export const useProjectStore = defineStore('project', () => {
       const { pathname: src } = activeItem.value
       clipboard.value = { type: String(type), src }
     })
-    bus.on('SIDEBAR::paste', async () => {
-      const cb = clipboard.value
-      const { pathname, isDirectory } = activeItem.value
-      const dirname = isDirectory ? pathname : window.path.dirname(pathname)
-      if (cb && cb.src) {
-        let dest = dirname + PATH_SEPARATOR + window.path.basename(cb.src)
-
-        if (window.path.normalize(cb.src) === window.path.normalize(dest)) {
-          if (cb.type === 'cut') {
-            notice.notify({
-              title: 'Paste Forbidden',
-              type: 'warning',
-              message: 'Source and destination must not be the same.'
-            })
-            return
-          }
-          // Copy in same folder: generate unique name (e.g. "file (copy).md", "file (copy 2).md")
-          const ext = window.path.extname(cb.src)
-          const base = window.path.basename(cb.src, ext)
-          let suffix = 1
-          const MAX_COPIES = 99
-          dest = dirname + PATH_SEPARATOR + base + ' (copy)' + ext
-          while (await window.fileUtils.pathExists(dest)) {
-            suffix++
-            if (suffix > MAX_COPIES) {
-              notice.notify({
-                title: 'Too many copies',
-                type: 'warning',
-                message: `Maximum of ${MAX_COPIES} copies reached. Please clean up first.`
-              })
-              return
-            }
-            dest = dirname + PATH_SEPARATOR + base + ` (copy ${suffix})` + ext
-          }
-        }
-
-        cb.dest = dest
-
-        paste(cb as PasteOptions)
-          .then(() => {
-            clipboard.value = null
-          })
-          .catch((err) => {
-            notice.notify({
-              title: 'Error while pasting',
-              type: 'error',
-              message: err instanceof Error ? err.message : String(err)
-            })
-          })
-      }
-    })
+    registerSidebarPasteHandler({ activeItem, clipboard })
     bus.on('SIDEBAR::rename', () => {
       const { pathname } = activeItem.value
       renameCache.value = pathname
