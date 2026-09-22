@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { createLazyMarkdownPipeline, type PipelineEngine } from '@/components/editorWithTabs/lazyMarkdownPipeline'
+import {
+  createLazyMarkdownPipeline,
+  type PipelineEngine
+} from '@/components/editorWithTabs/lazyMarkdownPipeline'
 
 // A loose record view of a dispatched payload (tests assert via toMatchObject).
 type Captured = { [key: string]: unknown }
@@ -140,7 +143,12 @@ describe('lazyMarkdownPipeline — flush-on-read commits exactly once', () => {
     pipeline.onJsonChange(USER_EDIT)
     pipeline.flushActive()
 
-    expect(engine.calls.flush).toBe(1)
+    // Two flushes, not one: `flushActive` applies the queue, and the commit it
+    // triggers flushes again before serializing -- an engine that has nothing
+    // queued is a no-op, while a commit that skips the flush would serialize the
+    // pre-op document (see lazy-markdown-flush-before-commit.spec.ts). The
+    // property this test owns -- exactly one serialization per read -- still holds.
+    expect(engine.calls.flush).toBe(2)
     expect(engine.calls.serialize).toBe(1)
     expect(pipeline.hasPendingCommit).toBe(false)
 
