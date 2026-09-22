@@ -31,7 +31,7 @@ const buildMenu = (template: MenuTemplate | undefined, windowId: number): Menu =
         click: () => {
           const sender = popups.get(windowId)?.sender
           try {
-            sender?.send('mt::menu::click', { windowId, id })
+            typedSend(sender, 'mt::menu::click', { windowId, id })
           } catch {
             /* sender destroyed */
           }
