@@ -287,15 +287,19 @@ export default [
   // 33-case theme switch, 43) as the binder. Turning that switch into the
   // `BUILT_IN_THEME_CSS` table cleared it, and re-probing the package at the
   // floor turned the worst remaining function into `util/docx/document.ts:346`
-  // at 36 — so the ceiling comes down to just above that. 277 still binds on the
-  // `store/project.ts` setup.
+  // at 36 — so the ceiling comes down to just above that.
+  //
+  // 255: the length ceiling moved as well. It bound on `store/project.ts`'s setup
+  // at 277 until the directory-watch reducer came out of it into
+  // `store/treeEvents.ts`, leaving that setup at 250; runners-up are 242 and 202
+  // (`useEngineOptionSync.ts`), so any further cut has to clear those.
   {
     files: ['packages/desktop/src/**/*.ts', 'packages/desktop/src/**/*.vue'],
     rules: {
       complexity: ['warn', 37],
       'max-lines-per-function': [
         'warn',
-        { max: 277, skipBlankLines: true, skipComments: true }
+        { max: 255, skipBlankLines: true, skipComments: true }
       ]
     }
   }

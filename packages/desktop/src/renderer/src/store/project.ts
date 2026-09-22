@@ -1,19 +1,12 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import {
-  addFile,
-  unlinkFile,
-  addDirectory,
-  unlinkDirectory,
-  resortTree,
-  updateFileMtime
-} from './treeCtrl'
+import { resortTree } from './treeCtrl'
+import { processTreeEvent } from './treeEvents'
 import { usePreferencesStore } from './preferences'
 import bus from '../bus'
 import { create, paste, rename, type FileCreateType, type PasteOptions } from '../util/fileSystem'
 import { PATH_SEPARATOR } from '../config'
 import notice from '../services/notification'
-import { getFileStateFromData } from './help'
 import { useLayoutStore } from './layout'
 import { useEditorStore } from './editor'
 import { debouncedSendBufferedState } from './bufferedState'
@@ -179,48 +172,21 @@ export const useProjectStore = defineStore('project', () => {
 
   function _processTreeEvent(type: string, change: TreeChange): void {
     const editorStore = useEditorStore()
-    switch (type) {
-      case 'add': {
-        const { pathname, data, isMarkdown } = change
-        addFile(
-          projectTree.value!,
-          change as Parameters<typeof addFile>[1],
-          String(preferencesStore.fileSortBy),
-          String(preferencesStore.fileSortOrder)
-        )
-        if (isMarkdown && newFileNameCache.value && pathname === newFileNameCache.value) {
-          const fileState = getFileStateFromData(data as Record<string, unknown>)
-          editorStore.UPDATE_CURRENT_FILE(fileState)
+    processTreeEvent(
+      {
+        tree: projectTree.value!,
+        fileSortBy: String(preferencesStore.fileSortBy),
+        fileSortOrder: String(preferencesStore.fileSortOrder),
+        pendingNewFileName: newFileNameCache.value,
+        adoptCreatedFile: (fileState) => editorStore.UPDATE_CURRENT_FILE(fileState),
+        forgetPendingNewFileName: () => {
           newFileNameCache.value = ''
-        }
-        break
-      }
-      case 'unlink':
-        unlinkFile(projectTree.value!, change)
-        editorStore.SET_SAVE_STATUS_WHEN_REMOVE(change)
-        break
-      case 'addDir':
-        addDirectory(projectTree.value!, change)
-        break
-      case 'unlinkDir':
-        unlinkDirectory(projectTree.value!, change)
-        break
-      case 'change':
-        if (change?.mtimeMs !== undefined) {
-          updateFileMtime(
-            projectTree.value!,
-            change as Parameters<typeof updateFileMtime>[1],
-            String(preferencesStore.fileSortBy),
-            String(preferencesStore.fileSortOrder)
-          )
-        }
-        break
-      default:
-        if (window.electron?.process?.env?.NODE_ENV === 'development') {
-          console.log(`Unknown directory watch type: "${type}"`)
-        }
-        break
-    }
+        },
+        fileRemoved: (removed) => editorStore.SET_SAVE_STATUS_WHEN_REMOVE(removed)
+      },
+      type,
+      change
+    )
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
