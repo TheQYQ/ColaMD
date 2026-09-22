@@ -71,7 +71,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 其后又逐个合入两条：`chore/desktop-size-gates`（`be4e173` O21 + `ca8eaed` O24）、`cleanup/dead-symbols`（`09e1a2b` + `80cc31b` O13、O20 复核）。合入后在 `develop` 上复跑：`pnpm check` 退出 0（149 warnings / 0 errors）、`pnpm knip`（依赖）退出 0、`pnpm knip:full` 只剩 1 项、desktop 单测 71 文件 904 通过 + 1 跳过。
 
-遗留事项：**分支仍未 push**（远端还没有这些提交）。等实机确认的：O17 侧栏新建行、O7① 设置页图片目录那行（改成了只读文本）、O7② 新改的"CLI 脚本"那行（同样从输入框变成只读文本 + Open 按钮）。原先"等拍板"的三条已各自有了结论：O26 见本条的拍板记录（布局归 prettier，`--check` 不做门禁）、O19 的 6 处默认值以 `static/preference.json` 为准并已对齐（见 O19）、O7② 的读通道域与载荷归属已落地（见 O7②）。仍然敞着的是 O7② 的一条收尾（布尔探测通道要不要收域，需要先有授权故事）与 O12 第 6 步 part B 的引擎装配段。O6 与 O10 经复核分别降级与撤下，理由见各自条目；O20 移交 O13 的死代码已随 `cleanup/dead-symbols` 清完（见 O13 的完成状态）。
+遗留事项：**`develop` 已 push 到远端**（2026-09-22，`9449f8f..cfb8678`，168 个提交，fast-forward；`git ls-remote` 核对过远端 `refs/heads/develop` 与本地 HEAD 同一个 sha）。**`main` 没动**（本地 `main` 比 `origin/main` 落后 72，develop→main 是另一件事、未被要求），那些 `refactor/*`、`fix/*`、`docs/*` 分支引用本身也没推上去——内容已随 `--no-ff` 合并进 `develop` 的历史。等实机确认的：O17 侧栏新建行、O7① 设置页图片目录那行（改成了只读文本）、O7② 新改的"CLI 脚本"那行（同样从输入框变成只读文本 + Open 按钮）。原先"等拍板"的三条已各自有了结论：O26 见本条的拍板记录（布局归 prettier，`--check` 不做门禁）、O19 的 6 处默认值以 `static/preference.json` 为准并已对齐（见 O19）、O7② 的读通道域与载荷归属已落地（见 O7②）。仍然敞着的是 O7② 的一条收尾（布尔探测通道要不要收域，需要先有授权故事）与 O12 第 6 步 part B 的引擎装配段。O6 与 O10 经复核分别降级与撤下，理由见各自条目；O20 移交 O13 的死代码已随 `cleanup/dead-symbols` 清完（见 O13 的完成状态）。
 
 **合并顺序（用 `git merge-tree` 对 12 个分支两两预演，非破坏性）**：5 对会冲突，其余两两可自动合。
 
