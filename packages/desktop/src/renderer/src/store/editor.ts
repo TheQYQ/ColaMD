@@ -12,12 +12,10 @@ import {
   setPathname,
   tabSaveFailure
 } from './fileSave'
-import listToTree, { type ListItem, type TreeNode } from '../util/listToTree'
+import { type ListItem, type TreeNode } from '../util/listToTree'
 import { getOptionsFromState, createBufferedEditorState, getRootFolderFromState } from './help'
 import notice from '../services/notification'
 import {
-  createApplicationMenuState,
-  createSelectionFormatState,
   type ApplicationMenuState,
   type SelectionChange,
   type SelectionFormat
@@ -48,6 +46,13 @@ import {
   TrailingNewlineCommand
 } from '../commands'
 import { defineStore } from 'pinia'
+import {
+  maybeRefreshToc,
+  persistCursor,
+  selectionChange,
+  selectionFormats,
+  updateTocState
+} from './selectionState'
 import { usePreferencesStore } from './preferences'
 import { useProjectStore } from './project'
 import { t } from '../i18n'
@@ -104,8 +109,6 @@ type TocTreeNode = TreeNode<TocItem>
 // dropped, and the sidebar TOC never refreshed even though the document itself
 // had. (Verified: getTOC() returned content "C2"/githubSlug "c2" while the
 // signature still read `2:mu-7`.)
-const tocSignature = (toc: TocItem[]): string =>
-  toc.map((item) => `${item.lvl ?? ''}:${item.githubSlug ?? ''}:${item.content ?? ''}`).join('|')
 
 interface PushTabNotificationPayload {
   tabId: string
@@ -681,8 +684,7 @@ export const useEditorStore = defineStore('editor', {
      * @param toc Flat list of headings returned by `muya.getTOC()`.
      */
     UPDATE_TOC(toc: TocItem[]): void {
-      this.listToc = toc ?? []
-      this.toc = listToTree<TocItem>(toc ?? [])
+      updateTocState(this, toc)
     },
 
     /**
@@ -693,10 +695,7 @@ export const useEditorStore = defineStore('editor', {
      * screen, and only when the signature actually moved.
      */
     refreshTocIfChanged(id: string, toc: TocItem[] | null | undefined): void {
-      if (id === this.currentFile?.id && toc && tocSignature(toc) !== tocSignature(this.listToc)) {
-        this.listToc = toc
-        this.toc = listToTree<TocItem>(toc)
-      }
+      maybeRefreshToc(this, id, toc)
     },
 
     // Content change from realtime preview editor and source code editor
@@ -717,20 +716,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     SELECTION_CHANGE(changes: SelectionChange): void {
-      const { start, end } = changes
-      if (this.currentFile && start.key === end.key && start.block?.text) {
-        const value = start.block.text.substring(start.offset, end.offset)
-        this.currentFile.searchMatches = {
-          matches: [],
-          index: -1,
-          value
-        }
-      }
-
-      const menuState = createApplicationMenuState(changes)
-      this.selectionMenuState = menuState
-      const { windowId } = window.colamd?.env ?? { windowId: -1 }
-      window.electron.ipcRenderer.send('mt::editor-selection-changed', windowId, menuState)
+      selectionChange(this, changes)
     },
 
     // Persist the caret for a tab without the heavy content-change pipeline. A
@@ -741,18 +727,11 @@ export const useEditorStore = defineStore('editor', {
     // it only stores the serialized caret, skipping markdown/blocks/TOC re-derivation
     // and the save/dirty bookkeeping LISTEN_FOR_CONTENT_CHANGE performs.
     PERSIST_CURSOR(id: string, cursor: unknown): void {
-      if (!id || !cursor) return
-      const index = this.tabIdToIndex[id]
-      if (index == null) return
-      const tab = this.tabs[index]
-      if (tab) tab.cursor = cursor
+      persistCursor(this, id, cursor)
     },
 
     SELECTION_FORMATS(formats: SelectionFormat[]): void {
-      const formatState = createSelectionFormatState(formats)
-      this.selectionFormatState = formatState
-      const { windowId } = window.colamd?.env ?? { windowId: -1 }
-      window.electron.ipcRenderer.send('mt::update-format-menu', windowId, formatState)
+      selectionFormats(this, formats)
     },
 
     EXPORT({ type, content, bytes, markdown, pageOptions }: ExportPayload): void {
