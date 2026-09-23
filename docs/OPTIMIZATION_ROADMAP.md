@@ -71,7 +71,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 其后又逐个合入两条：`chore/desktop-size-gates`（`be4e173` O21 + `ca8eaed` O24）、`cleanup/dead-symbols`（`09e1a2b` + `80cc31b` O13、O20 复核）。合入后在 `develop` 上复跑：`pnpm check` 退出 0（149 warnings / 0 errors）、`pnpm knip`（依赖）退出 0、`pnpm knip:full` 只剩 1 项、desktop 单测 71 文件 904 通过 + 1 跳过。
 
-遗留事项（2026-09-23 重取；这一段以前每合一批就要改一次，下面的日期就是它逐次的状态）：**`develop` 已 push 到远端**（2026-09-22 首次，168 个提交 fast-forward，之后每批都跟推、一律用 `gh api …/branches/develop` 读远端 sha 逐字符核对）。**`develop`→`main` 的 PR #37 已于 2026-09-23 合并**（merge commit `7a63394`，head `ada148d` 上 19 条门禁全 pass，含 mac E2E 腿首次全绿；合并后 `compare/develop...main` = `files=0`，两分支内容逐字节相同）。那些 `refactor/*`、`fix/*`、`docs/*` 分支引用本身没推上去——内容已随 `--no-ff` 合并进 `develop` 的历史。等实机确认的：O17 侧栏新建行、O7① 设置页图片目录那行（改成了只读文本）、O7② 新改的"CLI 脚本"那行（同样从输入框变成只读文本 + Open 按钮）。原先"等拍板"的三条已各自有了结论：O26 见本条的拍板记录（布局归 prettier，`--check` 不做门禁）、O19 的 6 处默认值以 `static/preference.json` 为准并已对齐（见 O19）、O7② 的读通道域与载荷归属已落地（见 O7②）；**曾记在这里的"布尔探测通道要不要收域"也已有结论——记成不收域的决定，残余风险是路径存在性 oracle（见 O7② 的封口条）**。真正还敞着的只剩两件：**O12 第 6 步 part B 的引擎装配段**（`editor.vue` 的插件注册 / `new Muya(...)` / 事件接线，五至八刀已把这批里的 store 侧清空，`store/project.ts` setup 277→167、长度门 277→173，见 O12 的刀次记录）和**两条只能当场取证的观察项**（`electron.launch` 第五次超时、`parity-pg1-menu-state` 的一次性红，见 O12/§4.1 下方）。O6 与 O10 经复核分别降级与撤下，理由见各自条目；O20 移交 O13 的死代码已随 `cleanup/dead-symbols` 清完（见 O13 的完成状态）。
+遗留事项（2026-09-23 重取；这一段以前每合一批就要改一次，下面的日期就是它逐次的状态）：**`develop` 已 push 到远端**（2026-09-22 首次，168 个提交 fast-forward，之后每批都跟推、一律用 `gh api …/branches/develop` 读远端 sha 逐字符核对）。**`develop`→`main` 的 PR #37 已于 2026-09-23 合并**（merge commit `7a63394`，head `ada148d` 上 19 条门禁全 pass，含 mac E2E 腿首次全绿；合并后 `compare/develop...main` = `files=0`，两分支内容逐字节相同）。那些 `refactor/*`、`fix/*`、`docs/*` 分支引用本身没推上去——内容已随 `--no-ff` 合并进 `develop` 的历史。实机确认状态：**O17 侧栏新建行与 O7① 设置页图片目录那行已由用户于 2026-09-23 跑 `pnpm dev` 看过并通过**；只剩 O7② 新改的"CLI 脚本"那行（同样从输入框变成只读文本 + Open 按钮）还没看。原先"等拍板"的三条已各自有了结论：O26 见本条的拍板记录（布局归 prettier，`--check` 不做门禁）、O19 的 6 处默认值以 `static/preference.json` 为准并已对齐（见 O19）、O7② 的读通道域与载荷归属已落地（见 O7②）；**曾记在这里的"布尔探测通道要不要收域"也已有结论——记成不收域的决定，残余风险是路径存在性 oracle（见 O7② 的封口条）**。真正还敞着的只剩两件：**O12 第 6 步 part B 的引擎装配段**（`editor.vue` 的插件注册 / `new Muya(...)` / 事件接线，五至八刀已把这批里的 store 侧清空，`store/project.ts` setup 277→167、长度门 277→173，见 O12 的刀次记录）和**两条只能当场取证的观察项**（`electron.launch` 第五次超时、`parity-pg1-menu-state` 的一次性红，见 O12/§4.1 下方）。O6 与 O10 经复核分别降级与撤下，理由见各自条目；O20 移交 O13 的死代码已随 `cleanup/dead-symbols` 清完（见 O13 的完成状态）。
 
 **合并顺序（用 `git merge-tree` 对 12 个分支两两预演，非破坏性）**：5 对会冲突，其余两两可自动合。
 
@@ -135,7 +135,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 `security/pathScope.ts:28-31` 明示读通道不设限；`:36-42` 曾把"`imageFolderPath` 可由渲染端经 `mt::set-user-preference` 设置"记为**已接受的残余风险**——即被攻破的渲染进程能自己扩大可写范围。
 
 - ①（已实施）：这个键此前**有两个家**——dataCenter（对话框写、有 schema）与 preferences（渲染端可写、**没有任何 schema 声明**），而 `addAllowedRoot` 读的正是可伪造的那一份。现在收敛为单一家：`mt::set-user-preference` 丢弃该键并告警，选择器忽略调用方传来的路径（只能"要一次对话框"），授权跟随 user-data 广播，`IUserPreferences` 不再声明它，设置页那行输入框改成只读文本（可写但必被主进程丢弃的输入框比没有输入框更糟）。
-- ①的验收（已达成，含"先红后绿"）：把两处防护临时还原并重新构建后，新增的 E2E 用例**确实失败**（伪造的 `imageFolderPath` 让越界写盘成功）；换回本分支实现后 `security-path-scope.spec.ts` 7 例全绿；另有 3 条单测钉住两处拒收与"取消对话框保持原值"。**待实机看**：设置页图片目录那行的观感（与 O17 同一类：lint/typecheck/单测证明不了几何）。
+- ①的验收（已达成，含"先红后绿"）：把两处防护临时还原并重新构建后，新增的 E2E 用例**确实失败**（伪造的 `imageFolderPath` 让越界写盘成功）；换回本分支实现后 `security-path-scope.spec.ts` 7 例全绿；另有 3 条单测钉住两处拒收与"取消对话框保持原值"。**实机已确认（2026-09-23，用户跑 `pnpm dev` 自查）**：设置页图片目录那行的观感通过（这一条原本是"待实机看"：lint/typecheck/单测证明不了几何）。
 - **② 的第一步已落地**（分支 `security/picker-grants-and-read-scope`，两件事）：
   - **选择器结果即授权**：`src/main/ipc/dialog.ts` 的 `mt::dialog::open`/`mt::dialog::save` 现在对每条返回路径按 `isDirectory` 授目录本身、否则授其父目录（与 `menu/actions/file.ts:878-881` 的 `openFileOrFolder` 同形，取消对话框不授权）。新增 `test/unit/specs/dialog-picker-grants-root.spec.ts` 5 例钉住这四种形状，变异验证：把 `grantPickedPaths` 改成直接 return，4 例红、"取消不授权"那例仍绿。
   - **`mt::uploader::upload` 的载荷归属**（这条在核对时升级为信任边界问题）：该通道的 `req.preferences.cliScript` 会直接进 `execFile(cliScript, [localPath])`（旧 `uploader.ts:111-122`），`execFile` 挡住的是 shell 元字符而不是"任意程序"，也就是说**任何能走到这条通道的渲染端 bug 等于主进程代码执行**——正是 `pathScope.ts:7-12` 声明要防的那一类。现在：主进程在调用时从自家存储读 `currentUploader`（dataCenter）与 `cliScript`（preferences），脚本必须是存在的文件才执行，载荷形状由 `shared/types/ipc.ts` 的契约拥有（该通道不再是裸 `ipcMain.handle`，O8 的两处豁免少一处）。与 ① 同形的是"谁来赋值"：`mt::set-user-preference` 现在丢弃 `cliScript`，只有 `mt::ask-for-modify-cli-script` 打开的原生文件选择器能写它，设置页那行因此从可输入 `el-input` 改成只读文本 + Open 按钮（复用既有 `preferences.image.folderSetting.open` 文案，未新增 locale 键），该行原有的"是否可执行"检查保持不动。渲染端载荷收敛为 `{ pathname, image, isPath }`，`upload-image.spec.ts` 改成钉"任何键名下都不许有选码用的字段越过边界"。
@@ -369,12 +369,12 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 ### E 组·梯队复核新增（来自 §7）
 
-**O17 · 新建文件行的缩进与兄弟行不一致** — 成本 XS，影响 低（视觉）— **代码已完成 `50bc907`（第一批），仍等实机看一眼**
+**O17 · 新建文件行的缩进与兄弟行不一致** — 成本 XS，影响 低（视觉）— **代码已完成 `50bc907`（第一批），实机已确认（2026-09-23）**
 原判"45px 是已删除的侧栏图标条残留"——**误判**。真实成因：`.folder-name`（`treeFolder.vue:6`）与 `.side-bar-file`（`treeFile.vue:6`）都用 `padding-left: depth * 6 + 10` 缩进，唯独新建输入框自己用 `margin-left: depth * 5 + 15`——**属性和公式都不同**，于是必须再配一个魔数宽度去吸收 margin：`tree.vue` 用 `calc(100% - 45px)`（该处 `const depth = 0`，实际只吃 15px），`treeFolder.vue` 用 `70%`。
 
 - 已排除的假阳性：`services/notification/index.css:152` 的 `calc(100% - 45px)` 与侧栏无关，属于 `.mt-confirm` 对话框，45px 是紧邻 `.confirm` 按钮区的预留。
 - 修法拉齐到行约定：缩进走 `padding-left: depth * 6 + 10`，宽度 `100%` + `box-sizing: border-box`。`.rename` 输入框本就在带 padding 的行内，未动。
-- 验收：`grep -rn "45px" src/renderer` 只剩 notification 与 `layout.ts:57` 注释；`depth * 5 + 15` 全仓归零。**像素效果仍需实机看**（多层 + 折叠文件夹里触发"新建文件"，左边缘与同层文件行对齐、右侧不溢出）——lint/typecheck/单测只能证明没改坏，测不了几何。
+- 验收：`grep -rn "45px" src/renderer` 只剩 notification 与 `layout.ts:57` 注释；`depth * 5 + 15` 全仓归零。**像素效果已由用户实机确认通过（2026-09-23，`pnpm dev`）**——看的就是原先列的那三项：多层 + 折叠文件夹里触发"新建文件"、左边缘与同层文件行对齐、右侧不溢出。这一类几何 lint/typecheck/单测测不了，只能这样落一次。
 
 **O18 · 最近文档打不开时静默失败** — 成本 S，影响 中 — **已完成 `7bbedb5`（分支 `fix/open-failure-visible`）**
 
