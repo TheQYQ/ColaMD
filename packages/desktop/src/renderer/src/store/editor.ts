@@ -1,5 +1,5 @@
 import bus, { listenBoth } from '../bus'
-import { getUniqueId, deepClone } from '../util'
+import { deepClone } from '../util'
 import { byteLengthUtf8 } from '../util/byteLengthUtf8'
 import {
   moveFileTo,
@@ -66,11 +66,8 @@ import {
   closeUnsavedTab,
   forceCloseTab
 } from './tabClose'
-import {
-  isImageUnreferenced,
-  resolveCleanupCandidate,
-  type CleanupCandidate
-} from '../util/imageCleanup'
+import { type CleanupCandidate } from '../util/imageCleanup'
+import { askForImageAutoPath, cleanupUnreferencedImage, imageDeleted } from './imageCleanupActions'
 import type { FormatLinkPayload, IpcMainEventChannels, VersionSnapshot } from '@shared/types/ipc'
 import type {
   BootstrapEditorConfig,
@@ -153,12 +150,6 @@ export interface EditorState {
   selectionMenuState: ApplicationMenuState | null
   selectionFormatState: Record<string, boolean>
 }
-
-// Pending unreferenced-image cleanup checks, keyed by absolute path. The
-// delay gives undo (or a cut followed by an immediate paste-back) a window to
-// restore the reference before the file is unlinked.
-const imageCleanupTimers = new Map<string, ReturnType<typeof setTimeout>>()
-const IMAGE_CLEANUP_DELAY_MS = 5000
 
 export const useEditorStore = defineStore('editor', {
   state: (): EditorState => ({
@@ -380,35 +371,8 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
-    // image path auto complement
     ASK_FOR_IMAGE_AUTO_PATH(src: string): Promise<string[]> {
-      if (!this.currentFile) return Promise.resolve([])
-      const { pathname } = this.currentFile
-      if (pathname) {
-        let rs: (value: string[]) => void = () => {}
-        const promise = new Promise<string[]>((resolve) => {
-          rs = resolve
-        })
-        const id = getUniqueId()
-        // Dynamic IPC channel — not part of the static IpcMainEventChannels contract.
-        ;(
-          window.electron.ipcRenderer.once as (
-            channel: string,
-            listener: (event: unknown, files: string[]) => void
-          ) => void
-        )(`mt::response-of-image-path-${id}`, (_: unknown, files: string[]) => {
-          rs(files)
-        })
-        window.electron.ipcRenderer.send('mt::ask-for-image-auto-path', {
-          pathname,
-          src,
-          id,
-          currentFile: deepClone(this.currentFile)
-        })
-        return promise
-      } else {
-        return Promise.resolve([])
-      }
+      return askForImageAutoPath(this, src)
     },
 
     SEARCH(value: IFileState['searchMatches']): void {
@@ -416,62 +380,12 @@ export const useEditorStore = defineStore('editor', {
       this.currentFile.searchMatches = deepClone(value) // deep clone to trigger state changes
     },
 
-    // IMG.2: the engine removed the last markdown reference to an image.
-    // Schedule a debounced cleanup — the reference check re-runs at fire time
-    // so an undo restores cleanliness, and the file is only unlinked when it
-    // lives inside the allowed path domain and no open tab references it.
-    IMAGE_DELETED({ src }: { src: string }): void {
-      const preferencesStore = usePreferencesStore()
-      if (!preferencesStore.deleteUnreferencedImages) return
-      const tab = this.currentFile
-      if (!tab?.pathname) return
-
-      const documentDir = window.path.dirname(tab.pathname)
-      const candidate = resolveCleanupCandidate(
-        src,
-        documentDir,
-        preferencesStore.imageFolderPath,
-        {
-          path: window.path,
-          isChildOfDirectory: window.fileUtils.isChildOfDirectory
-        }
-      )
-      if (!candidate) return
-
-      const existing = imageCleanupTimers.get(candidate.absolutePath)
-      if (existing) clearTimeout(existing)
-      imageCleanupTimers.set(
-        candidate.absolutePath,
-        setTimeout(() => {
-          imageCleanupTimers.delete(candidate.absolutePath)
-          this.CLEANUP_UNREFERENCED_IMAGE(candidate).catch((err) => {
-            console.error('Image cleanup failed:', err)
-          })
-        }, IMAGE_CLEANUP_DELAY_MS)
-      )
+    IMAGE_DELETED(payload: { src: string }): void {
+      imageDeleted(this, payload)
     },
 
     async CLEANUP_UNREFERENCED_IMAGE(candidate: CleanupCandidate): Promise<void> {
-      try {
-        // The active tab's markdown may lag the engine (M1.2b lazy pipeline);
-        // inactive tabs' markdown is static. Flush so the check sees the
-        // post-deletion content.
-        this.flushActiveEditor()
-        const markdowns = this.tabs.map((t) => (typeof t.markdown === 'string' ? t.markdown : ''))
-        if (!isImageUnreferenced(markdowns, candidate)) return
-        if (!(await window.fileUtils.pathExists(candidate.absolutePath))) return
-        await window.fileUtils.unlink(candidate.absolutePath)
-        notice.notify({
-          title: t('store.editor.imageCleanupTitle'),
-          message: t('store.editor.imageCleanupMessage', {
-            name: window.path.basename(candidate.absolutePath)
-          }),
-          showConfirm: false,
-          time: 8000
-        })
-      } catch (err) {
-        console.error('Failed to clean up unreferenced image:', err)
-      }
+      await cleanupUnreferencedImage(this, candidate)
     },
 
     // We need to update line endings menu when changing tabs.
