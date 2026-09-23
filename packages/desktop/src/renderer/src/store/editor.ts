@@ -27,8 +27,8 @@ import {
   type SelectionChange,
   type SelectionFormat
 } from '../services/applicationMenuState'
-import { initialTabsToOpen } from './tabOps'
 import { takeReloadBoundary } from './contentChange'
+import { applyBootstrapEditor, restoreBufferedEditorState } from './windowSession'
 import {
   cycleTabs,
   exchangeTabsById,
@@ -55,8 +55,6 @@ import {
 import { defineStore } from 'pinia'
 import { usePreferencesStore } from './preferences'
 import { useProjectStore } from './project'
-import { useLayoutStore } from './layout'
-import { useMainStore } from '.'
 import { t } from '../i18n'
 import { debouncedSendBufferedState, sendBufferedState } from './bufferedState'
 import {
@@ -186,67 +184,9 @@ export const useEditorStore = defineStore('editor', {
     },
 
     RESTORE_BUFFERED_STATE(state: unknown): void {
-      const rawState = state as { editor?: unknown; project?: unknown; layout?: unknown } | null
-      const editorInput = rawState?.editor ?? state
-      const bufferedEditorState = createBufferedEditorState(editorInput)
-      if (!bufferedEditorState) {
-        console.error('RESTORE_BUFFERED_STATE: Invalid editor buffer state.')
-        return
-      }
-
-      const oldIdToNewId: Record<string, string> = {}
-      const tabs: IFileState[] = bufferedEditorState.tabs.map((tab) => {
-        const fileState = createDocumentState(tab as unknown as Record<string, unknown>)
-        oldIdToNewId[tab.id] = fileState.id
-        return fileState
-      })
-
-      const currentFileId = bufferedEditorState.currentFileId
-        ? oldIdToNewId[bufferedEditorState.currentFileId]
-        : undefined
-      const currentFile: IFileState | null = tabs.find((tab) => tab.id === currentFileId) ?? null
-
-      const projectStore = useProjectStore()
-      const layoutStore = useLayoutStore()
-
-      projectStore.RESTORE_BUFFERED_STATE(rawState?.project)
-      layoutStore.RESTORE_BUFFERED_STATE(rawState?.layout)
-      this.$patch((s) => {
-        s.tabs = tabs
-        s.currentFile = currentFile
-        s.tabIdToIndex = {}
-        s.listToc = []
-        s.toc = []
-      })
-
-      this.updateTabIdToIndex()
-      window.DIRNAME = currentFile?.pathname ? window.path.dirname(currentFile.pathname) : ''
-      this.UPDATE_LINE_ENDING_MENU()
-
-      for (const warning of bufferedEditorState.restoreWarnings) {
-        const restoredTabId = warning.tabId ? oldIdToNewId[warning.tabId] : null
-        const tab = restoredTabId
-          ? this.tabs.find((t) => t.id === restoredTabId)
-          : this.tabs.find((t) =>
-            window.fileUtils.isSamePathSync(t.pathname, warning.pathname ?? '')
-          )
-
-        if (!tab) continue
-
-        this.pushTabNotification({
-          tabId: tab.id,
-          msg: warning.msg,
-          showConfirm: warning.showConfirm,
-          style: warning.style,
-          exclusiveType: warning.exclusiveType
-        })
-      }
+      restoreBufferedEditorState(this, state)
     },
 
-    /**
-     * Copies the specified heading's github-slug to the clipboard.
-     * @param key The heading-id to copy.
-     */
     copyGithubSlug(key: string): void {
       const item = this.listToc.find((i) => i.slug === key)
 
@@ -771,33 +711,7 @@ export const useEditorStore = defineStore('editor', {
      * registration below so the sequence can be driven from a test.
      */
     APPLY_BOOTSTRAP_EDITOR(config: BootstrapEditorConfig): void {
-      const {
-        welcomeMarkdown,
-        addBlankTab,
-        markdownList,
-        lineEnding,
-        sideBarVisibility,
-        tabBarVisibility,
-        sourceCodeModeEnabled
-      } = config
-
-      const preferencesStore = usePreferencesStore()
-      const layoutStore = useLayoutStore()
-      const mainStore = useMainStore()
-
-      mainStore.SET_INITIALIZED()
-      preferencesStore.SET_USER_PREFERENCE({ endOfLine: lineEnding })
-      layoutStore.SET_LAYOUT({
-        rightColumn: 'files',
-        showSideBar: !!sideBarVisibility,
-        showTabBar: !!tabBarVisibility
-      })
-      layoutStore.DISPATCH_LAYOUT_MENU_ITEMS()
-      preferencesStore.SET_MODE({ type: 'sourceCode', checked: !!sourceCodeModeEnabled })
-
-      for (const request of initialTabsToOpen({ welcomeMarkdown, addBlankTab, markdownList })) {
-        this.NEW_UNTITLED_TAB(request)
-      }
+      applyBootstrapEditor(this, config)
     },
 
     LISTEN_FOR_BOOTSTRAP_WINDOW(): void {
