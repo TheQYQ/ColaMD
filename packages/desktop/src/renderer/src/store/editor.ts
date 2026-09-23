@@ -17,7 +17,6 @@ import {
   createDocumentState,
   getOptionsFromState,
   getBlankFileState,
-  adjustTrailingNewlines,
   createBufferedEditorState,
   getRootFolderFromState
 } from './help'
@@ -30,7 +29,15 @@ import {
   type SelectionFormat
 } from '../services/applicationMenuState'
 import { exchangeTargetIndex, initialTabsToOpen, moveItem, nextCycleIndex } from './tabOps'
-import { historyMarksDirty, isNewlineOnlyFromEmpty, takeReloadBoundary } from './contentChange'
+import { takeReloadBoundary } from './contentChange'
+import {
+  handleAutoSave,
+  handleDiskChange,
+  listenForContentChange,
+  type AutoSavePayload,
+  type ContentChangePayload,
+  type FileChangePayload
+} from './contentEvents'
 import {
   FileEncodingCommand,
   LineEndingCommand,
@@ -44,7 +51,6 @@ import { useLayoutStore } from './layout'
 import { useMainStore } from '.'
 import { t } from '../i18n'
 import { debouncedSendBufferedState, sendBufferedState } from './bufferedState'
-import { autoSaveTimers, clearAutoSaveTimer } from './autoSaveTimer'
 import {
   closeAllTabs,
   closeOtherTabs,
@@ -112,19 +118,6 @@ interface PushTabNotificationPayload {
   action?: FileNotification['action']
 }
 
-interface FileChangePayload {
-  pathname: string
-  data: {
-    isMixedLineEndings?: boolean
-    lineEnding?: LineEnding | string
-    adjustLineEndingOnSave?: boolean
-    trimTrailingNewline?: number
-    encoding?: IFileState['encoding']
-    markdown: string
-    filename: string
-  }
-}
-
 // The payload shape is owned by the shared contract: `mt::format-link-click`
 // crosses to the main process, and both ends now check against one declaration.
 type FormatLinkClickPayload = FormatLinkPayload
@@ -137,32 +130,6 @@ interface ExportPayload {
   /** Raw markdown source — used by the pandoc export formats. */
   markdown?: string
   pageOptions?: PageOptions
-}
-
-interface AutoSavePayload {
-  id: string
-  filename: string
-  pathname: string
-  markdown: string
-  options: ReturnType<typeof getOptionsFromState>
-}
-
-interface ContentChangePayload {
-  id: string
-  // M1.2b lazy-serialization payload tiers:
-  //  - markdown non-null → full content change (serialized snapshot included).
-  //  - markdown null + edit true → keystroke-tier notification: the live engine
-  //    holds the new content but no serialized snapshot exists yet; only the
-  //    cheap dirty/auto-save bookkeeping runs.
-  //  - markdown null + edit falsy → derived-UI-state-only update (TOC/blocks).
-  markdown: string | null
-  edit?: boolean
-  wordCount?: IFileState['wordCount'] | null
-  cursor?: unknown | null
-  muyaIndexCursor?: unknown | null
-  history?: IFileState['history'] | null
-  toc?: TocItem[] | null
-  blocks?: unknown | null
 }
 
 // ----------------------------------------------------------------------------
@@ -1195,151 +1162,12 @@ export const useEditorStore = defineStore('editor', {
     //   - Derived UI state: only toc/blocks are non-null — updates sidebar
     //     rendering. When markdown is null, the critical-path bookkeeping is
     //     skipped entirely.
-    LISTEN_FOR_CONTENT_CHANGE({
-      id,
-      markdown,
-      edit,
-      wordCount,
-      cursor,
-      muyaIndexCursor,
-      history,
-      toc,
-      blocks
-    }: ContentChangePayload): void {
-      if (!id) {
-        throw new Error('Listen for document change but id was not set!')
-      } else if (this.tabs.length === 0) {
-        return
-      } else if (!(id in this.tabIdToIndex)) {
-        // This only happens when the sourceCode tries to write a stale id via prepareTabSwitch() but the tab
-        // has already been closed. In this case we can safely ignore the update.
-        return
-      }
-
-      const tab = this.tabs[this.tabIdToIndex[id]]
-      if (!tab) return
-
-      const preferencesStore = usePreferencesStore()
-      const { autoSave } = preferencesStore
-
-      // M1.2b keystroke tier: the engine holds the new content but no
-      // serialized snapshot exists yet. Only the cheap, order-sensitive
-      // bookkeeping runs: a real user edit is deterministically dirty (the
-      // debounced full commit recomputes the content hash and restores
-      // cleanliness if an undo landed back on the saved content), and
-      // auto-save must re-arm per keystroke.
-      if (edit === true) {
-        if (cursor) tab.cursor = cursor
-        if (wordCount) tab.wordCount = wordCount
-        tab.isSaved = false
-        const { filename, pathname } = tab
-        if (pathname && autoSave) {
-          const options = getOptionsFromState(tab)
-          // The auto-save timer re-reads the active tab's markdown at fire
-          // time (flush-on-read), so the possibly-stale snapshot here is fine.
-          this.HANDLE_AUTO_SAVE({
-            id,
-            filename,
-            pathname,
-            markdown: typeof tab.markdown === 'string' ? tab.markdown : '',
-            options
-          })
-        }
-        debouncedSendBufferedState()
-        return
-      }
-
-      // Derived UI state only update (debounced TOC/blocks refresh)
-      if (markdown === null) {
-        if (blocks) tab.blocks = blocks
-        // wordCount rides this debounced tier too (sidebar counter only —
-        // see the json-change callback in editor.vue); apply it when present.
-        if (wordCount) tab.wordCount = wordCount
-        this.refreshTocIfChanged(id, toc)
-        return
-      }
-
-      const { filename, pathname, markdown: oldMarkdown, trimTrailingNewline } = tab
-
-      markdown = adjustTrailingNewlines(markdown, trimTrailingNewline)
-      tab.markdown = markdown
-
-      if (isNewlineOnlyFromEmpty(oldMarkdown, markdown)) {
-        debouncedSendBufferedState()
-        return
-      }
-
-      if (wordCount) tab.wordCount = wordCount
-      if (cursor) tab.cursor = cursor
-      if (muyaIndexCursor) tab.muyaIndexCursor = muyaIndexCursor
-      if (history) tab.history = history
-      if (blocks) tab.blocks = blocks
-
-      // Only update TOC if it's the current file
-      this.refreshTocIfChanged(id, toc)
-
-      const isDirty =
-        history === undefined
-          ? markdown !== oldMarkdown
-          : historyMarksDirty(tab.history, tab.lastSavedHistoryId)
-      if (isDirty) {
-        tab.isSaved = false
-        if (pathname && autoSave) {
-          const options = getOptionsFromState(tab)
-          this.HANDLE_AUTO_SAVE({
-            id,
-            filename,
-            pathname,
-            markdown,
-            options
-          })
-        }
-      } else if (history !== undefined && tab.lastSavedHistoryId !== -1) {
-        // Check here is to prevent it from overriding a restored .isSaved state
-        tab.isSaved = true // An undo can trigger this
-      }
-      debouncedSendBufferedState()
+    LISTEN_FOR_CONTENT_CHANGE(payload: ContentChangePayload): void {
+      listenForContentChange(this, payload)
     },
 
-    HANDLE_AUTO_SAVE({ id, filename, pathname, markdown, options }: AutoSavePayload): void {
-      if (!id || !pathname) {
-        throw new Error('HANDLE_AUTO_SAVE: Invalid tab.')
-      }
-
-      const preferencesStore = usePreferencesStore()
-      const projectStore = useProjectStore()
-      const { autoSaveDelay } = preferencesStore
-
-      clearAutoSaveTimer(id)
-
-      const timer = setTimeout(() => {
-        autoSaveTimers.delete(id)
-
-        const tab = this.tabs.find((t) => t.id === id)
-        if (tab && !tab.isSaved) {
-          // `markdown` was captured when the timer was scheduled; the active
-          // tab's newest content lives in the engine (still unflushed edits
-          // would be silently dropped from the written file). Flush and
-          // re-read so the auto-save persists the content as of NOW.
-          let markdownToSave = markdown
-          if (tab.id === this.currentFile?.id) {
-            this.flushActiveEditor()
-            markdownToSave = tab.markdown
-          }
-          this.SAVE_VERSION_SNAPSHOT('Auto-save')
-          const defaultPath = getRootFolderFromState(projectStore)
-          window.electron.ipcRenderer.send(
-            'mt::response-file-save',
-            id,
-            filename,
-            pathname,
-            markdownToSave,
-            deepClone(options),
-            defaultPath
-          )
-        }
-      }, autoSaveDelay)
-      autoSaveTimers.set(id, timer)
+    HANDLE_AUTO_SAVE(payload: AutoSavePayload): void {
+      handleAutoSave(this, payload)
     },
 
     SELECTION_CHANGE(changes: SelectionChange): void {
@@ -1492,74 +1320,7 @@ export const useEditorStore = defineStore('editor', {
      * `loadMarkdownFile`.
      */
     HANDLE_DISK_CHANGE(payload: IpcMainEventChannels['mt::update-file'][0]): void {
-      const preferencesStore = usePreferencesStore()
-      const { type, change } = payload
-      const { tabs } = this
-      const { pathname } = change
-      const tab = tabs.find((t) => window.fileUtils.isSamePathSync(t.pathname, pathname))
-      if (!tab) {
-        console.error(`HANDLE_DISK_CHANGE: Cannot find tab for path "${pathname}".`)
-        return
-      }
-
-      const { id, isSaved, filename } = tab
-      switch (type) {
-        case 'unlink': {
-          tab.isSaved = false
-          this.pushTabNotification({
-            tabId: id,
-            msg: t('store.editor.fileRemovedOnDisk', { name: filename }),
-            style: 'warn',
-            showConfirm: false,
-            exclusiveType: 'file_changed'
-          })
-          debouncedSendBufferedState()
-          break
-        }
-        case 'add':
-        case 'change': {
-          // Flush the active tab first: its `tab.markdown` lags the live
-          // engine until a flush, and comparing against a stale value
-          // would falsely report a content change and warn/reload (#1861).
-          if (tab.id === this.currentFile?.id) {
-            this.flushActiveEditor()
-          }
-          // Only the file's metadata changed on disk (e.g. a git checkout
-          // that left the content byte-identical) — there is nothing to
-          // reload and no reason to warn the user (#1861).
-          const newMarkdown = (change as unknown as FileChangePayload).data?.markdown
-          if (typeof newMarkdown === 'string' && newMarkdown === tab.markdown) {
-            break
-          }
-
-          const { autoSave } = preferencesStore
-          if (autoSave) {
-            clearAutoSaveTimer(id)
-
-            if (isSaved) {
-              this.loadChange(change as unknown as FileChangePayload)
-              return
-            }
-          }
-
-          tab.isSaved = false
-          this.pushTabNotification({
-            tabId: id,
-            msg: t('store.editor.fileChangedOnDisk', { name: filename }),
-            showConfirm: true,
-            exclusiveType: 'file_changed',
-            action: (status) => {
-              if (status) {
-                this.loadChange(change as unknown as FileChangePayload)
-              }
-            }
-          })
-          debouncedSendBufferedState()
-          break
-        }
-        default:
-          console.error(`HANDLE_DISK_CHANGE: Invalid type "${type}"`)
-      }
+      handleDiskChange(this, payload)
     },
 
     LISTEN_FOR_FILE_CHANGE(): void {
