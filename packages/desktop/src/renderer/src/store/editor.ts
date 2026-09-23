@@ -1,13 +1,25 @@
 import bus, { listenBoth } from '../bus'
 import { getUniqueId, deepClone } from '../util'
 import { byteLengthUtf8 } from '../util/byteLengthUtf8'
+import {
+  moveFileTo,
+  markTabSaved,
+  rename,
+  renameIfNeeded,
+  responseForRename,
+  saveFile,
+  saveFileAs,
+  setPathname,
+  tabSaveFailure
+} from './fileSave'
 import listToTree, { type ListItem, type TreeNode } from '../util/listToTree'
 import {
   createDocumentState,
   getOptionsFromState,
   getBlankFileState,
   adjustTrailingNewlines,
-  createBufferedEditorState
+  createBufferedEditorState,
+  getRootFolderFromState
 } from './help'
 import notice from '../services/notification'
 import {
@@ -18,12 +30,7 @@ import {
   type SelectionFormat
 } from '../services/applicationMenuState'
 import { exchangeTargetIndex, initialTabsToOpen, moveItem, nextCycleIndex } from './tabOps'
-import {
-  historyFrameId,
-  historyMarksDirty,
-  isNewlineOnlyFromEmpty,
-  takeReloadBoundary
-} from './contentChange'
+import { historyMarksDirty, isNewlineOnlyFromEmpty, takeReloadBoundary } from './contentChange'
 import {
   FileEncodingCommand,
   LineEndingCommand,
@@ -158,10 +165,6 @@ interface ContentChangePayload {
   blocks?: unknown | null
 }
 
-interface ProjectStoreLike {
-  projectTree: { pathname?: string } | null
-}
-
 // ----------------------------------------------------------------------------
 // State shape
 // ----------------------------------------------------------------------------
@@ -183,25 +186,6 @@ export interface EditorState {
 // restore the reference before the file is unlinked.
 const imageCleanupTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const IMAGE_CLEANUP_DELAY_MS = 5000
-
-// The "this tab has never been written to disk, so saving it *is* the answer to
-// Move-to / Rename" request. Both actions opened with twenty identical lines
-// (flush, read the tab, clone its options, resolve the default folder, send
-// `mt::response-file-save` with the same seven arguments) and only their
-// else-branches differed, so any change to that payload had to be made twice —
-// and `test/unit/specs/flush-before-save.spec.ts` pins the flushed markdown on
-// both paths precisely because they were easy to drift.
-const sendSaveForUntitledFile = (tab: IFileState, defaultPath: string): void => {
-  window.electron.ipcRenderer.send(
-    'mt::response-file-save',
-    tab.id,
-    tab.filename,
-    tab.pathname,
-    tab.markdown,
-    deepClone(getOptionsFromState(tab)),
-    defaultPath
-  )
-}
 
 export const useEditorStore = defineStore('editor', {
   state: (): EditorState => ({
@@ -599,24 +583,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     FILE_SAVE(): void {
-      if (!this.currentFile) return
-      this.flushActiveEditor()
-      const projectStore = useProjectStore()
-      const { id, filename, pathname, markdown } = this.currentFile
-      const options = getOptionsFromState(this.currentFile)
-      const defaultPath = getRootFolderFromState(projectStore)
-      if (id) {
-        this.SAVE_VERSION_SNAPSHOT('Manual Save')
-        window.electron.ipcRenderer.send(
-          'mt::response-file-save',
-          id,
-          filename,
-          pathname,
-          markdown,
-          deepClone(options),
-          defaultPath
-        )
-      }
+      saveFile(this)
     },
 
     // need pass some data to main process when `save` menu item clicked
@@ -627,25 +594,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     FILE_SAVE_AS(): void {
-      if (!this.currentFile) return
-      this.flushActiveEditor()
-      const projectStore = useProjectStore()
-      const { id, filename, pathname, markdown } = this.currentFile
-      const options = getOptionsFromState(this.currentFile)
-      const defaultPath = getRootFolderFromState(projectStore)
-
-      if (id) {
-        this.SAVE_VERSION_SNAPSHOT('Manual Save')
-        window.electron.ipcRenderer.send(
-          'mt::response-file-save-as',
-          id,
-          filename,
-          pathname,
-          markdown,
-          deepClone(options),
-          defaultPath
-        )
-      }
+      saveFileAs(this)
     },
 
     // need pass some data to main process when `save as` menu item clicked
@@ -655,71 +604,16 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
-    /**
-     * A tab acquired a real path (save-as or a dialog save). A tab already open
-     * on that path is closed first, since two tabs on one file would fight over
-     * it; the surviving tab keeps its id so undo and watchers stay attached.
-     */
     SET_PATHNAME(fileInfo: IpcMainEventChannels['mt::set-pathname'][0]): void {
-      const { tabs } = this
-      const { pathname, id, filename } = fileInfo
-      const tab = tabs.find((f) => f.id === id)
-      if (!tab) {
-        console.error('[ERROR] Cannot change file path from unknown tab.')
-        return
-      }
-
-      const existingTab = tabs.find(
-        (t) => t.id !== id && window.fileUtils.isSamePathSync(t.pathname, pathname)
-      )
-      if (existingTab) {
-        this.CLOSE_TAB(existingTab)
-      }
-
-      if (id === this.currentFile?.id && pathname) {
-        window.DIRNAME = window.path.dirname(pathname)
-      }
-      Object.assign(tab, { filename, pathname, isSaved: true })
-      debouncedSendBufferedState()
+      setPathname(this, fileInfo)
     },
 
-    /**
-     * Main finished writing the tab. Remember which history frame that was: the
-     * saved flag is re-derived from it later, so an undo back to this exact
-     * content clears the dot again without comparing text.
-     */
     MARK_TAB_SAVED(tabId: string): void {
-      const tab = this.tabs.find((f) => f.id === tabId)
-      if (!tab) return
-
-      const frameId = historyFrameId(tab.history)
-      if (frameId !== undefined) {
-        tab.lastSavedHistoryId = frameId
-      }
-      tab.isSaved = true
-      debouncedSendBufferedState()
+      markTabSaved(this, tabId)
     },
 
     TAB_SAVE_FAILURE(tabId: string, msg: string): void {
-      const tab = this.tabs.find((t) => t.id === tabId)
-      if (!tab) {
-        notice.notify({
-          title: t('dialog.saveFailure'),
-          message: msg,
-          type: 'error',
-          time: 20000,
-          showConfirm: false
-        })
-        return
-      }
-
-      tab.isSaved = false
-      this.pushTabNotification({
-        tabId,
-        msg: t('store.editor.errorWhileSaving', { msg }),
-        style: 'crit'
-      })
-      debouncedSendBufferedState()
+      tabSaveFailure(this, tabId, msg)
     },
 
     LISTEN_FOR_SET_PATHNAME(): void {
@@ -830,16 +724,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     MOVE_FILE_TO(): void {
-      if (!this.currentFile) return
-      this.flushActiveEditor()
-      const { id, pathname } = this.currentFile
-      if (!id) return
-      if (!pathname) {
-        // A newly created file has nowhere to move to — saving it is the answer.
-        sendSaveForUntitledFile(this.currentFile, getRootFolderFromState(useProjectStore()))
-      } else {
-        window.electron.ipcRenderer.send('mt::response-file-move-to', { id, pathname })
-      }
+      moveFileTo(this)
     },
 
     LISTEN_FOR_MOVE_TO(): void {
@@ -855,51 +740,15 @@ export const useEditorStore = defineStore('editor', {
     },
 
     RESPONSE_FOR_RENAME(): void {
-      if (!this.currentFile) return
-      this.flushActiveEditor()
-      const { id, pathname } = this.currentFile
-      if (!id) return
-      if (!pathname) {
-        // Same reasoning as MOVE_FILE_TO: an unsaved tab is saved, not renamed.
-        sendSaveForUntitledFile(this.currentFile, getRootFolderFromState(useProjectStore()))
-      } else {
-        bus.emit('rename')
-      }
+      responseForRename(this)
     },
 
-    // ask for main process to rename this file to a new name `newFilename`
     RENAME(newFilename: string): void {
-      if (!this.currentFile) return
-      const { id, pathname, filename } = this.currentFile
-      if (typeof filename === 'string' && filename !== newFilename) {
-        const newPathname = window.path.join(window.path.dirname(pathname), newFilename)
-        window.electron.ipcRenderer.send('mt::rename', {
-          id,
-          pathname,
-          newPathname,
-          currentFile: deepClone(this.currentFile)
-        })
-      }
+      rename(this, newFilename)
     },
 
-    /**
-     * Update the pathname/filename of any tab whose pathname matches `src`.
-     * Invoked from the sidebar rename flow (project.ts:RENAME_IN_SIDEBAR).
-     */
     RENAME_IF_NEEDED({ src, dest }: { src: string; dest: string }): void {
-      this.tabs.forEach((tab) => {
-        if (tab.pathname === src) {
-          tab.pathname = dest
-          tab.filename = window.path.basename(dest)
-        }
-      })
-      // Keep DIRNAME in sync when the active tab is the one being renamed,
-      // so link resolution / dirname-based lookups don't keep using the old
-      // folder until the user switches tabs.
-      if (this.currentFile != null && this.currentFile.pathname === dest) {
-        window.DIRNAME = window.path.dirname(dest)
-      }
-      debouncedSendBufferedState()
+      renameIfNeeded(this, { src, dest })
     },
 
     UPDATE_CURRENT_FILE(currentFile: IFileState): void {
@@ -1833,16 +1682,3 @@ export const useEditorStore = defineStore('editor', {
 })
 
 // ----------------------------------------------------------------------------
-
-/**
- * Return the opened root folder or an empty string.
- *
- * @param {object} projectStore The project store instance.
- */
-const getRootFolderFromState = (projectStore: ProjectStoreLike): string => {
-  const openedFolder = projectStore.projectTree
-  if (openedFolder) {
-    return openedFolder.pathname ?? ''
-  }
-  return ''
-}

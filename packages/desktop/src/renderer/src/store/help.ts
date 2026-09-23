@@ -1,4 +1,10 @@
 import type { IFileState } from '@shared/types/files'
+
+// Structural view of the project store, so this helper does not have to import
+// the store it is handed (and would import back).
+export interface ProjectStoreLike {
+  projectTree: { pathname?: string } | null
+}
 import { getUniqueId, deepClone } from '../util'
 
 // Helper module (NOT a Pinia store): defaults and factories for the editor
@@ -334,4 +340,17 @@ export const createBufferedEditorState = (state: unknown): BufferedEditorState |
         .filter((w): w is BufferedRestoreWarning => w !== null)
       : []
   }
+}
+
+/**
+ * Return the opened root folder or an empty string.
+ *
+ * @param projectStore The project store instance.
+ */
+export const getRootFolderFromState = (projectStore: ProjectStoreLike): string => {
+  const openedFolder = projectStore.projectTree
+  if (openedFolder) {
+    return openedFolder.pathname ?? ''
+  }
+  return ''
 }
