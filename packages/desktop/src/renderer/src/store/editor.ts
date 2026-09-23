@@ -17,14 +17,7 @@ import {
   type SelectionChange,
   type SelectionFormat
 } from '../services/applicationMenuState'
-import {
-  createFileChangedEvent,
-  exchangeTargetIndex,
-  initialTabsToOpen,
-  moveItem,
-  nextCycleIndex,
-  selectTabAfterClose
-} from './tabOps'
+import { exchangeTargetIndex, initialTabsToOpen, moveItem, nextCycleIndex } from './tabOps'
 import {
   historyFrameId,
   historyMarksDirty,
@@ -44,6 +37,16 @@ import { useLayoutStore } from './layout'
 import { useMainStore } from '.'
 import { t } from '../i18n'
 import { debouncedSendBufferedState, sendBufferedState } from './bufferedState'
+import { autoSaveTimers, clearAutoSaveTimer } from './autoSaveTimer'
+import {
+  closeAllTabs,
+  closeOtherTabs,
+  closeSavedTabs,
+  closeTab,
+  closeTabsByIds,
+  closeUnsavedTab,
+  forceCloseTab
+} from './tabClose'
 import {
   isImageUnreferenced,
   resolveCleanupCandidate,
@@ -173,20 +176,6 @@ export interface EditorState {
   // the frameless HTML menu bar to resolve checked/disabled items locally.
   selectionMenuState: ApplicationMenuState | null
   selectionFormatState: Record<string, boolean>
-}
-
-const autoSaveTimers = new Map<string, ReturnType<typeof setTimeout>>()
-
-/**
- * Drop a tab's pending auto-save. Three paths need it — the tab closed, a newer
- * edit re-arms it, or the disk version takes over — and in all three a timer left
- * armed would write content the user has already moved past.
- */
-const clearAutoSaveTimer = (id: string | undefined): void => {
-  if (!id) return
-  const timer = autoSaveTimers.get(id)
-  if (timer !== undefined) clearTimeout(timer)
-  autoSaveTimers.delete(id)
 }
 
 // Pending unreferenced-image cleanup checks, keyed by absolute path. The
@@ -1046,14 +1035,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     CLOSE_TAB(file: IFileState | null = null): void {
-      const target = file ?? this.currentFile
-      if (target === null) return
-
-      if (target.isSaved) {
-        this.FORCE_CLOSE_TAB(target)
-      } else {
-        this.CLOSE_UNSAVED_TAB(target)
-      }
+      closeTab(this, file)
     },
 
     LISTEN_FOR_CLOSE_TAB(): void {
@@ -1081,131 +1063,27 @@ export const useEditorStore = defineStore('editor', {
     },
 
     FORCE_CLOSE_TAB(file: IFileState): void {
-      // Flush before the tab is removed: the closing tab may be the active
-      // one with unflushed engine edits, and once spliced the `json-change`
-      // triggered by the flush can no longer reach it (its id is gone from
-      // the tab map) — the 'Session End' snapshot below would read stale
-      // markdown.
-      if (file.id === this.currentFile?.id) {
-        this.flushActiveEditor()
-      }
-      const { tabs, currentFile } = this
-      const index = tabs.findIndex((t) => t.id === file.id)
-      if (index > -1) {
-        tabs.splice(index, 1)
-        this.updateTabIdToIndex()
-      }
-
-      clearAutoSaveTimer(file.id)
-
-      // Snapshot on close so the user can recover unsaved work from the
-      // history panel even if they chose "Don't Save".
-      if (file.pathname && !file.isSaved) {
-        this.SAVE_VERSION_SNAPSHOT('Session End')
-      }
-
-      this.updateTabIdToIndex() // Update before sending it out to prevent stale mappings.
-
-      if (currentFile && file.id === currentFile.id) {
-        const fileState = selectTabAfterClose(this.tabs, index)
-        this.currentFile = fileState
-        if (fileState && typeof fileState.markdown === 'string') {
-          window.DIRNAME = fileState.pathname ? window.path.dirname(fileState.pathname) : ''
-          bus.emit('file-changed', createFileChangedEvent(fileState))
-        } else {
-          window.DIRNAME = ''
-        }
-      }
-
-      if (this.tabs.length === 0) {
-        this.listToc = []
-        this.toc = []
-      }
-
-      const { pathname } = file
-      if (pathname) {
-        window.electron.ipcRenderer.send('mt::window-tab-closed', pathname)
-      }
-      debouncedSendBufferedState()
+      forceCloseTab(this, file)
     },
 
     CLOSE_UNSAVED_TAB(file: IFileState): void {
-      // Save flow: the active tab's markdown lags the live engine until a
-      // flush, and once sent the unflushed edits would be silently dropped
-      // from the written file.
-      if (file.id === this.currentFile?.id) {
-        this.flushActiveEditor()
-      }
-      const { id, pathname, filename, markdown } = file
-      const options = getOptionsFromState(file)
-      window.electron.ipcRenderer.send('mt::save-and-close-tabs', [
-        { id, pathname, filename, markdown, options: deepClone(options) }
-      ])
+      closeUnsavedTab(this, file)
     },
 
     CLOSE_OTHER_TABS(file: IFileState): void {
-      this.tabs
-        .filter((f) => f.id !== file.id)
-        .forEach((tab) => {
-          this.CLOSE_TAB(tab)
-        })
+      closeOtherTabs(this, file)
     },
 
     CLOSE_SAVED_TABS(): void {
-      this.tabs
-        .filter((f) => f.isSaved)
-        .forEach((tab) => {
-          this.CLOSE_TAB(tab)
-        })
+      closeSavedTabs(this)
     },
 
     CLOSE_ALL_TABS(): void {
-      this.tabs.slice().forEach((tab) => {
-        this.CLOSE_TAB(tab)
-      })
+      closeAllTabs(this)
     },
 
     CLOSE_TABS(tabIdList: string[]): void {
-      if (!tabIdList || tabIdList.length === 0) return
-
-      let tabIndex = 0
-      tabIdList.forEach((id) => {
-        const index = this.tabs.findIndex((f) => f.id === id)
-        if (index === -1) return
-
-        const closed = this.tabs[index]
-        const { pathname } = closed ?? { pathname: '' }
-
-        if (pathname) {
-          window.electron.ipcRenderer.send('mt::window-tab-closed', pathname)
-        }
-
-        this.tabs.splice(index, 1)
-        if (this.currentFile?.id === id) {
-          this.currentFile = null
-          window.DIRNAME = ''
-          if (tabIdList.length === 1) {
-            tabIndex = index
-          }
-        }
-      })
-
-      this.updateTabIdToIndex() // Update before sending it out to prevent stale mappings.
-
-      if (this.currentFile == null && this.tabs.length > 0) {
-        this.currentFile = selectTabAfterClose(this.tabs, tabIndex)
-        const current = this.currentFile
-        if (current && typeof current.markdown === 'string') {
-          window.DIRNAME = current.pathname ? window.path.dirname(current.pathname) : ''
-          bus.emit('file-changed', createFileChangedEvent(current))
-        }
-      }
-
-      if (this.tabs.length === 0) {
-        this.listToc = []
-        this.toc = []
-      }
-      debouncedSendBufferedState()
+      closeTabsByIds(this, tabIdList)
     },
 
     EXCHANGE_TABS_BY_ID(tabIDs: { fromId: string; toId: string | null }): void {
