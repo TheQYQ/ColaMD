@@ -16,7 +16,6 @@ import listToTree, { type ListItem, type TreeNode } from '../util/listToTree'
 import {
   createDocumentState,
   getOptionsFromState,
-  getBlankFileState,
   createBufferedEditorState,
   getRootFolderFromState
 } from './help'
@@ -28,8 +27,17 @@ import {
   type SelectionChange,
   type SelectionFormat
 } from '../services/applicationMenuState'
-import { exchangeTargetIndex, initialTabsToOpen, moveItem, nextCycleIndex } from './tabOps'
+import { initialTabsToOpen } from './tabOps'
 import { takeReloadBoundary } from './contentChange'
+import {
+  cycleTabs,
+  exchangeTabsById,
+  newTabWithContent,
+  newUntitledTab,
+  showTabView,
+  switchTabByFilepath,
+  switchTabByIndex
+} from './tabLifecycle'
 import {
   handleAutoSave,
   handleDiskChange,
@@ -903,21 +911,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     EXCHANGE_TABS_BY_ID(tabIDs: { fromId: string; toId: string | null }): void {
-      const { fromId, toId } = tabIDs
-      const { tabs } = this
-
-      const fromIndex = tabs.findIndex((t) => t.id === fromId)
-      if (fromIndex === -1) return
-
-      if (!toId) {
-        moveItem(tabs, fromIndex, tabs.length - 1)
-      } else {
-        const toIndex = tabs.findIndex((t) => t.id === toId)
-        if (toIndex === -1) return
-        moveItem(tabs, fromIndex, exchangeTargetIndex(fromIndex, toIndex))
-      }
-      this.updateTabIdToIndex()
-      debouncedSendBufferedState()
+      exchangeTabsById(this, tabIDs)
     },
 
     RENAME_FILE(file: IFileState): void {
@@ -927,69 +921,17 @@ export const useEditorStore = defineStore('editor', {
 
     // Direction is a boolean where false is left and true right.
     CYCLE_TABS(direction: boolean): void {
-      const { tabs, currentFile } = this
-      if (tabs.length <= 1) {
-        return
-      }
-
-      const currentIndex = tabs.findIndex((t) => t.id === currentFile?.id)
-      if (currentIndex === -1) {
-        console.error('CYCLE_TABS: Cannot find current tab index.')
-        return
-      }
-
-      const nextTabIndex = nextCycleIndex(currentIndex, tabs.length, direction)
-
-      const nextTab = tabs[nextTabIndex]
-      if (!nextTab || !nextTab.id) {
-        console.error(`CYCLE_TABS: Cannot find next tab (index="${nextTabIndex}").`)
-        return
-      }
-
-      this.UPDATE_CURRENT_FILE(nextTab)
+      cycleTabs(this, direction)
     },
 
     SWITCH_TAB_BY_FILEPATH(filePath: string): void {
-      const { tabs } = this
-
-      if (!filePath) {
-        console.warn('Invalid file path:', filePath)
-        return
-      }
-
-      const nextTabIndex = tabs.findIndex((t) => t.pathname === filePath)
-      if (nextTabIndex === -1) {
-        console.error('Cannot find tab with pathname:', filePath)
-        return
-      }
-      const next = tabs[nextTabIndex]
-      if (next) this.UPDATE_CURRENT_FILE(next)
+      switchTabByFilepath(this, filePath)
     },
 
     SWITCH_TAB_BY_INDEX(nextTabIndex: number): void {
-      const { tabs, currentFile } = this
-      if (nextTabIndex < 0 || nextTabIndex >= tabs.length) {
-        console.warn('Invalid tab index:', nextTabIndex)
-        return
-      }
-
-      const currentIndex = tabs.findIndex((t) => t.id === currentFile?.id)
-      if (currentIndex === -1) {
-        console.error('Cannot find current tab index.')
-        return
-      }
-
-      const nextTab = tabs[nextTabIndex]
-      if (!nextTab || !nextTab.id) {
-        console.error(`Cannot find tab by index="${nextTabIndex}".`)
-        return
-      }
-      this.UPDATE_CURRENT_FILE(nextTab)
+      switchTabByIndex(this, nextTabIndex)
     },
 
-    /**
-     * Create a new untitled tab, optionally seeded with markdown content.
-     */
     NEW_UNTITLED_TAB({
       markdown: markdownString,
       selected
@@ -997,35 +939,9 @@ export const useEditorStore = defineStore('editor', {
       markdown?: string
       selected?: boolean
     }): void {
-      if (selected == null) {
-        selected = true
-      }
-
-      this.SHOW_TAB_VIEW(false)
-
-      const preferencesStore = usePreferencesStore()
-      const { defaultEncoding, endOfLine } = preferencesStore
-      const fileState = getBlankFileState(
-        this.tabs,
-        defaultEncoding,
-        endOfLine,
-        markdownString ?? null
-      )
-
-      if (selected) {
-        const { id, markdown } = fileState
-        this.UPDATE_CURRENT_FILE(fileState)
-        bus.emit('file-loaded', { id, markdown })
-      } else {
-        this.tabs.push(fileState)
-        this.updateTabIdToIndex()
-        debouncedSendBufferedState()
-      }
+      newUntitledTab(this, { markdown: markdownString, selected })
     },
 
-    /**
-     * Create a new tab from the given markdown document.
-     */
     NEW_TAB_WITH_CONTENT({
       markdownDocument,
       options = {},
@@ -1035,79 +951,11 @@ export const useEditorStore = defineStore('editor', {
       options?: TabOptions
       selected?: boolean
     }): void {
-      if (!markdownDocument) {
-        console.warn('Cannot create a file tab without a markdown document!')
-        this.NEW_UNTITLED_TAB({})
-        return
-      }
-
-      if (typeof selected === 'undefined') {
-        selected = true
-      }
-
-      const { currentFile, tabs } = this
-      const { pathname } = markdownDocument
-      const existingTab = tabs.find((t) =>
-        window.fileUtils.isSamePathSync(t.pathname, pathname ?? '')
-      )
-      if (existingTab) {
-        this.UPDATE_CURRENT_FILE(existingTab)
-        return
-      }
-
-      let keepTabBarState = false
-      if (currentFile) {
-        const { isSaved, pathname: cfPath } = currentFile
-        if (isSaved && !cfPath) {
-          keepTabBarState = true
-          this.FORCE_CLOSE_TAB(currentFile)
-        }
-      }
-
-      if (!keepTabBarState) {
-        this.SHOW_TAB_VIEW(false)
-      }
-
-      const { markdown, isMixedLineEndings } = markdownDocument
-      const docState = createDocumentState(
-        Object.assign(
-          {},
-          markdownDocument as unknown as Record<string, unknown>,
-          options as Record<string, unknown>
-        )
-      )
-      const { id, cursor } = docState
-
-      if (selected) {
-        this.UPDATE_CURRENT_FILE(docState)
-        bus.emit('file-loaded', { id, markdown, cursor })
-      } else {
-        this.tabs.push(docState)
-        this.updateTabIdToIndex()
-        debouncedSendBufferedState()
-      }
-
-      if (isMixedLineEndings) {
-        const { filename, lineEnding } = markdownDocument
-        if (typeof lineEnding === 'string') {
-          this.pushTabNotification({
-            tabId: id,
-            msg: t('store.editor.mixedLineEndingsNormalized', {
-              name: filename,
-              lineEnding: lineEnding.toUpperCase()
-            })
-          })
-        }
-      }
+      newTabWithContent(this, { markdownDocument, options, selected })
     },
 
     SHOW_TAB_VIEW(always: boolean): void {
-      const { tabs } = this
-      const layoutStore = useLayoutStore()
-      if (always || tabs.length === 1) {
-        layoutStore.SET_LAYOUT({ showTabBar: true })
-        layoutStore.DISPATCH_LAYOUT_MENU_ITEMS()
-      }
+      showTabView(this, always)
     },
 
     SET_SAVE_STATUS_WHEN_REMOVE({ pathname }: { pathname: string }): void {
