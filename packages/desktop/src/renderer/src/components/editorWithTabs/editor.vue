@@ -714,6 +714,18 @@ const setImageViewerVisible = (status: boolean) => {
   }
 }
 
+// Both engine events that reveal an image (`preview-image` on Space, and the
+// Ctrl/Cmd-click on an inline image in `format-click`) replace the one viewer
+// instance, so the swap lives here rather than in each subscription.
+const openImageViewer = (url: string): void => {
+  if (imageViewer) {
+    imageViewer.destroy()
+  }
+  if (!imageViewerRef.value) return
+  imageViewer = new SimpleImageViewer(imageViewerRef.value, { url })
+  setImageViewerVisible(true)
+}
+
 const switchSpellcheckLanguage = (languageCode: unknown) => {
   const { isEnabled } = spellchecker
 
@@ -1557,25 +1569,13 @@ onMounted(() => {
           dirname: window.DIRNAME
         })
       } else if (formatType === 'image' && ctrlOrMeta) {
-        if (imageViewer) {
-          imageViewer.destroy()
-        }
-        if (imageViewerRef.value) {
-          imageViewer = new SimpleImageViewer(imageViewerRef.value, { url: data as string })
-          setImageViewerVisible(true)
-        }
+        openImageViewer(data as string)
       }
     }
   )
 
   editor.value.on('preview-image', ({ data }: { data: string }) => {
-    if (imageViewer) {
-      imageViewer.destroy()
-    }
-    if (imageViewerRef.value) {
-      imageViewer = new SimpleImageViewer(imageViewerRef.value, { url: data })
-      setImageViewerVisible(true)
-    }
+    openImageViewer(data)
   })
 
   editor.value.on('selection-change', (changes: MuyaChange) => {
