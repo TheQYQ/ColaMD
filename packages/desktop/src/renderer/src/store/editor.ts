@@ -68,6 +68,13 @@ import {
 } from './tabClose'
 import { type CleanupCandidate } from '../util/imageCleanup'
 import { askForImageAutoPath, cleanupUnreferencedImage, imageDeleted } from './imageCleanupActions'
+import {
+  listenForExportSuccess,
+  listenForPrintServiceClearup,
+  sendExportResponse,
+  sendPrintResponse,
+  type ExportPayload
+} from './exportPrint'
 import type { FormatLinkPayload, IpcMainEventChannels, VersionSnapshot } from '@shared/types/ipc'
 import type {
   BootstrapEditorConfig,
@@ -75,7 +82,6 @@ import type {
   FileNotification,
   LineEnding,
   MarkdownDocument,
-  PageOptions,
   TabOptions
 } from '@shared/types/files'
 
@@ -122,16 +128,6 @@ interface PushTabNotificationPayload {
 // The payload shape is owned by the shared contract: `mt::format-link-click`
 // crosses to the main process, and both ends now check against one declaration.
 type FormatLinkClickPayload = FormatLinkPayload
-
-interface ExportPayload {
-  type: string
-  content?: string
-  /** Binary export payloads (e.g. .docx bytes) — written as-is by main. */
-  bytes?: Uint8Array
-  /** Raw markdown source — used by the pandoc export formats. */
-  markdown?: string
-  pageOptions?: PageOptions
-}
 
 // ----------------------------------------------------------------------------
 // State shape
@@ -734,62 +730,20 @@ export const useEditorStore = defineStore('editor', {
       selectionFormats(this, formats)
     },
 
-    EXPORT({ type, content, bytes, markdown, pageOptions }: ExportPayload): void {
-      if (this.currentFile === null) return
-
-      let title = ''
-      const { listToc } = this
-      if (listToc && listToc.length > 0) {
-        let headerRef: TocItem | undefined = listToc[0]
-        const len = Math.min(listToc.length, 6)
-        for (let i = 1; i < len; ++i) {
-          if (headerRef?.lvl === 1) break
-          const header = listToc[i]
-          if (header && headerRef && (headerRef.lvl ?? 0) > (header.lvl ?? 0)) {
-            headerRef = header
-          }
-        }
-        title = headerRef?.content ?? ''
-      }
-
-      const { filename, pathname } = this.currentFile
-      window.electron.ipcRenderer.send('mt::response-export', {
-        type: type as ExportPayload['type'] as never,
-        title,
-        content: content ?? '',
-        bytes,
-        markdown: markdown ?? '',
-        filename,
-        pathname,
-        pageOptions: pageOptions ?? {}
-      })
+    EXPORT(payload: ExportPayload): void {
+      sendExportResponse(this, payload)
     },
 
     LISTEN_FOR_EXPORT_SUCCESS(): void {
-      window.electron.ipcRenderer.on('mt::export-success', (_, payload) => {
-        const filePath = payload?.filePath ?? ''
-        notice
-          .notify({
-            title: t('store.editor.exportSuccessTitle'),
-            message: t('store.editor.exportSuccessMessage', {
-              name: window.path.basename(filePath)
-            }),
-            showConfirm: true
-          })
-          .then(() => {
-            window.electron.shell.showItemInFolder(filePath)
-          })
-      })
+      listenForExportSuccess()
     },
 
     PRINT_RESPONSE(): void {
-      window.electron.ipcRenderer.send('mt::response-print')
+      sendPrintResponse()
     },
 
     LISTEN_FOR_PRINT_SERVICE_CLEARUP(): void {
-      window.electron.ipcRenderer.on('mt::print-service-clearup', () => {
-        bus.emit('print-service-clearup')
-      })
+      listenForPrintServiceClearup()
     },
 
     SET_LINE_ENDING(lineEnding: LineEnding | string): void {
