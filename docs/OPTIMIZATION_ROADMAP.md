@@ -663,6 +663,7 @@ WORKPLAN 第七梯队自述里唯一没闭合的"长图与 pandoc 真实转换�
 - **两条关键断言是钉过的（变异验证）**：把 `main/utils/imageExport.ts` 的量高改成写死 `MIN_IMAGE_HEIGHT` → PNG 那条当场红（`Expected: > 800 / Received: 400`）；把 `main/menu/actions/file.ts` 的 pandoc 调用写死 `'latex'` → **epub / rtf / opml 三条各红、latex 仍绿**，正是"签名足以区分格式"这件事要证明的东西。两处变异都已还原，`git diff HEAD --stat` 只剩测试文件。
 - **第一次走查差点得出反的结论，记下来**：先拿一份 6 块的小文档跑，PNG 是 **800×600**——那恰好是 Electron 窗口的默认内容尺寸，看上去就像"只截了首屏"。于是在主进程加一次性插桩读它量到的高度，`measured=800x600 contentSize=[800,600] recheck=600` 说明**短文档本来就不足一屏**，不是缺陷；换成 90 段正文后同一处量到 4085。**这条走查的真正判据是"高度随内容变长"，不是"图是不是竖的"**，所以 spec 用的是长文档。插桩已 `git checkout --` 撤掉。
 - **仍然未知的那半**：`capturePage` 在离屏窗口 + Linux/macOS 无头环境下的行为，本机替不了它回答，`e2e.yml` 首跑才是首次证据。如果某个平台拿不到帧，处置是给它加**带理由的平台豁免**，不是删断言。
+- **这条 spec 被依赖门拦下过一次，是门该抓的样子**：spec 里 `spawnSync('pandoc', ['--version'])` 那个字面量让 **`pnpm knip` 从退出 0 变 1**（报未登记的二进制 `pandoc`）。登记进 `knip.json` 的 `ignoreBinaries`（与 `screencapture` 同一先例：系统二进制不是 npm 依赖），并注明"应用侧本来就是 shell 出去调 pandoc，spec 只是探测它存不存在以便 skip"。**没有把探测改成"假定 pandoc 一定在"来绕开这一项**。
 
 ### 三条全局偏差
 
