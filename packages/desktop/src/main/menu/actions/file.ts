@@ -28,7 +28,10 @@ import { getPath, getRecommendTitleFromMarkdownString } from '../../utils'
 import pandoc, { exportViaPandoc } from '../../utils/pandoc'
 import { exportDocumentImage } from '../../utils/imageExport'
 import { t } from '../../i18n'
-import type { UnsavedFile } from '@shared/types/files'
+import type { ExportType, UnsavedFile } from '@shared/types/files'
+import type { FormatLinkPayload } from '@shared/types/ipc'
+import { typedOn } from '../../ipc/typedOn'
+import { typedSend } from '../../ipc/typedSend'
 
 type Win = BrowserWindow | null | undefined
 
@@ -218,12 +221,12 @@ const handleResponseForExport = async (e: IpcMainEvent, payload: ExportPayload):
         }
         await writeFile(filePath, content, extension!, 'utf8')
       }
-      win.webContents.send('mt::export-success', { type, filePath })
+      typedSend(win.webContents, 'mt::export-success', { type, filePath })
     } catch (err) {
       log.error('Error while exporting:', err)
       const ERROR_MSG =
         (err instanceof Error && err.message) || `Error happened when export ${filePath}`
-      win.webContents.send('mt::show-notification', {
+      typedSend(win.webContents, 'mt::show-notification', {
         title: 'Export failure',
         type: 'error',
         message: ERROR_MSG
@@ -303,17 +306,21 @@ const handleResponseForSave = async (
         ipcMain.emit('menu-add-recently-used', filePath)
 
         const newFilename = path.basename(filePath!)
-        win.webContents.send('mt::set-pathname', { id, pathname: filePath, filename: newFilename })
+        typedSend(win.webContents, 'mt::set-pathname', {
+          id,
+          pathname: filePath,
+          filename: newFilename
+        })
       } else {
         ipcMain.emit('window-file-saved', win.id, filePath)
-        win.webContents.send('mt::tab-saved', id)
+        typedSend(win.webContents, 'mt::tab-saved', id)
       }
       return id
     })
     .catch((err: unknown) => {
       log.error('Error while saving:', err)
       const msg = err instanceof Error ? err.message : String(err)
-      win.webContents.send('mt::tab-save-failure', id, msg)
+      typedSend(win.webContents, 'mt::tab-save-failure', id, msg)
     })
 }
 
@@ -343,14 +350,14 @@ const showUnsavedFilesMessage = async (
     }
     const onClosed = (): void => finish(null)
 
-    ipcMain.on('mt::unsaved-dialog-response', onResponse)
+    typedOn('mt::unsaved-dialog-response', onResponse)
     win.once('closed', onClosed)
-    win.webContents.send('mt::show-unsaved-dialog', files.length)
+    typedSend(win.webContents, 'mt::show-unsaved-dialog', files.length)
   })
 }
 
 const noticePandocNotFound = (win: BrowserWindow): void => {
-  win.webContents.send('mt::pandoc-not-exists', {
+  typedSend(win.webContents, 'mt::pandoc-not-exists', {
     title: t('dialog.importWarning'),
     type: 'warning',
     message: t('dialog.installPandoc'),
@@ -370,12 +377,12 @@ const openPandocFile = async (windowId: number, pathname: string): Promise<void>
 
 const removePrintServiceFromWindow = (win: BrowserWindow): void => {
   // remove print service content and restore GUI
-  win.webContents.send('mt::print-service-clearup')
+  typedSend(win.webContents, 'mt::print-service-clearup')
 }
 
 // --- events -----------------------------------
 
-ipcMain.on('mt::save-tabs', (e, unsavedFiles: UnsavedFile[]) => {
+typedOn('mt::save-tabs', (e, unsavedFiles: UnsavedFile[]) => {
   Promise.all(
     unsavedFiles.map((file) =>
       handleResponseForSave(
@@ -391,7 +398,7 @@ ipcMain.on('mt::save-tabs', (e, unsavedFiles: UnsavedFile[]) => {
   ).catch(log.error)
 })
 
-ipcMain.on('mt::save-and-close-tabs', async (e, unsavedFiles: UnsavedFile[]) => {
+typedOn('mt::save-and-close-tabs', async (e, unsavedFiles: UnsavedFile[]) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return
@@ -418,18 +425,18 @@ ipcMain.on('mt::save-and-close-tabs', async (e, unsavedFiles: UnsavedFile[]) => 
     )
       .then((arr) => {
         const tabIds = arr.filter((id): id is string => id != null)
-        win.webContents.send('mt::force-close-tabs-by-id', tabIds)
+        typedSend(win.webContents, 'mt::force-close-tabs-by-id', tabIds)
       })
       .catch((err: unknown) => {
         log.error('Error while save all:', err)
       })
   } else {
     const tabIds = unsavedFiles.map((f) => f.id)
-    win.webContents.send('mt::force-close-tabs-by-id', tabIds)
+    typedSend(win.webContents, 'mt::force-close-tabs-by-id', tabIds)
   }
 })
 
-ipcMain.on(
+typedOn(
   'mt::response-file-save-as',
   async (
     e: IpcMainEvent,
@@ -468,7 +475,7 @@ ipcMain.on(
             ipcMain.emit('menu-add-recently-used', filePath)
 
             const newFilename = path.basename(filePath!)
-            win.webContents.send('mt::set-pathname', {
+            typedSend(win.webContents, 'mt::set-pathname', {
               id,
               pathname: filePath,
               filename: newFilename
@@ -478,26 +485,26 @@ ipcMain.on(
             ipcMain.emit('window-change-file-path', win.id, filePath, pathname)
 
             const newFilename = path.basename(filePath!)
-            win.webContents.send('mt::set-pathname', {
+            typedSend(win.webContents, 'mt::set-pathname', {
               id,
               pathname: filePath,
               filename: newFilename
             })
           } else {
             ipcMain.emit('window-file-saved', win.id, filePath)
-            win.webContents.send('mt::tab-saved', id)
+            typedSend(win.webContents, 'mt::tab-saved', id)
           }
         })
         .catch((err: unknown) => {
           log.error('Error while save as:', err)
           const msg = err instanceof Error ? err.message : String(err)
-          win.webContents.send('mt::tab-save-failure', id, msg)
+          typedSend(win.webContents, 'mt::tab-save-failure', id, msg)
         })
     }
   }
 )
 
-ipcMain.on('mt::close-window-confirm', async (e, unsavedFiles: UnsavedFile[]) => {
+typedOn('mt::close-window-confirm', async (e, unsavedFiles: UnsavedFile[]) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return
@@ -547,20 +554,21 @@ ipcMain.on('mt::close-window-confirm', async (e, unsavedFiles: UnsavedFile[]) =>
     // Discard: drop the unsaved tabs in the renderer and let it flush the
     // session buffer (without them) before closing, so discarded content is
     // not resurrected by session restore.
-    win.webContents.send(
+    typedSend(
+      win.webContents,
       'mt::discard-unsaved-tabs-and-close',
       unsavedFiles.map((file) => file.id)
     )
   }
 })
 
-ipcMain.on('mt::response-file-save', handleResponseForSave as Parameters<typeof ipcMain.on>[1])
+typedOn('mt::response-file-save', handleResponseForSave as Parameters<typeof ipcMain.on>[1])
 
-ipcMain.on('mt::response-export', handleResponseForExport as Parameters<typeof ipcMain.on>[1])
+typedOn('mt::response-export', handleResponseForExport as Parameters<typeof ipcMain.on>[1])
 
-ipcMain.on('mt::response-print', handleResponseForPrint as Parameters<typeof ipcMain.on>[1])
+typedOn('mt::response-print', handleResponseForPrint as Parameters<typeof ipcMain.on>[1])
 
-ipcMain.on('mt::window::drop', async (e, fileList: string[]) => {
+typedOn('mt::window::drop', async (e, fileList: string[]) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return
@@ -590,7 +598,7 @@ interface RenamePayload {
   newPathname: string
 }
 
-ipcMain.on('mt::rename', async (e, { id, pathname, newPathname }: RenamePayload) => {
+typedOn('mt::rename', async (e, { id, pathname, newPathname }: RenamePayload) => {
   if (pathname === newPathname) return
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
@@ -601,7 +609,7 @@ ipcMain.on('mt::rename', async (e, { id, pathname, newPathname }: RenamePayload)
     fsRename(pathname, newPathname, (err: NodeJS.ErrnoException | null) => {
       if (err) {
         log.error(`mt::rename: Cannot rename "${pathname}" to "${newPathname}".\n${err.stack}`)
-        win.webContents.send('mt::show-notification', {
+        typedSend(win.webContents, 'mt::show-notification', {
           title: t('dialog.renameFailure'),
           type: 'error',
           message: t('store.editor.errorWhileRenaming', { msg: err.message })
@@ -610,7 +618,7 @@ ipcMain.on('mt::rename', async (e, { id, pathname, newPathname }: RenamePayload)
       }
 
       ipcMain.emit('window-change-file-path', win.id, newPathname, pathname)
-      e.sender.send('mt::set-pathname', {
+      typedSend(e.sender, 'mt::set-pathname', {
         id,
         pathname: newPathname,
         filename: path.basename(newPathname)
@@ -636,7 +644,7 @@ ipcMain.on('mt::rename', async (e, { id, pathname, newPathname }: RenamePayload)
   }
 })
 
-ipcMain.on(
+typedOn(
   'mt::response-file-move-to',
   async (e, { id, pathname }: { id: string; pathname: string }) => {
     const win = BrowserWindow.fromWebContents(e.sender)
@@ -653,7 +661,7 @@ ipcMain.on(
       fsRename(pathname, filePath, (err: NodeJS.ErrnoException | null) => {
         if (err) {
           log.error(`mt::rename: Cannot rename "${pathname}" to "${filePath}".\n${err.stack}`)
-          win.webContents.send('mt::show-notification', {
+          typedSend(win.webContents, 'mt::show-notification', {
             title: t('dialog.moveFailure'),
             type: 'error',
             message: t('store.editor.errorWhileMoving', { msg: err.message })
@@ -662,7 +670,7 @@ ipcMain.on(
         }
 
         ipcMain.emit('window-change-file-path', win.id, filePath, pathname)
-        e.sender.send('mt::set-pathname', {
+        typedSend(e.sender, 'mt::set-pathname', {
           id,
           pathname: filePath,
           filename: path.basename(filePath)
@@ -674,7 +682,7 @@ ipcMain.on(
 
 // Empty-state "Open File" button in the sidebar — picker filtered to markdown
 // and text files. Grants mutation scope for the file's parent directory.
-ipcMain.on('mt::ask-for-open-file-in-sidebar', async (e) => {
+typedOn('mt::ask-for-open-file-in-sidebar', async (e) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return
@@ -695,12 +703,7 @@ ipcMain.on('mt::ask-for-open-file-in-sidebar', async (e) => {
   }
 })
 
-interface FormatLinkPayload {
-  data: { href?: string; text?: string }
-  dirname?: string
-}
-
-ipcMain.on('mt::format-link-click', async (e, { data, dirname }: FormatLinkPayload) => {
+typedOn('mt::format-link-click', async (e, { data, dirname }: FormatLinkPayload) => {
   if (!data || (!data.href && !data.text)) {
     return
   }
@@ -714,7 +717,7 @@ ipcMain.on('mt::format-link-click', async (e, { data, dirname }: FormatLinkPaylo
   if (urlCandidate === rawUrl) {
     // No <> found, no spaces should be allowed
     if (/\s/.test(rawUrl)) {
-      win.webContents.send('mt::show-notification', {
+      typedSend(win.webContents, 'mt::show-notification', {
         title: 'Links cannot contain spaces',
         type: 'error',
         message:
@@ -770,28 +773,28 @@ ipcMain.on('mt::format-link-click', async (e, { data, dirname }: FormatLinkPaylo
 
 // --- commands -------------------------------------
 
-ipcMain.on('mt::cmd-open-file', (e) => {
+typedOn('mt::cmd-open-file', (e) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   openFile(win)
 })
 
-ipcMain.on('mt::cmd-new-editor-window', () => {
+typedOn('mt::cmd-new-editor-window', () => {
   newEditorWindow()
 })
 
-ipcMain.on('mt::cmd-open-folder', (e) => {
+typedOn('mt::cmd-open-folder', (e) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   openFolder(win)
 })
 
-ipcMain.on('mt::cmd-close-window', (e) => {
+typedOn('mt::cmd-close-window', (e) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (win) {
     win.close()
   }
 })
 
-ipcMain.on('mt::cmd-import-file', (e) => {
+typedOn('mt::cmd-import-file', (e) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (win) {
     importFile(win)
@@ -800,9 +803,9 @@ ipcMain.on('mt::cmd-import-file', (e) => {
 
 // --- menu -------------------------------------
 
-export const exportFile = (win: Win, type: string): void => {
+export const exportFile = (win: Win, type: ExportType): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::show-export-dialog', type)
+    typedSend(win.webContents, 'mt::show-export-dialog', type)
   }
 }
 
@@ -834,7 +837,7 @@ export const importFile = async (win: BrowserWindow | null): Promise<void> => {
 
 export const printDocument = (win: Win): void => {
   if (win) {
-    win.webContents.send('mt::show-export-dialog', 'print')
+    typedSend(win.webContents, 'mt::show-export-dialog', 'print')
   }
 }
 
@@ -886,7 +889,7 @@ export const openFileOrFolder = (win: BrowserWindow, pathname: string): void => 
     // and tell the window — rename and move failures already report through
     // this channel, so a dead click here was the only silent case.
     log.error(`Cannot open unknown file: "${resolvedPath}"`)
-    win.webContents.send('mt::show-notification', {
+    typedSend(win.webContents, 'mt::show-notification', {
       title: t('dialog.openFailure'),
       type: 'error',
       message: t('store.editor.fileRemovedOnDisk', { name: path.basename(resolvedPath) })
@@ -896,7 +899,7 @@ export const openFileOrFolder = (win: BrowserWindow, pathname: string): void => 
 
 export const newBlankTab = (win: Win): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::new-untitled-tab')
+    typedSend(win.webContents, 'mt::new-untitled-tab')
     showTabBar(win)
   }
 }
@@ -907,7 +910,7 @@ export const newEditorWindow = (): void => {
 
 export const closeTab = (win: Win): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::editor-close-tab')
+    typedSend(win.webContents, 'mt::editor-close-tab')
   }
 }
 
@@ -919,13 +922,13 @@ export const closeWindow = (win: Win): void => {
 
 export const save = (win: Win): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::editor-ask-file-save')
+    typedSend(win.webContents, 'mt::editor-ask-file-save')
   }
 }
 
 export const saveAs = (win: Win): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::editor-ask-file-save-as')
+    typedSend(win.webContents, 'mt::editor-ask-file-save-as')
   }
 }
 
@@ -942,13 +945,13 @@ export const autoSave = (menuItem: MenuItem, _browserWindow: BrowserWindow | und
 
 export const moveTo = (win: Win): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::editor-move-file')
+    typedSend(win.webContents, 'mt::editor-move-file')
   }
 }
 
 export const rename = (win: Win): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::editor-rename-file')
+    typedSend(win.webContents, 'mt::editor-rename-file')
   }
 }
 

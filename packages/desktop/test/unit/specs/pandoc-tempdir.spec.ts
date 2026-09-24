@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events'
-import { mkdtempSync, readdirSync } from 'node:fs'
+import { existsSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
@@ -11,10 +11,11 @@ import { describe, expect, it, vi } from 'vitest'
 // nothing in the temp dir", which is the whole contract; pandoc itself is not
 // needed because the child process is faked.
 
-const h = vi.hoisted(() => ({ exitCode: 0 }))
+const h = vi.hoisted(() => ({ exitCode: 0, argv: [] as string[] }))
 
 vi.mock('child_process', () => {
-  const spawn = (): EventEmitter => {
+  const spawn = (_command: string, argv: string[]): EventEmitter => {
+    h.argv = argv
     const proc = new EventEmitter()
     queueMicrotask(() => proc.emit('close', h.exitCode))
     return proc
@@ -24,20 +25,25 @@ vi.mock('child_process', () => {
   return { spawn, default: { spawn } }
 })
 
-const prefix = 'colamd-pandoc-'
-const leakedDirs = (): string[] => readdirSync(tmpdir()).filter((n) => n.startsWith(prefix))
-
 async function runExport(wantFailure: boolean): Promise<void> {
   const { exportViaPandoc } = await import('main_renderer/utils/pandoc')
   const workDir = mkdtempSync(path.join(tmpdir(), 'pandoc-leak-spec-'))
-  const before = leakedDirs().length
   const call = exportViaPandoc('# Doc\n', 'latex', path.join(workDir, 'out.tex'))
   if (wantFailure) {
     await expect(call).rejects.toThrow(/pandoc exited with code 2/)
   } else {
     await expect(call).resolves.toBeUndefined()
   }
-  expect(leakedDirs().length).toBe(before)
+  // The converter is handed its own temp markdown as the last argument, written
+  // inside the directory the module made (`utils/pandoc.ts:87-106`), so that path
+  // names exactly the directory that has to be gone again. Counting every
+  // `colamd-pandoc-*` entry in `os.tmpdir()` instead also sees the ones
+  // `pandoc-export.spec.ts` creates on a parallel worker, which made this
+  // assertion fail at random in the full suite.
+  const handedSource = h.argv[h.argv.length - 1]
+  const tempDir = path.dirname(handedSource)
+  expect(path.basename(tempDir)).toMatch(/^colamd-pandoc-/)
+  expect(existsSync(tempDir)).toBe(false)
 }
 
 describe('pandoc export temp directory', () => {

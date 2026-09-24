@@ -2,6 +2,7 @@
 
 import { type BrowserWindow, type MenuItemConstructorOptions } from 'electron'
 import { t } from '../../i18n'
+import { typedSend } from '../../ipc/typedSend'
 
 // Use function form to avoid calling the translation function during module load
 export const getCUT = (): MenuItemConstructorOptions => ({
@@ -27,7 +28,7 @@ export const getCopyAsRich = (): MenuItemConstructorOptions => ({
   id: 'copyAsRichMenuItem',
   click(_menuItem, targetWindow) {
     if (targetWindow) {
-      ;(targetWindow as BrowserWindow).webContents.send('mt::cm-copy-as-rich')
+      typedSend((targetWindow as BrowserWindow).webContents, 'mt::cm-copy-as-rich')
     }
   }
 })
@@ -37,7 +38,7 @@ export const getCopyAsHtml = (): MenuItemConstructorOptions => ({
   id: 'copyAsHtmlMenuItem',
   click(_menuItem, targetWindow) {
     if (targetWindow) {
-      ;(targetWindow as BrowserWindow).webContents.send('mt::cm-copy-as-html')
+      typedSend((targetWindow as BrowserWindow).webContents, 'mt::cm-copy-as-html')
     }
   }
 })
@@ -47,7 +48,7 @@ export const getPasteAsPlainText = (): MenuItemConstructorOptions => ({
   id: 'pasteAsPlainTextMenuItem',
   click(_menuItem, targetWindow) {
     if (targetWindow) {
-      ;(targetWindow as BrowserWindow).webContents.send('mt::cm-paste-as-plain-text')
+      typedSend((targetWindow as BrowserWindow).webContents, 'mt::cm-paste-as-plain-text')
     }
   }
 })
@@ -57,7 +58,7 @@ export const getInsertBefore = (): MenuItemConstructorOptions => ({
   id: 'insertParagraphBeforeMenuItem',
   click(_menuItem, targetWindow) {
     if (targetWindow) {
-      ;(targetWindow as BrowserWindow).webContents.send('mt::cm-insert-paragraph', 'before')
+      typedSend((targetWindow as BrowserWindow).webContents, 'mt::cm-insert-paragraph', 'before')
     }
   }
 })
@@ -67,7 +68,7 @@ export const getInsertAfter = (): MenuItemConstructorOptions => ({
   id: 'insertParagraphAfterMenuItem',
   click(_menuItem, targetWindow) {
     if (targetWindow) {
-      ;(targetWindow as BrowserWindow).webContents.send('mt::cm-insert-paragraph', 'after')
+      typedSend((targetWindow as BrowserWindow).webContents, 'mt::cm-insert-paragraph', 'after')
     }
   }
 })

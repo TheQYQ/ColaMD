@@ -4,16 +4,20 @@ import log from 'electron-log'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
 import { searchFilesAndDir } from '../../utils/imagePathAutoComplement'
+import { typedOn } from '../../ipc/typedOn'
+import { typedSend } from '../../ipc/typedSend'
+import type { LineEnding } from '@shared/types/files'
 
 type Win = BrowserWindow | null | undefined
 
 // TODO(Refactor): Move to filesystem and provide generic API to search files in directories.
-ipcMain.on('mt::ask-for-image-auto-path', (e, { pathname, src, id }) => {
+typedOn('mt::ask-for-image-auto-path', (e, { pathname, src, id }) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return
   }
   if (!src || typeof src !== 'string') {
+    // eslint-disable-next-line no-restricted-syntax -- the channel is a per-request reply address (`mt::response-of-image-path-${id}`), so there is no contract key to check
     win.webContents.send(`mt::response-of-image-path-${id}`, [])
     return
   }
@@ -31,10 +35,12 @@ ipcMain.on('mt::ask-for-image-auto-path', (e, { pathname, src, id }) => {
   }
   searchFilesAndDir(dir, searchKey)
     .then((files) => {
+      // eslint-disable-next-line no-restricted-syntax -- the channel is a per-request reply address (`mt::response-of-image-path-${id}`), so there is no contract key to check
       return win.webContents.send(`mt::response-of-image-path-${id}`, files)
     })
     .catch((err: unknown) => {
       log.error(err)
+      // eslint-disable-next-line no-restricted-syntax -- the channel is a per-request reply address (`mt::response-of-image-path-${id}`), so there is no contract key to check
       return win.webContents.send(`mt::response-of-image-path-${id}`, [])
     })
 })
@@ -95,7 +101,7 @@ export const editorReplace = (win: Win): void => {
 
 const edit = (win: Win, type: string): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::editor-edit-action', type)
+    typedSend(win.webContents, 'mt::editor-edit-action', type)
   }
 }
 
@@ -121,9 +127,9 @@ export const screenshot = (win: Win): void => {
   ipcMain.emit('screen-capture', win)
 }
 
-export const lineEnding = (win: Win, lineEnding: string): void => {
+export const lineEnding = (win: Win, lineEnding: LineEnding): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::set-line-ending', lineEnding)
+    typedSend(win.webContents, 'mt::set-line-ending', lineEnding)
   }
 }
 

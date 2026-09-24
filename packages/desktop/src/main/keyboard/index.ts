@@ -1,4 +1,4 @@
-import { shell, ipcMain } from 'electron'
+import { shell } from 'electron'
 import { typedHandle } from '../ipc/typedHandle'
 import log from 'electron-log'
 import EventEmitter from 'events'
@@ -12,6 +12,7 @@ import {
 } from 'native-keymap'
 import os from 'os'
 import path from 'path'
+import { typedOn } from '../ipc/typedOn'
 
 export interface KeyboardInfo {
   layout: IKeyboardLayoutInfo
@@ -91,7 +92,7 @@ export const registerKeyboardListeners = (): void => {
   typedHandle('mt::keybinding-get-keyboard-info', async () => {
     return getKeyboardInfo()
   })
-  ipcMain.on('mt::keybinding-debug-dump-keyboard-info', async () => {
+  typedOn('mt::keybinding-debug-dump-keyboard-info', async () => {
     const dumpPath = path.join(os.tmpdir(), 'colamd_keyboard_info.json')
     const content = JSON.stringify(getKeyboardInfo(), null, 2)
     fsPromises

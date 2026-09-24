@@ -1,6 +1,7 @@
 import { type BrowserWindow, type Menu, type MenuItem } from 'electron'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
+import { typedSend } from '../../ipc/typedSend'
 
 const MENU_ID_FORMAT_MAP: Readonly<Record<string, string>> = Object.freeze({
   strongMenuItem: 'strong',
@@ -20,7 +21,7 @@ type Win = BrowserWindow | null | undefined
 
 const format = (win: Win, type: string): void => {
   if (win && win.webContents) {
-    win.webContents.send('mt::editor-format-action', { type })
+    typedSend(win.webContents, 'mt::editor-format-action', { type })
   }
 }
 

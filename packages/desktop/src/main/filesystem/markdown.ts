@@ -16,16 +16,10 @@ interface MarkdownDocumentOptions {
   encoding: Encoding
 }
 
-interface MarkdownDocumentRaw {
-  markdown: string
-  filename: string
-  pathname: string
-  encoding: Encoding
-  lineEnding: LineEnding
-  adjustLineEndingOnSave: boolean
-  trimTrailingNewline: number
-  isMixedLineEndings: boolean
-}
+// The shape is declared in the shared contract now; this module is one of its
+// producers, and `mt::open-new-tab` pushes it to the renderer unchanged.
+import type { MarkdownDocumentRaw } from '@shared/types/files'
+export type { MarkdownDocumentRaw }
 
 const getLineEnding = (lineEnding: LineEnding): string => {
   if (lineEnding === 'lf') {

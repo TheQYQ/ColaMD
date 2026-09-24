@@ -9,7 +9,13 @@ import { createPinia, setActivePinia } from 'pinia'
 vi.hoisted(() => {
   const w = globalThis as unknown as {
     window?: {
-      path?: { sep: string; dirname: (p: string) => string }
+      DIRNAME?: string
+      path?: {
+        sep: string
+        dirname: (p: string) => string
+        join: (...p: string[]) => string
+        basename: (p: string) => string
+      }
       fileUtils?: { isSamePathSync: (a: string, b: string) => boolean }
       electron?: {
         clipboard: { writeText: (s: string) => void }
@@ -21,7 +27,9 @@ vi.hoisted(() => {
   // Strips the last segment so DIRNAME assertions mean something.
   w.window.path ??= {
     sep: '/',
-    dirname: (p: string) => p.slice(0, p.lastIndexOf('/'))
+    dirname: (p: string) => p.slice(0, p.lastIndexOf('/')),
+    join: (...parts: string[]) => parts.filter(Boolean).join('/'),
+    basename: (p: string) => p.slice(p.lastIndexOf('/') + 1)
   }
   w.window.fileUtils ??= { isSamePathSync: (a, b) => a === b }
   w.window.electron ??= {
@@ -184,5 +192,143 @@ describe('useEditorStore.TAB_SAVE_FAILURE', () => {
     expect(payload.title).not.toBe('dialog.saveFailure')
     expect(typeof payload.title).toBe('string')
     expect((payload.title as string).length).toBeGreaterThan(0)
+  })
+})
+
+// O12(12): the rename paths and the save/save-as pair. `RENAME` and
+// `RENAME_IF_NEEDED` had no test anywhere before this file grew them, and the
+// last case here is the one the extraction leans on: FILE_SAVE and FILE_SAVE_AS
+// were eighteen lines written twice, differing only by channel.
+
+describe('useEditorStore.RENAME', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    window.DIRNAME = ''
+  })
+
+  it('asks main to rename the file inside its current folder', () => {
+    const store = useEditorStore()
+    seed(store, [makeTab({ pathname: '/docs/note.md', filename: 'note.md' })])
+    const send = vi.spyOn(window.electron.ipcRenderer, 'send')
+
+    store.RENAME('other.md')
+
+    const call = send.mock.calls.find((c: unknown[]) => c[0] === 'mt::rename')
+    expect(call?.[1]).toMatchObject({
+      id: 'tab-1',
+      pathname: '/docs/note.md',
+      newPathname: '/docs/other.md'
+    })
+  })
+
+  it('says nothing when the name did not change', () => {
+    const store = useEditorStore()
+    seed(store, [makeTab({ pathname: '/docs/note.md', filename: 'note.md' })])
+    const send = vi.spyOn(window.electron.ipcRenderer, 'send')
+
+    store.RENAME('note.md')
+
+    expect(send.mock.calls.some((c: unknown[]) => c[0] === 'mt::rename')).toBe(false)
+  })
+
+  it('says nothing without a current tab', () => {
+    const store = useEditorStore()
+    seed(store, [makeTab()])
+    store.currentFile = null
+    const send = vi.spyOn(window.electron.ipcRenderer, 'send')
+
+    store.RENAME('other.md')
+
+    expect(send.mock.calls.some((c: unknown[]) => c[0] === 'mt::rename')).toBe(false)
+  })
+})
+
+describe('useEditorStore.RENAME_IF_NEEDED', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    window.DIRNAME = ''
+  })
+
+  const threeTabs = () => [
+    makeTab({ id: 'a', pathname: '/docs/a.md', filename: 'a.md' }),
+    makeTab({ id: 'b', pathname: '/docs/b.md', filename: 'b.md' }),
+    makeTab({ id: 'c', pathname: '/elsewhere/a.md', filename: 'a.md' })
+  ]
+
+  it('rewrites only the tabs pointing at the renamed path', () => {
+    const store = useEditorStore()
+    seed(store, threeTabs())
+
+    store.RENAME_IF_NEEDED({ src: '/docs/a.md', dest: '/new/folder/x.md' })
+
+    expect(store.tabs.map((t) => `${t.pathname}|${t.filename}`)).toEqual([
+      '/new/folder/x.md|x.md',
+      '/docs/b.md|b.md',
+      '/elsewhere/a.md|a.md'
+    ])
+  })
+
+  it('moves DIRNAME when the active tab is the one that was renamed', () => {
+    const store = useEditorStore()
+    seed(store, threeTabs())
+    window.DIRNAME = '/docs'
+
+    store.RENAME_IF_NEEDED({ src: '/docs/a.md', dest: '/new/folder/x.md' })
+
+    expect(window.DIRNAME).toBe('/new/folder')
+  })
+
+  it('leaves DIRNAME alone when the active tab is unrelated', () => {
+    const store = useEditorStore()
+    const tabs = threeTabs()
+    seed(store, tabs)
+    store.currentFile = tabs[1] as unknown as typeof store.currentFile
+    window.DIRNAME = '/docs'
+
+    store.RENAME_IF_NEEDED({ src: '/docs/a.md', dest: '/new/folder/x.md' })
+
+    expect(window.DIRNAME).toBe('/docs')
+  })
+})
+
+describe('useEditorStore.FILE_SAVE / FILE_SAVE_AS', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    window.DIRNAME = ''
+  })
+
+  it('send one field-for-field identical request and differ only by channel', () => {
+    const store = useEditorStore()
+    seed(store, [makeTab({ pathname: '/docs/note.md', filename: 'note.md' })])
+    const send = vi.spyOn(window.electron.ipcRenderer, 'send')
+
+    store.FILE_SAVE()
+    store.FILE_SAVE_AS()
+
+    const save = send.mock.calls.filter((c: unknown[]) => c[0] === 'mt::response-file-save')
+    const saveAs = send.mock.calls.filter((c: unknown[]) => c[0] === 'mt::response-file-save-as')
+    expect(save).toHaveLength(1)
+    expect(saveAs).toHaveLength(1)
+    // The whole point of the shared sender: the arguments are one shape, so a
+    // change to the payload can only be made once.
+    expect(saveAs[0].slice(1)).toEqual(save[0].slice(1))
+    expect(save[0][1]).toBe('tab-1')
+  })
+
+  it('writes nothing when there is no current tab', () => {
+    const store = useEditorStore()
+    seed(store, [makeTab()])
+    store.currentFile = null
+    const send = vi.spyOn(window.electron.ipcRenderer, 'send')
+
+    store.FILE_SAVE()
+    store.FILE_SAVE_AS()
+
+    expect(
+      send.mock.calls.filter((c: unknown[]) => String(c[0]).startsWith('mt::response-file-save'))
+    ).toEqual([])
   })
 })

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import type { BrowserWindow as IBrowserWindow } from 'electron'
 import log from 'electron-log'
 import { TypedEmitter } from '@shared/types/typedEmitter'
@@ -12,6 +12,8 @@ import type Preference from '../preferences'
 import { WindowType } from '../windows/base'
 import type { WindowTypeValue } from '../windows/base'
 import type EditorWindow from '../windows/editor'
+import { typedOn } from '../ipc/typedOn'
+import { typedSend } from '../ipc/typedSend'
 
 class WindowActivityList {
   // Oldest             Newest
@@ -363,7 +365,7 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
 
   private _listenForIpcMain(): void {
     // Force close a BrowserWindow
-    ipcMain.on('mt::close-window', (e) => {
+    typedOn('mt::close-window', (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       // Before closing, update the buffer store if needed
       this.editorBufferStore.handleClose(
@@ -373,7 +375,7 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
       this.forceClose(win)
     })
 
-    ipcMain.on('mt::open-file', (e, filePath: string, options: Record<string, unknown>) => {
+    typedOn('mt::open-file', (e, filePath: string, options: Record<string, unknown>) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const editor = this.get(win.id) as EditorWindow | undefined
@@ -384,7 +386,7 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
       editor.openTab(filePath, options, true)
     })
 
-    ipcMain.on('mt::window-tab-closed', (e, pathname: string) => {
+    typedOn('mt::window-tab-closed', (e, pathname: string) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const editor = this.get(win.id) as EditorWindow | undefined
@@ -393,7 +395,7 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
       }
     })
 
-    ipcMain.on('mt::window-toggle-always-on-top', (e) => {
+    typedOn('mt::window-toggle-always-on-top', (e) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const flag = !win.isAlwaysOnTop()
@@ -477,7 +479,7 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
             const root = editor?.openedRootDirectory
             if (!editor || !root) continue
             await this._watcher.unwatch(browserWindow, root, 'dir')
-            browserWindow.webContents.send('mt::reload-directory', root)
+            typedSend(browserWindow.webContents, 'mt::reload-directory', root)
             this._watcher.watch(browserWindow, root, 'dir')
           }
         })().catch((err) => log.error('Tree filter rescan failed:', err))
@@ -489,14 +491,14 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
       }
       if (Object.keys(prefs).length > 0) {
         for (const { browserWindow } of this._windows.values()) {
-          browserWindow?.webContents.send('mt::user-preference', prefs)
+          typedSend(browserWindow?.webContents, 'mt::user-preference', prefs)
         }
       }
     })
 
     onInternalChannel('broadcast-user-data-changed', (userData: Record<string, unknown>) => {
       for (const { browserWindow } of this._windows.values()) {
-        browserWindow?.webContents.send('mt::user-preference', userData)
+        typedSend(browserWindow?.webContents, 'mt::user-preference', userData)
       }
     })
   }

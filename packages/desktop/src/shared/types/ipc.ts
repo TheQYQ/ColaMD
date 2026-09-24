@@ -20,7 +20,6 @@
 import type { IKeyboardLayoutInfo, IKeyboardMapping } from 'native-keymap'
 import type { RipgrepRequest } from './ripgrep'
 import type {
-  MarkdownDocument,
   TabOptions,
   BootstrapEditorConfig,
   PageOptions,
@@ -28,7 +27,8 @@ import type {
   SaveOptions,
   LineEnding,
   FileChangeDetail,
-  UnsavedFile
+  UnsavedFile,
+  MarkdownDocumentRaw
 } from './files'
 import type { BufferedState as BufferedStateType } from './bufferedState'
 import type { MenuTemplate, MenuPopupPosition } from './menu'
@@ -40,6 +40,51 @@ import type {
   ElectronMessageBoxOptions,
   ElectronMessageBoxResult
 } from './dialog'
+
+// Payloads owned by the contract itself: the two ends of these channels used
+// to agree only at run time, so `typedOn` could not bind them without a
+// declaration here. `SelectionState` and `FormatLinkPayload` moved out of
+// `src/main/menu/…` for the same reason -- the main side now imports them
+// from here instead of declaring its own copy.
+export interface NeedUpdatePayload {
+  needUpdate: boolean
+}
+
+// `bootstrap.ts` flattens the renderer Error into these three fields before
+// sending; it is NOT an `Error` instance on the main side.
+export interface RendererErrorCopy {
+  message: string
+  name: string
+  stack?: string
+}
+
+export interface ImageAutoPathRequest {
+  pathname: string
+  src: string
+  id: string
+  currentFile: unknown
+}
+
+export interface FormatLinkPayload {
+  // muya's getLinkInfo yields `href: null` when the rendered link carries no
+  // usable href (e.g. an unsupported protocol stripped by sanitizeHyperlink);
+  // the main handler falls back to the link text in that case, so `text` is
+  // declared even though the renderer forwards the whole info object.
+  data: { href: string | null; text?: string; [key: string]: unknown }
+  dirname: string
+}
+
+export interface SelectionState {
+  affiliation: Record<string, boolean>
+  isTable?: boolean
+  isLooseListItem?: boolean
+  isTaskList?: boolean
+  isDisabled?: boolean
+  isMultiline?: boolean
+  isCodeFences?: boolean
+  isCodeContent?: boolean
+  hasFrontMatter?: boolean
+}
 
 /**
  * A single document version snapshot. Mirrors the shape persisted by
@@ -144,9 +189,9 @@ export interface IpcSendChannels {
   'broadcast-user-data-changed': [partial: unknown]
   'menu-add-recently-used': [filePath: string]
   'menu-clear-recently-used': []
-  'mt::NEED_UPDATE': [payload?: unknown]
+  'mt::NEED_UPDATE': [payload: NeedUpdatePayload]
   'mt::app-try-quit': []
-  'mt::ask-for-image-auto-path': [payload: unknown]
+  'mt::ask-for-image-auto-path': [payload: ImageAutoPathRequest]
   // No argument: main opens the picker and assigns the result itself, because
   // this folder is also a write-scope root (see security/pathScope.ts).
   'mt::ask-for-modify-image-folder-path': []
@@ -164,10 +209,10 @@ export interface IpcSendChannels {
   'mt::cmd-open-file': []
   'mt::cmd-open-folder': []
   'mt::cmd-toggle-autosave': []
-  'mt::editor-selection-changed': [windowId: number, state: unknown]
-  'mt::format-link-click': [payload: { data: unknown; dirname: string }]
+  'mt::editor-selection-changed': [windowId: number, state: SelectionState]
+  'mt::format-link-click': [payload: FormatLinkPayload]
   'mt::get-current-language': []
-  'mt::handle-renderer-error': [error: unknown]
+  'mt::handle-renderer-error': [error: RendererErrorCopy]
   'mt::keybinding-debug-dump-keyboard-info': []
   'mt::make-screenshot': []
   'mt::menu::popup': [template: MenuTemplate, position?: MenuPopupPosition]
@@ -177,7 +222,7 @@ export interface IpcSendChannels {
   // which asks the OS handler and answers with an error string.
   'mt::menu::open-path': [pathname: string]
   'mt::unsaved-dialog-response': [result: { needSave: boolean } | null]
-  'mt::open-file': [filePath: string, options?: unknown]
+  'mt::open-file': [filePath: string, options: Record<string, unknown>]
   'mt::open-file-by-window-id': [windowId: number, filePath: string, options?: unknown]
   'mt::open-setting-window': []
   'mt::rename': [
@@ -218,17 +263,17 @@ export interface IpcSendChannels {
   ]
   'mt::response-print': []
   'mt::rg::cancel': [searchId: string]
-  'mt::save-and-close-tabs': [tabs: unknown[]]
-  'mt::save-tabs': [tabs: unknown[]]
+  'mt::save-and-close-tabs': [tabs: UnsavedFile[]]
+  'mt::save-tabs': [tabs: UnsavedFile[]]
   'mt::select-default-directory-to-open': []
-  'mt::set-user-data': [partial: unknown]
-  'mt::set-user-preference': [partial: unknown]
+  'mt::set-user-data': [userData: Record<string, unknown>]
+  'mt::set-user-preference': [partial: Record<string, unknown>]
   'mt::shell::open-external': [url: string]
   'mt::shell::show-item': [fullPath: string]
   'mt::update-format-menu': [windowId: number, state: Record<string, boolean>]
   'mt::update-line-ending-menu': [windowId: number, lineEnding: LineEnding]
   'mt::update-sidebar-menu': [windowId: number, visible: boolean]
-  'mt::view-layout-changed': [windowId: number, layout: unknown]
+  'mt::view-layout-changed': [windowId: number, layout: Record<string, unknown>]
   'mt::win::close': []
   'mt::win::maximize': []
   'mt::win::minimize': []
@@ -237,7 +282,7 @@ export interface IpcSendChannels {
   'mt::win::unmaximize': []
   'mt::window-tab-closed': [pathname: string]
   'mt::window-toggle-always-on-top': []
-  'mt::window::drop': [payload: unknown]
+  'mt::window::drop': [fileList: string[]]
   'screen-capture': [payload: unknown]
   'set-user-preference': [partial: unknown]
   'watcher-unwatch-all-by-id': [windowId: number]
@@ -292,17 +337,17 @@ export interface IpcMainEventChannels {
   'mt::export-success': [payload: { type: string; filePath: string }]
   'mt::force-close-tabs-by-id': [tabIds: string[]]
   'mt::discard-unsaved-tabs-and-close': [tabIds: string[]]
-  'mt::show-unsaved-dialog': []
+  'mt::show-unsaved-dialog': [count: number]
   'mt::invalidate-image-cache': []
   'mt::keybindings-response': [bindings: unknown]
   'mt::load-state': [state: BufferedStateType]
-  'mt::menu::click': [menuId: string]
-  'mt::menu::closed': []
+  'mt::menu::click': [payload: { windowId: number; id?: string }]
+  'mt::menu::closed': [payload: { windowId: number }]
   'mt::new-untitled-tab': [selected?: boolean, markdown?: string]
   'mt::open-directory': [directoryPath: string]
   'mt::reload-directory': [directoryPath: string]
   'mt::open-new-tab': [
-    markdownDocument: MarkdownDocument | null,
+    markdownDocument: MarkdownDocumentRaw | null,
     options?: TabOptions,
     selected?: boolean
   ]
@@ -333,13 +378,13 @@ export interface IpcMainEventChannels {
   'mt::update-file': [payload: { type: 'add' | 'change' | 'unlink'; change: FileChangeDetail }]
   'mt::update-object-tree': [payload: unknown]
   'mt::user-preference': [partial: unknown]
-  'mt::window-active-status': [active: boolean]
+  'mt::window-active-status': [payload: { status: boolean }]
   'mt::window-enter-full-screen': []
   'mt::window-leave-full-screen': []
   'mt::window-maximize': []
   'mt::window-unmaximize': []
   'mt::window-zoom': [zoomLevel: number]
-  'settings::change-tab': [tab: string]
+  'settings::change-tab': [tab?: string | null]
 }
 
 // =================================================================

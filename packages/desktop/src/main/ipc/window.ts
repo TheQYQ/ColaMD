@@ -1,14 +1,9 @@
-import {
-  BrowserWindow,
-  Menu,
-  MenuItem,
-  ipcMain,
-  type IpcMainEvent,
-  type WebContents
-} from 'electron'
+import { BrowserWindow, Menu, MenuItem, type IpcMainEvent, type WebContents } from 'electron'
 import log from 'electron-log'
 import type { MenuTemplate, MenuTemplateItem, MenuPopupPosition } from '@shared/types/menu'
 import { typedHandle } from './typedHandle'
+import { typedOn } from './typedOn'
+import { typedSend } from './typedSend'
 
 const windowFromEvent = (event: IpcMainEvent): BrowserWindow | null =>
   BrowserWindow.fromWebContents(event.sender)
@@ -36,7 +31,7 @@ const buildMenu = (template: MenuTemplate | undefined, windowId: number): Menu =
         click: () => {
           const sender = popups.get(windowId)?.sender
           try {
-            sender?.send('mt::menu::click', { windowId, id })
+            typedSend(sender, 'mt::menu::click', { windowId, id })
           } catch {
             /* sender destroyed */
           }
@@ -49,27 +44,27 @@ const buildMenu = (template: MenuTemplate | undefined, windowId: number): Menu =
 }
 
 export const registerWindowHandlers = (): void => {
-  ipcMain.on('mt::win::minimize', (event) => {
+  typedOn('mt::win::minimize', (event) => {
     const win = windowFromEvent(event)
     if (win) win.minimize()
   })
-  ipcMain.on('mt::win::maximize', (event) => {
+  typedOn('mt::win::maximize', (event) => {
     const win = windowFromEvent(event)
     if (win) win.maximize()
   })
-  ipcMain.on('mt::win::unmaximize', (event) => {
+  typedOn('mt::win::unmaximize', (event) => {
     const win = windowFromEvent(event)
     if (win) win.unmaximize()
   })
-  ipcMain.on('mt::win::close', (event) => {
+  typedOn('mt::win::close', (event) => {
     const win = windowFromEvent(event)
     if (win) win.close()
   })
-  ipcMain.on('mt::win::set-fullscreen', (event, flag: boolean) => {
+  typedOn('mt::win::set-fullscreen', (event, flag: boolean) => {
     const win = windowFromEvent(event)
     if (win) win.setFullScreen(!!flag)
   })
-  ipcMain.on('mt::win::toggle-fullscreen', (event) => {
+  typedOn('mt::win::toggle-fullscreen', (event) => {
     const win = windowFromEvent(event)
     if (win) win.setFullScreen(!win.isFullScreen())
   })
@@ -82,7 +77,7 @@ export const registerWindowHandlers = (): void => {
     return !!win && win.isFullScreen()
   })
 
-  ipcMain.on('mt::menu::popup', (event, template: MenuTemplate, position?: MenuPopupPosition) => {
+  typedOn('mt::menu::popup', (event, template: MenuTemplate, position?: MenuPopupPosition) => {
     const win = windowFromEvent(event)
     if (!win) return
     // Stash sender BEFORE menu.popup so buildMenu click handlers can resolve
@@ -99,7 +94,7 @@ export const registerWindowHandlers = (): void => {
         callback: () => {
           popups.delete(win.id)
           try {
-            event.sender.send('mt::menu::closed', { windowId: win.id })
+            typedSend(event.sender, 'mt::menu::closed', { windowId: win.id })
           } catch {
             /* destroyed */
           }

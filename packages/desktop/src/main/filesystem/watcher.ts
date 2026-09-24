@@ -10,6 +10,7 @@ import { isLinux, isOsx } from '../config'
 import type { BrowserWindow } from 'electron'
 import type { LineEnding } from '@shared/types/files'
 import type Preference from '../preferences'
+import { typedSend } from '../ipc/typedSend'
 
 // TODO(refactor): Please see GH#1035.
 
@@ -134,7 +135,7 @@ const add = async (
     } catch (err) {
       // Only notify user about opened files.
       if (type === 'file') {
-        win.webContents.send('mt::show-notification', {
+        typedSend(win.webContents, 'mt::show-notification', {
           title: 'Watcher I/O error',
           type: 'error',
           message: err instanceof Error ? err.message : String(err)
@@ -148,6 +149,7 @@ const add = async (
   // The single-file watcher stays markdown-only so mt::update-file only ever
   // carries openable documents.
   if (isMarkdown || type === 'dir') {
+    // eslint-disable-next-line no-restricted-syntax -- the channel comes from a lookup table, so the key is only known at runtime; typedSend() cannot check a union of tuples
     win.webContents.send(EVENT_NAME[type], {
       type: 'add',
       change: file
@@ -157,6 +159,7 @@ const add = async (
 
 const unlink = (win: BrowserWindow, pathname: string, type: WatchType): void => {
   const file = { pathname }
+  // eslint-disable-next-line no-restricted-syntax -- the channel comes from a lookup table, so the key is only known at runtime; typedSend() cannot check a union of tuples
   win.webContents.send(EVENT_NAME[type], {
     type: 'unlink',
     change: file
@@ -176,7 +179,7 @@ const change = async (
     // Only send mtimeMs so the sidebar can re-sort; skip loading file content.
     try {
       const stats = await fsPromises.stat(pathname)
-      win.webContents.send('mt::update-object-tree', {
+      typedSend(win.webContents, 'mt::update-object-tree', {
         type: 'change',
         change: { pathname, mtimeMs: stats.mtimeMs }
       })
@@ -200,13 +203,13 @@ const change = async (
         fsPromises.stat(pathname)
       ])
       const file = { pathname, data, mtimeMs: stats.mtimeMs }
-      win.webContents.send('mt::update-file', {
+      typedSend(win.webContents, 'mt::update-file', {
         type: 'change',
         change: file
       })
     } catch (err) {
       if (type === 'file') {
-        win.webContents.send('mt::show-notification', {
+        typedSend(win.webContents, 'mt::show-notification', {
           title: 'Watcher I/O error',
           type: 'error',
           message: err instanceof Error ? err.message : String(err)
@@ -230,7 +233,7 @@ const addDir = (win: BrowserWindow, pathname: string, type: WatchType): void => 
     files: []
   }
 
-  win.webContents.send('mt::update-object-tree', {
+  typedSend(win.webContents, 'mt::update-object-tree', {
     type: 'addDir',
     change: directory
   })
@@ -240,7 +243,7 @@ const unlinkDir = (win: BrowserWindow, pathname: string, type: WatchType): void 
   if (type === 'file') return
 
   const directory = { pathname }
-  win.webContents.send('mt::update-object-tree', {
+  typedSend(win.webContents, 'mt::update-object-tree', {
     type: 'unlinkDir',
     change: directory
   })
@@ -382,7 +385,7 @@ class Watcher {
             enospcReached = true
             log.warn('inotify limit reached: Too many file descriptors are opened.')
 
-            win.webContents.send('mt::show-notification', {
+            typedSend(win.webContents, 'mt::show-notification', {
               title: 'inotify limit reached',
               type: 'warning',
               message:
