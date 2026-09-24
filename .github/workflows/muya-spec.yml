@@ -1,6 +1,10 @@
 name: Muya Spec (CommonMark + GFM)
 
 on:
+  # Manual runs exist to judge platform-specific suites (this one only
+  # runs on ubuntu) without touching packages/muya just to trip the path
+  # filter below.
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
