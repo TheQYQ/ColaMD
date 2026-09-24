@@ -1,0 +1,6 @@
+# The CommonMark/GFM round-trip fixtures are compared byte-for-byte against the
+# markdown the engine emits, and that output is always LF. With
+# `core.autocrlf=true` (the default on many Windows setups) a checkout rewrites
+# these files to CRLF and three of the fifteen round-trip cases fail locally
+# while passing on CI — so pin the line ending instead of the test.
+packages/muya/test/spec/fixtures/** text eol=lf
