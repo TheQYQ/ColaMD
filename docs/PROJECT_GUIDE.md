@@ -266,7 +266,7 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 ### 10.4 CI 与质量门
 
-13 个工作流（`.github/workflows/`）：
+12 个工作流（`.github/workflows/`；`claude.yml` 已于 2026-09-26 移除）：
 
 | 工作流                                         | 内容                                                                        | 触发                                          | OS                                                                  |
 | ---------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------- |
@@ -277,7 +277,6 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 | `e2e.yml`                                      | apt 依赖 → postinstall → build → `xvfb-run test:e2e`                        | PR/dispatch                                   | ubuntu-24.04                                                        |
 | `muya-{build,circular,lint,test,spec,e2e}.yml` | 引擎构建、`madge --circular`、lint+类型、单测、一致性、Playwright(chromium) | PR                                            | ubuntu                                                              |
 | `validate-licenses.yml`                        | `pnpm run validate-licenses`                                                | PR + push `develop`（package.json/lock 变更） | ubuntu                                                              |
-| `claude.yml`                                   | claude-code-action，仅 `github.actor == 'TheQYQ'`                           | issue/PR 评论                                 | ubuntu                                                              |
 
 `.github/actions/setup/action.yml`：pnpm/action-setup@v4.4.0 → setup-node@v4.4.0（node 22.21.1 + 缓存）→ `pnpm install --frozen-lockfile --ignore-scripts`。**`--ignore-scripts` 意味着补丁与 rebuild 只在显式重跑 postinstall 的 `build/e2e/release` 里发生。**
 
