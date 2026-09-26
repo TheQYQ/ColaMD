@@ -199,7 +199,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 撤下理由：原改法（把规范化结果缓存进 `window.colamd.paths`）要给一个非热点加一层路径缓存与其失效逻辑，属于用复杂度换一个测不到的收益；`docs/PROJECT_GUIDE.md` §11.1-8 已同步改写为"离散动作的同步回落"。
 - 若将来真有证据（PERF_TESTING 采样里出现阻塞计数）再重开，判据是"同一秒内 `mt::paths::is-same-sync` 调用次数"，不是读代码猜。
 
-**O11 · 设置页语言轮询** — 成本 XS — **已完成（第一批 PR-2；本轮复核：`grep setInterval` 在 `src/renderer/src/prefComponents/**/\*.vue`下已零命中）**`prefComponents/sideBar/config.ts:232`每秒轮询`window.**VUE_I18N**` 取 locale，只在下次 setup 时清（`:267`），组件卸载后仍常驻。已有事件通道 `language-changed`（`src/main/i18n.ts:23`，且已在契约 `shared/types/ipc.ts:252`）可替掉它。
+**O11 · 设置页语言轮询** — 成本 XS — **已完成**：`0277865` 把 `prefComponents/sideBar/config.ts` 里"每秒轮询 `window.__VUE_I18N__` 取 locale"改成监听 bus 的 `language-changed`（同批新增 `test/unit/specs/preferences-language-change.spec.ts` 钉住这条行为），当前实现是 `config.ts:228` 的 `setupLanguageChangeListener`。**2026-09-27 复核更正**：这条原先写的证据"`grep setInterval` 在 `prefComponents/**/*.vue` 下已零命中"**今天不成立**——同一条 grep 现在命中 `prefComponents/image/components/uploader/index.vue:300,651`，那是上传动画的计时器、与语言轮询无关；语言那条确实已经不在了，但以后引用这条要说清"哪两处命中属于什么"，别拿 grep 计数当结论。
 
 - 验收：删掉定时器，切语言仍能刷新文案；`onBeforeUnmount` 断言无遗留 timer。
 
@@ -464,7 +464,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 改法（已实施）：`openFileOrFolder` 的兜底分支由 `console.error` 改为经 `mt::show-notification` 报给该窗口（与 rename/move 失败同模式）；契约里给两条通道各补一行语义注释，免得下一轮又被判成重复。文案只新增标题 `dialog.openFailure`（11 份语言，值已各自翻译），消息复用既有的 `store.editor.fileRemovedOnDisk`，不新增长句翻译。
 - 验收（更正后）：原写的"E2E 点一条指向已删除文件的最近文档"**做不到**——reader 会把它过滤掉，构造不出该菜单项。改为单测 `open-path-failure-notification.spec.ts` 锁通知载荷，并用既有 `rename-failure-notification.spec.ts`（E2E，本地真窗口通过）证明这条通道真能渲染出通知条。
 
-**O19 · 偏好键的三处声明** — 成本 S，影响 中 — **两部分均已完成**：主进程可见键进 schema `e00f899`（分支 `security/image-folder-dialog-only`），6 处默认值不一致 `fe62eab`（分支 `fix/preference-default-parity`）\*\*
+**O19 · 偏好键的三处声明** — 成本 S，影响 中 — **两部分均已完成**：主进程可见键进 schema `e00f899`（分支 `security/image-folder-dialog-only`），6 处默认值不一致 `fe62eab`（分支 `fix/preference-default-parity`）。
 
 > **测量更正**：本条原写"11 个偏好键只活在渲染端"。逐项定位后，那 10 个键**没有一个需要进 preferences schema**：`webImages`/`cloudImages`/`currentUploader`/`cliScript` 是 dataCenter 的键（`dataCenter/schema.json` 已声明 imageFolderPath 一族），`installedThemes`/`typewriter`/`focus`/`sourceCode`/`deleteUnreferencedImages` 是渲染端自己的状态（编辑模式注释即写明 not persisted），`imageFolderPath` 由 O7① 归给 dataCenter。真正的 schema 缺口只有 **1 个**：`treePathExcludePatterns`——它在 `static/preference.json` 有默认值、且被主进程读（`filesystem/watcher.ts:59`、`app/windowManager.ts:469`），却是 77 个键里唯一没有 schema 条目的。
 
