@@ -92,9 +92,9 @@
 
 ## 開發
 
-如果你希望自行建置 ColaMD，請參閱[開發指南](../../CLAUDE.md)。
+如果你希望自行建置 ColaMD，請參閱[開發指南](../PROJECT_GUIDE.md)。
 
-- [開發指南](../../CLAUDE.md)
+- [開發指南](../PROJECT_GUIDE.md)
 - [貢獻指南](../../.github/CONTRIBUTING.md)
 
 如果你對 ColaMD 有任何疑問，歡迎提交 issue。提交時請使用開啟 issue 時的預設格式。當然，如果你直接提交 PR，將不勝感激。

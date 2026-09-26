@@ -92,9 +92,9 @@ Linux, macOS ve Windows için tüm ikili dosyalar [sürümler sayfasından](http
 
 ## Geliştirme
 
-ColaMD'yi kendiniz derlemek isterseniz [geliştirme rehberine](../../CLAUDE.md) göz atın.
+ColaMD'yi kendiniz derlemek isterseniz [geliştirme rehberine](../PROJECT_GUIDE.md) göz atın.
 
-- [Geliştirme rehberi](../../CLAUDE.md)
+- [Geliştirme rehberi](../PROJECT_GUIDE.md)
 - [Katkı rehberi](../../.github/CONTRIBUTING.md)
 
 ColaMD hakkında sorularınız varsa bir issue yazabilirsiniz. Bunu yaparken issue açarken görünen varsayılan formatı kullanın. Elbette doğrudan bir PR gönderirseniz çok memnun oluruz.
