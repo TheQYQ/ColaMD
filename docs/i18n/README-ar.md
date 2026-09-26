@@ -2,6 +2,10 @@
 
 <h1 dir="rtl" align="center">ColaMD</h1>
 
+<p align="center">
+  <sub><a href="../../README.md">简体中文</a> · <a href="../../README.en.md">English</a> · <a href="README-zh_tw.md">繁體中文</a> · <a href="README-jp.md">日本語</a> · <a href="README-kr.md">한국어</a> · <a href="README-fr.md">Français</a> · <a href="README-de.md">Deutsch</a> · <a href="README-es.md">Español</a> · <a href="README-pt.md">Português</a> · <a href="README-tr.md">Türkçe</a> · <strong>العربية</strong> · <a href="README-bn.md">বাংলা</a></sub>
+</p>
+
 <div dir="rtl" align="center">
   <strong>:high_brightness: محرر ماركداون من الجيل التالي :crescent_moon:</strong><br>
   محرر Markdown بسيط وأنيق يركز على السرعة وسهولة الاستخدام.<br>
@@ -43,43 +47,6 @@
       المساهمة
     </a>
   </h3>
-</div>
-
-<div dir="rtl" align="center">
-  <sub>الترجمات:</sub>
-  <a href="../../README.md">
-    <span>:uk:</span>
-  </a>
-  <a href="README-zh_cn.md#readme">
-    <span>:cn:</span>
-  </a>
-  <a href="README-zh_tw.md#readme">
-    <span>:taiwan:</span>
-  </a>
-  <a href="README-de.md#readme">
-    <span>:de:</span>
-  </a>
-  <a href="README-jp.md#readme">
-    <span>:jp:</span>
-  </a>
-  <a href="README-fr.md#readme">
-    <span>:fr:</span>
-  </a>
-  <a href="README-tr.md#readme">
-    <span>:tr:</span>
-  </a>
-  <a href="README-es.md#readme">
-    <span>:es:</span>
-  </a>
-  <a href="README-pt.md#readme">
-    <span>:portugal:</span>
-  </a>
-  <a href="README-kr.md#readme">
-    <span>:kr:</span>
-  </a>
-  <a href="README-bn.md#readme">
-    <span>:bangladesh:</span>
-  </a>
 </div>
 
 <div dir="rtl" align="center">
