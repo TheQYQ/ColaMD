@@ -6,8 +6,8 @@
 // source view. See https://github.com/TheQYQ/ColaMD/issues/4121.
 //
 // The outer mode is `gfm` to preserve the tables / autolinks / task lists
-// styling the previous `setMode(cm, 'markdown')` call resolved to via
-// `codeMirror/modes.js` (which maps "markdown" → `gfm` / `text/x-gfm`).
+// styling the previous `setMode(cm, 'markdown')` call resolved to: CodeMirror's own
+// mode metadata maps "markdown" to `gfm` / `text/x-gfm`.
 //
 // A second mode, `markdown-math-latex`, additionally delegates `\(...\)` spans
 // (the `mathLatexDelimiters` preference) — registered up front so the editor
