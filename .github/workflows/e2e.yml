@@ -56,6 +56,10 @@ jobs:
       # skips those four when it is missing. It was missing on both runners, so
       # those conversions had only ever been proven on one machine — this is the
       # same thing a user does (the app looks `pandoc` up on PATH).
+      # The last two lines are deliberately unpiped: `pandoc --version | head -1`
+      # would report the status of `head`, so a runner where the install silently
+      # produced no binary would still go green — with the four cases skipped,
+      # which is exactly the state this step exists to end.
       - name: Install pandoc
         run: |
           if [ "${{ matrix.platform }}" = 'linux' ]; then
@@ -64,7 +68,8 @@ jobs:
           else
             brew install pandoc
           fi
-          pandoc --version | head -n 1
+          command -v pandoc
+          pandoc --version
 
       - uses: ./.github/actions/setup
 
