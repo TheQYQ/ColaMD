@@ -1,27 +1,28 @@
 # CI run ledger
 
 本文件是 `docs/OPTIMIZATION_ROADMAP.md` 与 `docs/PROJECT_GUIDE.md` 里引用的 **GitHub Actions run 记录**的仓库内副本。
-run 页面属于仓库本身：仓库若被删除或重建，这些号就 404，而文档里"某次门禁跑在哪个 sha 上"的结论必须有出处。
-所以凡新增被文档引用的 run，都要在这里补一行。生成方式：`python scripts/exportCiRuns.py`（脚本按文档里的 11 位号自动抓取）。
+run 页面属于**某一个仓库**：项目在 2026-09-27 同名重建过，旧 run 号只存在于归档库 `ColaMD-archive`，而归档库一旦删除就永久 404 —— 这份文件因此是那些结论唯一的长期出处，不要按"随时能重抓"来理解它。
 
-- 抓取时间：2026-09-27；仓库 `TheQYQ/ColaMD` 的 run 总数：**525**
+生成方式：`python scripts/exportCiRuns.py`。脚本按文档里的 11 位号自动抓取，顺序是**当前库 → 归档库**；两边都取不到时**保留本文件里已有的那一行并标注"已不可达"**，绝不因为 404 就丢证据。
+
+- 抓取时间：2026-09-27
+- 当前库 `TheQYQ/ColaMD` 的 run 总数：**14**；归档库 `TheQYQ/ColaMD-archive`：**525**
 - `head_sha` 是 GitHub 记录的原始值，**不随分支历史重写而变**（见 `OPTIMIZATION_ROADMAP` §3 的重映射规则 ④）。
 
-| run           | workflow                     | head_sha  | 结论    | 日期       | 触发              | 各 job                                                                         |
-| ------------- | ---------------------------- | --------- | ------- | ---------- | ----------------- | ------------------------------------------------------------------------------ |
-| `35729699390` | E2E Test                     | `36e15ff` | success | 2026-09-22 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=success |
-| `35746222480` | E2E Test                     | `61c99c2` | failure | 2026-09-22 | pull_request      | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=failure |
-| `35752534189` | E2E Test                     | `5d4d064` | failure | 2026-09-22 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=failure |
-| `35753839166` | E2E Test                     | `a0348b1` | failure | 2026-09-22 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=failure |
-| `35757512852` | E2E Test                     | `58ff17a` | failure | 2026-09-22 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=failure |
-| `35759387561` | E2E Test                     | `0661ced` | failure | 2026-09-22 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=failure; e2e (macos, macos-15, macos)=failure |
-| `35763304319` | E2E Test                     | `95099e6` | success | 2026-09-22 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=success |
-| `35766221736` | Test                         | `fe202fd` | success | 2026-09-22 | pull_request      | coverage=success; test (ubuntu-latest)=success; test (windows-latest)=success  |
-| `35956060123` | Muya Spec (CommonMark + GFM) | `76ae14b` | success | 2026-09-24 | workflow_dispatch | spec=success                                                                   |
-| `36240056224` | E2E Test                     | `5b15507` | success | 2026-09-26 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=success |
-| `36244202347` | E2E Test                     | `0309e4d` | success | 2026-09-26 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=success |
-| `36244205143` | Muya Spec (CommonMark + GFM) | `0309e4d` | success | 2026-09-26 | workflow_dispatch | spec=success                                                                   |
-
-## 未收录但出现在文档里的 11 位数字
-
-（这些不是 run 号，列出来是为了别再把它们当提交号或 run 号统计。）
+| run           | 库     | workflow                     | head_sha  | 结论    | 日期       | 触发              | 各 job                                                                                                                                                                                          |
+| ------------- | ------ | ---------------------------- | --------- | ------- | ---------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `35729699390` | 归档库 | E2E Test                     | `36e15ff` | success | 2026-09-22 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=success                                                                                                                  |
+| `35746222480` | 归档库 | E2E Test                     | `61c99c2` | failure | 2026-09-22 | pull_request      | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=failure                                                                                                                  |
+| `35752534189` | 归档库 | E2E Test                     | `5d4d064` | failure | 2026-09-22 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=failure                                                                                                                  |
+| `35753839166` | 归档库 | E2E Test                     | `a0348b1` | failure | 2026-09-22 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=failure                                                                                                                  |
+| `35757512852` | 归档库 | E2E Test                     | `58ff17a` | failure | 2026-09-22 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=failure                                                                                                                  |
+| `35759387561` | 归档库 | E2E Test                     | `0661ced` | failure | 2026-09-22 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=failure; e2e (macos, macos-15, macos)=failure                                                                                                                  |
+| `35763304319` | 归档库 | E2E Test                     | `95099e6` | success | 2026-09-22 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=success                                                                                                                  |
+| `35766221736` | 归档库 | Test                         | `fe202fd` | success | 2026-09-22 | pull_request      | coverage=success; test (ubuntu-latest)=success; test (windows-latest)=success                                                                                                                   |
+| `35956060123` | 归档库 | Muya Spec (CommonMark + GFM) | `76ae14b` | success | 2026-09-24 | workflow_dispatch | spec=success                                                                                                                                                                                    |
+| `36240056224` | 归档库 | E2E Test                     | `5b15507` | success | 2026-09-26 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=success                                                                                                                  |
+| `36244202347` | 归档库 | E2E Test                     | `0309e4d` | success | 2026-09-26 | workflow_dispatch | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=success                                                                                                                  |
+| `36244205143` | 归档库 | Muya Spec (CommonMark + GFM) | `0309e4d` | success | 2026-09-26 | workflow_dispatch | spec=success                                                                                                                                                                                    |
+| `36266954425` | 当前库 | Release ColaMD               | `a27494e` | success | 2026-09-26 | push              | Build (linux)=success; Build (macos-arm64)=success; Build (macos-x64)=success; Build (windows-arm64)=success; Build (windows-x64)=success; Publish GitHub Release=success; Validate tag=success |
+| `36266954535` | 当前库 | Release ColaMD               | `1c13f6a` | success | 2026-09-26 | push              | Build (linux)=success; Build (macos-arm64)=success; Build (macos-x64)=success; Build (windows-arm64)=success; Build (windows-x64)=success; Publish GitHub Release=success; Validate tag=success |
+| `36268664649` | 当前库 | E2E Test                     | `bc92ab8` | failure | 2026-09-26 | pull_request      | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=failure                                                                                                                  |
