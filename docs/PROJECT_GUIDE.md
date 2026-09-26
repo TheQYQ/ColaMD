@@ -305,15 +305,17 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 > **口径**：`CLAUDE.md` 已于 2026-09-27 随本轮"去 Claude 绑定"删除，下表里 `CLAUDE.md:行号` 是**删除前的快照**，留着是因为它记的是"当时哪份文档在骗人"这件事本身；仍然有效的内容已并入本文（构建注意 → §10.1，命令与脚本 → §10.2）。
 
-| 位置                | 说法                                                                                    | 实际                                                                                                                                                                    |
-| ------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLAUDE.md:215-216` | 编辑器窗口 `contextIsolation: false + nodeIntegration: true`，文件 `src/main/config.js` | **错**。`main/config.ts:12,13,18`（编辑器）与 `:40,41,44`（偏好窗）均为 isolation+sandbox+无 nodeIntegration；文件是 `.ts` 不是 `.js`。`CLAUDE.md:82-86` 的表述才是对的 |
-| `CLAUDE.md:176`     | 示例单测 `test/unit/specs/markdown-basic.spec.ts`                                       | 文件已不存在，用例回移到 `packages/muya/test/spec/roundTrip.spec.ts`                                                                                                    |
-| `CLAUDE.md:233`     | 举例通道 `mt::open-new-tab`、`mt::file-saved`                                           | 契约中不存在这两个通道                                                                                                                                                  |
-| `CLAUDE.md:43`      | `packages: ['packages/*']`                                                              | 另有 `packages/muya/examples` 与 `packages/muya/e2e` 两个显式工作区                                                                                                     |
-| `README.md:97`      | 侧栏含"文件树、全文件夹搜索、目录、版本历史"                                            | 只剩 `files` + `toc` 两个 tab；全文搜索无 UI，版本历史无面板                                                                                                            |
-| `README.md:98`      | "命令面板与快速打开"                                                                    | 快速打开行为已退化（§11.1-1）                                                                                                                                           |
-| `README.md:100`     | 输出 HTML / PDF / Word                                                                  | 低估了：实际支持 8 种（另含 png/jpeg 长图与 pandoc 的 epub/latex/rtf/opml），见 §9                                                                                      |
+> **README 的源与快照（2026-09-27 起）**：根 `README.md` 是**中文**（GitHub 默认页），`README.en.md` 是英文，**只有这两份是源**；`docs/i18n/README-*.md` 其余 10 种是社区翻译快照，会落后于源，功能增删只在源文件里改。12 份文件顶部各有一条相同的文字语言栏（原来那排 emoji 国旗撤了——旗帜不等于语言，读屏与纯文本下也不可读）。
+
+| 位置                                | 说法                                                                                    | 实际                                                                                                                                                                    |
+| ----------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLAUDE.md:215-216`                 | 编辑器窗口 `contextIsolation: false + nodeIntegration: true`，文件 `src/main/config.js` | **错**。`main/config.ts:12,13,18`（编辑器）与 `:40,41,44`（偏好窗）均为 isolation+sandbox+无 nodeIntegration；文件是 `.ts` 不是 `.js`。`CLAUDE.md:82-86` 的表述才是对的 |
+| `CLAUDE.md:176`                     | 示例单测 `test/unit/specs/markdown-basic.spec.ts`                                       | 文件已不存在，用例回移到 `packages/muya/test/spec/roundTrip.spec.ts`                                                                                                    |
+| `CLAUDE.md:233`                     | 举例通道 `mt::open-new-tab`、`mt::file-saved`                                           | 契约中不存在这两个通道                                                                                                                                                  |
+| `CLAUDE.md:43`                      | `packages: ['packages/*']`                                                              | 另有 `packages/muya/examples` 与 `packages/muya/e2e` 两个显式工作区                                                                                                     |
+| `README.md:97`（现 `README.en.md`） | 侧栏含"文件树、全文件夹搜索、目录、版本历史"                                            | **已修（2026-09-27）**：中英两份都改成"文件树 + 文档大纲两个面板"（代码依据 `sideBar/index.vue:22,25`）；"全文件夹搜索"与"版本历史"这两项无 UI 的已从宣传里撤掉         |
+| `README.md:98`                      | "命令面板与快速打开"                                                                    | **不再是偏差**：快速打开的退化已由 O1 修好（`8765cee`），这句现在与行为一致                                                                                             |
+| `README.md:100`                     | 输出 HTML / PDF / Word                                                                  | **已修（2026-09-27）**：两份都写"导出 8 种"，与 `main/menu/templates/file.ts:112-120` 的菜单项一致（html/pdf/docx/png + pandoc 的 epub/latex/rtf/opml）                 |
 
 ### 11.3 工具链偏差
 
@@ -344,7 +346,7 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 | 文档                                                          | 内容                                                                                                                                                                                            |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `README.md` / `docs/i18n/README-zh_cn.md`                     | 面向用户的功能与下载说明（注意 §11.2 的偏差）                                                                                                                                                   |
+| `README.md`（中文，默认页）/ `README.en.md`（English）        | 面向用户的功能与下载说明。这两份是**源**，`docs/i18n/README-*.md` 其余 10 种是翻译快照（口径见 §11.2）                                                                                          |
 | `docs/CI_RUN_LEDGER.md`                                       | 文档引用的每条 CI run 的仓库内副本（run → workflow → `head_sha` → 结论 → 各 job），由 `python scripts/exportCiRuns.py` 生成；仓库若重建，run 页会 404，这份是唯一的留存处                       |
 | `AGENTS.md`                                                   | 面向 AI 代理与新贡献者的动手须知：环境、门禁基线、四条必读规矩与流程（取代已删除的 `CLAUDE.md`）                                                                                                |
 | `packages/muya/ENGINE_GUIDE.md`                               | 引擎架构、约定、构建细节                                                                                                                                                                        |
