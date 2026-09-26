@@ -8,7 +8,7 @@
 Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），monorepo 里自带编辑引擎。
 
 - `packages/desktop`（包名 `colamd`）— 主进程 / preload / 渲染端（Vue 3 + Pinia + CodeMirror 5）。根 `package.json` 的桌面脚本全部通过 `pnpm --filter colamd` 代理。
-- `packages/muya`（`@muyajs/core`）— 编辑引擎。**根 ESLint 明确忽略 `packages/muya/**`\*\*，它是自带工具链（antfu ESLint、stylelint、madge、vitest）的独立包，约定与阈值都不同。
+- `packages/muya`（`@muyajs/core`）— 编辑引擎，**自成一包**：根 ESLint 把它的整目录列进了 ignores（`eslint.config.js:23`），它用自己的 antfu 配置与另一套阈值，差异见 `docs/PROJECT_GUIDE.md` §10.4 与 `packages/muya/ENGINE_GUIDE.md`。
 
 ## 环境
 
