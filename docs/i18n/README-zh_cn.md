@@ -92,9 +92,9 @@
 
 ## 开发
 
-如果你希望自行构建 ColaMD，请参阅[开发指南](../../CLAUDE.md)。
+如果你希望自行构建 ColaMD，请参阅[开发指南](../PROJECT_GUIDE.md)。
 
-- [开发指南](../../CLAUDE.md)
+- [开发指南](../PROJECT_GUIDE.md)
 - [贡献指南](../../.github/CONTRIBUTING.md)
 
 如果你对 ColaMD 有任何疑问，欢迎提交 issue。提交时请使用打开 issue 时的默认格式。当然，如果你直接提交 PR，将不胜感激。
