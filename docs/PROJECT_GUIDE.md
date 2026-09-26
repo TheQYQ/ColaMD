@@ -266,7 +266,7 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 ### 10.4 CI 与质量门
 
-12 个工作流（`.github/workflows/`；`claude.yml` 已于 2026-09-26 移除）：
+12 个工作流（`.github/workflows/`；`claude.yml` 已于 2026-09-26 从 `develop` 移除。**口径要说清：数的是 `develop` 工作树——默认分支 `main` 上那份 `claude.yml` 还在，GitHub 的工作流注册表里它仍是 `active`，而 `issue_comment` / `pull_request_review_comment` / `issues` / `pull_request_review` 这类触发跑的就是默认分支上那份定义，所以"这条通路已关"要等删除落进 `main` 才成立**。现状实测：`gh api repos/TheQYQ/ColaMD/actions/workflows` 返回 13 条含 `Claude Code`；`git show main:.github/workflows/claude.yml` 存在；真正还挡着它的只有两条——文件里的 `github.actor == 'TheQYQ'` 守卫，以及仓库 **Actions secrets 总数 0**（`gh api .../actions/secrets` → `{"total_count":0}`，即 `CLAUDE_CODE_OAUTH_TOKEN` 从未在此仓库配置，触发了也会在鉴权那步失败）；515 条历史 run 里 `Claude Code` 名下 **0 条**，它从未执行过一次）：
 
 | 工作流                                         | 内容                                                                        | 触发                                          | OS                                                                  |
 | ---------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------- |
