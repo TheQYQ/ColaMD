@@ -134,6 +134,13 @@ export const runExport = async (
   // The file is the evidence, and it is already read: leaving exports in /tmp
   // would outlive the run.
   fs.rmSync(filePath, { force: true })
-  const successes = await exportSuccesses(page)
+  // The success notification is sent after the write lands, so reading the
+  // probe once can miss it on a fast runner — poll within the same budget.
+  const deadline = Date.now() + timeoutMs
+  let successes = await exportSuccesses(page)
+  while (Date.now() < deadline && !successes.some((s) => s.filePath === filePath)) {
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    successes = await exportSuccesses(page)
+  }
   return { bytes, success: successes.find((s) => s.filePath === filePath) }
 }

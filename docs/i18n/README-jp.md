@@ -2,6 +2,10 @@
 
 <h1 align="center">ColaMD</h1>
 
+<p align="center">
+  <sub><a href="../../README.md">简体中文</a> · <a href="../../README.en.md">English</a> · <a href="README-zh_tw.md">繁體中文</a> · <strong>日本語</strong> · <a href="README-kr.md">한국어</a> · <a href="README-fr.md">Français</a> · <a href="README-de.md">Deutsch</a> · <a href="README-es.md">Español</a> · <a href="README-pt.md">Português</a> · <a href="README-tr.md">Türkçe</a> · <a href="README-ar.md">العربية</a> · <a href="README-bn.md">বাংলা</a></sub>
+</p>
+
 <div align="center">
   <strong>:high_brightness: 次世代の Markdown エディタ :crescent_moon:</strong><br>
   スピードと使いやすさに特化した、シンプルでエレガントなMarkdown エディタ。<br>

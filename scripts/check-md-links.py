@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-# Link checker for README.md and docs/i18n/*.md — verifies every relative
-# link/image target exists, and same-page anchors match GitHub-style heading
-# slugs. Mirrors GitHub's slugger closely enough for our headings.
+# Link checker for the root README variants, docs/i18n/*.md and docs/*.md —
+# verifies every relative link/image target exists, and same-page anchors match
+# GitHub-style heading slugs. Mirrors GitHub's slugger closely enough for our
+# headings.
 import os
 import re
 import sys
@@ -10,7 +11,9 @@ import unicodedata
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS_I18N_DIR = os.path.join(ROOT, 'docs', 'i18n')
 DOCS_DIR = os.path.join(ROOT, 'docs')
-FILES = ['README.md'] + sorted(
+FILES = sorted(
+    f for f in os.listdir(ROOT)
+    if f.startswith('README') and f.endswith('.md')) + sorted(
     os.path.join('docs', 'i18n', f) for f in os.listdir(DOCS_I18N_DIR)
     if f.endswith('.md')) + sorted(
     os.path.join('docs', f) for f in os.listdir(DOCS_DIR) if f.endswith('.md'))

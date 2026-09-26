@@ -4,6 +4,7 @@ import path from 'path'
 import crypto from 'crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { VersionSnapshot } from '@shared/types/ipc'
+import VersionHistoryStore from 'main_renderer/versionHistory'
 
 const dirs: string[] = []
 function tempDir(): string {
@@ -34,7 +35,6 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
 
   beforeEach(async () => {
     basePath = tempDir()
-    const { default: VersionHistoryStore } = await import('main_renderer/versionHistory')
     const instance = new VersionHistoryStore(basePath)
 
     store = {
@@ -224,8 +224,6 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
   })
 
   it('persists snapshots to disk (survives instance recreation)', async () => {
-    const { default: VersionHistoryStore } = await import('main_renderer/versionHistory')
-
     // First instance writes.
     const instance1 = new VersionHistoryStore(basePath)
     await instance1.saveSnapshot({
@@ -245,7 +243,6 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
   })
 
   it('writes a valid JSON file on disk', async () => {
-    const { default: VersionHistoryStore } = await import('main_renderer/versionHistory')
     const instance = new VersionHistoryStore(basePath)
 
     await instance.saveSnapshot({
@@ -269,7 +266,6 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
   })
 
   it('recovers gracefully from corrupted disk file', async () => {
-    const { default: VersionHistoryStore } = await import('main_renderer/versionHistory')
     const instance = new VersionHistoryStore(basePath)
 
     // Write a corrupted JSON file directly.

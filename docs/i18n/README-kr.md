@@ -2,6 +2,10 @@
 
 <h1 align="center">ColaMD</h1>
 
+<p align="center">
+  <sub><a href="../../README.md">简体中文</a> · <a href="../../README.en.md">English</a> · <a href="README-zh_tw.md">繁體中文</a> · <a href="README-jp.md">日本語</a> · <strong>한국어</strong> · <a href="README-fr.md">Français</a> · <a href="README-de.md">Deutsch</a> · <a href="README-es.md">Español</a> · <a href="README-pt.md">Português</a> · <a href="README-tr.md">Türkçe</a> · <a href="README-ar.md">العربية</a> · <a href="README-bn.md">বাংলা</a></sub>
+</p>
+
 <div align="center">
   <strong>:high_brightness: 차세대 마크다운 에디터 :crescent_moon:</strong><br>
   속도와 사용성에 초점을 맞춘 단순하고 우아한 마크다운 에디터.<br>
