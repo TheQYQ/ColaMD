@@ -48,6 +48,6 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 ## 流程
 
 - 一批一分支一 PR，目标 `develop`；promote 到 `main` 也走 PR，并按 `main` 惯例用 **merge commit**（不是 squash）。
-- **合进 `main` 不产生任何 CI run**：12 个工作流只认 `pull_request`、`workflow_dispatch` 或 `v*` 标签。所以 PR 门禁就是这批改动的完整远端验证，promote 之后没有第二道门。
+- **合进 `main` 不产生 CI run**（`build.yml` 在 2026-09-11 曾对 `main` 的 push 跑过一次并失败，此后触发条件收窄，`main` 上再无 run）。12 个工作流里 **11 个只认 `pull_request`**，其中 `e2e.yml` / `build.yml` / `muya-spec.yml` 另有 `workflow_dispatch`；`validate-licenses.yml` 额外认 **push 到 `develop`**（带 paths 过滤）；`release.yml` 只认 `v*` 标签。所以**推 `develop` 只能拿到 licenses 那一条**，PR 门禁才是一批改动的完整远端验证，promote 之后没有第二道门。
 - 性能类改动必须先更新 `packages/muya/docs/perf-baseline.md`——它是性能数字的唯一来源。
 - 安全边界（哪些偏好键渲染端可写、选择器结果即授权、域收敛）见 `docs/PROJECT_GUIDE.md` §6 与 `OPTIMIZATION_ROADMAP` 的 O7/O8 条目；**不要为了让测试通过而放宽校验**。
