@@ -5,5 +5,8 @@
   "ignoreDependencies": ["patch-package"],
   // `screencapture` is the macOS system binary spawned by
   // packages/desktop/src/main/app/index.ts, not an npm binary.
-  "ignoreBinaries": ["screencapture"]
+  // `pandoc` is the same story twice over: the app shells out to it for the
+  // EPUB/LaTeX/RTF/OPML exports, and the export spec probes for it (to skip on
+  // machines without it) rather than depending on it.
+  "ignoreBinaries": ["screencapture", "pandoc"]
 }

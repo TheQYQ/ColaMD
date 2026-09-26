@@ -78,7 +78,7 @@ export const getCssForOptions = async (options: PdfCssOptions): Promise<string> 
           const themeCSS =
             buf instanceof Uint8Array ? new TextDecoder('utf-8').decode(buf) : String(buf)
           output += themeCSS
-        } catch (_) {
+        } catch {
           // No-op
         }
       }

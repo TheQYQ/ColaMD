@@ -10,7 +10,6 @@ import loadmode from './loadmode'
 import overlayMode from './overlayMode'
 import multiplexMode from './multiplexMode'
 import registerMarkdownMathMode from './markdownMathMode'
-import languages from './modes'
 import 'codemirror/lib/codemirror.css'
 import './index.css'
 import 'codemirror/theme/railscasts.css'
@@ -21,55 +20,13 @@ import 'codemirror/theme/railscasts.css'
 type CodeMirrorLike = unknown
 type CodeMirrorInstance = CodeMirror.Editor
 
-interface ModeInfoEntry {
-  name?: string
-  mime?: string | string[]
-  mimes?: string[]
-  mode?: string
-  [key: string]: unknown
-}
-
-interface MatchedMode {
-  name: string
-  mode: ModeInfoEntry
-}
-
 loadmode(codeMirror)
 overlayMode(codeMirror)
 multiplexMode(codeMirror)
 registerMarkdownMathMode(codeMirror)
 ;(window as unknown as { CodeMirror: CodeMirrorLike }).CodeMirror = codeMirror
 
-const modes: ModeInfoEntry[] = codeMirror.modeInfo
 codeMirror.modeURL = '../../../../node_modules/codemirror/mode/%N/%N.js'
-
-const getModeFromName = (name: string): MatchedMode | null => {
-  let result: MatchedMode | null = null
-  const lang = languages.filter((lang) => lang.name === name)[0]
-  if (lang) {
-    const { name, mode, mime } = lang
-    const matched = modes.filter((m) => {
-      if (m.mime) {
-        if (Array.isArray(m.mime) && m.mime.indexOf(mime) > -1 && m.mode === mode) {
-          return true
-        } else if (typeof m.mime === 'string' && m.mime === mime && m.mode === mode) {
-          return true
-        }
-      }
-      if (Array.isArray(m.mimes) && m.mimes.indexOf(mime) > -1 && m.mode === mode) {
-        return true
-      }
-      return false
-    })
-    if (matched.length && typeof matched[0] === 'object') {
-      result = {
-        name,
-        mode: matched[0]
-      }
-    }
-  }
-  return result
-}
 
 export const setCursorAtFirstLine = (cm: CodeMirrorInstance): void => {
   cm.focus()

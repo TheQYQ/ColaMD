@@ -260,7 +260,7 @@ gh release create "v$VERSION" --title "v$VERSION" --notes-file /tmp/release-note
 **v0.2.0 (in flight)** — the colamd-muya backport batch. 22 PRs (#208–#230) ported the upstream colamd muya tree onto `@muyajs/core` end-to-end:
 
 - New surface: footnote block + tool, reference links/images, `LinkTools`, `getTOC()` public API, `focus` / `blur` events, code block line numbers, image small-image + inline resize-bar suppression.
-- Parser conformance: CommonMark 0.31 and GFM 0.29-gfm fixture runners (`pnpm --filter @muyajs/core test:spec`) with a locked baseline (87.7% / 86.3%) and a regression gate via `expected-failures.json`.
+- Parser conformance: CommonMark 0.31 and GFM 0.29-gfm fixture runners (`pnpm --filter @muyajs/core test:spec`) with a locked baseline (CommonMark 88.0% / GFM 86.6%, 2026-09-26) and a regression gate via `expected-failures.json`.
 - Hardening: XSS protections (hyperlink + Mermaid + code-block + langInput input via DOMPurify), normalizeTable crash fix, loadImageAsync failure cache, `stateToMarkdown` serialization baseline, clipboard/paste/copy corrections, editor cursor / IME / autopair / table navigation fixes, EventCenter listener-leak + once-iteration fix.
 - Tests: 1 → 386 unit tests (43 files).
 

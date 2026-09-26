@@ -128,7 +128,9 @@ export default function (
       () => {
         userSetting()
       },
-      { visible: !isOsx }
+      // The id is what makes the entry addressable — from a test, and from
+      // anything else that needs to name it instead of match its label.
+      { id: 'preferencesMenuItem', visible: !isOsx }
     ),
     { type: 'separator' },
     item('menu.file.closeTab', 'file.close-tab', actions.closeTab),

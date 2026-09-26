@@ -11,14 +11,6 @@ interface VersionHistoryFile {
   snapshots: VersionSnapshot[]
 }
 
-/** Snapshot capture reasons — used as the human-readable label. */
-const SnapshotLabel = {
-  ManualSave: 'Manual Save',
-  AutoSave: 'Auto-save',
-  SessionEnd: 'Session End',
-  Idle: 'Idle'
-} as const
-
 const MAX_SNAPSHOTS_PER_FILE = 50
 
 /**

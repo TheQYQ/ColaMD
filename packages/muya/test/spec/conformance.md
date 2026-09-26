@@ -1,6 +1,9 @@
 # CommonMark / GFM spec conformance
 
-Baseline captured at PR-6a (2026-05-20).
+Baseline captured at PR-6a (2026-05-20); headline and section numbers were
+re-synced to `expected-failures.json` on 2026-09-26 (four Setext-headings
+examples had turned green since the snapshot: CommonMark 84/89, GFM 54/59).
+This table is maintained by hand, so refresh it together with the locked list.
 
 Re-run via: `pnpm --filter @muyajs/core test:spec`. The runner reads
 `expected-failures.json` to lock the baseline: any example currently
@@ -16,8 +19,8 @@ measure the *parser*'s spec compliance, not the DOMPurify sanitiser
 
 | Suite | Passed | Total | Pass rate |
 |---|---|---|---|
-| CommonMark 0.31 | 572 | 652 | 87.7% |
-| GFM 0.29-gfm | 580 | 672 | 86.3% |
+| CommonMark 0.31 | 574 | 652 | 88.0% |
+| GFM 0.29-gfm | 582 | 672 | 86.6% |
 
 ## CommonMark 0.31 — pass rate by section
 
@@ -44,7 +47,7 @@ measure the *parser*'s spec compliance, not the DOMPurify sanitiser
 | Paragraphs | 4 | 8 | 50.0% |
 | Precedence | 1 | 1 | 100.0% |
 | Raw HTML | 18 | 20 | 90.0% |
-| Setext headings | 22 | 27 | 81.5% |
+| Setext headings | 24 | 27 | 88.9% |
 | Soft line breaks | 1 | 2 | 50.0% |
 | Tabs | 1 | 11 | 9.1% |
 | Textual content | 2 | 3 | 66.7% |
@@ -52,9 +55,9 @@ measure the *parser*'s spec compliance, not the DOMPurify sanitiser
 
 ### Failing examples (CommonMark 0.31)
 
-80 examples currently fail. Numbers are locked in `expected-failures.json`:
+78 examples currently fail. Numbers are locked in `expected-failures.json`:
 
-> 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 25, 26, 27, 28, 30, 32, 33, 34, 37, 38, 39, 40, 49, 70, 82, 84, 87, 89, 93, 113, 133, 148, 155, 174, 197, 222, 223, 224, 226, 241, 252, 255, 275, 276, 280, 294, 296, 307, 318, 319, 320, 321, 323, 503, 512, 518, 519, 520, 524, 526, 528, 532, 533, 536, 538, 540, 552, 556, 587, 595, 602, 608, 611, 612, 620, 622, 645, 649, 650
+> 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 25, 26, 27, 28, 30, 32, 33, 34, 37, 38, 39, 40, 49, 70, 82, 87, 93, 113, 133, 148, 155, 174, 197, 222, 223, 224, 226, 241, 252, 255, 275, 276, 280, 294, 296, 307, 318, 319, 320, 321, 323, 503, 512, 518, 519, 520, 524, 526, 528, 532, 533, 536, 538, 540, 552, 556, 587, 595, 602, 608, 611, 612, 620, 622, 645, 649, 650
 
 ## GFM 0.29-gfm — pass rate by section
 
@@ -83,7 +86,7 @@ measure the *parser*'s spec compliance, not the DOMPurify sanitiser
 | Paragraphs | 4 | 8 | 50.0% |
 | Precedence | 1 | 1 | 100.0% |
 | Raw HTML | 18 | 20 | 90.0% |
-| Setext headings | 22 | 27 | 81.5% |
+| Setext headings | 24 | 27 | 88.9% |
 | Soft line breaks | 1 | 2 | 50.0% |
 | Strikethrough (extension) | 2 | 2 | 100.0% |
 | Tables (extension) | 8 | 8 | 100.0% |
@@ -94,6 +97,6 @@ measure the *parser*'s spec compliance, not the DOMPurify sanitiser
 
 ### Failing examples (GFM 0.29-gfm)
 
-92 examples currently fail. Numbers are locked in `expected-failures.json`:
+90 examples currently fail. Numbers are locked in `expected-failures.json`:
 
-> 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 19, 40, 52, 54, 57, 59, 63, 83, 103, 118, 125, 143, 166, 192, 193, 194, 196, 219, 230, 233, 253, 254, 258, 272, 274, 280, 287, 298, 299, 300, 301, 303, 308, 321, 322, 323, 324, 326, 328, 329, 330, 333, 334, 335, 336, 398, 426, 434, 435, 436, 473, 474, 475, 477, 511, 520, 526, 527, 528, 532, 534, 536, 540, 541, 544, 546, 560, 564, 595, 603, 610, 616, 619, 620, 626, 630, 639, 641, 652, 665, 669, 670
+> 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 19, 40, 52, 57, 63, 83, 103, 118, 125, 143, 166, 192, 193, 194, 196, 219, 230, 233, 253, 254, 258, 272, 274, 280, 287, 298, 299, 300, 301, 303, 308, 321, 322, 323, 324, 326, 328, 329, 330, 333, 334, 335, 336, 398, 426, 434, 435, 436, 473, 474, 475, 477, 511, 520, 526, 527, 528, 532, 534, 536, 540, 541, 544, 546, 560, 564, 595, 603, 610, 616, 619, 620, 626, 630, 639, 641, 652, 665, 669, 670

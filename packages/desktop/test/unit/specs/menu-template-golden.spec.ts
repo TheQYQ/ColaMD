@@ -158,7 +158,7 @@ const GOLDEN: Record<string, string[]> = {
     '  menu.file.exportOpml -> exportFile(<win main-window>, "opml")',
     'menu.file.print acc=A(file.print) -> printDocument(<win main-window>)',
     '|',
-    'menu.file.preferences acc=A(file.preferences) visible=true -> userSetting()',
+    'menu.file.preferences #preferencesMenuItem acc=A(file.preferences) visible=true -> userSetting()',
     '|',
     'menu.file.closeTab acc=A(file.close-tab) -> closeTab(<win main-window>)',
     'menu.file.closeWindow acc=A(file.close-window) -> closeWindow(<win main-window>)',

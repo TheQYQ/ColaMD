@@ -52,6 +52,25 @@ jobs:
             xvfb libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
             libdrm2 libgtk-3-0 libgbm1 libasound2t64
 
+      # The export spec shells out to the pandoc CLI for EPUB/LaTeX/RTF/OPML and
+      # skips those four when it is missing. It was missing on both runners, so
+      # those conversions had only ever been proven on one machine — this is the
+      # same thing a user does (the app looks `pandoc` up on PATH).
+      # The last two lines are deliberately unpiped: `pandoc --version | head -1`
+      # would report the status of `head`, so a runner where the install silently
+      # produced no binary would still go green — with the four cases skipped,
+      # which is exactly the state this step exists to end.
+      - name: Install pandoc
+        run: |
+          if [ "${{ matrix.platform }}" = 'linux' ]; then
+            sudo apt-get update
+            sudo apt-get install -y pandoc
+          else
+            brew install pandoc
+          fi
+          command -v pandoc
+          pandoc --version
+
       - uses: ./.github/actions/setup
 
       # Mirrors build.yml: must be set before postinstall runs electron-rebuild.

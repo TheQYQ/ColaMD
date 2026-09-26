@@ -1,4 +1,3 @@
-import { themes as builtInThemes } from '../prefComponents/theme/config'
 import type { ColaMDThemeManifest, InstalledTheme } from './themeMarket'
 
 /**
