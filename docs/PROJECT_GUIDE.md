@@ -36,7 +36,7 @@
 
 ## 3. 仓库结构
 
-pnpm workspace 声明了 **三个** 包（`pnpm-workspace.yaml:2-8`，`CLAUDE.md:43` 只写了 `packages/*`，遗漏后两条）：
+pnpm workspace 声明了 **三个** 包（`pnpm-workspace.yaml:2-8`：`packages/*` 之外还显式列了 `packages/muya/examples` 与 `packages/muya/e2e`，只写 `packages/*` 的旧说法见 §11.2 那条已删的 `CLAUDE.md:43`）：
 
 ```
 ColaMD/
@@ -179,7 +179,7 @@ ColaMD/
 
 ## 8. Muya 引擎（`packages/muya`，`@muyajs/core 0.2.0`）
 
-引擎自带全套工具链（ESLint/antfu、stylelint、madge、vitest），根 ESLint 明确忽略 `packages/muya/**`。架构要点（完整版在 `packages/muya/CLAUDE.md`）：
+引擎自带全套工具链（ESLint/antfu、stylelint、madge、vitest），根 ESLint 明确忽略 `packages/muya/**`。架构要点（完整版在 `packages/muya/ENGINE_GUIDE.md`）：
 
 - `new Muya(el, options)` 替换目标元素为 `contenteditable` div，构造 `EventCenter`/`Editor`/`Ui`/`I18n`；`muya.init()` 里 `Editor.init()` 调 `registerBlocks()` 并创建根 `ScrollPage`。**新增块类型必须在 `src/block/index.ts::registerBlocks()` 注册，否则 `loadBlock` 返回 undefined。**
 - UI 插件通过静态 `Muya.use(Plugin, options)` 全局注册、按 `pluginName` 存进 `muya._uiPlugins`；`examples/src/main.ts` 是权威装配样例。
@@ -188,7 +188,7 @@ ColaMD/
 - Markdown 往返：`markdownToState`（`marked`）/ `stateToMarkdown` / `markdownToHtml` / `htmlToMarkdown`（`turndown` + gfm 插件）。引用式链接定义 **不是** 一等块类型，`case 'def'` 把原始定义行塞回 paragraph 以保证往返无损。
 - 撤销栈是真 OT（`invertWithDoc`/`compose`、时间与词边界合并、IME 恒等 op 防护），不是快照栈；架构上为协同编辑预留了 `transform`，但 **没有任何 transport 接上**。
 - 内联渲染：自写 lexer/rules + `snabbdom` 虚拟 DOM，集成 KaTeX、Prism、Mermaid、Vega/Vega-Lite、PlantUML。
-- 排版契约：`IMuyaOptions` 的 6 个选项与 `--mu-*` CSS 变量一一对应（`packages/muya/CLAUDE.md` 有完整表），运行时改动一律走 `muya.setOptions({...})`。
+- 排版契约：`IMuyaOptions` 的 6 个选项与 `--mu-*` CSS 变量一一对应（`packages/muya/ENGINE_GUIDE.md` 有完整表），运行时改动一律走 `muya.setOptions({...})`。
 - 子目录规模（ts 文件）：`block` 117、`ui` 49、`inlineRenderer` 46、`state` 38、`clipboard` 35、`selection` 20、`editor` 8、`history` 6、`utils` 65。
 
 ## 9. 功能 → 代码定位表
@@ -232,6 +232,8 @@ electron-builder（`packages/desktop/electron-builder.yml`）：`appId com.colam
 
 原生模块 `ced` 与 `native-keymap` 需要 C++20 工具链（VS Build Tools），因此列为 `optionalDependencies` + 由 `scripts/postinstall.ts` 驱动 rebuild；`packages/desktop/patches/` 里两个补丁分别给 `native-keymap` 打开 stdcpp20、给 `ced` 加预编译 `.node` 兜底。
 
+两条开发循环上的注意（原 `CLAUDE.md` 的 Build Notes，删除前逐条对过代码）：**改 `main`/`preload` 的代码不会被窗口重载拾取，要重启 `pnpm run dev`**（只有渲染端接了 Vite HMR；`Ctrl+R` 那类重载只重跑 preload）；**换 Electron 版本后要跑 `pnpm run rebuild-native`**（`packages/desktop/package.json` 里就是 `electron-rebuild -f`），否则两个原生模块与新 ABI 不匹配。渲染端是纯 ESM，**不要在 renderer 代码里写 `require()`**。
+
 ### 10.2 根脚本
 
 | 脚本                                                   | 作用                                                                                                                                                                                    | 何时跑                          |
@@ -266,7 +268,7 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 ### 10.4 CI 与质量门
 
-12 个工作流（`.github/workflows/`；`claude.yml` 已于 2026-09-26 从 `develop` 移除。**口径要说清：数的是 `develop` 工作树——默认分支 `main` 上那份 `claude.yml` 还在，GitHub 的工作流注册表里它仍是 `active`，而 `issue_comment` / `pull_request_review_comment` / `issues` / `pull_request_review` 这类触发跑的就是默认分支上那份定义，所以"这条通路已关"要等删除落进 `main` 才成立**。现状实测：`gh api repos/TheQYQ/ColaMD/actions/workflows` 返回 13 条含 `Claude Code`；`git show main:.github/workflows/claude.yml` 存在；真正还挡着它的只有两条——文件里的 `github.actor == 'TheQYQ'` 守卫，以及仓库 **Actions secrets 总数 0**（`gh api .../actions/secrets` → `{"total_count":0}`，即 `CLAUDE_CODE_OAUTH_TOKEN` 从未在此仓库配置，触发了也会在鉴权那步失败）；515 条历史 run 里 `Claude Code` 名下 **0 条**，它从未执行过一次）：
+12 个工作流（`.github/workflows/`；`claude.yml` 已于 2026-09-26 从 `develop` 移除。**这条通路是 2026-09-27 才真关掉的**：删除先落在 `develop`（`ba84e3b`），再由 **PR #41** 合进默认分支（merge `9637c8c`）——只删 `develop` 不算关掉，因为 `issue_comment` / `pull_request_review_comment` / `issues` / `pull_request_review` 这类触发跑的是**默认分支上那份定义**，注册表里它当时仍 `active`。合并后实测：`git ls-tree origin/main .github/workflows/` 为 12 份且无 `claude.yml`，`gh api .../actions/workflows` 的 `total_count` 从 13 变 **12**。它生前从未执行过一次（515 条历史 run 里 `Claude Code` 名下 **0 条**），仓库 **Actions secrets 总数 0**（`CLAUDE_CODE_OAUTH_TOKEN` 从未在此仓库配置），所以在那之前真正挡着它的只有 `github.actor == 'TheQYQ'` 守卫加缺 token）：
 
 | 工作流                                         | 内容                                                                        | 触发                                          | OS                                                                  |
 | ---------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------- |
@@ -299,7 +301,9 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 9. **遗留但无害**：`main/app/index.ts:465-485` 整段注释掉的截图/快捷键捕获；`renderer/src/assets/symbolIcon/index.js`（MarkText 图标雪碧图，被 `main.ts:5` 引入却无模板引用）；`commands/descriptions.ts:169-175` 列了 3 个没有对应命令的 id；`components/titleBar/index.vue:99` 按 `.js` 引入实为 `.ts` 的文件。
 10. **安全面残余（①已闭，②仍开）**：`main/security/pathScope.ts` 曾把"`imageFolderPath` 可由渲染端经 `mt::set-user-preference` 设置"记为已接受风险——该键同时是**写域授权根**，等于让被攻破的渲染进程自选可写范围，而且它在 preferences 与 dataCenter 各有一份、授权读的是可伪造的那份。分支 `security/image-folder-dialog-only`（`7fc33d9`）收为单一归属：只有对话框能赋值、泛型偏好通道丢弃该键、授权改随 user-data 广播。**仍未解决**的是读通道不设限（`pathScope.ts:27-31`），前置与量法见 O7②。
 
-### 11.2 README / CLAUDE.md 与代码不符
+### 11.2 README / 已删除的 `CLAUDE.md` 与代码不符
+
+> **口径**：`CLAUDE.md` 已于 2026-09-27 随本轮"去 Claude 绑定"删除，下表里 `CLAUDE.md:行号` 是**删除前的快照**，留着是因为它记的是"当时哪份文档在骗人"这件事本身；仍然有效的内容已并入本文（构建注意 → §10.1，命令与脚本 → §10.2）。
 
 | 位置                | 说法                                                                                    | 实际                                                                                                                                                                    |
 | ------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -329,20 +333,19 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 **新人 30 分钟路线**
 
-1. 读本文件 §3–§6（结构与跨进程边界），再读 `CLAUDE.md` 的 Build Notes 与 Code Style。
+1. 读本文件 §3–§6（结构与跨进程边界），再看 §10.1 的构建注意与 §10.4 的代码风格与门禁。
 2. `pnpm install`（会下载 Electron、打补丁、rebuild 原生模块；Windows 需 VS Build Tools 或手工放预编译 `.node`），`pnpm run dev`。
 3. 跑一遍 `pnpm test` 与 `pnpm -C packages/muya test`，把 §10.3 的表格和实际输出对上。
 4. 沿一条真实链路读码，看清"菜单在 main、状态在 renderer"是怎么咬合的：
    `Ctrl+S` → `main/menu/actions/file.ts` 发 `mt::editor-ask-file-save` → 渲染端 `store/editor.ts:329 LISTEN_FOR_SAVE` → `FILE_SAVE()`（`store/editor.ts:324` 委托到 `store/fileSave.ts:66`）→ 回主进程 `mt::save-tabs`（`actions/file.ts:378`）→ 原子写盘（`main/filesystem/index.ts:47-56`，write-file-atomic）→ `mt::tab-saved` 回执（`actions/file.ts:309`）。看懂一条比看十个模块有用。
-5. 想动编辑区，先读 `packages/muya/CLAUDE.md` 的 Architecture 与 Appearance contract，再进 `editor.vue`。
+5. 想动编辑区，先读 `packages/muya/ENGINE_GUIDE.md` 的 Architecture 与 Appearance contract，再进 `editor.vue`。
 
 **仓库内文档**
 
 | 文档                                                          | 内容                                                                                                                                                                                            |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `README.md` / `docs/i18n/README-zh_cn.md`                     | 面向用户的功能与下载说明（注意 §11.2 的偏差）                                                                                                                                                   |
-| `CLAUDE.md`                                                   | 开发指南：命令、目录、构建注意（注意 §11.2 的偏差）                                                                                                                                             |
-| `packages/muya/CLAUDE.md`                                     | 引擎架构、约定、构建细节                                                                                                                                                                        |
+| `packages/muya/ENGINE_GUIDE.md`                               | 引擎架构、约定、构建细节                                                                                                                                                                        |
 | `docs/UI_REDESIGN_GUIDE.md`                                   | V1 设计系统、布局与微交互规范（已落地）                                                                                                                                                         |
 | `ColaMD_WORKPLAN.md`                                          | 工作计划与 Typora 对标进度（含 Windows 环境注意、验证命令速查）。**七个梯队的"已完成"自述须按 `OPTIMIZATION_ROADMAP.md` §7 复核结果读**：用例数是过期快照、"未提交"标注已失效、第四梯队三处失真 |
 | `CODE_REVIEW_AND_ROADMAP.md`                                  | 全仓代码审查（2026-09）：量化面板、Top10 修复清单、值得肯定的设计、路线图（**基线已过时**，判定见下一行）                                                                                       |

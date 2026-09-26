@@ -92,9 +92,9 @@ Linux, macOS 및 Windows용 모든 바이너리는 [릴리스 페이지](https:/
 
 ## 개발
 
-ColaMD를 직접 빌드하려면 [개발 가이드](../../CLAUDE.md)를 참고하세요.
+ColaMD를 직접 빌드하려면 [개발 가이드](../PROJECT_GUIDE.md)를 참고하세요.
 
-- [개발 가이드](../../CLAUDE.md)
+- [개발 가이드](../PROJECT_GUIDE.md)
 - [기여 가이드](../../.github/CONTRIBUTING.md)
 
 ColaMD에 관한 질문이 있으면 issue를 작성하세요. 그럴 때는 issue를 열 때 나오는 기본 형식을 사용해 주세요. 물론, PR을 직접 제출하시면 매우 감사하겠습니다.

@@ -137,7 +137,7 @@ pnpm run dev
 
 More resources:
 
-- [Development guide](CLAUDE.md) — architecture, commands, conventions
+- [Development guide](docs/PROJECT_GUIDE.md) — architecture, commands, conventions
 - [Contributing guide](.github/CONTRIBUTING.md)
 - [Build & packaging scripts](package.json) — `pnpm run build:win` / `build:mac` / `build:linux`
 

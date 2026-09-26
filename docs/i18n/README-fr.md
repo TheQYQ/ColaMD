@@ -92,9 +92,9 @@ Tous les binaires pour Linux, macOS et Windows peuvent être téléchargés depu
 
 ## Développement
 
-Si vous souhaitez compiler ColaMD vous-même, consultez le [guide de développement](../../CLAUDE.md).
+Si vous souhaitez compiler ColaMD vous-même, consultez le [guide de développement](../PROJECT_GUIDE.md).
 
-- [Guide de développement](../../CLAUDE.md)
+- [Guide de développement](../PROJECT_GUIDE.md)
 - [Guide de contribution](../../.github/CONTRIBUTING.md)
 
 Si vous avez des questions concernant ColaMD, n'hésitez pas à ouvrir un issue. Lors de la création, veuillez utiliser le format par défaut. Bien sûr, si vous soumettez directement un PR, ce sera très apprécié.

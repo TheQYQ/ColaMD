@@ -92,9 +92,9 @@ Alle Binärdateien für Linux, macOS und Windows können von der [Release-Seite]
 
 ## Entwicklung
 
-Wenn du ColaMD selbst bauen möchtest, wirf einen Blick auf die [Entwicklungsdokumentation](../../CLAUDE.md).
+Wenn du ColaMD selbst bauen möchtest, wirf einen Blick auf die [Entwicklungsdokumentation](../PROJECT_GUIDE.md).
 
-- [Entwicklungsdokumentation](../../CLAUDE.md)
+- [Entwicklungsdokumentation](../PROJECT_GUIDE.md)
 - [Beitragshinweise](../../.github/CONTRIBUTING.md)
 
 Bei Fragen zu ColaMD kannst du gerne ein Issue erstellen. Bitte verwende dabei das Standardformat. Natürlich ist auch ein direkter PR sehr willkommen.

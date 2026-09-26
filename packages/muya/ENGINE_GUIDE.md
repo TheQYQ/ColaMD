@@ -1,6 +1,6 @@
-# CLAUDE.md (packages/muya)
+# ENGINE_GUIDE.md (packages/muya)
 
-This file provides guidance to Claude Code when working inside `packages/muya`.
+This file is the architecture and conventions guide for work inside `packages/muya`.
 
 > **Location.** `packages/muya` is the muya editor engine, migrated into this ColaMD monorepo and published as `@muyajs/core`. The desktop renderer consumes `@muyajs/core` as its editor engine. `packages/muya` keeps its own toolchain (ESLint/antfu, stylelint, madge, vitest), and the root ESLint ignores `packages/muya/**` — treat it as a self-contained package with its own conventions.
 
