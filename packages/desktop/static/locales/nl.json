@@ -236,7 +236,35 @@
     },
     "icons": {
       "files": "Bestanden",
-      "toc": "Inhoudsopgave"
+      "toc": "Inhoudsopgave",
+      "history": "Versiegeschiedenis"
+    },
+    "history": {
+      "noFile": "Geen bestand geopend",
+      "loading": "Laden…",
+      "noSnapshots": "Nog geen versiegeschiedenis. Bij het opslaan worden automatisch momentopnames gemaakt.",
+      "restore": "Herstellen",
+      "delete": "Verwijderen",
+      "clearAll": "Alles wissen",
+      "close": "Sluiten",
+      "cancel": "Annuleren",
+      "previewTitle": "Versievoorbeeld",
+      "restoreConfirm": "Het herstellen van deze versie vervangt de huidige documentinhoud. Eerst wordt een back-up van de huidige staat opgeslagen. Doorgaan?",
+      "restoreTitle": "Versie herstellen",
+      "restoreFailed": "Kan de versie niet herstellen",
+      "restoreSuccess": "Versie succesvol hersteld",
+      "deleteConfirm": "Weet u zeker dat u deze versie definitief wilt verwijderen?",
+      "deleteTitle": "Versie verwijderen",
+      "deleteSuccess": "Versie verwijderd",
+      "deleteFailed": "Kan de versie niet verwijderen",
+      "clearConfirm": "Weet u zeker dat u de volledige versiegeschiedenis van dit bestand wilt wissen? Dit kan niet ongedaan worden gemaakt.",
+      "clearTitle": "Geschiedenis wissen",
+      "clearSuccess": "Geschiedenis gewist",
+      "clearFailed": "Kan de geschiedenis niet wissen",
+      "justNow": "Zojuist",
+      "minutesAgo": "{count} min geleden",
+      "hoursAgo": "{count} u geleden",
+      "daysAgo": "{count} d geleden"
     }
   },
   "commandPalette": {

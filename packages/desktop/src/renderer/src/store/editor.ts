@@ -888,9 +888,13 @@ export const useEditorStore = defineStore('editor', {
       }
 
       // Guard for test environments where the preload bridge is not available.
-      window.versionHistory?.save(snapshot).catch((err) => {
-        console.error('Failed to save version snapshot:', err)
-      })
+      window.versionHistory
+        ?.save(snapshot)
+        // The sidebar history panel listens for this to refresh its list.
+        .then(() => bus.emit('version-snapshot-saved'))
+        .catch((err) => {
+          console.error('Failed to save version snapshot:', err)
+        })
     },
 
     /**
