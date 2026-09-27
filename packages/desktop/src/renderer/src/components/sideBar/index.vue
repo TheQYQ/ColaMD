@@ -23,6 +23,7 @@
           :project-tree="projectTree"
         />
         <toc v-else-if="activeColumn === 'toc'" />
+        <history v-else-if="activeColumn === 'history'" />
       </div>
     </div>
     <div
@@ -40,6 +41,7 @@ import { useProjectStore } from '@/store/project'
 import { getAllSideBarTabs } from './help'
 import Tree from './tree.vue'
 import Toc from './toc.vue'
+import History from './history.vue'
 import { storeToRefs } from 'pinia'
 
 /**

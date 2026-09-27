@@ -236,7 +236,35 @@
     },
     "icons": {
       "files": "Archivos",
-      "toc": "Tabla de Contenidos"
+      "toc": "Tabla de Contenidos",
+      "history": "Historial de versiones"
+    },
+    "history": {
+      "noFile": "Ningún archivo abierto",
+      "loading": "Cargando…",
+      "noSnapshots": "Aún no hay historial de versiones. Las instantáneas se crean automáticamente al guardar.",
+      "restore": "Restaurar",
+      "delete": "Eliminar",
+      "clearAll": "Borrar todo",
+      "close": "Cerrar",
+      "cancel": "Cancelar",
+      "previewTitle": "Vista previa de la versión",
+      "restoreConfirm": "Restaurar esta versión reemplazará el contenido actual del documento. Primero se guardará una copia de seguridad del estado actual. ¿Continuar?",
+      "restoreTitle": "Restaurar versión",
+      "restoreFailed": "No se pudo restaurar la versión",
+      "restoreSuccess": "Versión restaurada correctamente",
+      "deleteConfirm": "¿Seguro que quieres eliminar esta versión permanentemente?",
+      "deleteTitle": "Eliminar versión",
+      "deleteSuccess": "Versión eliminada",
+      "deleteFailed": "No se pudo eliminar la versión",
+      "clearConfirm": "¿Seguro que quieres borrar todo el historial de versiones de este archivo? No se puede deshacer.",
+      "clearTitle": "Borrar historial",
+      "clearSuccess": "Historial borrado",
+      "clearFailed": "No se pudo borrar el historial",
+      "justNow": "Justo ahora",
+      "minutesAgo": "hace {count} min",
+      "hoursAgo": "hace {count} h",
+      "daysAgo": "hace {count} d"
     }
   },
   "commandPalette": {

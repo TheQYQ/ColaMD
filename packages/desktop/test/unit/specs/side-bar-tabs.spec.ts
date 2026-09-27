@@ -13,32 +13,30 @@ vi.hoisted(() => {
 
 import { getAllSideBarTabs, sideBarTabs } from '@/components/sideBar/help'
 
-// The sidebar panel contract is 文件 / 目录 — both history (#f4f4a13) and
-// search panels were retired, along with every "Find in Folder" entry point
-// (menu item, command palette, keyboard shortcut).
+// The sidebar panel contract is 文件 / 目录 / 版本历史 — the search panel was
+// retired along with every "Find in Folder" entry point (menu item, command
+// palette, keyboard shortcut), and the history tab is back for the version
+// history panel (its read-side IPC was wired for real this time).
 describe('built-in sidebar tab set', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
   })
 
-  it('offers only the files and toc tabs', () => {
+  it('offers exactly the files, toc and history tabs', () => {
     const ids = sideBarTabs.map((tab) => tab.id)
 
     expect(ids).toContain('files')
     expect(ids).toContain('toc')
-    expect(ids).toHaveLength(2)
+    expect(ids).toContain('history')
+    expect(ids).toHaveLength(3)
   })
 
-  it('exposes the same two tabs through the merged tab list', () => {
+  it('exposes the same three tabs through the merged tab list', () => {
     const ids = getAllSideBarTabs().map((tab) => tab.id)
 
     expect(ids).toContain('files')
     expect(ids).toContain('toc')
-  })
-
-  it('no longer offers a history tab', () => {
-    expect(sideBarTabs.some((tab) => tab.id === 'history')).toBe(false)
-    expect(getAllSideBarTabs().some((tab) => tab.id === 'history')).toBe(false)
+    expect(ids).toContain('history')
   })
 
   it('no longer offers a search tab', () => {

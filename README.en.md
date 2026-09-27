@@ -61,7 +61,7 @@
 - Realtime preview (WYSIWYG) editing experience focused on speed and usability.
 - Support [CommonMark Spec](https://spec.commonmark.org), [GitHub Flavored Markdown Spec](https://github.github.com/gfm/) and selective support [Pandoc markdown](https://pandoc.org/MANUAL.html#pandocs-markdown).
 - Markdown extensions such as math expressions (KaTeX), diagrams (Mermaid, Flowchart, Vega, PlantUML), front matter and emojis.
-- Sidebar with two panels: the file tree and the document outline.
+- Sidebar with three panels: the file tree, the document outline, and version history.
 - Command palette (`Ctrl+Shift+P`) and quick open (`Ctrl+P`) for keyboard-driven workflows.
 - Paragraph and inline style shortcuts to improve your writing efficiency.
 - Export to **8 formats** from _File → Export_: **HTML**, **PDF**, **Word (.docx)** and a **long image (PNG)**, plus **EPUB**, **LaTeX**, **RTF** and **OPML** when Pandoc is installed.

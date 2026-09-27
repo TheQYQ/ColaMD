@@ -236,7 +236,35 @@
     },
     "icons": {
       "files": "ファイル",
-      "toc": "目次"
+      "toc": "目次",
+      "history": "バージョン履歴"
+    },
+    "history": {
+      "noFile": "ファイルが開かれていません",
+      "loading": "読み込み中…",
+      "noSnapshots": "まだバージョン履歴はありません。保存時にスナップショットが自動的に作成されます。",
+      "restore": "復元",
+      "delete": "削除",
+      "clearAll": "すべて消去",
+      "close": "閉じる",
+      "cancel": "キャンセル",
+      "previewTitle": "バージョンプレビュー",
+      "restoreConfirm": "このバージョンを復元すると、現在のドキュメント内容が置き換えられます。先に現在の状態のバックアップが保存されます。続行しますか？",
+      "restoreTitle": "バージョンの復元",
+      "restoreFailed": "バージョンを復元できませんでした",
+      "restoreSuccess": "バージョンを復元しました",
+      "deleteConfirm": "このバージョンを完全に削除してもよろしいですか？",
+      "deleteTitle": "バージョンの削除",
+      "deleteSuccess": "バージョンを削除しました",
+      "deleteFailed": "バージョンを削除できませんでした",
+      "clearConfirm": "このファイルのバージョン履歴をすべて消去してもよろしいですか？この操作は元に戻せません。",
+      "clearTitle": "履歴の消去",
+      "clearSuccess": "履歴を消去しました",
+      "clearFailed": "履歴を消去できませんでした",
+      "justNow": "たった今",
+      "minutesAgo": "{count} 分前",
+      "hoursAgo": "{count} 時間前",
+      "daysAgo": "{count} 日前"
     }
   },
   "commandPalette": {

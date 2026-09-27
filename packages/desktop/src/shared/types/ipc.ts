@@ -99,6 +99,20 @@ export interface VersionSnapshot {
   byteLength: number
 }
 
+/**
+ * `VersionSnapshot` without the markdown body. The history panel lists
+ * snapshots for the current file — up to 50 full documents per file — so the
+ * list channel ships metadata only and the body is fetched per snapshot via
+ * `mt::version-history:get-content` when actually previewed or restored.
+ */
+export interface VersionSnapshotMeta {
+  id: string
+  pathname: string
+  timestamp: number
+  label: string
+  byteLength: number
+}
+
 // =================================================================
 // Invoke channels (renderer → main, returns Promise<T>)
 // =================================================================
@@ -152,6 +166,10 @@ export interface IpcInvokeChannels {
     ]
     ret: unknown
   }
+  'mt::version-history:clear': { args: [pathname: string]; ret: boolean }
+  'mt::version-history:delete': { args: [pathname: string, id: string]; ret: boolean }
+  'mt::version-history:get-content': { args: [pathname: string, id: string]; ret: string | null }
+  'mt::version-history:list': { args: [pathname: string]; ret: VersionSnapshotMeta[] }
   'mt::version-history:save': {
     args: [snapshot: VersionSnapshot]
     ret: VersionSnapshot | null

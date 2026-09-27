@@ -236,7 +236,35 @@
     },
     "icons": {
       "files": "Dosyalar",
-      "toc": "İçindekiler"
+      "toc": "İçindekiler",
+      "history": "Sürüm Geçmişi"
+    },
+    "history": {
+      "noFile": "Açık dosya yok",
+      "loading": "Yükleniyor…",
+      "noSnapshots": "Henüz sürüm geçmişi yok. Kaydettiğinizde anlık görüntüler otomatik olarak oluşturulur.",
+      "restore": "Geri yükle",
+      "delete": "Sil",
+      "clearAll": "Tümünü temizle",
+      "close": "Kapat",
+      "cancel": "İptal",
+      "previewTitle": "Sürüm önizlemesi",
+      "restoreConfirm": "Bu sürümü geri yüklemek, geçerli belge içeriğini değiştirecektir. Önce geçerli durumun yedeği kaydedilecektir. Devam edilsin mi?",
+      "restoreTitle": "Sürümü geri yükle",
+      "restoreFailed": "Sürüm geri yüklenemedi",
+      "restoreSuccess": "Sürüm başarıyla geri yüklendi",
+      "deleteConfirm": "Bu sürümü kalıcı olarak silmek istediğinizden emin misiniz?",
+      "deleteTitle": "Sürümü sil",
+      "deleteSuccess": "Sürüm silindi",
+      "deleteFailed": "Sürüm silinemedi",
+      "clearConfirm": "Bu dosyanın tüm sürüm geçmişini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "clearTitle": "Geçmişi temizle",
+      "clearSuccess": "Geçmiş temizlendi",
+      "clearFailed": "Geçmiş temizlenemedi",
+      "justNow": "Az önce",
+      "minutesAgo": "{count} dk önce",
+      "hoursAgo": "{count} sa önce",
+      "daysAgo": "{count} g önce"
     }
   },
   "commandPalette": {

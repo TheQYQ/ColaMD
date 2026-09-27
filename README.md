@@ -53,7 +53,7 @@
 - **实时渲染（所见即所得）编辑**，以速度为先。
 - **标准兼容**：支持 [CommonMark 规范](https://spec.commonmark.org)、[GitHub Flavored Markdown 规范](https://github.github.com/gfm/)，以及选择性的 [Pandoc markdown](https://pandoc.org/MANUAL.html#pandocs-markdown) 扩展。引擎侧的逐条一致性实测为 **CommonMark 88.0% / GFM 86.6%**，明细见 [`packages/muya/test/spec/conformance.md`](packages/muya/test/spec/conformance.md)。
 - **扩展语法**：数学公式（KaTeX）、图表（Mermaid、Flowchart、Vega、PlantUML）、YAML front matter、表情符号。
-- **侧栏两个面板**：文件树与文档大纲。
+- **侧栏三个面板**：文件树、文档大纲与版本历史。
 - **键盘优先**：命令面板（`Ctrl+Shift+P`）与快速打开（`Ctrl+P`）。
 - **段落与行内样式快捷键**，减少手碰鼠标。
 - **导出 8 种格式**（菜单「文件 → 导出」）：**HTML**、**PDF**、**Word (.docx)**、**长图 (PNG)**，以及需要本机安装 Pandoc 的 **EPUB**、**LaTeX**、**RTF**、**OPML**。
