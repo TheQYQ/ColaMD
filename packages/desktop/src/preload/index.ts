@@ -213,7 +213,12 @@ const versionHistoryAPI = {
     markdown: string
     label: string
     byteLength: number
-  }) => invoke('mt::version-history:save', snapshot)
+  }) => invoke('mt::version-history:save', snapshot),
+  list: (pathname: string) => invoke('mt::version-history:list', pathname),
+  getContent: (pathname: string, id: string) =>
+    invoke('mt::version-history:get-content', pathname, id),
+  delete: (pathname: string, id: string) => invoke('mt::version-history:delete', pathname, id),
+  clear: (pathname: string) => invoke('mt::version-history:clear', pathname)
 }
 
 const fontsAPI = {

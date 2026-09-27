@@ -8,7 +8,9 @@ import type {
   IpcSendChannels,
   IpcSyncChannels,
   IpcMainEventChannels,
-  BootInfo
+  BootInfo,
+  VersionSnapshot,
+  VersionSnapshotMeta
 } from '@shared/types/ipc'
 import type { MenuTemplate, MenuPopupPosition } from '@shared/types/menu'
 
@@ -187,18 +189,9 @@ declare global {
     uploadImage(req: unknown): Promise<unknown>
   }
 
-  interface VersionHistorySnapshot {
-    id: string
-    pathname: string
-    timestamp: number
-    markdown: string
-    label: string
-    byteLength: number
-  }
-
   interface VersionHistoryAPI {
-    save(snapshot: VersionHistorySnapshot): Promise<VersionHistorySnapshot | null>
-    get(pathname: string): Promise<VersionHistorySnapshot[]>
+    save(snapshot: VersionSnapshot): Promise<VersionSnapshot | null>
+    list(pathname: string): Promise<VersionSnapshotMeta[]>
     getContent(pathname: string, id: string): Promise<string | null>
     delete(pathname: string, id: string): Promise<boolean>
     clear(pathname: string): Promise<boolean>

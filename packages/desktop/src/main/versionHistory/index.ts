@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import writeFileAtomic from 'write-file-atomic'
 import { ipcMain } from 'electron'
-import type { VersionSnapshot } from '@shared/types/ipc'
+import type { VersionSnapshot, VersionSnapshotMeta } from '@shared/types/ipc'
 import { typedHandle } from '../ipc/typedHandle'
 
 interface VersionHistoryFile {
@@ -44,9 +44,24 @@ class VersionHistoryStore {
   registerIpcHandlers(): void {
     if (typeof ipcMain === 'undefined' || !ipcMain.handle) return
 
-    // Only `save` is wired to the renderer today — the renderer's version
-    // history UI is read-side disabled. The storage methods (getSnapshots,
-    // deleteSnapshot, …) remain as a tested public API on this class.
+    // The read handlers take a pathname purely as the store key — it is hashed
+    // into a file name inside this directory and never used to touch the
+    // filesystem — and every returned byte previously entered the store through
+    // `save` from the same renderer, so these channels hand back nothing the
+    // calling renderer could not already have. They therefore stay outside the
+    // pathScope read rules (same reasoning as the boolean probes in ipc/fs.ts).
+    typedHandle('mt::version-history:list', (_e, pathname: string) => {
+      return this.getSnapshotMetas(pathname)
+    })
+    typedHandle('mt::version-history:get-content', (_e, pathname: string, id: string) => {
+      return this.getSnapshotContent(pathname, id)
+    })
+    typedHandle('mt::version-history:delete', (_e, pathname: string, id: string) => {
+      return this.deleteSnapshot(pathname, id)
+    })
+    typedHandle('mt::version-history:clear', (_e, pathname: string) => {
+      return this.clearHistory(pathname)
+    })
     typedHandle('mt::version-history:save', (_e, snapshot: VersionSnapshot) => {
       return this.saveSnapshot(snapshot)
     })
@@ -82,6 +97,20 @@ class VersionHistoryStore {
   /** All snapshots for `pathname`, newest last. Returns [] when none exist. */
   getSnapshots(pathname: string): VersionSnapshot[] {
     return this._readFile(pathname).snapshots
+  }
+
+  /**
+   * Metadata for every snapshot of `pathname`, newest last, without the
+   * markdown bodies (the list IPC must not ship up to 50 full documents).
+   */
+  getSnapshotMetas(pathname: string): VersionSnapshotMeta[] {
+    return this.getSnapshots(pathname).map((s) => ({
+      id: s.id,
+      pathname: s.pathname,
+      timestamp: s.timestamp,
+      label: s.label,
+      byteLength: s.byteLength
+    }))
   }
 
   /** Full markdown content of a single snapshot, or null when not found. */
