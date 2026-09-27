@@ -4,8 +4,14 @@
       ref="folderEl"
       class="folder-name"
       :style="{ 'padding-left': `${depth * 6 + 10}px` }"
-      :class="[{ active: folder.id === activeItem.id }]"
+      :class="[
+        { active: folder.id === activeItem.id, 'kb-focus': kbFocusedPathname === folder.pathname }
+      ]"
       :title="folder.pathname"
+      :data-tree-row="folder.pathname"
+      :data-kind="'folder'"
+      :data-depth="depth"
+      :data-expanded="String(!isCollapsed)"
       @click="folderNameClick"
     >
       <el-icon
@@ -59,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, inject, type Ref, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
 import { showContextMenu } from '../../contextMenu/sideBar'
@@ -74,6 +80,9 @@ const props = defineProps<{
 }>()
 
 const projectStore = useProjectStore()
+
+// Keyboard focus highlight, owned by tree.vue's navigation handler.
+const kbFocusedPathname = inject<Ref<string | null>>('sideBarTreeKbFocus', ref(null))
 
 const createName = ref('')
 const newName = ref('')
@@ -168,6 +177,10 @@ onMounted(() => {
     }
     &:hover {
       background: var(--sideBarItemHoverBgColor);
+    }
+    &.kb-focus {
+      background: var(--sideBarItemHoverBgColor);
+      box-shadow: inset 0 0 0 1px var(--themeColor);
     }
   }
 }

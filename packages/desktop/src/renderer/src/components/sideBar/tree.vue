@@ -26,7 +26,11 @@
       </div>
       <div
         v-show="showDirectories"
+        ref="treeWrapper"
         class="tree-wrapper"
+        tabindex="0"
+        @keydown="handleTreeKeydown"
+        @click="handleWrapperClick"
       >
         <folder
           v-for="folder of projectTree.folders"
@@ -89,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, provide } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
 import Folder from './treeFolder.vue'
@@ -98,6 +102,7 @@ import bus from '../../bus'
 import { showContextMenu } from '../../contextMenu/sideBar'
 import { useI18n } from 'vue-i18n'
 import { ArrowRight } from '@element-plus/icons-vue'
+import { nextTreeNavState, type TreeNavKey, type TreeRowModel } from './treeKeyboard'
 import type { TreeNode } from './types'
 
 const { t } = useI18n()
@@ -166,6 +171,105 @@ const handleInputFocus = (): void => {
 
 const handleInputEnter = (): void => {
   projectStore.CREATE_FILE_DIRECTORY(createName.value)
+}
+
+// ---------------------------------------------------------------------------
+// Keyboard navigation (Typora 1.14 parity). The reducer in treeKeyboard.ts
+// owns the traversal rules; this block is the DOM glue: rows expose their
+// identity through data-* attributes, the wrapper gathers them in visual
+// order, and mouse clicks on rows sync the keyboard focus so the two
+// selection models never disagree.
+// ---------------------------------------------------------------------------
+const treeWrapper = ref<HTMLDivElement | null>(null)
+const kbFocusedPathname = ref<string | null>(null)
+provide('sideBarTreeKbFocus', kbFocusedPathname)
+
+const NAV_KEYS: TreeNavKey[] = [
+  'ArrowDown',
+  'ArrowUp',
+  'ArrowRight',
+  'ArrowLeft',
+  'Home',
+  'End',
+  'Enter',
+  'F2',
+  'Delete'
+]
+
+const gatherRows = (): { rows: TreeRowModel[]; els: HTMLElement[] } => {
+  const els = Array.from(treeWrapper.value?.querySelectorAll<HTMLElement>('[data-tree-row]') ?? [])
+  const rows: TreeRowModel[] = els.map((el) => ({
+    pathname: el.dataset.pathname ?? '',
+    kind: el.dataset.kind === 'folder' ? 'folder' : 'file',
+    depth: Number(el.dataset.depth ?? 0),
+    expanded: el.dataset.expanded === 'true'
+  }))
+  return { rows, els }
+}
+
+// The sidebar context handlers read only { pathname, isDirectory } off the
+// active item (sidebarContextMenu.ts), so a minimal node reconstructed from
+// the row dataset is enough for F2 / Delete — no store lookup needed.
+const nodeFromRow = (el: HTMLElement): unknown => {
+  const pathname = el.dataset.pathname ?? ''
+  const isDirectory = el.dataset.kind === 'folder'
+  return {
+    pathname,
+    isDirectory,
+    isFile: !isDirectory,
+    isMarkdown: el.dataset.markdown === 'true',
+    name: window.path.basename(pathname)
+  }
+}
+
+const setKbFocus = (el: HTMLElement): void => {
+  kbFocusedPathname.value = el.dataset.pathname ?? null
+  el.scrollIntoView({ block: 'nearest' })
+}
+
+const handleTreeKeydown = (event: KeyboardEvent): void => {
+  // Rename / create inputs keep their own key handling (Enter commits,
+  // Escape is handled globally) — arrows must not move tree focus meanwhile.
+  if (event.target instanceof HTMLInputElement) return
+  if (!NAV_KEYS.includes(event.key as TreeNavKey)) return
+
+  const { rows, els } = gatherRows()
+  if (rows.length === 0) return
+  const currentIndex = els.findIndex((el) => el.dataset.pathname === kbFocusedPathname.value)
+  const action = nextTreeNavState(rows, currentIndex, event.key as TreeNavKey)
+
+  switch (action.type) {
+    case 'focus':
+      setKbFocus(els[action.index])
+      break
+    case 'open':
+    case 'toggle':
+    case 'expand':
+    case 'collapse':
+      // The row's own click handler already implements exactly this: files
+      // open, folders toggle their expansion.
+      els[currentIndex].click()
+      break
+    case 'rename':
+      setKbFocus(els[currentIndex])
+      projectStore.CHANGE_ACTIVE_ITEM(nodeFromRow(els[currentIndex]))
+      bus.emit('SIDEBAR::rename')
+      break
+    case 'remove':
+      projectStore.CHANGE_ACTIVE_ITEM(nodeFromRow(els[currentIndex]))
+      bus.emit('SIDEBAR::remove')
+      break
+    case 'none':
+      return
+  }
+  event.preventDefault()
+}
+
+const handleWrapperClick = (event: MouseEvent): void => {
+  const row = (event.target as HTMLElement | null)?.closest?.(
+    '[data-tree-row]'
+  ) as HTMLElement | null
+  if (row?.dataset.pathname) kbFocusedPathname.value = row.dataset.pathname
 }
 
 onMounted(() => {
