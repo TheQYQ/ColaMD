@@ -4,7 +4,12 @@ import { languages } from 'prismjs/components.js';
 import initLoadLanguage, { loadedLanguages, transformAliasToOrigin } from './loadLanguage';
 
 const prism = Prism;
-window.Prism = Prism;
+// Prism's component and plugin files self-register onto the *global* Prism,
+// which only exists in a browser. Node consumers of the published lib (SSR via
+// renderToStaticHTML) have no window; they load languages through the
+// loadLanguage instance instead, so the global handoff can be skipped there.
+if (typeof window !== 'undefined')
+    window.Prism = Prism;
 import('prismjs/plugins/keep-markup/prism-keep-markup');
 
 // prismjs ships C++ without a `c++`/`h++` alias, so fenced blocks tagged
