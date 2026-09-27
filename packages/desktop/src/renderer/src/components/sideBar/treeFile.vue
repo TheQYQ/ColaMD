@@ -5,8 +5,16 @@
     class="side-bar-file"
     :style="{ 'padding-left': `${depth * 6 + 10}px`, opacity: file.isMarkdown ? 1 : 0.75 }"
     :class="[
-      { current: currentFile?.pathname === file.pathname, active: file.id === activeItem.id }
+      {
+        current: currentFile?.pathname === file.pathname,
+        active: file.id === activeItem.id,
+        'kb-focus': kbFocusedPathname === file.pathname
+      }
     ]"
+    :data-tree-row="file.pathname"
+    :data-kind="'file'"
+    :data-markdown="String(file.isMarkdown)"
+    :data-depth="depth"
     @click="handleFileClick"
   >
     <file-icon :name="file.name" />
@@ -24,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, inject, type Ref, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
@@ -40,6 +48,9 @@ const props = defineProps<{
 
 const projectStore = useProjectStore()
 const editorStore = useEditorStore()
+
+// Keyboard focus highlight, owned by tree.vue's navigation handler.
+const kbFocusedPathname = inject<Ref<string | null>>('sideBarTreeKbFocus', ref(null))
 
 const newName = ref('')
 const fileEl = ref<HTMLDivElement | null>(null)
@@ -130,6 +141,10 @@ onMounted(() => {
 }
 .side-bar-file.active > span {
   color: var(--text-primary);
+}
+.side-bar-file.kb-focus {
+  background: var(--sideBarItemHoverBgColor);
+  box-shadow: inset 0 0 0 1px var(--themeColor);
 }
 input.rename {
   height: 24px;

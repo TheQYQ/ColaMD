@@ -730,13 +730,13 @@ WORKPLAN 第七梯队自述里唯一没闭合的"长图与 pandoc 真实转换�
 
 ### 8.1 Typora 对标打磨清单（未开工，2026-09-27 从 `ColaMD_WORKPLAN.md` §2 Phase 4 搬入）
 
-对标基准是 **Typora 1.14**（官网 + 1.9→1.14 更新日志）。Phase 1–3 共 15 项已在 2026-09-13 前后完成，其结论由 §7 逐条复核过；**只有下面这批仍未开工**：
+对标基准是 **Typora 1.14**（官网 + 1.9→1.14 更新日志）。Phase 1–3 共 15 项已在 2026-09-13 前后完成，其结论由 §7 逐条复核过。**2026-09-28 审计更正**：搬入时标"未开工"的前三项里，欢迎文档与文件显示配置其实早已落地（搬入时没核实就打了叉，犯了 §8.2 同款错误），键盘导航为本轮补齐：
 
-- [ ] 侧边栏文件显示配置：隐藏文件 / 非 Markdown 文件 / 自定义过滤（Typora 1.14）
-- [ ] 文件树键盘导航（Typora 1.14；先核实现状再动工）
+- [x] 侧边栏文件显示配置：隐藏文件 / 非 Markdown 文件 / 自定义过滤（Typora 1.14）——**已落地（2026-09-28 审计确认，实现早于搬入）**：`treeShowNonMarkdownFiles` / `treeShowHiddenFiles` / `treePathExcludePatterns`（minimatch）/ `fileSortBy` 在 Preferences → General，过滤在 main watcher 源头生效（`main/filesystem/watcher.ts:44-64`）
+- [x] 文件树键盘导航（Typora 1.14）——**已落地（2026-09-28，分支 `feat/tree-keyboard-nav`）**：树面板可聚焦，↑↓/Home/End 移动、→ 展开/下钻、← 折叠/回父级、Enter 打开/切换、F2 重命名、Delete 移废纸篓（后两者复用右键菜单的 bus 动作链）；遍历规则在纯 reducer `sideBar/treeKeyboard.ts`（15 例单测），DOM 胶水只在 tree.vue
 - [ ] Markdown 设置改动后的生效提示（Typora 1.13 的 reload prompt 形态）
 - [ ] 公式自动编号（KaTeX 渲染层）
-- [ ] 首次启动欢迎文档
+- [x] 首次启动欢迎文档——**已落地（2026-09-28 审计确认，实现早于搬入）**：`static/welcome/welcome.md` 经 `main/windows/editor.ts`（`addBlankTab && !hasPreferencesFile`）精确实现"仅首次启动"，经 `tabOps.initialTabsToOpen` 首帧展示
 - [ ] 侧边栏 overlay 浮动模式（Typora 1.4+）
 - [ ] 浮动格式工具栏对齐 Typora 1.14 形态（已有选中浮动条，低优先）
 - [ ] 大纲拖拽重排（Typora 也没有，属超集功能）
