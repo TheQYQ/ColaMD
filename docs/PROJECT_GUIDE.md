@@ -344,20 +344,18 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 **仓库内文档**
 
-| 文档                                                          | 内容                                                                                                                                                                                            |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `README.md`（中文，默认页）/ `README.en.md`（English）        | 面向用户的功能与下载说明。这两份是**源**，`docs/i18n/README-*.md` 其余 10 种是翻译快照（口径见 §11.2）                                                                                          |
-| `docs/CI_RUN_LEDGER.md`                                       | 文档引用的每条 CI run 的仓库内副本（run → workflow → `head_sha` → 结论 → 各 job），由 `python scripts/exportCiRuns.py` 生成；仓库若重建，run 页会 404，这份是唯一的留存处                       |
-| `AGENTS.md`                                                   | 面向 AI 代理与新贡献者的动手须知：环境、门禁基线、四条必读规矩与流程（取代已删除的 `CLAUDE.md`）                                                                                                |
-| `packages/muya/ENGINE_GUIDE.md`                               | 引擎架构、约定、构建细节                                                                                                                                                                        |
-| `docs/UI_REDESIGN_GUIDE.md`                                   | V1 设计系统、布局与微交互规范（已落地）                                                                                                                                                         |
-| `ColaMD_WORKPLAN.md`                                          | 工作计划与 Typora 对标进度（含 Windows 环境注意、验证命令速查）。**七个梯队的"已完成"自述须按 `OPTIMIZATION_ROADMAP.md` §7 复核结果读**：用例数是过期快照、"未提交"标注已失效、第四梯队三处失真 |
-| `CODE_REVIEW_AND_ROADMAP.md`                                  | 全仓代码审查（2026-09）：量化面板、Top10 修复清单、值得肯定的设计、路线图（**基线已过时**，判定见下一行）                                                                                       |
-| `docs/OPTIMIZATION_ROADMAP.md`                                | 当前基线的优化路线：实测面板、旧 Top-10 逐条复核、27 项优化清单、七梯队自述复核、分期 PR 路线                                                                                                   |
-| `BUGLIST.md`                                                  | 2026-09-15 审计的实锤 bug 清单，已全部修复                                                                                                                                                      |
-| `.github/CONTRIBUTING.md`、`.github/COMMENTING-GUIDELINES.md` | 贡献流程与注释规范                                                                                                                                                                              |
+| 文档                                                          | 内容                                                                                                                                                                      |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `README.md`（中文，默认页）/ `README.en.md`（English）        | 面向用户的功能与下载说明。这两份是**源**，`docs/i18n/README-*.md` 其余 10 种是翻译快照（口径见 §11.2）                                                                    |
+| `docs/CI_RUN_LEDGER.md`                                       | 文档引用的每条 CI run 的仓库内副本（run → workflow → `head_sha` → 结论 → 各 job），由 `python scripts/exportCiRuns.py` 生成；仓库若重建，run 页会 404，这份是唯一的留存处 |
+| `AGENTS.md`                                                   | 面向 AI 代理与新贡献者的动手须知：环境、门禁基线、四条必读规矩与流程（取代已删除的 `CLAUDE.md`）                                                                          |
+| `packages/muya/ENGINE_GUIDE.md`                               | 引擎架构、约定、构建细节                                                                                                                                                  |
+| `docs/UI_REDESIGN_GUIDE.md`                                   | V1 设计系统、布局与微交互规范（已落地）                                                                                                                                   |
+| `docs/OPTIMIZATION_ROADMAP.md`                                | 当前基线的优化路线：实测面板、旧 Top-10 逐条复核、27 项优化清单、七梯队自述复核、分期 PR 路线                                                                             |
+| `BUGLIST.md`                                                  | 2026-09-15 审计的实锤 bug 清单，已全部修复                                                                                                                                |
+| `.github/CONTRIBUTING.md`、`.github/COMMENTING-GUIDELINES.md` | 贡献流程与注释规范                                                                                                                                                        |
 
-> `CODE_REVIEW_AND_ROADMAP.md` 生成于 2026-09-07、审查基线 `cd9ab53`，其量化面板与 Top-10 已大幅过时（此后 M1 性能专项、两轮死代码清理与侧栏重构都已合入）。逐条复核见 [`docs/OPTIMIZATION_ROADMAP.md`](OPTIMIZATION_ROADMAP.md) §2。
+> 原 `CODE_REVIEW_AND_ROADMAP.md`（生成于 2026-09-07，审查基线 `cd9ab53`）**与 `ColaMD_WORKPLAN.md` 已于 2026-09-27 删除**：前者的复核结论在 `OPTIMIZATION_ROADMAP` §2/§3，其 §8 功能路线图整体搬进该文档 §8；后者的七梯队自述复核在 §7（那里的行号是删除前快照），未开工的 Typora 对标打磨清单在 §8.1。
 
 ## 13. 代码质量体检（2026-09-19 实测）
 

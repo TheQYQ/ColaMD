@@ -1,7 +1,7 @@
 # ColaMD 优化路线图
 
-> 本文以当前工作区代码为唯一基准（分支 `develop`，`05e108d`，2026-09-19），**取代** `CODE_REVIEW_AND_ROADMAP.md` 的优化职能。
-> 只谈技术优化（正确性、安全、性能、结构、工程），不裁定 `CODE_REVIEW_AND_ROADMAP.md` §8 的新增功能项（插件系统 / 协同编辑 / AI 辅助 / 引擎发布 / 主题市场）。
+> 本文以当前工作区代码为唯一基准（分支 `develop`，`05e108d`，2026-09-19），**取代** `CODE_REVIEW_AND_ROADMAP.md` 的优化职能——那份文档已于 2026-09-27 删除：§1–§7 的复核结论落在本文 §2 与 §3，§8 的功能路线图落在本文 §8。
+> 只谈技术优化（正确性、安全、性能、结构、工程），不裁定功能优先级；新增功能项的**清单与 2026-09-27 重测现状**在本文 §8（插件系统 / 协同编辑 / AI 辅助 / 引擎发布 / 主题市场 等），排期由人定。
 > 文中每条结论都给 `路径:行号`；每条测量都标了测量方法，可按 §1 末尾的命令复现。
 
 ## 1. 实测基线面板
@@ -33,18 +33,18 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 判定基于代码，不基于 `ColaMD_WORKPLAN.md` 的自述。
 
-| 旧 # | 问题（`CODE_REVIEW_AND_ROADMAP.md:42-58`）         | 判定    | 证据                                                                                                                                                                                                                                                                                                                                                                         |
-| ---- | -------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | `webSecurity: false` 可读任意本地文件              | ✅ 已修 | `main/config.ts:24` `webSecurity: process.env.NODE_ENV !== 'development'`，dev 例外有明确注释理由；`:12,13,18` isolation+sandbox+无 nodeIntegration                                                                                                                                                                                                                          |
-| 2    | `mt::fs::*` 接受任意未校验路径                     | ⚠️ 部分 | `main/security/pathScope.ts` 已建立写/删/移的根白名单并 realpath 解析；但 `:28-31` 声明**读通道刻意不设限**，`:36-42` 记录 `imageFolderPath` 可由渲染端 `mt::set-user-preference` 自行扩大可写域 → O7                                                                                                                                                                        |
-| 3    | `shell.openExternal` 无协议白名单                  | ✅ 已修 | `main/ipc/shell.ts:9` `OPEN_EXTERNAL_RE = /^https?:\/\//i`，拒绝 `file://`/`smb://`/自定义 scheme 并记日志                                                                                                                                                                                                                                                                   |
-| 4    | 每击键 5 遍全文扫描                                | ✅ 已修 | M1.2/M1.2b：脏标记 + 120ms 停顿层 + flush-on-read，`test/unit/specs/lazy-markdown-pipeline.spec.ts`（desktop 侧，实现在 `renderer/src/components/editorWithTabs/lazyMarkdownPipeline.ts`；WORKPLAN 把实现名误写成 spec 名）锁"击键连发 0 次全文序列化"                                                                                                                       |
-| 5    | ~19 个零引用依赖                                   | ✅ 已修 | 现 35 个依赖，实测零引用 0；`0646ad1`/`fa36381` 两轮清理                                                                                                                                                                                                                                                                                                                     |
-| 6    | `validate-licenses` 引用已删除的 `packages/muyajs` | ✅ 已修 | `scripts/thirdPartyChecker.ts:15` `workspaceExclusions = ['packages/desktop', 'packages/muya']`                                                                                                                                                                                                                                                                              |
-| 7    | 测试/lint 仅 Linux                                 | ⚠️ 部分 | `test.yml` 已含 windows，`e2e.yml` 已加 mac 腿、`build.yml` 五条腿打包前各自跑本平台单测、`test.yml` 多了非阻断 coverage job（O14 ①②③，分支 `chore/ci-matrix-coverage`）——**这三条腿已首跑并拿到真证据，PR #37 的 19 条门禁在 head `018fef0` 上全部 pass**（mac E2E 腿在 `list-indent` 修复后才第一次绿，见 §3 O14②）；`lint.yml` 与全部 `muya-*.yml` 仍只有 ubuntu → 见 O14 |
-| 8    | BigInt FNV-1a 全文哈希                             | ✅ 已修 | `components/editorWithTabs/syntheticHistory.ts:50` 改用双 32 位 Number 通道（并注释了为何仍保 64 位强度）；M1.2b 又把它移出击键路径                                                                                                                                                                                                                                          |
-| 9    | 会话持久化每秒全标签快照 + 主线程同步写盘          | ✅ 已修 | M1.4（PR #32）：5s debounce / 30s maxWait、O(tabs) 签名门控跳过无变化写盘、fsync 改异步链式；实测见 `store/bufferedState.ts`                                                                                                                                                                                                                                                 |
-| 10   | 图片路径自动补全模块级无界缓存                     | ⚠️ 部分 | **原判定"缓存不重建"实测为假**：`main/utils/imagePathAutoComplement.ts:67-91` 的 `watchDirectory` 已在 `'rename'` 事件上调 `rebuild()`（`:57-65`），当初挂在 :16 的 `// TODO: rebuild cache @jocs` 是过期注释（本轮已换成说明性注释）；剩下的只是 `IMAGE_PATH`/`watchers` 按目录只增不减（`:19-20`，仅 watcher 出错时才 `delete`） → O6 降级                                 |
+| 旧 # | 问题（原 `CODE_REVIEW_AND_ROADMAP.md:42-58`，该文件已删除，行号是删除前快照） | 判定    | 证据                                                                                                                                                                                                                                                                                                                                                                         |
+| ---- | ----------------------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | `webSecurity: false` 可读任意本地文件                                         | ✅ 已修 | `main/config.ts:24` `webSecurity: process.env.NODE_ENV !== 'development'`，dev 例外有明确注释理由；`:12,13,18` isolation+sandbox+无 nodeIntegration                                                                                                                                                                                                                          |
+| 2    | `mt::fs::*` 接受任意未校验路径                                                | ⚠️ 部分 | `main/security/pathScope.ts` 已建立写/删/移的根白名单并 realpath 解析；但 `:28-31` 声明**读通道刻意不设限**，`:36-42` 记录 `imageFolderPath` 可由渲染端 `mt::set-user-preference` 自行扩大可写域 → O7                                                                                                                                                                        |
+| 3    | `shell.openExternal` 无协议白名单                                             | ✅ 已修 | `main/ipc/shell.ts:9` `OPEN_EXTERNAL_RE = /^https?:\/\//i`，拒绝 `file://`/`smb://`/自定义 scheme 并记日志                                                                                                                                                                                                                                                                   |
+| 4    | 每击键 5 遍全文扫描                                                           | ✅ 已修 | M1.2/M1.2b：脏标记 + 120ms 停顿层 + flush-on-read，`test/unit/specs/lazy-markdown-pipeline.spec.ts`（desktop 侧，实现在 `renderer/src/components/editorWithTabs/lazyMarkdownPipeline.ts`；WORKPLAN 把实现名误写成 spec 名）锁"击键连发 0 次全文序列化"                                                                                                                       |
+| 5    | ~19 个零引用依赖                                                              | ✅ 已修 | 现 35 个依赖，实测零引用 0；`0646ad1`/`fa36381` 两轮清理                                                                                                                                                                                                                                                                                                                     |
+| 6    | `validate-licenses` 引用已删除的 `packages/muyajs`                            | ✅ 已修 | `scripts/thirdPartyChecker.ts:15` `workspaceExclusions = ['packages/desktop', 'packages/muya']`                                                                                                                                                                                                                                                                              |
+| 7    | 测试/lint 仅 Linux                                                            | ⚠️ 部分 | `test.yml` 已含 windows，`e2e.yml` 已加 mac 腿、`build.yml` 五条腿打包前各自跑本平台单测、`test.yml` 多了非阻断 coverage job（O14 ①②③，分支 `chore/ci-matrix-coverage`）——**这三条腿已首跑并拿到真证据，PR #37 的 19 条门禁在 head `018fef0` 上全部 pass**（mac E2E 腿在 `list-indent` 修复后才第一次绿，见 §3 O14②）；`lint.yml` 与全部 `muya-*.yml` 仍只有 ubuntu → 见 O14 |
+| 8    | BigInt FNV-1a 全文哈希                                                        | ✅ 已修 | `components/editorWithTabs/syntheticHistory.ts:50` 改用双 32 位 Number 通道（并注释了为何仍保 64 位强度）；M1.2b 又把它移出击键路径                                                                                                                                                                                                                                          |
+| 9    | 会话持久化每秒全标签快照 + 主线程同步写盘                                     | ✅ 已修 | M1.4（PR #32）：5s debounce / 30s maxWait、O(tabs) 签名门控跳过无变化写盘、fsync 改异步链式；实测见 `store/bufferedState.ts`                                                                                                                                                                                                                                                 |
+| 10   | 图片路径自动补全模块级无界缓存                                                | ⚠️ 部分 | **原判定"缓存不重建"实测为假**：`main/utils/imagePathAutoComplement.ts:67-91` 的 `watchDirectory` 已在 `'rename'` 事件上调 `rebuild()`（`:57-65`），当初挂在 :16 的 `// TODO: rebuild cache @jocs` 是过期注释（本轮已换成说明性注释）；剩下的只是 `IMAGE_PATH`/`watchers` 按目录只增不减（`:19-20`，仅 watcher 出错时才 `delete`） → O6 降级                                 |
 
 **结论**：旧报告的"高危三件套"与"性能四件套"已经关闭。当前真正欠着的不是同一批问题——下面 27 项是这一轮实测出的（O1–O26 于 2026-09-19，O27 于次日实施 O18 时补）。`ColaMD_WORKPLAN.md` 七个梯队的"已完成"自述同样逐条核对过，见 §7。
 
@@ -649,19 +649,19 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | 给 `getClipboardHtml` / `getHighlightHtml` 去 O(n²) | `perf-baseline.md` M1.3 判读：只处理选区/剪贴板级内容，不在文档级热路径                                                              |
 | 给图片补全缓存加失效或 LRU（O6）                    | 缓存本来就随 `'rename'` 重建（`imagePathAutoComplement.ts:67-91`）；残余只是按目录只增不减，量级未测出，加淘汰机制是先写成本后写需求 |
 | 去掉 `isSamePathSync` 的同步回落（O10）             | 只在大小写异体路径上触发，调用方全是离散用户动作（见 O10 撤下说明）；缓存规范化结果要给非热点加一层失效逻辑                          |
-| 裁定功能路线图                                      | 按本文定位排除，见开头声明                                                                                                           |
+| 裁定功能优先级                                      | 本文只列候选与现状（§8），排期由人定                                                                                                 |
 
 ## 6. 与既有文档的关系
 
-| 文档                                  | 状态                                                                                                                                                      |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/PROJECT_GUIDE.md`               | 项目结构与模块地图（同一基线）。优化项以本文为准，"东西在哪"以那份为准                                                                                    |
-| `CODE_REVIEW_AND_ROADMAP.md`          | 保留为历史证据（生成于 2026-09-07，审查基线 `cd9ab53`）。顶部加指引，正文不改——它的判断过程本身有价值                                                     |
-| `ColaMD_WORKPLAN.md`                  | 记录到 PR #32，含 M1/UI/Phase 1-3 的实施注记与 Windows 环境注意。七个梯队的"已完成"自述复核见 §7；其"未提交"标注与 git 实际状态不符，顶部加指引，正文不动 |
-| `BUGLIST.md`                          | 2026-09-15 审计，全部已修，无需续写                                                                                                                       |
-| `packages/muya/docs/perf-baseline.md` | 性能数字的事实来源，本文件只引用不复制；后续性能类优化必须先更新它                                                                                        |
+| 文档                                       | 状态                                                                                                                                                            |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/PROJECT_GUIDE.md`                    | 项目结构与模块地图（同一基线）。优化项以本文为准，"东西在哪"以那份为准                                                                                          |
+| `CODE_REVIEW_AND_ROADMAP.md`（**已删除**） | 生成于 2026-09-07、审查基线 `cd9ab53`。§1–§7 的复核结论留在本文 §2/§3，**§8 的功能路线图整体搬进本文 §8**；判断过程可从 git 历史取回                            |
+| `ColaMD_WORKPLAN.md`（**已删除**）         | 七个梯队的"已完成"自述复核见 §7（那里的行号是删除前快照）；**未开工的 Phase 4 打磨清单与 Typora 对标口径搬进本文 §8.1/§8.2**；其"未提交"标注本就与 git 状态不符 |
+| `BUGLIST.md`                               | 2026-09-15 审计，全部已修，无需续写                                                                                                                             |
+| `packages/muya/docs/perf-baseline.md`      | 性能数字的事实来源，本文件只引用不复制；后续性能类优化必须先更新它                                                                                              |
 
-## 7. 附录 · ColaMD_WORKPLAN.md 梯队自述复核
+## 7. 附录 · 工作计划文档的梯队自述复核（该文件已于 2026-09-27 删除，行号是删除前快照）
 
 复核口径：**每条"✅ 已完成"都要能在代码里定位到它声明的落点**；性能与测试数字为重跑实测（`vitest run`，两包退出码均为 0），不采信文档自述。审查范围含全部七个梯队（第四、五梯队为逐项深挖，其余为落点抽查）。
 
@@ -699,3 +699,49 @@ WORKPLAN 第七梯队自述里唯一没闭合的"长图与 pandoc 真实转换�
 ### 一处方法论提醒
 
 第四梯队失真那三条，全是"完成之后又被后续提交改动，而计划文档没回写"。梯队式进度文档天然会漂移——若继续维护 WORKPLAN，只应在每个梯队末尾加一行"后续被 X 覆盖"的注记，不要重写正文（正文是历史证据）。
+
+## 8. 功能路线图（全项目唯一清单）
+
+> **来源（2026-09-27）**：本节从 `CODE_REVIEW_AND_ROADMAP.md` §8 搬入。那份文档的 §1–§7 已被本文 §2（旧 Top-10 复核）与 §3（A–F 组）取代，但 **§8 的功能路线图是唯一一份**，而本文开头又声明"不裁定功能路线图"——它必须先有个去处，原文件才能删。**"不裁定优先级"依然成立**：本节只列候选与现状，排期由人定。
+> 原表"依据"列引用的是那份文档自己的小节号（`4.1`、`4.7`、`6.4`、`6.5` 等），文件已删；对应结论现在在本文 §2 与 §3。
+> **下表每条现状都是 2026-09-27 重测的**，不是照抄 2026-09-07 的判断。
+
+| #   | 功能/改进                                       | 2026-09-27 实测现状                                                                                                                                           |
+| --- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1  | 依赖瘦身 + 安装包减重                           | **未做**：`packages/muya/package.json` 仍声明 **28** 个 `dependencies`；原说"19 个零引用"要用 `pnpm knip:full` + `madge` 重测后才能引用                       |
+| S2  | CI 平台矩阵补全（单测加 windows）               | **已落地**：`.github/workflows/test.yml` 有 `windows-latest` 腿                                                                                               |
+| S3  | `pnpm build` 自带 locale 压缩                   | **已落地**：每个 `build:*` 脚本前先跑 `minify-locales`                                                                                                        |
+| S4  | 重命名 / 移动失败的用户通知                     | **已落地**：`test/e2e/rename-failure-notification.spec.ts` 钉住                                                                                               |
+| S5  | 文档版本快照                                    | **部分**：数据层在 `packages/desktop/src/main/versionHistory/`，**从未有侧栏面板**（`PROJECT_GUIDE` §11.2 记着 README 曾误宣传）                              |
+| M1  | 性能专项（千页文档不卡）                        | **已落地并收尾**：见 §1 面板与 `packages/muya/docs/perf-baseline.md`                                                                                          |
+| M2  | 安全强化包                                      | **大部分落地**：`main/security/pathScope.ts` + 本文 O7/O8；残余见 O7②                                                                                         |
+| M3  | `keytar` → Electron `safeStorage`               | **前提已变**：全仓既无 `keytar` 也无 `safeStorage`（两处 grep 均为 **0**），凭据存储当前根本不存在 → 这条应作废，或改写成"将来需要凭据时直接用 `safeStorage`" |
+| M4  | 导出管线增强（DOCX / EPUB）                     | **已落地**：导出菜单 8 项（`main/menu/templates/file.ts:112-120`）                                                                                            |
+| M5  | 大仓库体验：文件树虚拟化 + rg 结果批量推送      | **未做**：渲染端无 `el-tree-v2` / `RecycleScroller`                                                                                                           |
+| M6  | workspace 概念（多根工作区 + 每根独立 watcher） | **未做**：store 层无 `workspaceFolders`                                                                                                                       |
+| L1  | 插件系统 v1                                     | **未做**：无 `pluginRegistry` / `registerPlugin`                                                                                                              |
+| L2  | 协同编辑（实验）                                | **底座仍在、从未运行**：`ot-json1` 被 9 个文件引用，但没有入口                                                                                                |
+| L3  | AI 辅助写作                                     | **未做**：全仓无相关代码（`anthropic` 只出现在 `packages/muya` unlink 测试的示例链接里）                                                                      |
+| L4  | 引擎独立发布（exports 分歧 / d.ts 交付）        | **本轮未核**：要单独审 `packages/muya/package.json` 的 exports 与发布流；搬入时不假装已知                                                                     |
+| L5  | 主题市场 / 自定义主题导入导出                   | **已落地**：`themeMarket` 在仓库里，另有 `.colamd-theme` 主题包                                                                                               |
+
+**原推荐节奏**（S1–S4 先清 → M2 安全包 → 其余）里 **S2/S3/S4、M2、M4、L5 已经落地**，剩下的实际是 **S1、S5 的半件、M5、M6、L1、L2、L3、L4**。
+
+### 8.1 Typora 对标打磨清单（未开工，2026-09-27 从 `ColaMD_WORKPLAN.md` §2 Phase 4 搬入）
+
+对标基准是 **Typora 1.14**（官网 + 1.9→1.14 更新日志）。Phase 1–3 共 15 项已在 2026-09-13 前后完成，其结论由 §7 逐条复核过；**只有下面这批仍未开工**：
+
+- [ ] 侧边栏文件显示配置：隐藏文件 / 非 Markdown 文件 / 自定义过滤（Typora 1.14）
+- [ ] 文件树键盘导航（Typora 1.14；先核实现状再动工）
+- [ ] Markdown 设置改动后的生效提示（Typora 1.13 的 reload prompt 形态）
+- [ ] 公式自动编号（KaTeX 渲染层）
+- [ ] 首次启动欢迎文档
+- [ ] 侧边栏 overlay 浮动模式（Typora 1.4+）
+- [ ] 浮动格式工具栏对齐 Typora 1.14 形态（已有选中浮动条，低优先）
+- [ ] 大纲拖拽重排（Typora 也没有，属超集功能）
+- [ ] 远期生态：`colamd://` URL 协议 / VSCode 扩展（对应"Open in Typora"）、PicList 上传器；TextBundle 观察
+
+### 8.2 搬入时纠正的两条对标说法
+
+- 原清单把"**版本历史侧栏**"列为"已具备（对齐 Typora）"——**不成立**：只有数据层，侧栏从来没有面板（`PROJECT_GUIDE` §11.2）。
+- 原清单写"**33 内置主题**"——本轮实测 `packages/desktop/src/renderer/src/assets/themes/` 是 **35** 个文件；引用主题数量时以目录计数为准，不要抄旧数。
