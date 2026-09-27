@@ -1,6 +1,6 @@
 # getState() 调用方审计（M1.1.1）
 
-> 依据：`ColaMD_WORKPLAN.md` PR-2。本文档盘点 `JSONState.getState()`（全文档深拷贝）的全部生产调用方，逐点标注频率、变异行为与 live 共享安全性，作为 PR-3（getState 去克隆 + json-change 瘦身）的改造依据与回归网。
+> 依据：原 `ColaMD_WORKPLAN.md` 的 PR-2（该文件已于 2026-09-27 删除，复核见 `docs/OPTIMIZATION_ROADMAP.md` §7）。本文档盘点 `JSONState.getState()`（全文档深拷贝）的全部生产调用方，逐点标注频率、变异行为与 live 共享安全性，作为 PR-3（getState 去克隆 + json-change 瘦身）的改造依据与回归网。
 >
 > 审计基线：`main` @ 601d5c3（2026-09-09）。行号以该提交为准。
 

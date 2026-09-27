@@ -34,7 +34,7 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 
 ## 动手前必读的四条
 
-1. **权威文档只有两份**：`docs/PROJECT_GUIDE.md`（结构、模块地图、功能→代码定位表）与 `docs/OPTIMIZATION_ROADMAP.md`（优化项、实测基线面板、完成状态）。`README.md`、`ColaMD_WORKPLAN.md`、`CODE_REVIEW_AND_ROADMAP.md` 都有已记录的漂移，别当现状引用。
+1. **权威文档只有两份**：`docs/PROJECT_GUIDE.md`（结构、模块地图、功能→代码定位表）与 `docs/OPTIMIZATION_ROADMAP.md`（优化项、实测基线面板、完成状态）。`README.md` 有已记录的漂移（`PROJECT_GUIDE` §11.2），别当现状引用；`ColaMD_WORKPLAN.md` 与 `CODE_REVIEW_AND_ROADMAP.md` 已于 2026-09-27 删除，内容去向见 `OPTIMIZATION_ROADMAP` §7（梯队复核）与 §8（功能路线图）。
 2. **`docs/*.md` 里的 `路径:行号` 没有任何工具在守**——`scripts/check-md-links.py` 只解析 15 份 README 的相对链接/锚点。改过某个文件的结构之后，必须自己 grep 出引用它的文档行逐条复核，链接门绿了不算。
 3. **删"零引用"代码前先查动态引用**。`0646ad1` 删掉一层转发垫片后 `Ctrl+P` 就坏了，而**没有任何测试变红**；补回来的用例是 `8765cee`。
 4. **报门禁要给退出码，也要给没跑的那一门**。宁可先把钉死的工具链版本装齐，也不要用 `--no-verify` 绕过。
