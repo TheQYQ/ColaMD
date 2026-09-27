@@ -86,6 +86,8 @@ for run_id in cited:
 
 totals = {r: (api('repos/%s/actions/runs?per_page=1' % r) or {}).get('total_count') for r in REPOS}
 
+archive_note = ('**已删除，旧 run 号只存在于本文件**' if totals[ARCHIVE] is None
+                else '**%s**' % totals[ARCHIVE])
 lines = [
     '# CI run ledger',
     '',
@@ -97,7 +99,7 @@ lines = [
     '两边都取不到时**保留本文件里已有的那一行并标注"已不可达"**，绝不因为 404 就丢证据。',
     '',
     '- 抓取时间：2026-09-27',
-    '- 当前库 `%s` 的 run 总数：**%s**；归档库 `%s`：**%s**' % (CURRENT, totals[CURRENT], ARCHIVE, totals[ARCHIVE]),
+    '- 当前库 `%s` 的 run 总数：**%s**；归档库 `%s`：%s' % (CURRENT, totals[CURRENT], ARCHIVE, archive_note),
     '- `head_sha` 是 GitHub 记录的原始值，**不随分支历史重写而变**（见 `OPTIMIZATION_ROADMAP` §3 的重映射规则 ④）。',
     '',
     '| run | 库 | workflow | head_sha | 结论 | 日期 | 触发 | 各 job |',
