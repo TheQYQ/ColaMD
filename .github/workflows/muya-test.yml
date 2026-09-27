@@ -18,7 +18,18 @@ concurrency:
 
 jobs:
   unit:
-    runs-on: ubuntu-latest
+    # Windows leg: the engine unit suite is where path-separator and EOL
+    # differences surface — the round-trip fixtures already bit CRLF checkouts
+    # once (pinned by .gitattributes, guarded by fixtureEol.spec.ts), and an
+    # ubuntu-only CI could never see that class of failure. The other muya
+    # workflows stay ubuntu-only on purpose: lint/build/madge run
+    # platform-independent tooling, and muya-e2e exercises chromium, whose
+    # behavior does not vary by OS.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup

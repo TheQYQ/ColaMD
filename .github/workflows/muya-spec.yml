@@ -1,9 +1,8 @@
 name: Muya Spec (CommonMark + GFM)
 
 on:
-  # Manual runs exist to judge platform-specific suites (this one only
-  # runs on ubuntu) without touching packages/muya just to trip the path
-  # filter below.
+  # Manual runs exist to exercise the suites without touching packages/muya
+  # just to trip the path filter below.
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -25,7 +24,15 @@ concurrency:
 
 jobs:
   spec:
-    runs-on: ubuntu-latest
+    # Windows leg: the conformance suites read repo fixtures byte-for-byte and
+    # pin expected failures, so an EOL/path surprise shows up here first (the
+    # round-trip fixtures already needed a .gitattributes pin to survive CRLF
+    # checkouts — ubuntu CI could never see that class of failure).
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
