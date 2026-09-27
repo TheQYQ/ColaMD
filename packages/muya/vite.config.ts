@@ -12,11 +12,23 @@ export default defineConfig({
     build: {
         target: 'chrome70',
         outDir: 'lib',
+        // The largest JS-imported asset (an editor icon) is 5.9KB; anything
+        // at or below this limit is inlined as a data URI instead of being
+        // emitted as a file that the bundle imports at runtime. That matters
+        // because a lib build that does `import icon from '../assets/x.png'`
+        // crashes plain Node (`require`/`import` of a .png) — it only ever
+        // worked when the consumer ran a bundler. Fonts stay external via
+        // the lib-assets plugin below (CSS is never loaded by Node).
+        assetsInlineLimit: 8 * 1024,
         lib: {
             entry: resolve(dirname, 'src/index.ts'),
             name: pkg.name,
             fileName: format => `${format}/index.js`,
             formats: ['es', 'umd', 'cjs'],
+            // Default is the sanitized package name ("core"), but the README
+            // and the "./*" export surface document `lib/style.css` — keep the
+            // emitted stylesheet aligned with what consumers are told to import.
+            cssFileName: 'style',
         },
     },
     test: {
@@ -53,11 +65,36 @@ export default defineConfig({
         hookTimeout: 60_000,
     },
     plugins: [
+        // snabbdom 3.6.4 compiles `window?.requestAnimationFrame` into
+        // `window === null || window === void 0 ? void 0 : …`, which throws
+        // ReferenceError wherever `window` is undeclared — i.e. any Node
+        // evaluation of the published lib (SSR via renderToStaticHTML)
+        // crashes at import time, in the consumer's own node_modules where
+        // no patch can reach. Rewriting the probe at build time keeps the
+        // fix in this repo and CI-reproducible; semantics are unchanged
+        // (browsers take the rAF branch, Node falls back to setTimeout).
+        {
+            name: 'snabbdom-style-raf-guard',
+            transform(code, id) {
+                if (!id.replace(/\\/g, '/').includes('snabbdom/build/modules/style.js')) return null
+                const unsafe = 'typeof (window === null || window === void 0 ? void 0 : window.requestAnimationFrame) === "function"'
+                if (!code.includes(unsafe)) return null
+                return code.replace(
+                    unsafe,
+                    'typeof window !== "undefined" && typeof window.requestAnimationFrame === "function"'
+                )
+            },
+        },
         dts({
             entryRoot: 'src',
             outDirs: 'lib/types',
         }),
         libAssetsPlugin({
+            // Extract only assets above the inline limit (the fonts — an
+            // editor icon is at most 5.9KB, a KaTeX/mermaid font file is
+            // typically 10-500KB). This keeps the bundles Node-loadable
+            // while fonts stay real files referenced from core.css.
+            limit: 8 * 1024,
             outputPath: (url) => {
                 return url.endsWith('.png') ? 'assets/icons' : 'assets/fonts';
             },

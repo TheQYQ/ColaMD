@@ -26,7 +26,10 @@ npm install @muyajs/core
 pnpm add @muyajs/core
 ```
 
-Muya is a browser library and expects a bundler (Vite, webpack, Rollup, esbuild, …). The package ships ESM (`lib/es`), CJS (`lib/cjs`), UMD (`lib/umd`), and full TypeScript declarations (`lib/types`).
+The package ships ESM (`lib/es`), CJS (`lib/cjs`), UMD (`lib/umd`), the full TypeScript declarations (`lib/types`), and the editor stylesheet (`lib/style.css`). Importing it does not require a bundler: the module graph loads cleanly under plain Node ≥ 20.19 (verified for both `require` and `import`). That said:
+
+- **Interactive editing needs a browser** (a real `window`/`document`), typically through a bundler (Vite, webpack, esbuild, …).
+- **`renderToStaticHTML` in Node needs a DOM at call time**: sanitization goes through DOMPurify, whose default instance has no `sanitize` without a `window`. Rendering in Node therefore requires a jsdom-backed DOM injection, which is not wired up yet — until then, render server-side inside a DOM-provided environment.
 
 ## Quick start
 
@@ -279,6 +282,15 @@ Muya is derived from ColaMD. The team's goal is for Muya to live outside the des
 **Does the Muya version track ColaMD's version?**
 
 No, the two version numbers are independent.
+
+## Publishing (maintainers)
+
+```sh
+pnpm build   # emits lib/{es,cjs,umd}/index.js, lib/style.css, lib/types, lib/assets
+pnpm pack    # or pnpm publish
+```
+
+**Publish with pnpm, never npm.** The workspace `exports` point at `./src/index.ts` (source, for the monorepo) and `publishConfig` rewrites them to `lib/` — pnpm applies that substitution; npm does **not**, so an npm-published tarball would declare `exports` pointing at files that `files: ["lib"]` never ships, and every import would fail.
 
 ## Built with Muya
 
