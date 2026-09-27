@@ -374,7 +374,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
   - **编号全部从头开始**：新库的 PR 从 **#1** 重新计数、run id 也是新的。**本文提到的 `#37–#42` 与那 12 个 run 号属于旧库**，去新库找会找不到；它们的长期出处是 `docs/CI_RUN_LEDGER.md`（脚本会先查当前库、再查归档库，两边都取不到时保留既有行并标"已不可达"）。
   - **48 个 Release 资产是 CI 重建的**，没有走 3.5 GB 下载-重传：把 `v0.1.0`/`v0.1.3` 推上新库即触发 `release.yml`，两条 run `36266954425` 与 `36266954535` 各产出 24 个资产，同名标签与资产名不变，所以 `/releases/latest` 与 `/releases/download/v0.1.3/...` 这些链接不受影响。
   - **新库第一次完整门禁**：PR #1（head `a320e0a`）**12/12 success**，merge `f86b549`。
-  - 删除 `ColaMD-archive` 是这一步**唯一未执行**的动作（不可逆），等确认新库无问题后单独进行。
+  - **归档库已删除（2026-09-27，用户执行）**：`ColaMD-archive`（id `1359105739`）返回 404，新库 `id 1389727074` 完好（`main`/`develop` 两条分支、两个 Release 共 48 个资产、贡献者只有 `TheQYQ`）。删前抄件：42 个 PR、42 个 issue、34 条评论、2 个 Release 元数据 + 一份 `SUMMARY.md`（放在本机临时目录，**临时目录会被清，长留需自行挪走**）。**删除的后果要认清**：`#37–#42` 的 PR 页面与 525 条 run 页面永久 404，本文引用的那 12 个旧 run 号因此**只剩 `docs/CI_RUN_LEDGER.md` 这一份副本**——删后立即重跑 `python scripts/exportCiRuns.py` 实测：`rows=15 stale=12`，12 条旧 run 全部保留并标"已不可达"，三条新库 run 正常刷新。
 - **新库的 mac 腿抓出了测试自身的一处竞态（不是应用回归）**。PR #2 head `bc92ab8` 上 `e2e (macos)` 红在 `export-long-image-and-pandoc.spec.ts:91` 的 `expect(success?.type).toBe('latex')`（`Received: undefined`，run `36268664649`），而**它前一行的 `sign(bytes)` 已经通过**——`.tex` 文件确实写出且内容含 `\begin{document}`，也就是**转换成功、通知事件还没送达就被断言**。成因在 `test/e2e/exportHarness.ts`：`runExport` 是"文件一出现就返回，然后**只读一次**探针数组"，而主进程是**写完才发** `mt::export-success`。修法是同一预算内轮询探针（`44914b0`）。**要说清的边界**：本机 Windows 复现不出来——把轮询预算归零做对照，本机仍 6/6 绿，所以这是 CI runner 暴露的时序问题，不是本机可证的缺陷；旧库同样带着这条竞态，那两次 mac 绿只是撞上了时序。**教训：断言一个异步事件的到达，必须轮询，不能"读完文件顺手读一次"。**
 
 **O13 · 死代码与孤儿导出清理** — 成本 S
