@@ -127,6 +127,11 @@
     "type": "boolean",
     "default": false
   },
+  "sideBarOverlay": {
+    "description": "Sidebar--Whether the sidebar floats over the content",
+    "type": "boolean",
+    "default": false
+  },
   "trimUnnecessaryCodeBlockEmptyLines": {
     "description": "Editor--Trim the beginning and ending empty lines in code block",
     "type": "boolean",

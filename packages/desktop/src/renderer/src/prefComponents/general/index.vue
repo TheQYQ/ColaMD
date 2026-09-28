@@ -91,6 +91,12 @@
           :bool="treeShowHiddenFiles"
           :on-change="(value) => onSelectChange('treeShowHiddenFiles', value)"
         />
+        <bool
+          :description="t('preferences.general.sidebar.overlay')"
+          :notes="t('preferences.general.sidebar.overlayNotes')"
+          :bool="sideBarOverlay"
+          :on-change="(value) => onSelectChange('sideBarOverlay', value)"
+        />
 
         <text-box
           :description="t('preferences.general.sidebar.excludePatterns')"
@@ -233,7 +239,8 @@ const {
   language,
   openedFilesInSidebar,
   treeShowNonMarkdownFiles,
-  treeShowHiddenFiles
+  treeShowHiddenFiles,
+  sideBarOverlay
 } = storeToRefs(preferenceStore)
 
 const startUpAction = computed<StartUpAction>({

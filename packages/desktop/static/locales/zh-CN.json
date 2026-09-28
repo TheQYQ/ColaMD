@@ -504,7 +504,9 @@
           "zToA": "Z → A",
           "oldestFirst": "从旧到新",
           "newestFirst": "从新到旧"
-        }
+        },
+        "overlay": "浮动侧栏",
+        "overlayNotes": "侧栏悬浮在内容之上而不是挤占宽度。点击编辑区即收起。"
       },
       "misc": {
         "title": "杂项",
