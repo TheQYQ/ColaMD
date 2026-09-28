@@ -6,9 +6,9 @@ export interface SideBarTabEntry {
 }
 
 /**
- * Built-in sidebar tabs: files + outline (目录). Rendered as a compact text
- * tab row at the top of the panel (no icon strip, no settings gear —
- * preferences live in the 文件 > 偏好设置 menu).
+ * Built-in sidebar tabs: files + outline (目录) + version history. Rendered as
+ * a compact text tab row at the top of the panel (no icon strip, no settings
+ * gear — preferences live in the 文件 > 偏好设置 menu).
  */
 export const sideBarTabs: SideBarTabEntry[] = [
   {
@@ -18,6 +18,10 @@ export const sideBarTabs: SideBarTabEntry[] = [
   {
     id: 'toc',
     name: () => t('sideBar.icons.toc')
+  },
+  {
+    id: 'history',
+    name: () => t('sideBar.icons.history')
   }
 ]
 

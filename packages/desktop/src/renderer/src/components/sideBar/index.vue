@@ -3,6 +3,7 @@
     v-show="showSideBar"
     ref="sideBar"
     class="side-bar"
+    :class="{ 'side-bar-overlay': sideBarOverlay }"
     :style="{ width: `${finalSideBarWidth}px` }"
   >
     <div class="side-bar-inner">
@@ -23,6 +24,7 @@
           :project-tree="projectTree"
         />
         <toc v-else-if="activeColumn === 'toc'" />
+        <history v-else-if="activeColumn === 'history'" />
       </div>
     </div>
     <div
@@ -36,10 +38,12 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useLayoutStore } from '@/store/layout'
 import { useProjectStore } from '@/store/project'
+import { usePreferencesStore } from '@/store/preferences'
 
 import { getAllSideBarTabs } from './help'
 import Tree from './tree.vue'
 import Toc from './toc.vue'
+import History from './history.vue'
 import { storeToRefs } from 'pinia'
 
 /**
@@ -50,6 +54,7 @@ import { storeToRefs } from 'pinia'
  */
 const layoutStore = useLayoutStore()
 const projectStore = useProjectStore()
+const { sideBarOverlay } = storeToRefs(usePreferencesStore())
 
 const sideBar = ref<HTMLDivElement | null>(null)
 const dragBar = ref<HTMLDivElement | null>(null)
@@ -118,6 +123,14 @@ const handleTabClick = (name: string): void => {
 </script>
 
 <style scoped>
+.side-bar.side-bar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
 .side-bar {
   display: flex;
   flex-shrink: 0;

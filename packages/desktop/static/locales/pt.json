@@ -236,7 +236,35 @@
     },
     "icons": {
       "files": "Arquivos",
-      "toc": "Índice"
+      "toc": "Índice",
+      "history": "Histórico de versões"
+    },
+    "history": {
+      "noFile": "Nenhum arquivo aberto",
+      "loading": "Carregando…",
+      "noSnapshots": "Ainda não há histórico de versões. Instantâneos são criados automaticamente ao salvar.",
+      "restore": "Restaurar",
+      "delete": "Excluir",
+      "clearAll": "Limpar tudo",
+      "close": "Fechar",
+      "cancel": "Cancelar",
+      "previewTitle": "Pré-visualização da versão",
+      "restoreConfirm": "Restaurar esta versão substituirá o conteúdo atual do documento. Primeiro será salvo um backup do estado atual. Continuar?",
+      "restoreTitle": "Restaurar versão",
+      "restoreFailed": "Falha ao restaurar a versão",
+      "restoreSuccess": "Versão restaurada com sucesso",
+      "deleteConfirm": "Tem certeza de que deseja excluir esta versão permanentemente?",
+      "deleteTitle": "Excluir versão",
+      "deleteSuccess": "Versão excluída",
+      "deleteFailed": "Falha ao excluir a versão",
+      "clearConfirm": "Tem certeza de que deseja limpar todo o histórico de versões deste arquivo? Isso não pode ser desfeito.",
+      "clearTitle": "Limpar histórico",
+      "clearSuccess": "Histórico limpo",
+      "clearFailed": "Falha ao limpar o histórico",
+      "justNow": "Agora mesmo",
+      "minutesAgo": "há {count} min",
+      "hoursAgo": "há {count} h",
+      "daysAgo": "há {count} d"
     }
   },
   "commandPalette": {
@@ -476,7 +504,9 @@
           "zToA": "Z → A",
           "oldestFirst": "Mais antigo primeiro",
           "newestFirst": "Mais recente primeiro"
-        }
+        },
+        "overlay": "Barra lateral flutuante",
+        "overlayNotes": "A barra lateral se sobrepõe ao conteúdo em vez de comprimi-lo. Clicar no editor a fecha."
       },
       "misc": {
         "title": "Diversos",
@@ -628,7 +658,9 @@
         },
         "mathLatexDelimiters": "Ativar delimitadores matemáticos do LaTeX",
         "inlineComment": "Ativar comentários embutidos",
-        "definitionList": "Ativar listas de definição"
+        "definitionList": "Ativar listas de definição",
+        "autoNumberMathBlocks": "Numerar blocos de fórmulas automaticamente",
+        "autoNumberMathBlocksNotes": "Numera sequencialmente os blocos de fórmulas ((1), (2), ...). A numeração acompanha automaticamente inserções e exclusões."
       },
       "diagrams": {
         "title": "Diagramas",

@@ -236,7 +236,35 @@
     },
     "icons": {
       "files": "Fichiers",
-      "toc": "Table des matières"
+      "toc": "Table des matières",
+      "history": "Historique des versions"
+    },
+    "history": {
+      "noFile": "Aucun fichier ouvert",
+      "loading": "Chargement…",
+      "noSnapshots": "Pas encore d'historique de versions. Des instantanés sont créés automatiquement à chaque enregistrement.",
+      "restore": "Restaurer",
+      "delete": "Supprimer",
+      "clearAll": "Tout effacer",
+      "close": "Fermer",
+      "cancel": "Annuler",
+      "previewTitle": "Aperçu de la version",
+      "restoreConfirm": "Restaurer cette version remplacera le contenu actuel du document. Une sauvegarde de l'état actuel sera d'abord effectuée. Continuer ?",
+      "restoreTitle": "Restaurer la version",
+      "restoreFailed": "Échec de la restauration de la version",
+      "restoreSuccess": "Version restaurée avec succès",
+      "deleteConfirm": "Voulez-vous vraiment supprimer définitivement cette version ?",
+      "deleteTitle": "Supprimer la version",
+      "deleteSuccess": "Version supprimée",
+      "deleteFailed": "Échec de la suppression de la version",
+      "clearConfirm": "Voulez-vous vraiment effacer tout l'historique des versions de ce fichier ? Cette action est irréversible.",
+      "clearTitle": "Effacer l'historique",
+      "clearSuccess": "Historique effacé",
+      "clearFailed": "Échec de l'effacement de l'historique",
+      "justNow": "À l'instant",
+      "minutesAgo": "il y a {count} min",
+      "hoursAgo": "il y a {count} h",
+      "daysAgo": "il y a {count} j"
     }
   },
   "commandPalette": {
@@ -476,7 +504,9 @@
           "zToA": "Z → A",
           "oldestFirst": "Plus ancien en premier",
           "newestFirst": "Plus récent en premier"
-        }
+        },
+        "overlay": "Barre latérale flottante",
+        "overlayNotes": "La barre latérale se superpose au contenu au lieu de le comprimer. Un clic dans l'éditeur la ferme."
       },
       "misc": {
         "title": "Divers",
@@ -628,7 +658,9 @@
         },
         "mathLatexDelimiters": "Activer les délimiteurs mathématiques LaTeX",
         "inlineComment": "Activer les commentaires en ligne",
-        "definitionList": "Activer les listes de définition"
+        "definitionList": "Activer les listes de définition",
+        "autoNumberMathBlocks": "Numéroter automatiquement les blocs de formules",
+        "autoNumberMathBlocksNotes": "Numérote séquentiellement les blocs de formules ((1), (2), ...). La numérotation suit automatiquement les insertions et suppressions."
       },
       "diagrams": {
         "title": "Diagrammes",

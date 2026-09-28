@@ -277,4 +277,32 @@ describe('VersionHistoryStore — snapshot lifecycle', () => {
     const list = instance.getSnapshots('/corrupt.md')
     expect(list).toEqual([])
   })
+
+  it('getSnapshotMetas returns metadata without the markdown bodies', async () => {
+    const instance = new VersionHistoryStore(basePath)
+    await instance.saveSnapshot({
+      id: 'm1',
+      pathname: '/meta.md',
+      timestamp: 1000,
+      markdown: 'the body itself',
+      label: 'Manual Save',
+      byteLength: 15
+    })
+
+    const metas = instance.getSnapshotMetas('/meta.md')
+    expect(metas).toHaveLength(1)
+    expect(metas[0]).toEqual({
+      id: 'm1',
+      pathname: '/meta.md',
+      timestamp: 1000,
+      label: 'Manual Save',
+      byteLength: 15
+    })
+    expect('markdown' in metas[0]).toBe(false)
+  })
+
+  it('getSnapshotMetas returns empty array for unknown file', () => {
+    const instance = new VersionHistoryStore(basePath)
+    expect(instance.getSnapshotMetas('/nonexistent.md')).toEqual([])
+  })
 })

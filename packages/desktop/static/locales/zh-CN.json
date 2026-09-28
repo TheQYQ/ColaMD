@@ -236,7 +236,35 @@
     },
     "icons": {
       "files": "文件",
-      "toc": "目录"
+      "toc": "目录",
+      "history": "版本历史"
+    },
+    "history": {
+      "noFile": "未打开文件",
+      "loading": "加载中…",
+      "noSnapshots": "暂无版本历史。保存文件时会自动创建快照。",
+      "restore": "恢复",
+      "delete": "删除",
+      "clearAll": "全部清除",
+      "close": "关闭",
+      "cancel": "取消",
+      "previewTitle": "版本预览",
+      "restoreConfirm": "恢复此版本将替换当前文档内容。会先保存当前状态的备份。是否继续？",
+      "restoreTitle": "恢复版本",
+      "restoreFailed": "恢复版本失败",
+      "restoreSuccess": "版本恢复成功",
+      "deleteConfirm": "确定要永久删除此版本吗？",
+      "deleteTitle": "删除版本",
+      "deleteSuccess": "版本已删除",
+      "deleteFailed": "删除版本失败",
+      "clearConfirm": "确定要清空此文件的全部版本历史吗？此操作无法撤销。",
+      "clearTitle": "清空历史",
+      "clearSuccess": "历史已清空",
+      "clearFailed": "清空历史失败",
+      "justNow": "刚刚",
+      "minutesAgo": "{count} 分钟前",
+      "hoursAgo": "{count} 小时前",
+      "daysAgo": "{count} 天前"
     }
   },
   "commandPalette": {
@@ -476,7 +504,9 @@
           "zToA": "Z → A",
           "oldestFirst": "从旧到新",
           "newestFirst": "从新到旧"
-        }
+        },
+        "overlay": "浮动侧栏",
+        "overlayNotes": "侧栏悬浮在内容之上而不是挤占宽度。点击编辑区即收起。"
       },
       "misc": {
         "title": "杂项",
@@ -628,7 +658,9 @@
         },
         "mathLatexDelimiters": "启用 LaTeX 数学分隔符",
         "inlineComment": "启用行内注释",
-        "definitionList": "启用定义列表"
+        "definitionList": "启用定义列表",
+        "autoNumberMathBlocks": "公式块自动编号",
+        "autoNumberMathBlocksNotes": "为显示公式块按顺序编号（(1)、(2)……），插入或删除时自动重新编号。"
       },
       "diagrams": {
         "title": "图表",

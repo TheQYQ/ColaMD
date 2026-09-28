@@ -6,7 +6,7 @@ run 页面属于**某一个仓库**：项目在 2026-09-27 同名重建过，旧
 生成方式：`python scripts/exportCiRuns.py`。脚本按文档里的 11 位号自动抓取，顺序是**当前库 → 归档库**；两边都取不到时**保留本文件里已有的那一行并标注"已不可达"**，绝不因为 404 就丢证据。
 
 - 抓取时间：2026-09-27
-- 当前库 `TheQYQ/ColaMD` 的 run 总数：**18**；归档库 `TheQYQ/ColaMD-archive`：**已删除，旧 run 号只存在于本文件**
+- 当前库 `TheQYQ/ColaMD` 的 run 总数：**37**；归档库 `TheQYQ/ColaMD-archive`：**已删除，旧 run 号只存在于本文件**
 - `head_sha` 是 GitHub 记录的原始值，**不随分支历史重写而变**（见 `OPTIMIZATION_ROADMAP` §3 的重映射规则 ④）。
 
 | run           | 库     | workflow                     | head_sha  | 结论    | 日期       | 触发              | 各 job                                                                                                                                                                                          |
@@ -26,3 +26,5 @@ run 页面属于**某一个仓库**：项目在 2026-09-27 同名重建过，旧
 | `36266954425` | 当前库 | Release ColaMD               | `a27494e` | success | 2026-09-26 | push              | Build (linux)=success; Build (macos-arm64)=success; Build (macos-x64)=success; Build (windows-arm64)=success; Build (windows-x64)=success; Publish GitHub Release=success; Validate tag=success |
 | `36266954535` | 当前库 | Release ColaMD               | `1c13f6a` | success | 2026-09-26 | push              | Build (linux)=success; Build (macos-arm64)=success; Build (macos-x64)=success; Build (windows-arm64)=success; Build (windows-x64)=success; Publish GitHub Release=success; Validate tag=success |
 | `36268664649` | 当前库 | E2E Test                     | `bc92ab8` | failure | 2026-09-26 | pull_request      | e2e (linux, ubuntu-24.04, linux)=success; e2e (macos, macos-15, macos)=failure                                                                                                                  |
+| `36323210222` | 当前库 | Muya Test                    | `a792e64` | success | 2026-09-27 | pull_request      | unit (ubuntu-latest)=success; unit (windows-latest)=success                                                                                                                                     |
+| `36323210233` | 当前库 | Muya Spec (CommonMark + GFM) | `a792e64` | success | 2026-09-27 | pull_request      | spec (ubuntu-latest)=success; spec (windows-latest)=success                                                                                                                                     |

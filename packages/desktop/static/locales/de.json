@@ -236,7 +236,35 @@
     },
     "icons": {
       "files": "Dateien",
-      "toc": "Inhaltsverzeichnis"
+      "toc": "Inhaltsverzeichnis",
+      "history": "Versionsverlauf"
+    },
+    "history": {
+      "noFile": "Keine Datei geöffnet",
+      "loading": "Wird geladen…",
+      "noSnapshots": "Noch kein Versionsverlauf. Beim Speichern werden automatisch Schnappschüsse erstellt.",
+      "restore": "Wiederherstellen",
+      "delete": "Löschen",
+      "clearAll": "Alle löschen",
+      "close": "Schließen",
+      "cancel": "Abbrechen",
+      "previewTitle": "Versionsvorschau",
+      "restoreConfirm": "Beim Wiederherstellen dieser Version wird der aktuelle Dokumentinhalt ersetzt. Zuvor wird eine Sicherung des aktuellen Zustands gespeichert. Fortfahren?",
+      "restoreTitle": "Version wiederherstellen",
+      "restoreFailed": "Version konnte nicht wiederhergestellt werden",
+      "restoreSuccess": "Version erfolgreich wiederhergestellt",
+      "deleteConfirm": "Möchten Sie diese Version endgültig löschen?",
+      "deleteTitle": "Version löschen",
+      "deleteSuccess": "Version gelöscht",
+      "deleteFailed": "Version konnte nicht gelöscht werden",
+      "clearConfirm": "Möchten Sie den gesamten Versionsverlauf dieser Datei löschen? Dies kann nicht rückgängig gemacht werden.",
+      "clearTitle": "Verlauf löschen",
+      "clearSuccess": "Verlauf gelöscht",
+      "clearFailed": "Verlauf konnte nicht gelöscht werden",
+      "justNow": "Gerade eben",
+      "minutesAgo": "vor {count} Min.",
+      "hoursAgo": "vor {count} Std.",
+      "daysAgo": "vor {count} Tg."
     }
   },
   "commandPalette": {
@@ -476,7 +504,9 @@
           "zToA": "Z → A",
           "oldestFirst": "Älteste zuerst",
           "newestFirst": "Neueste zuerst"
-        }
+        },
+        "overlay": "Schwebende Seitenleiste",
+        "overlayNotes": "Die Seitenleiste überlagert den Inhalt, statt ihn zu verdrängen. Ein Klick in den Editor schließt sie."
       },
       "misc": {
         "title": "Verschiedenes",
@@ -628,7 +658,9 @@
         },
         "mathLatexDelimiters": "LaTeX-Mathematik-Trennzeichen aktivieren",
         "inlineComment": "Inline-Kommentare aktivieren",
-        "definitionList": "Definitionslisten aktivieren"
+        "definitionList": "Definitionslisten aktivieren",
+        "autoNumberMathBlocks": "Formelblöcke automatisch nummerieren",
+        "autoNumberMathBlocksNotes": "Nummeriert Display-Formelblöcke fortlaufend ((1), (2), ...). Beim Einfügen und Löschen wird automatisch neu nummeriert."
       },
       "diagrams": {
         "title": "Diagramme",

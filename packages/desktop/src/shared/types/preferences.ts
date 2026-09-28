@@ -25,6 +25,7 @@ export interface IUserPreferences {
   openFolderInNewWindow?: boolean
   hideScrollbar?: boolean
   sidebarColumn?: number
+  sideBarOverlay?: boolean
   fileSortBy?: string
   fileSortOrder?: string
   startUpAction?: StartUpAction
@@ -35,6 +36,7 @@ export interface IUserPreferences {
   lineHeight?: number
   codeFontSize?: number
   codeFontFamily?: string
+  autoNumberMathBlocks?: boolean
   hideQuickInsertHint?: boolean
   hideLinkPopup?: boolean
   autoPairBracket?: boolean

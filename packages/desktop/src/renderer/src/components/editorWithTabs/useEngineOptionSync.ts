@@ -56,6 +56,7 @@ type MirrorKey =
   | 'hideLinkPopup'
   | 'autoCheck'
   | 'codeBlockLineNumbers'
+  | 'autoNumberMathBlocks'
 
 /** Where a mirror watches from: a preference ref, or a getter for a value that
  *  lives outside the ref bundle (`plantumlServer`). */
@@ -141,7 +142,9 @@ export const useEngineOptionSync = ({
     { source: prefs.orderListDelimiter, push: option('orderListDelimiter') },
     { source: prefs.hideLinkPopup, push: option('hideLinkPopup') },
     { source: prefs.autoCheck, push: option('autoCheck') },
-    { source: prefs.codeBlockLineNumbers, push: option('codeBlockLineNumbers', true) }
+    { source: prefs.codeBlockLineNumbers, push: option('codeBlockLineNumbers', true) },
+    // Toggling the container class suffices: CSS counters renumber live.
+    { source: prefs.autoNumberMathBlocks, push: option('autoNumberMathBlocks') }
   ]
 
   for (const { source, push } of mirrors) {
