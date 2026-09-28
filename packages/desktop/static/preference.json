@@ -25,6 +25,7 @@
   "codeFontFamily": "DejaVu Sans Mono",
   "codeBlockLineNumbers": false,
   "autoNumberMathBlocks": false,
+  "sideBarOverlay": false,
   "trimUnnecessaryCodeBlockEmptyLines": true,
   "wrapCodeBlocks": false,
   "editorLineWidth": "",

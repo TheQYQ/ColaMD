@@ -25,6 +25,7 @@ export interface IUserPreferences {
   openFolderInNewWindow?: boolean
   hideScrollbar?: boolean
   sidebarColumn?: number
+  sideBarOverlay?: boolean
   fileSortBy?: string
   fileSortOrder?: string
   startUpAction?: StartUpAction

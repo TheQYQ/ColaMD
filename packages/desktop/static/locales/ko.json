@@ -504,7 +504,9 @@
           "zToA": "Z → A",
           "oldestFirst": "오래된 순",
           "newestFirst": "최신 순"
-        }
+        },
+        "overlay": "플로팅 사이드바",
+        "overlayNotes": "사이드바가 콘텐츠를 밀어내지 않고 그 위에 표시됩니다. 편집기를 클릭하면 닫힙니다."
       },
       "misc": {
         "title": "기타",

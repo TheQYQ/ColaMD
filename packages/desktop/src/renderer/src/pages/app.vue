@@ -20,7 +20,10 @@
       class="editor-body"
     >
       <side-bar />
-      <div class="editor-main">
+      <div
+        class="editor-main"
+        @click="handleEditorMainClick"
+      >
         <recent v-if="!hasCurrentFile" />
         <editor-with-tabs
           v-if="hasCurrentFile"
@@ -87,7 +90,18 @@ const timer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const { windowActive, platform, init } = storeToRefs(mainStore)
 const { showTabBar } = storeToRefs(layoutStore)
-const { sourceCode, theme, customCss, textDirection, zoom } = storeToRefs(preferencesStore)
+const { sourceCode, theme, customCss, textDirection, zoom, sideBarOverlay } =
+  storeToRefs(preferencesStore)
+const { showSideBar } = storeToRefs(layoutStore)
+
+// Overlay sidebar parity (Typora 1.4+): when the sidebar floats above the
+// content, clicking anywhere in the editor dismisses it — the interaction
+// that makes an overlay usable without losing document width.
+const handleEditorMainClick = (): void => {
+  if (sideBarOverlay.value && showSideBar.value) {
+    layoutStore.SET_LAYOUT({ showSideBar: false })
+  }
+}
 const { projectTree } = storeToRefs(projectStore)
 const { currentFile } = storeToRefs(editorStore)
 
@@ -256,6 +270,8 @@ onMounted(async () => {
   flex: 1;
 }
 .editor-body {
+  /* Anchors the overlay sidebar positioning context. */
+  position: relative;
   display: flex;
   flex-direction: row;
   flex: 1;

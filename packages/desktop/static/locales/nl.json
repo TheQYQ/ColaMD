@@ -504,7 +504,9 @@
           "zToA": "Z → A",
           "oldestFirst": "Oudste eerst",
           "newestFirst": "Nieuwste eerst"
-        }
+        },
+        "overlay": "Zwevende zijbalk",
+        "overlayNotes": "De zijbalk overlegt de inhoud in plaats van die te verdringen. Klikken in de editor sluit hem."
       },
       "misc": {
         "title": "Diversen",
