@@ -598,6 +598,10 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 4. 动 O7/O8 之前先跑 §1 的两条基线命令，把改动前面板数字抄进 PR，避免优化完发现退化。
 5. 能在单测层锁住的契约优先用单测：`test.yml` 跑 ubuntu + windows 两腿，`e2e.yml` 只有 ubuntu，而 E2E 覆盖不到的平台恰是缺陷高发的平台；E2E 留给必须真窗口、真进程的行为。**第 5 条已被下面的预演实证**：本轮两个真缺陷都只在 Windows 上红（locale 断言、round-trip 字节断言），ubuntu 腿看不见。
 
+#### 新增抖动观测（2026-09-29）：`find-replace.spec.ts:213` mac 腿
+
+`findPrev from 1/3 wraps backward to 3/3 then steps back to 2/3` 在 mac 腿出现间歇性红：同一 run 内 initial + retry 双双以 ~10s 失败（`toContain` 断言），但跨 run 间歇——#13 首跑红/重跑绿，#14 首跑红/重跑绿，而 #10/#11/#12 的 mac 腿全绿（该 spec 本身在其中正常执行）。定性：非本次改动因果（对照=只改一行版本号的 #13/#14 与同代码全绿的 #10-#12），失败形状是"同 run 内两连红"，与既有"第五次 launch"累积类不同（该 spec 排在第 60 位，不在 launch 累积位置）。**记为待调查的新形状**：下次 mac 红时先抓 `.mu-...` find-bar 的 DOM 状态与查找计数器值，而不是直接重跑。
+
 ### 4.0 PR 历史两处核对（2026-09-22，我自己误报过一次）
 
 - `#34`（2026-09-12 建、**3 秒后自动合并**，`promote/workplan-m14` → `main`，1 提交 1 文件）与 `#35`（2026-09-18，`cleanup/code-simplify` → `develop`，3 提交 / 84 文件、净删约 1300 行）都是**本程序早前会话**用仓库自身身份（`浅影 <108055644+TheQYQ@users.noreply.github.com>`）开的，两条**都已 merged**，内容早已在 `develop` / `main`：`#34` 是把 `ColaMD_WORKPLAN.md` 的 M1.4 状态行按"promote 到 main"的既有惯例 cherry-pick 过去，`#35` 是那次全仓过度工程清理（`cleanup/code-simplify` 分支至今还在本地，尖端 `fa36381`）。它们也正是"`develop` 与 `main` 图谱上 main 多出 30 个提交"的来路，但**内容差异为 0**（`compare/develop...main` 的 `files` 为空），所以那 30 条纯是 promote/merge 造成的图形状差异，不是漏掉的改动。
