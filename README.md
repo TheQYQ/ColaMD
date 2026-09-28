@@ -105,7 +105,6 @@ pnpm build        # 构建校验
 更多资料：
 
 - [项目指南](docs/PROJECT_GUIDE.md) — 结构、模块地图、功能→代码定位表
-- [优化路线](docs/OPTIMIZATION_ROADMAP.md) — 实测基线与待办清单
 - [AGENTS.md](AGENTS.md) — 给 AI 编码代理与新贡献者的动手须知
 - [贡献指南](.github/CONTRIBUTING.md)
 - [构建与打包脚本](package.json) — `pnpm run build:win` / `build:mac` / `build:linux`
