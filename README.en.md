@@ -105,7 +105,6 @@ pnpm run dev
 More resources:
 
 - [Project guide](docs/PROJECT_GUIDE.md) — structure, module map, feature → code table
-- [Optimization roadmap](docs/OPTIMIZATION_ROADMAP.md) — measured baselines and open items
 - [AGENTS.md](AGENTS.md) — the hands-on guide for AI coding agents and new contributors
 - [Contributing guide](.github/CONTRIBUTING.md)
 - [Build & packaging scripts](package.json) — `pnpm run build:win` / `build:mac` / `build:linux`
