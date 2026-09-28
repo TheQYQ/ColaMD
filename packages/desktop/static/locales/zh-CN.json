@@ -656,7 +656,9 @@
         },
         "mathLatexDelimiters": "启用 LaTeX 数学分隔符",
         "inlineComment": "启用行内注释",
-        "definitionList": "启用定义列表"
+        "definitionList": "启用定义列表",
+        "autoNumberMathBlocks": "公式块自动编号",
+        "autoNumberMathBlocksNotes": "为显示公式块按顺序编号（(1)、(2)……），插入或删除时自动重新编号。"
       },
       "diagrams": {
         "title": "图表",

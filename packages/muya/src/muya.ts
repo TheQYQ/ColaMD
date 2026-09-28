@@ -1693,6 +1693,8 @@ function applyAppearance(domNode: HTMLElement, options: Partial<IMuyaOptions>) {
         style.setProperty('--mu-code-font-family', options.codeFontFamily);
     if ('wrapCodeBlocks' in options)
         domNode.classList.toggle(CLASS_NAMES.MU_CODE_WRAP, !!options.wrapCodeBlocks);
+    if ('autoNumberMathBlocks' in options)
+        domNode.classList.toggle(CLASS_NAMES.MU_NUMBER_MATH, !!options.autoNumberMathBlocks);
 }
 
 /**

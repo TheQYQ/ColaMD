@@ -656,7 +656,9 @@
         },
         "mathLatexDelimiters": "LaTeX数式デリミタを有効にする",
         "inlineComment": "インラインコメントを有効にする",
-        "definitionList": "定義リストを有効にする"
+        "definitionList": "定義リストを有効にする",
+        "autoNumberMathBlocks": "数式ブロックに自動採番",
+        "autoNumberMathBlocksNotes": "ディスプレイ数式ブロックに連番（(1)、(2)...）を付けます。挿入や削除で自動的に番号が振り直されます。"
       },
       "diagrams": {
         "title": "図表",

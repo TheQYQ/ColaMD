@@ -180,6 +180,7 @@ const {
   codeFontSize,
   codeFontFamily,
   codeBlockLineNumbers,
+  autoNumberMathBlocks,
   trimUnnecessaryCodeBlockEmptyLines,
   editorFontFamily,
   hideQuickInsertHint,
@@ -565,7 +566,8 @@ useEngineOptionSync({
     orderListDelimiter,
     hideLinkPopup,
     autoCheck,
-    codeBlockLineNumbers
+    codeBlockLineNumbers,
+    autoNumberMathBlocks
   }
 })
 

@@ -57,7 +57,8 @@ const MIRRORS: Mirror[] = [
   { slot: 'orderListDelimiter', kind: 'options', option: 'orderListDelimiter' },
   { slot: 'hideLinkPopup', kind: 'options', option: 'hideLinkPopup' },
   { slot: 'autoCheck', kind: 'options', option: 'autoCheck' },
-  { slot: 'codeBlockLineNumbers', kind: 'reparse', option: 'codeBlockLineNumbers' }
+  { slot: 'codeBlockLineNumbers', kind: 'reparse', option: 'codeBlockLineNumbers' },
+  { slot: 'autoNumberMathBlocks', kind: 'options', option: 'autoNumberMathBlocks' }
 ]
 
 const t = vi.hoisted(() => ({
@@ -144,7 +145,7 @@ describe('engine option mirrors', () => {
     buildSync()
   })
 
-  it('registers all 28 mirrors in the original order', () => {
+  it('registers all 29 mirrors in the original order', () => {
     expect(t.registered.map((r) => r.label)).toEqual(MIRRORS.map((m) => m.slot))
   })
 

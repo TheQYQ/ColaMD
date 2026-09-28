@@ -656,7 +656,9 @@
         },
         "mathLatexDelimiters": "LaTeX-wiskundige scheidingstekens inschakelen",
         "inlineComment": "Inline opmerkingen inschakelen",
-        "definitionList": "Definitielijsten inschakelen"
+        "definitionList": "Definitielijsten inschakelen",
+        "autoNumberMathBlocks": "Formelblokken automatisch nummeren",
+        "autoNumberMathBlocksNotes": "Nummert weergave-formelblokken sequentieel ((1), (2), ...). Hernummering volgt invoegingen en verwijderingen automatisch."
       },
       "diagrams": {
         "title": "Diagrammen",

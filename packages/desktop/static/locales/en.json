@@ -656,7 +656,9 @@
         },
         "mathLatexDelimiters": "Enable LaTeX math delimiters",
         "inlineComment": "Enable inline comments",
-        "definitionList": "Enable definition lists"
+        "definitionList": "Enable definition lists",
+        "autoNumberMathBlocks": "Auto-number math blocks",
+        "autoNumberMathBlocksNotes": "Sequentially numbers display math blocks ((1), (2), ...). Renumbering follows insertions and deletions automatically."
       },
       "diagrams": {
         "title": "Diagrams",
