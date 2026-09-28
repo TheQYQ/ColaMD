@@ -1255,3 +1255,25 @@ figure.mu-toc-block:not(.mu-active):hover {
 .mu-toc-block .mu-toc-preview .mu-toc-h6 {
     padding-left: 3em;
 }
+
+/* Typora 1.14 parity: sequential auto-numbering for display math blocks.
+   Opt-in via the `autoNumberMathBlocks` option; CSS counters renumber on
+   insertion/deletion without any re-render. */
+.mu-number-math figure.mu-math-block {
+    counter-increment: muya-math-eq;
+}
+
+.mu-number-math figure.mu-math-block .mu-math-preview {
+    position: relative;
+}
+
+.mu-number-math figure.mu-math-block .mu-math-preview::after {
+    content: '(' counter(muya-math-eq) ')';
+    position: absolute;
+    right: 0;
+    bottom: 1em;
+    color: var(--sideBarTextColor);
+    font-size: 0.9em;
+    user-select: none;
+    pointer-events: none;
+}

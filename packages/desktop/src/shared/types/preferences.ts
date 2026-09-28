@@ -35,6 +35,7 @@ export interface IUserPreferences {
   lineHeight?: number
   codeFontSize?: number
   codeFontFamily?: string
+  autoNumberMathBlocks?: boolean
   hideQuickInsertHint?: boolean
   hideLinkPopup?: boolean
   autoPairBracket?: boolean

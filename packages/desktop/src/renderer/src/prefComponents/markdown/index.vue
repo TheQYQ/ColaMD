@@ -78,6 +78,12 @@
           :bool="definitionList"
           :on-change="(value) => onSelectChange('definitionList', value)"
         />
+        <bool
+          :description="t('preferences.markdown.extensions.autoNumberMathBlocks')"
+          :notes="t('preferences.markdown.extensions.autoNumberMathBlocksNotes')"
+          :bool="autoNumberMathBlocks"
+          :on-change="(value) => onSelectChange('autoNumberMathBlocks', value)"
+        />
       </template>
     </compound>
 
@@ -177,6 +183,7 @@ const {
   mathLatexDelimiters,
   inlineComment,
   definitionList,
+  autoNumberMathBlocks,
   isHtmlEnabled,
   isGitlabCompatibilityEnabled,
   sequenceTheme,

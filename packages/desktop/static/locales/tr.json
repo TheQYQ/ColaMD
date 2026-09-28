@@ -656,7 +656,9 @@
         },
         "mathLatexDelimiters": "LaTeX matematik sınırlayıcılarını etkinleştir",
         "inlineComment": "Satır içi yorumları etkinleştir",
-        "definitionList": "Tanım listelerini etkinleştir"
+        "definitionList": "Tanım listelerini etkinleştir",
+        "autoNumberMathBlocks": "Matematik bloklarını otomatik numaralandır",
+        "autoNumberMathBlocksNotes": "Görüntülenen matematik bloklarını sırayla numaralandırır ((1), (2) ...). Ekleme ve silmelerde otomatik olarak yeniden numaralandırılır."
       },
       "diagrams": {
         "title": "Diyagramlar",

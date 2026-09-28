@@ -656,7 +656,9 @@
         },
         "mathLatexDelimiters": "Ativar delimitadores matemáticos do LaTeX",
         "inlineComment": "Ativar comentários embutidos",
-        "definitionList": "Ativar listas de definição"
+        "definitionList": "Ativar listas de definição",
+        "autoNumberMathBlocks": "Numerar blocos de fórmulas automaticamente",
+        "autoNumberMathBlocksNotes": "Numera sequencialmente os blocos de fórmulas ((1), (2), ...). A numeração acompanha automaticamente inserções e exclusões."
       },
       "diagrams": {
         "title": "Diagramas",

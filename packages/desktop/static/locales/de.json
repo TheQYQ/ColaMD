@@ -656,7 +656,9 @@
         },
         "mathLatexDelimiters": "LaTeX-Mathematik-Trennzeichen aktivieren",
         "inlineComment": "Inline-Kommentare aktivieren",
-        "definitionList": "Definitionslisten aktivieren"
+        "definitionList": "Definitionslisten aktivieren",
+        "autoNumberMathBlocks": "Formelblöcke automatisch nummerieren",
+        "autoNumberMathBlocksNotes": "Nummeriert Display-Formelblöcke fortlaufend ((1), (2), ...). Beim Einfügen und Löschen wird automatisch neu nummeriert."
       },
       "diagrams": {
         "title": "Diagramme",
