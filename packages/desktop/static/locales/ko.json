@@ -656,7 +656,9 @@
         },
         "mathLatexDelimiters": "LaTeX 수학 구분자 사용",
         "inlineComment": "인라인 주석 사용",
-        "definitionList": "정의 목록 사용"
+        "definitionList": "정의 목록 사용",
+        "autoNumberMathBlocks": "수식 블록 자동 번호 매기기",
+        "autoNumberMathBlocksNotes": "디스플레이 수식 블록에 순서대로 번호를 매깁니다((1), (2) ...). 삽입하거나 삭제하면 자동으로 다시 번호가 매겨집니다."
       },
       "diagrams": {
         "title": "다이어그램",

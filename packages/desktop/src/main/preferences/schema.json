@@ -122,6 +122,11 @@
     "type": "boolean",
     "default": false
   },
+  "autoNumberMathBlocks": {
+    "description": "Editor--Whether to auto-number display math blocks",
+    "type": "boolean",
+    "default": false
+  },
   "trimUnnecessaryCodeBlockEmptyLines": {
     "description": "Editor--Trim the beginning and ending empty lines in code block",
     "type": "boolean",

@@ -53,6 +53,10 @@ export interface IMuyaOptions {
     orderListDelimiter: string;
     tabSize: number;
     codeBlockLineNumbers: boolean;
+    // Typora 1.14 parity: sequential auto-numbering for display math blocks
+    // (rendered via CSS counters on the container class, so insertions and
+    // deletions renumber without a re-render).
+    autoNumberMathBlocks: boolean;
     listIndentation: number;
     frontMatter: boolean;
     frontmatterType: string; // '-' | '+' | ';' | '{';
