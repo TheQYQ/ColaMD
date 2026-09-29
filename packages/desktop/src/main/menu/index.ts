@@ -1,8 +1,6 @@
-import fs from 'fs'
 import path from 'path'
 import { app, Menu, type BrowserWindow } from 'electron'
 import log from 'electron-log'
-import { ensureDirSync } from 'common/filesystem'
 import { isLinux, isOsx, isWindows } from '../config'
 import { updateSidebarMenu } from '../menu/actions/edit'
 import { updateFormatMenu } from '../menu/actions/format'
@@ -11,7 +9,8 @@ import { onInternalChannel } from '../utils/internalIpc'
 import {
   MAX_RECENTLY_USED_DOCUMENTS,
   readRecentlyUsedDocuments,
-  RECENTLY_USED_DOCUMENTS_FILE_NAME
+  RECENTLY_USED_DOCUMENTS_FILE_NAME,
+  writeRecentlyUsedDocuments
 } from '../utils/recentDocuments'
 import { viewLayoutChanged } from '../menu/actions/view'
 import configureMenu, { configSettingMenu } from '../menu/templates'
@@ -46,7 +45,6 @@ interface ThemeMenuChange {
 class AppMenu {
   private readonly _preferences: Preference
   private readonly _keybindings: Keybindings
-  private readonly _userDataPath: string
   public readonly RECENTS_PATH: string
   public readonly isOsxOrWindows: boolean
   public activeWindowId: number
@@ -60,7 +58,6 @@ class AppMenu {
   constructor(preferences: Preference, keybindings: Keybindings, userDataPath: string) {
     this._preferences = preferences
     this._keybindings = keybindings
-    this._userDataPath = userDataPath
 
     this.RECENTS_PATH = path.join(userDataPath, RECENTLY_USED_DOCUMENTS_FILE_NAME)
     this.isOsxOrWindows = isOsx || isWindows
@@ -105,9 +102,7 @@ class AppMenu {
     this.updateAppMenu(recentDocuments)
 
     if (needSave) {
-      ensureDirSync(this._userDataPath)
-      const json = JSON.stringify(recentDocuments, null, 2)
-      fs.writeFileSync(RECENTS_PATH, json, 'utf-8')
+      writeRecentlyUsedDocuments(RECENTS_PATH, recentDocuments)
     }
   }
 
@@ -128,9 +123,7 @@ class AppMenu {
 
     const recentDocuments: string[] = []
     this.updateAppMenu(recentDocuments)
-    const json = JSON.stringify(recentDocuments, null, 2)
-    ensureDirSync(this._userDataPath)
-    fs.writeFileSync(RECENTS_PATH, json, 'utf-8')
+    writeRecentlyUsedDocuments(RECENTS_PATH, recentDocuments)
   }
 
   /**
