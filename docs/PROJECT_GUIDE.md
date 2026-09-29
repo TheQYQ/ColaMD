@@ -406,6 +406,21 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 > 本机 `pnpm` 不在 Git Bash 的 PATH 上（`/c/Users/lyg/AppData/Local/pnpm` 里没有可执行文件）。本轮做法：`corepack prepare pnpm@10.33.4 --activate` 装钉定版本，再放两个垫片到 PATH 前面——`pnpm`（`exec corepack pnpm "$@"`）与 `pnpm.cmd`（后者必需，因为 `pnpm --filter` 会派生 cmd.exe，而 cmd 认不了无后缀脚本）。**不用 `--no-verify` 绕门禁。**
 
+## 15. 稳定期审计记录（2026-09-29 起）
+
+进入稳定期后按类扫描找 bug，每轮的覆盖面与结论记录于此。
+
+**第一轮**（监听器与解析类）：泄漏扫描 18 命中 → 3 真泄漏修复（tree.vue 的 bus+3 个 document 监听、treeFile/treeFolder 的行级 bus 监听——均无清理，树卸载/折叠后按行累积；已对称清理）+ history.vue 过期响应竞态守卫（PR #16）。JSON.parse 三处全有 try、空 catch 零命中、v-html 单处且消毒、deep watcher 仍为 0。
+
+**第二轮**（跨进程与生命周期类）：
+
+- IPC 面复核：裸 `ipcMain.handle` 仍只有 `typedHandle.ts` 自身，裸 `ipcMain.on` 唯一豁免点仍是 `utils/internalIpc.ts`（运行期字符串通道），`typedHandle` 站点 41 → 45（版本历史 4 条）。
+- muya 事件总线对账：22 emit 对 on/subscribe 消费者，**0 死发射**（注意对账必须把 `eventCenter.subscribe` 算进消费者形式，漏了会误报 11 条）。
+- main 浮动 Promise：唯一命中是 `editorBufferStore` 的两参 `then(() => {}, () => {})`（拒绝已处理）——无未处理拒绝崩溃风险。
+- 资源生命周期：watcher 的 close/unwatchByWindowId 链在 windowManager 三处关闭路径完整接线；ripgrep 子进程可取消；离屏导出窗口 try/finally + destroy + 临时文件清理。
+
+**已知且接受的健壮性边界**：搜索框把用户正则同步编译执行（`new RegExp(searchValue)`，无效正则已有 try 提示）——病态正则 × 大文档可冻结渲染进程。属自伤型健壮性问题而非安全漏洞（正则是用户对自己文档输入的），修复需分块执行器或非回溯引擎（如 re2，与依赖瘦身方向冲突），**记录为已知边界，不立项**。
+
 ## 15. 已关闭的功能候选与重启条件（2026-09-29 重评估）
 
 评估结论：七项全部不做——各项代价都落在刚建好的安全边界或架构稳定性上，而收益属于低频或无证据场景。重启条件（成立时单独立项，其余不预支）：
