@@ -73,8 +73,16 @@ export const sendBufferedState = (): Promise<unknown> => {
 
   const snapshot = createBufferedState()
   if (snapshot) {
-    lastSentSignature = signature
-    return window.electron.ipcRenderer.invoke('update-buffer-state', snapshot)
+    // The signature is only "sent" once main reports the durable write landed.
+    // Committing it up front meant a failed write was never retried: the next
+    // unchanged snapshot matched the recorded signature, was skipped, and the
+    // crash buffer silently kept the previous content (#26 item 2).
+    return window.electron.ipcRenderer.invoke('update-buffer-state', snapshot).then((written) => {
+      if (written !== false) {
+        lastSentSignature = signature
+      }
+      return written
+    })
   }
 
   return Promise.resolve(false)
@@ -111,9 +119,12 @@ export const computeBufferSignature = (state: unknown): string => {
       const stack = tab.history?.stack
       const lastEditIndex = tab.history?.lastEditIndex
       const contentId =
-        typeof lastEditIndex === 'number' && stack ? stack[lastEditIndex]?.id ?? 'u' : 'u'
+        typeof lastEditIndex === 'number' && stack ? (stack[lastEditIndex]?.id ?? 'u') : 'u'
       const cursor = tab.cursor as
-        | { anchor?: { key?: unknown; offset?: unknown }; focus?: { key?: unknown; offset?: unknown } }
+        | {
+          anchor?: { key?: unknown; offset?: unknown }
+          focus?: { key?: unknown; offset?: unknown }
+        }
         | null
         | undefined
       return [

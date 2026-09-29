@@ -19,16 +19,17 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 
 ## 门禁（仓库根，附实测基线）
 
-| 命令                                   | 退出码     | 现在的基线                                                                                                                                       |
-| -------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `pnpm check`（= `lint` + `typecheck`） | 0          | **94 warnings / 0 errors**，全部是 `no-non-null-assertion`                                                                                       |
-| `pnpm test:unit`                       | 0          | 108 文件 / **1197 通过 + 1 跳过**（2026-09-29 在本分支重测，新增 `close-requires-saved-tabs.spec.ts`；上一行 94/0 同日）                         |
-| `pnpm build`                           | 0          | —                                                                                                                                                |
-| `pnpm knip`                            | 0          | 只查依赖，**这条才是门禁**                                                                                                                       |
-| `pnpm knip:full`                       | **1**      | 已知 4 项（1 unused export + 3 unused exported type），**故意不接进 CI**，别把它当回归                                                           |
-| `pnpm test:e2e`                        | 视机器而定 | Playwright 真窗口、`workers: 1`。红先用**不含改动的对照跑**定性再分类，别直接写"抖动"（已知的间歇形状记录在 `PROJECT_GUIDE` §14 下方的抖动日志） |
-| `pnpm -C packages/muya lint`           | 0          | 9 warnings / 0 errors                                                                                                                            |
-| `pnpm -C packages/muya test:spec`      | 0          | CommonMark **88.0%** / GFM **86.6%**，逐条状态在 `packages/muya/test/spec/conformance.md`                                                        |
+| 命令                                   | 退出码 | 现在的基线                                                                                                                                       |
+| -------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm check`（= `lint` + `typecheck`） | 0      | **94 warnings / 0 errors**，全部是 `no-non-null-assertion`                                                                                       |
+| `pnpm test:unit`                       | 0      | 110 文件 / **1207 通过 + 1 跳过**（2026-09-30 在合入 develop 后的树上重测，新增 `close-requires-saved-tabs.spec.ts`；上一行 94/0 是 2026-09-29） |
+
+| `pnpm build` | 0 | — |
+| `pnpm knip` | 0 | 只查依赖，**这条才是门禁** |
+| `pnpm knip:full` | **1** | 已知 4 项（1 unused export + 3 unused exported type），**故意不接进 CI**，别把它当回归 |
+| `pnpm test:e2e` | 视机器而定 | Playwright 真窗口、`workers: 1`。红先用**不含改动的对照跑**定性再分类，别直接写"抖动"（已知的间歇形状记录在 `PROJECT_GUIDE` §14 下方的抖动日志） |
+| `pnpm -C packages/muya lint` | 0 | 9 warnings / 0 errors |
+| `pnpm -C packages/muya test:spec` | 0 | CommonMark **88.0%** / GFM **86.6%**，逐条状态在 `packages/muya/test/spec/conformance.md` |
 
 两条形状阈值绑在具体函数上（`eslint.config.js:334-338`）：`complexity ['warn', 37]`、`max-lines-per-function { max: 173 }`。**只有把绑住它的那个函数改小才算进步**，改大要在 PR 里说明。
 
