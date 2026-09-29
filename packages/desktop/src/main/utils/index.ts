@@ -62,3 +62,18 @@ export const getLogLevel = (): LogLevel => {
   }
   return 'silly' // >= 3
 }
+
+/**
+ * Whether a window may be destroyed after the user answered "Save" to the
+ * unsaved-files prompt.
+ *
+ * `handleResponseForSave` resolves with the tab id only when the write landed;
+ * a canceled dialog or a failed write resolves with nothing, and it never
+ * rejects -- so a `.then(close)` that ignores the results closes the window on
+ * content that was never written, and the "close anyway?" `.catch` below it is
+ * unreachable. #26 item 4.
+ */
+export const everyTabSaved = (
+  results: Array<string | void | undefined>,
+  unsavedFiles: Array<{ id: string }>
+): boolean => results.filter((id): id is string => !!id).length === unsavedFiles.length
