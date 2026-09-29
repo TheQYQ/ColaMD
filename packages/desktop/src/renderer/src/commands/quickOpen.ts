@@ -7,6 +7,34 @@ import { t } from '../i18n'
 
 const SPECIAL_CHARS = /[\[\]\\^$.\|\?\*\+\(\)\/]{1}/g // eslint-disable-line no-useless-escape
 
+// `*` maps to `.*`, so a run of n stars becomes n nested `.*` groups that
+// backtrack against every non-matching tail: measured 23 s of a blocked
+// renderer main thread for six stars against one 69-character path. `.*.*`
+// accepts the same language as `.*`, so collapsing the run keeps results
+// identical. The only `*` the escaped source can contain is one produced by a
+// star, so a match always starts at a real star token -- a query's literal `.`
+// arrives as `\.` and never joins a run.
+const NESTED_STARS = /(?:\.\*)+/g
+
+/** Compiles a quick-open glob into a matcher, or returns null if the query is
+ *  not a valid pattern. `{` and `}` are not escaped, so a query like
+ *  `a{2,}{2,}` reaches the engine as a malformed quantifier ("Nothing to
+ *  repeat"); the caller then matches the query as literal text. */
+const compilePattern = (query: string): RegExp | null => {
+  const source = query
+    .replace(SPECIAL_CHARS, (p) => {
+      if (p === '*') return '.*'
+      return p === '\\' ? '\\\\' : `\\${p}`
+    })
+    .replace(NESTED_STARS, '.*')
+
+  try {
+    return new RegExp(source, 'i')
+  } catch {
+    return null
+  }
+}
+
 interface QuickOpenSubcommand {
   id: string
   description?: string
@@ -122,19 +150,16 @@ class QuickOpenCommand {
 
     // Add files that are not in the current root directory but opened.
     if (tabsAvailable) {
-      const re = new RegExp(
-        query.replace(SPECIAL_CHARS, (p) => {
-          if (p === '*') return '.*'
-          return p === '\\' ? '\\\\' : `\\${p}`
-        }),
-        'i'
-      )
+      const re = compilePattern(query)
+      const lowerQuery = query.toLowerCase()
+      const matches = (pathname: string): boolean =>
+        re ? re.test(pathname) : pathname.toLowerCase().includes(lowerQuery)
 
       for (const tab of _editorState.tabs) {
         const { pathname } = tab
         if (
           pathname &&
-          re.test(pathname) &&
+          matches(pathname) &&
           (!rootPath || !window.fileUtils.isChildOfDirectory(rootPath, pathname))
         ) {
           searchResult.push(pathname)
