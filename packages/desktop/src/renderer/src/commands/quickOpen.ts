@@ -35,6 +35,20 @@ const compilePattern = (query: string): RegExp | null => {
   }
 }
 
+/**
+ * The query reaches ripgrep as an `--iglob` pattern, where `[` `]` `{` `}` `?`
+ * are syntax: searching `a[1]` matched `a1.md` and missed `a[1].md`, and an
+ * unbalanced one like `a{` made rg exit 2, which the panel shows as "nothing
+ * found". Each becomes a one-element bracket class -- measured against the
+ * bundled ripgrep 15.0.0, `*a[[]1[]].md` matches `a[1].md` and nothing else.
+ *
+ * A class rather than the usual `\` escape because `prepareGlobs`
+ * (`src/main/ipc/ripgrep.ts:142`) rewrites every `path.sep` in the pattern to
+ * `/`, which would eat the backslash on Windows. `*` stays the wildcard, as it
+ * does in the tab branch of this same command. #27 item 3.
+ */
+const escapeGlobLiteral = (query: string): string => query.replace(/[[\]{}?]/g, (c) => `[${c}]`)
+
 interface QuickOpenSubcommand {
   id: string
   description?: string
@@ -232,14 +246,15 @@ class QuickOpenCommand {
   }
 
   _getInclusions = (query: string): string[] => {
+    const glob = escapeGlobLiteral(query)
     // NOTE: This will fail on `foo.m` because we search for `foo.m.md`.
     if (window.fileUtils.hasMarkdownExtension(query)) {
-      return [`*${query}`]
+      return [`*${glob}`]
     }
 
     const inclusions: string[] = []
     for (let i = 0; i < window.fileUtils.MARKDOWN_INCLUSIONS.length; ++i) {
-      inclusions[i] = `*${query}` + window.fileUtils.MARKDOWN_INCLUSIONS[i]
+      inclusions[i] = `*${glob}` + window.fileUtils.MARKDOWN_INCLUSIONS[i]
     }
     return inclusions
   }
