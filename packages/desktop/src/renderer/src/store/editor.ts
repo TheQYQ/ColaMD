@@ -71,9 +71,11 @@ import { askForImageAutoPath, cleanupUnreferencedImage, imageDeleted } from './i
 import {
   listenForExportSuccess,
   listenForPrintServiceClearup,
+  captureExportSource,
   sendExportResponse,
   sendPrintResponse,
-  type ExportPayload
+  type ExportPayload,
+  type ExportSource
 } from './exportPrint'
 import type { FormatLinkPayload, IpcMainEventChannels, VersionSnapshot } from '@shared/types/ipc'
 import type {
@@ -731,7 +733,17 @@ export const useEditorStore = defineStore('editor', {
     },
 
     EXPORT(payload: ExportPayload): void {
-      sendExportResponse(this, payload)
+      sendExportResponse(payload)
+    },
+
+    /**
+     * Freeze which document an export is for, at the moment the request starts.
+     * An export awaits (full-document render, native save dialog), so reading
+     * `currentFile` afterwards could name document A's output after document B
+     * if the user switched tabs meanwhile.
+     */
+    CAPTURE_EXPORT_SOURCE(): ExportSource | null {
+      return captureExportSource(this)
     },
 
     LISTEN_FOR_EXPORT_SUCCESS(): void {

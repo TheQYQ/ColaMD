@@ -13,6 +13,10 @@
 //
 // So strip by statement, tracking the brace depth of `import { … } from '…'`.
 
+import { readFileSync } from 'node:fs'
+import { parse, compileScript } from 'vue/compiler-sfc'
+import ts from 'typescript'
+
 const braceDelta = (line: string): number => {
   const opened = line.match(/\{/g)?.length ?? 0
   const closed = line.match(/\}/g)?.length ?? 0
@@ -33,4 +37,39 @@ export const stripTopLevelImports = (code: string): string => {
     kept.push(line)
   }
   return kept.join('\n')
+}
+
+/**
+ * Compile an SFC's real `<script setup>`, drop its imports, and evaluate it with
+ * `deps` injected -- so the spec drives the shipped reactive code, not a copy.
+ *
+ * The injected names come from `deps` itself: a symbol the setup evaluates but
+ * the spec forgot to provide is a `ReferenceError` at load time, and only the
+ * paths that actually run reach it (see the AGENTS.md note on this harness).
+ */
+export const loadSfcSetup = <T>(
+  vuePath: string,
+  deps: Record<string, unknown>
+): ((props?: unknown, ctx?: { expose: () => void }) => T) => {
+  const src = readFileSync(vuePath, 'utf8')
+  const { descriptor } = parse(src)
+  const compiled = compileScript(descriptor, { id: 'test' })
+  const js = ts.transpileModule(stripTopLevelImports(compiled.content), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
+  }).outputText
+  // eslint-disable-next-line no-new-func
+  const factory = new Function(
+    '__deps',
+    'exports',
+    'module',
+    `const { ${Object.keys(deps).join(', ')} } = __deps
+    ${js}
+    return module.exports`
+  ) as (deps: Record<string, unknown>, exports: object, module: object) => T
+
+  const m = { exports: {} as Record<string, unknown> }
+  const loaded = factory(deps, m.exports, m) as unknown as {
+    default: { setup: (props: unknown, ctx: { expose: () => void }) => T }
+  }
+  return (props = {}, ctx = { expose: () => {} }) => loaded.default.setup(props, ctx)
 }

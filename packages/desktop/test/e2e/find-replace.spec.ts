@@ -211,7 +211,12 @@ test.describe('Find bar — find next / previous navigation (items 152, 181)', (
   })
 
   test('findPrev from 1/3 wraps backward to 3/3 then steps back to 2/3', async () => {
-    // Continues from the previous test's 1/3 state.
+    // Re-establishes its own baseline instead of inheriting it from the test
+    // above: CI retries a failed test alone, against a fresh app from
+    // `beforeAll`, so an inherited baseline made the one retry always die on
+    // "0 / 0" and prove nothing about the symptom it was retrying.
+    await openFind(app, page)
+    await page.locator(FIND_INPUT).fill('apple')
     await expect.poll(() => counterText(page)).toContain('1 / 3')
 
     await sendIpcToRenderer(app, 'mt::editor-edit-action', 'findPrev')

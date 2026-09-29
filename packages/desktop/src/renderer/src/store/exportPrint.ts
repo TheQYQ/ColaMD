@@ -19,12 +19,34 @@ type EditorStore = ReturnType<typeof useEditorStore>
 
 export interface ExportPayload {
   type: string
+  /** Which document this export is FOR, frozen when the request starts. */
+  source: ExportSource | null
   content?: string
   /** Binary export payloads (e.g. .docx bytes) — written as-is by main. */
   bytes?: Uint8Array
   /** Raw markdown source — used by the pandoc export formats. */
   markdown?: string
   pageOptions?: PageOptions
+}
+
+/**
+ * The identity an exported file is named after: the open document's own name,
+ * path, and outline-derived title. It travels with the request because an
+ * export awaits (the whole document is rendered, and the save dialog is native);
+ * reading `currentFile` afterwards would name document A's bytes after document
+ * B whenever the user switched tabs while A was rendering.
+ */
+export interface ExportSource {
+  filename: string
+  pathname: string
+  title: string
+}
+
+export const captureExportSource = (store: EditorStore): ExportSource | null => {
+  const currentFile = store.currentFile
+  if (!currentFile) return null
+  const { filename, pathname } = currentFile
+  return { filename, pathname, title: exportTitle(store.listToc) }
 }
 
 /**
@@ -46,22 +68,23 @@ const exportTitle = (listToc: EditorStore['listToc']): string => {
   return headerRef?.content ?? ''
 }
 
-export const sendExportResponse = (store: EditorStore, payload: ExportPayload): void => {
-  const { currentFile } = store
-  if (currentFile === null) return
+export const sendExportResponse = (payload: ExportPayload): void => {
+  const { source } = payload
+  // No source means the caller did not say which document this is. Exporting
+  // whatever happens to be focused now is exactly the confusion this prevents.
+  if (!source) return
 
-  const { filename, pathname } = currentFile
   const { type, content, bytes, markdown, pageOptions } = payload
   // `type` is the literal the export menu handed down; the renderer carries it
   // as `string` because it arrives off the bus untyped.
   const request: IpcSendChannels['mt::response-export'][0] = {
     type: type as ExportType,
-    title: exportTitle(store.listToc),
+    title: source.title,
     content: content ?? '',
     bytes,
     markdown: markdown ?? '',
-    filename,
-    pathname,
+    filename: source.filename,
+    pathname: source.pathname,
     pageOptions: pageOptions ?? {}
   }
   window.electron.ipcRenderer.send('mt::response-export', request)

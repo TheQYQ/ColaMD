@@ -95,7 +95,7 @@ describe('EXPORT payload', () => {
       { lvl: 1, content: 'Seventh, out of reach' }
     ]
 
-    store.EXPORT({ type: 'pdf', pageOptions: {} })
+    store.EXPORT({ type: 'pdf', source: store.CAPTURE_EXPORT_SOURCE(), pageOptions: {} })
 
     expect(send().mock.calls[0][1]).toMatchObject({ title: 'Third' })
   })
@@ -104,7 +104,7 @@ describe('EXPORT payload', () => {
     const store = seeded()
     const bytes = new Uint8Array([0x50, 0x4b, 0x03, 0x04])
 
-    store.EXPORT({ type: 'docx', bytes })
+    store.EXPORT({ type: 'docx', source: store.CAPTURE_EXPORT_SOURCE(), bytes })
 
     const [, payload] = send().mock.calls[0] as unknown as [string, Record<string, unknown>]
     expect(payload.bytes).toBe(bytes)
@@ -116,12 +116,48 @@ describe('EXPORT payload', () => {
   it('hands the raw markdown to the pandoc formats without inventing HTML', () => {
     const store = seeded()
 
-    store.EXPORT({ type: 'epub', markdown: '# raw\n' })
+    store.EXPORT({ type: 'epub', source: store.CAPTURE_EXPORT_SOURCE(), markdown: '# raw\n' })
 
     const [, payload] = send().mock.calls[0] as unknown as [string, Record<string, unknown>]
     expect(payload.markdown).toBe('# raw\n')
     expect(payload.content).toBe('')
     expect(payload.bytes).toBeUndefined()
+  })
+})
+
+describe('EXPORT source identity (#28 item 2)', () => {
+  it('names the output after the document captured when the export started', () => {
+    const store = seeded()
+    store.listToc = [{ lvl: 1, content: 'Notes title' }]
+    const source = store.CAPTURE_EXPORT_SOURCE()
+    expect(source).toMatchObject({
+      filename: 'notes.md',
+      pathname: '/x/notes.md',
+      title: 'Notes title'
+    })
+
+    // What an export waits on: the whole document renders, then a native save
+    // dialog is up. The user switches to another tab inside that window.
+    store.currentFile = {
+      filename: 'other.md',
+      pathname: '/x/other.md'
+    } as unknown as typeof store.currentFile
+    store.listToc = [{ lvl: 1, content: 'Other outline' }]
+
+    store.EXPORT({ type: 'pdf', source, pageOptions: {} })
+
+    const [, payload] = send().mock.calls[0] as unknown as [string, Record<string, unknown>]
+    expect(payload.filename).toBe('notes.md')
+    expect(payload.pathname).toBe('/x/notes.md')
+    expect(payload.title).toBe('Notes title')
+  })
+
+  it('sends nothing when the payload does not say which document it exports', () => {
+    const store = seeded()
+
+    store.EXPORT({ type: 'pdf', source: null, pageOptions: {} })
+
+    expect(send()).not.toHaveBeenCalled()
   })
 })
 

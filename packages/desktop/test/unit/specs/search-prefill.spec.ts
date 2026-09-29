@@ -27,7 +27,10 @@ const vuePath = resolve(here, '../../../src/renderer/src/components/search/index
 interface Bindings {
   searchValue: { value: string }
   showSearch: { value: boolean }
+  isRegexp: { value: boolean }
+  searchErrorMsg: { value: string }
   listenFind: () => void
+  emptySearch: (selectHighlight?: boolean) => void
 }
 
 const loadComponent = (deps: Record<string, unknown>) => {
@@ -61,7 +64,7 @@ const loadComponent = (deps: Record<string, unknown>) => {
   return factory(deps, m.exports, m).default
 }
 
-const makeBindings = () => {
+const makeBindings = (overrides: Record<string, unknown> = {}) => {
   // currentFile.searchMatches is the channel SELECTION_CHANGE writes the
   // selected text into; storeToRefs hands the component a ref to it.
   const currentFile = ref<{
@@ -69,6 +72,7 @@ const makeBindings = () => {
   } | null>({
     searchMatches: { matches: [], index: -1, value: '' }
   })
+  const emit = vi.fn()
   const deps = {
     _defineComponent: (o: unknown) => o,
     ref,
@@ -77,7 +81,7 @@ const makeBindings = () => {
     nextTick,
     onMounted: () => {},
     onBeforeUnmount: () => {},
-    bus: { on: () => {}, off: () => {}, emit: vi.fn() },
+    bus: { on: () => {}, off: () => {}, emit },
     FindCaseIcon: {},
     FindWordIcon: {},
     FindRegexIcon: {},
@@ -96,14 +100,15 @@ const makeBindings = () => {
     // component's import list. The real guard is imported rather than stubbed so
     // the newest-call-wins behaviour exercised here is the shipped one.
     createSeqGuard,
-    probeSearchRegex: vi.fn(async () => ({ status: 'ok', matchCount: 0 }))
+    probeSearchRegex: vi.fn(async () => ({ status: 'ok', matchCount: 0 })),
+    ...overrides
   }
   const comp = loadComponent(deps)
   const ret = comp.setup({}, { expose: () => {} })
   const setSelection = (value: string) => {
     currentFile.value = { searchMatches: { matches: [], index: -1, value } }
   }
-  return { ret, setSelection }
+  return { ret, setSelection, emit }
 }
 
 describe('find-bar prefill from selection', () => {
@@ -132,5 +137,76 @@ describe('find-bar prefill from selection', () => {
     await nextTick()
     expect(ret.showSearch.value).toBe(true)
     expect(ret.searchValue.value).toBe('fox')
+  })
+})
+
+// #28 item 3. `emptySearch` (Escape, or any click inside the document) hides the
+// bar and clears the input, but the `searchValue` watch early-returns while the
+// bar is hidden -- so nothing took a newer sequence number, and a `searchFn`
+// parked on the ReDoS probe stayed "latest" and seconds later handed the engine
+// back a query the user had already thrown away.
+const withDeferredProbe = (resolution: unknown = { status: 'ok', matchCount: 2 }) => {
+  let settle: ((value: unknown) => void) | undefined
+  const deps = {
+    useEditorStore: () => ({ currentFile: { markdown: 'banana banana\n' } }),
+    probeSearchRegex: vi.fn(
+      () =>
+        new Promise((resolve) => {
+          settle = resolve
+        })
+    )
+  }
+  const bindings = makeBindings(deps)
+  return { ...bindings, settle: () => settle?.(resolution) }
+}
+
+const startRegexSearch = async (ret: Bindings): Promise<void> => {
+  ret.showSearch.value = true
+  ret.isRegexp.value = true
+  ret.searchValue.value = '(a+)+'
+  await nextTick()
+  await nextTick()
+}
+
+describe('discarding the find bar while the ReDoS probe is in flight', () => {
+  it('does not hand the discarded query back to the engine', async () => {
+    const { ret, emit, settle } = withDeferredProbe()
+    await startRegexSearch(ret)
+
+    ret.emptySearch()
+    settle()
+    await nextTick()
+    await nextTick()
+
+    expect(emit).not.toHaveBeenCalledWith(
+      'searchValue',
+      expect.objectContaining({ value: '(a+)+' })
+    )
+  })
+
+  it('still applies the query when nothing discarded it', async () => {
+    const { ret, emit, settle } = withDeferredProbe()
+    await startRegexSearch(ret)
+
+    settle()
+    await nextTick()
+    await nextTick()
+
+    expect(emit).toHaveBeenCalledWith('searchValue', expect.objectContaining({ value: '(a+)+' }))
+  })
+
+  // The same guard is what keeps a late timeout off the bar: the report is
+  // written after the await, so before this it could name a query the user had
+  // already discarded.
+  it('does not report a timeout for a query that was discarded', async () => {
+    const { ret, settle } = withDeferredProbe({ status: 'timeout', matchCount: 0 })
+    await startRegexSearch(ret)
+
+    ret.emptySearch()
+    settle()
+    await nextTick()
+    await nextTick()
+
+    expect(ret.searchErrorMsg.value).toBe('')
   })
 })
