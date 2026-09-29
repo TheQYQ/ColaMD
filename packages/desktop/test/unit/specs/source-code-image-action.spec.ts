@@ -123,11 +123,7 @@ describe('sourceCode handleImageAction', () => {
   })
 
   it('rewrites only the line carrying the id, leaving siblings intact', () => {
-    const cm = makeCM(
-      'before\n![abc123](old.png)\nafter',
-      { line: 0, ch: 0 },
-      { line: 0, ch: 0 }
-    )
+    const cm = makeCM('before\n![abc123](old.png)\nafter', { line: 0, ch: 0 }, { line: 0, ch: 0 })
     bootHandler(cm)({ id: 'abc123', result: 'new.png', alt: 'cat' })
     expect(cm.getValue()).toBe('before\n![cat](new.png)\nafter')
   })
@@ -172,13 +168,30 @@ describe('sourceCode handleImageAction', () => {
     expect(anchor.ch).toBe(4)
   })
 
+  it('treats dollar patterns in the alt text and the path as literal text', () => {
+    // The rewrite passed `alt`/`result` as a replacement STRING, so `$&` expanded
+    // to the matched markup -- which also leaked the internal image id into the
+    // visible line -- and `$$` lost a character.
+    const cm = makeCM('![abc123](old.png) tail', { line: 0, ch: 0 }, { line: 0, ch: 0 })
+    bootHandler(cm)({ id: 'abc123', result: 'new.png', alt: 'cost $& here' })
+    expect(cm.getValue()).toBe('![cost $& here](new.png) tail')
+
+    const cm2 = makeCM('![abc123](old.png)', { line: 0, ch: 0 }, { line: 0, ch: 0 })
+    bootHandler(cm2)({ id: 'abc123', result: 'a$$b.png', alt: 'cat' })
+    expect(cm2.getValue()).toBe('![cat](a$$b.png)')
+
+    const cm3 = makeCM('![abc123](old.png) tail', { line: 0, ch: 0 }, { line: 0, ch: 0 })
+    bootHandler(cm3)({ id: 'abc123', result: 'new.png', alt: "see $' after" })
+    expect(cm3.getValue()).toBe("![see $' after](new.png) tail")
+  })
+
   it('does nothing when the id is absent from every line', () => {
     const deps = makeDeps()
     const cm = makeCM('no images here', { line: 0, ch: 3 }, { line: 0, ch: 3 })
     bootHandler(cm, deps)({ id: 'zzz', result: 'r.png', alt: 'x' })
     expect(cm.getValue()).toBe('no images here')
     expect(cm.setSelection).not.toHaveBeenCalled()
-    expect((deps.setCursorAtFirstLine as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled()
+    expect(deps.setCursorAtFirstLine as ReturnType<typeof vi.fn>).not.toHaveBeenCalled()
   })
 
   it('early-returns on the structure-deleted branch (id present, no image markup)', () => {
@@ -189,7 +202,7 @@ describe('sourceCode handleImageAction', () => {
     bootHandler(cm, deps)({ id: 'abc123', result: 'r.png', alt: 'x' })
     expect(cm.getValue()).toBe('see abc123 ref')
     expect(cm.setSelection).not.toHaveBeenCalled()
-    expect((deps.setCursorAtFirstLine as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled()
+    expect(deps.setCursorAtFirstLine as ReturnType<typeof vi.fn>).not.toHaveBeenCalled()
   })
 
   it('skips an image whose id starts at column 0 (indexOf > 0 quirk)', () => {
@@ -206,6 +219,6 @@ describe('sourceCode handleImageAction', () => {
     bootHandler(cm, deps)({ id: 'abc123', result: 'new.png', alt: 'cat' })
     expect(cm.getValue()).toBe('![cat](new.png)')
     expect(cm.setSelection).not.toHaveBeenCalled()
-    expect((deps.setCursorAtFirstLine as ReturnType<typeof vi.fn>)).toHaveBeenCalledTimes(1)
+    expect(deps.setCursorAtFirstLine as ReturnType<typeof vi.fn>).toHaveBeenCalledTimes(1)
   })
 })

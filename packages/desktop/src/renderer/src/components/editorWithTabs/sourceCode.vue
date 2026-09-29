@@ -9,7 +9,11 @@
 import { ref, markRaw, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
-import { findMarkdownHeadingLine, scrollSourceEditorToLine, findActiveHeadingIndex } from '@/util/sourceModeToc'
+import {
+  findMarkdownHeadingLine,
+  scrollSourceEditorToLine,
+  findActiveHeadingIndex
+} from '@/util/sourceModeToc'
 import { storeToRefs } from 'pinia'
 import codeMirror, { setCursorAtFirstLine, setTextDirection } from '../../codeMirror'
 import { wordCount as getWordCount } from '@muyajs/core'
@@ -241,7 +245,11 @@ const handleImageAction = (payload: unknown) => {
 
   if (index > -1) {
     const oldLine = lines[index]
-    lines[index] = oldLine.replace(new RegExp(`!\\[${id}\\]\\(.*\\)`), `![${alt}](${result})`)
+    // `alt` and `result` are document/preference content, so the replacement goes
+    // in as a FUNCTION: as a string, an alt text of `cost $& here` expands to the
+    // matched markup -- which also leaks the internal image id into the visible
+    // line -- and `$$`/`` $` ``/`$'` drop or duplicate characters.
+    lines[index] = oldLine.replace(new RegExp(`!\\[${id}\\]\\(.*\\)`), () => `![${alt}](${result})`)
     const newValue = lines.join('\n')
     editor.value.setValue(newValue)
     const match = /(!\[.*\]\(.*\))/.exec(oldLine)
@@ -307,7 +315,7 @@ const listenChange = () => {
     // Outline follow (Typora parity): highlight the TOC entry of the section
     // the caret sits in. Heading index maps 1:1 onto the store's listToc.
     const index = findActiveHeadingIndex(cm.getValue(), cm.getCursor('head').line)
-    const slug = index >= 0 ? editorStore.listToc[index]?.slug ?? '' : ''
+    const slug = index >= 0 ? (editorStore.listToc[index]?.slug ?? '') : ''
     if (slug !== lastSourceTocSlug) {
       lastSourceTocSlug = slug
       bus.emit('toc-active-changed', slug)
@@ -329,7 +337,7 @@ let lastSourceTocSlug = ''
 // CodeMirror instead. Resolve the TOC entry to its heading line in the source.
 const handleScrollToHeader = (slug: unknown) => {
   if (!editor.value) return
-  const index = editorStore.listToc.findIndex(item => item.slug === slug)
+  const index = editorStore.listToc.findIndex((item) => item.slug === slug)
   if (index < 0) return
   const line = findMarkdownHeadingLine(editor.value.getValue(), index)
   if (line < 0) return
@@ -379,7 +387,7 @@ const publishSourceMatches = () => {
   editorStore.SEARCH({
     index: sourceMatchIndex.value,
     value: sourceSearchValue.value,
-    matches: sourceMatches.value.map(m => ({ start: m.from, end: m.to, match: m.text }))
+    matches: sourceMatches.value.map((m) => ({ start: m.from, end: m.to, match: m.text }))
   })
 }
 
@@ -423,7 +431,7 @@ const handleSourceSearchValue = (payload: unknown) => {
 
   // Select the first match at/after the caret (wrap to the first match).
   const head = cm.getCursor('from')
-  let index = matches.findIndex(m => posCompare(m.from, head) >= 0)
+  let index = matches.findIndex((m) => posCompare(m.from, head) >= 0)
   if (index < 0 && matches.length > 0) index = 0
   sourceMatchIndex.value = index
   if (index >= 0) {
@@ -437,9 +445,8 @@ const handleSourceFindAction = (action: unknown) => {
   const cm = editor.value
   if (!cm || sourceMatches.value.length === 0) return
   const n = sourceMatches.value.length
-  const next = action === 'prev'
-    ? (sourceMatchIndex.value - 1 + n) % n
-    : (sourceMatchIndex.value + 1) % n
+  const next =
+    action === 'prev' ? (sourceMatchIndex.value - 1 + n) % n : (sourceMatchIndex.value + 1) % n
   const match = sourceMatches.value[next]!
   sourceMatchIndex.value = next
   cm.setSelection(match.from, match.to, { scroll: true })

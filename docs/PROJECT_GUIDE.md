@@ -439,6 +439,16 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - `probe === null`（Worker 建不起来，或文档为空）时**不加闸门直接搜**，只 `console.warn` 一次——宁可退回旧行为，也不因为探针自身故障而拒绝用户的正常搜索。
 - 代价的量级：合法正则每次输入（150ms 防抖）都要多一遍全篇扫描 + 一次整篇文本的结构化克隆；命中预算的模式先花 4s 探测再拒绝。
 
+**第四轮**（用户内容进 `String#replace` 的 replacement 串，2026-09-29 起）。扫描面：`$&`、`` $` ``、`$'`、`$$` 在 replacement **字符串**里不是字面量，所以任何"把用户内容/文档内容/偏好值当作替换串"的调用都会静默改写内容。两条 grep 形状（第二参是标识符 / 是模板串）命中 6 处，逐条定性：**3 处真缺陷**、1 处已经是正确写法、1 处是假阳性、1 处同形但不可达。
+
+- 真缺陷一（导出，影响三种格式）：`util/exportHtml.ts` 把 `[TOC]` 注入与 `<body>` 重发都用字符串 replacement，而 replacement 的内容（TOC 条目文本、整篇渲染 HTML）就是用户文档本身。修复前实测：正文里一个 `` `$&` `` 让导出 HTML 出现 **2 个 `<body>`**（整篇 body 被粘贴进自身）；`` `$$` `` 被压成 `<code>$</code>`（静默掉字）；标题 `Args $& and $1` 注入 TOC 后 `<p>[TOC]</p>` 仍在。上游是 `editor.vue` 的 styledHtml / docx / jpeg / print 五条导出腿（`:942/:965/:997/:1025/:1055`）与 `util/exportDocx.ts:14`——**HTML、DOCX、PDF/打印三条出口共用这段代码**。
+- 真缺陷二（图片落盘目录）：`useEditorImages.ts` 的 `${filename}` 模板展开把**当前文档名**当作 replacement 串。修复前实测：`my$$file.md` 的图片静默写进 `my$file/`，`a$&b.md` 写进字面名为 `${filename}` 的目录。已抽成模块级纯函数 `resolveImageFilenameToken` 以便直接测（6 条）。
+- 真缺陷三（源码模式改图）：`sourceCode.vue` 的 `![id](旧)` → `![alt](新)` 重写。修复前实测：alt 写成 `cost $& here` 会产出 `![cost ![abc123](old.png) here](new.png)`——**内部图片 id 泄漏进可见文本**，行也坏了。
+- 已是正确写法：同文件的 `rewriteImageSrcs`（`exportHtml.ts:144-148`）早就用函数 replacer，所以本批的修法是沿用文件内既有惯例，不是新发明。
+- 假阳性：`editor.vue:872` 的 `editor.value.replace(value, opt)` 是引擎的替换动作，不是 `String#replace`。
+- 同形但不可达（**故本批不修**）：`codeMirror/loadmode.ts:53` 用围栏 info string 替换 `CodeMirror.modeURL` 里的 `%N`；要让 `$&` 生效得把语言名写成 `$&`，而那种 mode 本来就不存在，后果只是拿不到一个不存在的 mode 的 URL。
+- 我自己的一次用例错判：第三条用例我先按"顶级标题"构造，`getHtmlToc` 在未设 `tocIncludeTopHeading` 时**本来就要丢掉 lvl≤1 的条目并返回空串**——那是功能不是缺陷。红要先问"为什么红"，否则会把正确行为钉成回归。**已改成 lvl 2**，并加了一条 `expect(toc).not.toBe('')` 守住用例自身。
+
 ## 16. 已关闭的功能候选与重启条件（2026-09-29 重评估）
 
 评估结论：七项全部不做——各项代价都落在刚建好的安全边界或架构稳定性上，而收益属于低频或无证据场景。重启条件（成立时单独立项，其余不预支）：
