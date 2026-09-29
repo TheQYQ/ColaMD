@@ -22,7 +22,7 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 | 命令                                   | 退出码     | 现在的基线                                                                                                                                       |
 | -------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `pnpm check`（= `lint` + `typecheck`） | 0          | **94 warnings / 0 errors**，全部是 `no-non-null-assertion`                                                                                       |
-| `pnpm test:unit`                       | 0          | 99 文件 / **1149 通过 + 1 跳过**（2026-09-29 在 develop `1d5d9c2` 上加一条 quick-open 用例后重测；上一行 94/0 同日）                             |
+| `pnpm test:unit`                       | 0          | 101 文件 / **1165 通过 + 1 跳过**（2026-09-29 在 develop `1729d34` 之后重测；上一行 94/0 同日）                                                  |
 | `pnpm build`                           | 0          | —                                                                                                                                                |
 | `pnpm knip`                            | 0          | 只查依赖，**这条才是门禁**                                                                                                                       |
 | `pnpm knip:full`                       | **1**      | 已知 4 项（1 unused export + 3 unused exported type），**故意不接进 CI**，别把它当回归                                                           |
@@ -35,7 +35,7 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 ## 动手前必读的四条
 
 1. **权威文档只有一份**：`docs/PROJECT_GUIDE.md`（结构、模块地图、功能→代码定位表、实测基线面板 §14）。`README.md` 有已记录的漂移（`PROJECT_GUIDE` §11.2），别当现状引用。`ColaMD_WORKPLAN.md`、`CODE_REVIEW_AND_ROADMAP.md`（2026-09-27）与 `docs/OPTIMIZATION_ROADMAP.md`（2026-09-29，全部条目闭环或关闭后退役）均已删除，历史在 git（v0.1.4 之前可考）。
-2. **`docs/*.md` 里的 `路径:行号` 没有任何工具在守**——`scripts/check-md-links.py` 只解析 15 份 README 的相对链接/锚点。改过某个文件的结构之后，必须自己 grep 出引用它的文档行逐条复核，链接门绿了不算。
+2. **`docs/*.md` 里的 `路径:行号` 没有任何工具在守**——`scripts/check-md-links.py` 解析的是根 README 变体 + `docs/i18n/*.md` + `docs/*.md`（15 个文件，它自己那句 "in 15 README files" 是误称），只管相对链接/图片/锚点，**不校验** `路径:行号` 引用。改过某个文件的结构之后，必须自己 grep 出引用它的文档行逐条复核，链接门绿了不算。
 3. **删"零引用"代码前先查动态引用**。`0646ad1` 删掉一层转发垫片后 `Ctrl+P` 就坏了，而**没有任何测试变红**；补回来的用例是 `8765cee`。
 4. **报门禁要给退出码，也要给没跑的那一门**。宁可先把钉死的工具链版本装齐，也不要用 `--no-verify` 绕过。
 
@@ -43,7 +43,7 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 
 - 渲染端是 Pinia **options** store。把 action 簇外提成 `store/<cluster>.ts` 里的模块函数 `(store, ...)` 时，**store 内部的调用必须仍然走 `store.X()`**——绕过动作分派会被现有测试抓到。
 - 注释只在"为什么"不明显处写（隐藏的约束、微妙的不变量、针对某个 bug 的绕法）。规范见 `.github/COMMENTING-GUIDELINES.md`。
-- `test/unit/specs/search-prefill.spec.ts` 和 `source-code-image-action.spec.ts` 会剥掉 SFC 的 `import` 行、用 `new Function` 注入一份手写依赖清单来跑真实 setup。**给这两个 SFC 加 import 必须同步补那份清单**——漏掉的符号不报编译错，只在真被求值时抛 `ReferenceError`，走不到的路径会一直绿着掩盖它（2026-09-29 实测：PR #17 的 `probeSearchRegex` 就这样躺了一路）。
+- `test/unit/specs/search-prefill.spec.ts` 和 `source-code-image-action.spec.ts` 会剥掉 SFC 的 `import` 行、用 `new Function` 注入一份手写依赖清单来跑真实 setup。**给这两个 SFC 加 import 必须同步补那份清单**——漏掉的符号不报编译错，只在真被求值时抛 `ReferenceError`，走不到的路径会一直绿着掩盖它（2026-09-29 实测：PR #17 的 `probeSearchRegex` 就这样躺了一路）。**第二个坑同形状**：剥 import 早年按行做，prettier 把一行 `import { a, b, c } from 'x'` 折成四行后，剩下三行变成"求值即抛"的表达式语句，整个 spec 文件在装载阶段就红（2026-09-29 实测：一次只改了 `sourceCode.vue` 里一个表达式，提交钩子重排了整份文件，11 条用例全挂）。现在按**语句**剥（`test/unit/sfcScriptHarness.ts`，用例 `sfc-import-strip.spec.ts`），别再改回按行剥。
 - `prettier` 与根 ESLint 在 `async (` 的空格上直接对立，**它当不了门禁**；提交时 lint-staged 会跑它，后跑的赢。
 
 ## 流程
