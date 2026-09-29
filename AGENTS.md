@@ -22,7 +22,7 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 | 命令                                   | 退出码     | 现在的基线                                                                                                                                       |
 | -------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `pnpm check`（= `lint` + `typecheck`） | 0          | **94 warnings / 0 errors**，全部是 `no-non-null-assertion`                                                                                       |
-| `pnpm test:unit`                       | 0          | 107 文件 / **1192 通过 + 1 跳过**（2026-09-29 在本分支重测，新增的是 `recent-documents-write.spec.ts`）                                          |
+| `pnpm test:unit`                       | 0          | 108 文件 / **1197 通过 + 1 跳过**（2026-09-29 在本分支重测，新增 `close-requires-saved-tabs.spec.ts`；上一行 94/0 同日）                         |
 | `pnpm build`                           | 0          | —                                                                                                                                                |
 | `pnpm knip`                            | 0          | 只查依赖，**这条才是门禁**                                                                                                                       |
 | `pnpm knip:full`                       | **1**      | 已知 4 项（1 unused export + 3 unused exported type），**故意不接进 CI**，别把它当回归                                                           |

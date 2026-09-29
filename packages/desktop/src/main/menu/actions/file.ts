@@ -25,7 +25,7 @@ import { EXTENSION_HASN, PANDOC_EXTENSIONS, URL_REG } from '../../config'
 import { normalizeAndResolvePath, writeFile } from '../../filesystem'
 import { writeMarkdownFile } from '../../filesystem/markdown'
 import { addAllowedRoot } from '../../security/pathScope'
-import { getPath, getRecommendTitleFromMarkdownString } from '../../utils'
+import { everyTabSaved, getPath, getRecommendTitleFromMarkdownString } from '../../utils'
 import pandoc, { exportViaPandoc } from '../../utils/pandoc'
 import { exportDocumentImage } from '../../utils/imageExport'
 import { t } from '../../i18n'
@@ -505,6 +505,26 @@ typedOn(
   }
 )
 
+/**
+ * The window still has content that was not written. Ask before destroying it:
+ * "Save" used to close unconditionally because the save helper reports failure
+ * by resolving with nothing rather than rejecting. #26 item 4.
+ */
+const askBeforeClosingWithUnsaved = (win: BrowserWindow, detail: string): void => {
+  dialog
+    .showMessageBox(win, {
+      type: 'error',
+      buttons: [t('dialog.close'), t('dialog.keepOpen')],
+      message: t('dialog.saveFailure'),
+      detail
+    })
+    .then(({ response }) => {
+      if (win.id && response === 0) {
+        ipcMain.emit('window-close-by-id', win.id)
+      }
+    })
+}
+
 typedOn('mt::close-window-confirm', async (e, unsavedFiles: UnsavedFile[]) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
@@ -530,26 +550,21 @@ typedOn('mt::close-window-confirm', async (e, unsavedFiles: UnsavedFile[]) => {
         )
       )
     )
-      .then(() => {
-        ipcMain.emit('window-close-by-id', win.id)
+      .then((results) => {
+        if (everyTabSaved(results, unsavedFiles)) {
+          ipcMain.emit('window-close-by-id', win.id)
+          return
+        }
+        // A tab with no id in the results was canceled or failed to write; the
+        // helper never rejects, so this is the only place that can tell.
+        const stuck = unsavedFiles
+          .filter((file, index) => !results[index])
+          .map((file) => file.filename || file.id)
+        askBeforeClosingWithUnsaved(win, stuck.join('\n'))
       })
       .catch((err: unknown) => {
         log.error('Error while saving before quit:', err)
-
-        const msg = err instanceof Error ? err.message : String(err)
-        // Notify user about the problem.
-        dialog
-          .showMessageBox(win, {
-            type: 'error',
-            buttons: [t('dialog.close'), t('dialog.keepOpen')],
-            message: t('dialog.saveFailure'),
-            detail: msg
-          })
-          .then(({ response }) => {
-            if (win.id && response === 0) {
-              ipcMain.emit('window-close-by-id', win.id)
-            }
-          })
+        askBeforeClosingWithUnsaved(win, err instanceof Error ? err.message : String(err))
       })
   } else {
     // Discard: drop the unsaved tabs in the renderer and let it flush the
