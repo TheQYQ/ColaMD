@@ -421,7 +421,7 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - main 浮动 Promise：唯一命中是 `editorBufferStore` 的两参 `then(() => {}, () => {})`（拒绝已处理）——无未处理拒绝崩溃风险。
 - 资源生命周期：watcher 的 close/unwatchByWindowId 链在 windowManager 三处关闭路径完整接线；ripgrep 子进程可取消；离屏导出窗口 try/finally + destroy + 临时文件清理。
 
-**已知边界已改为立项并修复（2026-09-29，PR #17 + 本批收尾）**：搜索框原先把用户正则同步编译执行（`new RegExp(searchValue)`），病态正则 × 大文档会冻结渲染进程。当时的结论是"自伤型健壮性、修复需分块执行器或非回溯引擎（re2 与依赖瘦身冲突），不立项"——这条结论已被下面这套**零新依赖**的做法取代：正则在交给引擎之前先在 Worker 里预跑（`packages/desktop/src/renderer/src/components/search/searchRegexProbe.ts`），Worker 内的扫描在两次 `exec` 之间查预算（`regexProbeShared.ts:14` `scanWithBudget`，4s），单次不返回的 `exec` 由主线程看门狗 5.5s `terminate()` 兜住（`searchRegexProbe.ts:18`），拒绝时给 11 份语言的 `search.regexTimeout` 提示。正则构造逐条镜像 muya 的 `matchString`（`packages/muya/src/utils/search.ts:4-34`：同样的 flags 规则、纯文本转义、`\b` 包裹），普通文本搜索不探测（转义后的字面量是线性的）。
+**第三轮**（正则执行面，2026-09-29）：起因是第二轮末尾那条"已知边界"——它后来被立项并修掉了（PR #17 + 本批收尾），而这一轮顺着同一类问题又找出引擎里的一处。**搜索框**原先把用户正则同步编译执行（`new RegExp(searchValue)`），病态正则 × 大文档会冻结渲染进程。当时的结论是"自伤型健壮性、不立项"，理由是修复要分块执行器或非回溯引擎（re2 与依赖瘦身冲突）；该结论已被下面这套**零新依赖**的做法取代：正则在交给引擎之前先在 Worker 里预跑（`packages/desktop/src/renderer/src/components/search/searchRegexProbe.ts`），Worker 内的扫描在两次 `exec` 之间查预算（`regexProbeShared.ts:14` `scanWithBudget`，4s），单次不返回的 `exec` 由主线程看门狗 5.5s `terminate()` 兜住（`searchRegexProbe.ts:18`），拒绝时给 11 份语言的 `search.regexTimeout` 提示。正则构造逐条镜像 muya 的 `matchString`（`packages/muya/src/utils/search.ts:4-34`：同样的 flags 规则、纯文本转义、`\b` 包裹），普通文本搜索不探测（转义后的字面量是线性的）。
 
 **本批在已合入的 `74f0f6f` 之上补的三处**（该提交信息称"§15 已记录"，但它改的 16 个文件里没有 `docs/`，本节记录是这次才补上的）：
 
