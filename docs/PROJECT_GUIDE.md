@@ -529,7 +529,7 @@ AGENTS.md 的门禁表把"已知间歇形状"指到这里。这里只收**有 ru
 - 修法：每个元字符换成**单元素字符类**（`[` → `[[]`、`]` → `[]]`、`{` → `[{]`、`}` → `[}]`、`?` → `[?]`），实测这些形式在 rg 15.0.0 上精确命中字面名且不误伤；`*` 保持通配（与同一命令里标签那一支的语义一致，PR #24）。**为什么不用最常见的 `\` 转义**：`prepareGlobs`（`src/main/ipc/ripgrep.ts:142`）会把模式里每个 `path.sep` 改写成 `/`，Windows 上那正好是反斜杠——转义会被它吃掉。这也是当初必须先量一次的原因：不看 `prepareGlobs`，`\[` 看起来是标准答案。
 - 回归：`test/unit/specs/quick-open-glob-inclusions.spec.ts` 4 条——普通查询逐字不变（守住常用路径没被改坏）、五个元字符各成一类、"查询自带扩展名"那一支同样转义、`*` 仍是通配。修前 2 failed / 2 passed，修后 4/4。
 - 没做 e2e：真窗口里要走到磁盘这一支，需要 quick-open 的 `_folderState.projectTree` 真被填上（现有 e2e 只覆盖标签那一支）；而"这些 glob 在 rg 上确实按字面匹配"这条已经用**同一个二进制**量过并把命令写在上面，可复现。手动复核：在一个含 `a[1].md` 与 `a1.md` 的目录里 `Ctrl+P` 输 `a[1]` → 修复前列表是空的或只有 `a1.md`。
-- #27 剩下的：第 2 条（导出目的地用拼接不做 URL 编码，名字含 `#`/`%20` 的图片在导出 HTML/PDF 里失效）单独一批；三条"需要测量"的仍等复现结论。
+- #27 剩下的：第 2 条**已于 2026-09-30 量完并按判据不做代码改动**（见本节后末的专门条目，issue 正文已重写）；三条"需要测量"的仍等能造出那些文件名的机器。
 
 **#26 第 2 条：崩溃恢复缓冲写失败被当成写成功上报（本批已修）**。`main/editorBufferStore/index.ts` 的 `writeBufferStoreFile` 用 `.catch(console.error)` 把失败吞成 **resolved**，`updateBufferState` 又是 fire-and-forget 并且**无论成败都 `return true`**。渲染端 `store/bufferedState.ts` 的签名闸门把这件事放大了一层：它在**发出 invoke 之前**就把 `lastSentSignature` 记成这次快照的签名，于是失败之后签名已经"用掉"——状态不变就再也不发，**一次写失败之后没有任何重试路径**，崩溃缓冲悄悄停在上一份快照。
 
@@ -545,7 +545,16 @@ AGENTS.md 的门禁表把"已知间歇形状"指到这里。这里只收**有 ru
 - 回归：`test/unit/specs/close-requires-saved-tabs.spec.ts` 5 条（全部回报 id 才放行、一个取消就拦、一个写失败就拦、结果数少于请求数也拦、空请求视为无事可等）。
 - **要说清的限度**：谓词有单测，**处理器本身没有自动化回归**。`file.ts` 的 import 面（pandoc、imageExport、filesystem、commands、i18n、windows…）在单测里要全部 mock 才碰得到那条 `typedOn`，成本高于收益；主进程 handler 级的测试脚手架是仓库现有的缺口，记在 #34 的"诊断面"里。手动复核（约 30 秒）：新标签打字 → Ctrl+W 关窗 → 选"保存" → 在另存为对话框点**取消** → 修复前窗口直接消失且内容未落盘，修复后弹"保存失败/保持打开"。
 - 措辞上的一处取舍：取消对话框这种情况现在也复用既有的 `dialog.saveFailure` 文案（detail 里列出没写成的文件名）。新建一个 i18n 键要动 11 份语言文件，属产品文案决定，不在稳定期的健壮性批里顺手做。
-- #26 四条到此全部有批（1=#29、2=#40、3=#38、4=本批）。
+- #26 四条到此全部有批并已闭环（1=#29、2=#40 `195b337`、3=#38、4=本批 PR #41 `d77b51d`；issue #26 已于 2026-09-30 关闭，限度与手动步骤写在关闭评论里）。
+
+**#27 第 2 条：导出/打印里的图片目的地编码（已量完，按判据不做代码改动，2026-09-30）**。原判据写的是"`util/resolveImageSrc.ts:13,17` 拼 `file://` 不做 URL 编码，所以名字含 `#`/`%20` 的图片在导出 HTML/PDF 里失效"。**两句被实测推翻**，一句成立但按判据不修。
+
+- **量法（可复现）**：用仓库里那份真 Electron 起窗口，把 `localPathToFileUrl` 逐字复制进探针页面，拼出的 URL 交给 `<img>` 后读 `naturalWidth` 与 `currentSrc`；磁盘上放的是**字面名**为 `plain.png` / `My Image.png` / `100%20done.png` / `photo#1.png` / `a(1).png` / `100%done.png` 的 PNG。对照项 `plain.png` 必须 LOADED 这一轮才算数（本轮 7/9，对照通过）。目的地按"应用插入（先过 `encodeImageSrc`）"和"手写/导入（不编码）"两种形态各测。结果：`%20`、`%23`、`%28…%29`、裸 `%` 全 LOADED；**手写的裸 `#`** 与**字面名含合法转义 `100%20done.png`** 两条 BROKEN。
+- **撤回一**：`%20` 不解码那句不成立——`file://` 的路径段由 URL 解析器百分号解码，实测 LOADED；`resolveLocalImageSrc` 不该加解码。
+- **撤回二**："posix 名字含 `"` 会把导出 HTML 里那个 img 的 src 属性截断"这句不成立，而且断在更早的一步——引擎渲染阶段就把它编成了 `%22`。实测（临时 spec，跑完即删）：目的地取 `/dir/a"b.png` 时，引擎输出的 img 标签里那个 src 已经是 `/dir/a%22b.png`，所以 `rewriteImageSrcs`（`util/exportHtml.ts:144`）拿到的字符串里根本没有裸 `"`。（本条示例刻意避开两种形状——"方括号紧跟圆括号"与 `src=` / `href=` 后紧跟引号：`scripts/check-md-links.py:46-47` 用两条正则扫全文，**不认识代码跨度**，写了就会被判成一条缺失的相对链接。）
+- **不修一（裸 `#`）**：按 CommonMark/URL 语义 `photo#1.png` 本就指"文件 `photo` + fragment"，应用符合规范；而编辑器预览那一支同样不转义（`packages/muya/src/inlineRenderer/lexer.ts:378` 用 `encodeURI`，实测 `encodeURI('a#b.png')` 原样返回）。只改 `exportHtml` 会得到"导出有图、编辑器没图"的自相矛盾，要改必须两处一起改 —— 属引擎语义决定。**重启条件**：出现真实用户报告，或专门做这个引擎级决定。
+- **不修二（字面名含 `%XX`）**：看着只差给 `encodeImageSrc`（`packages/muya/src/utils/image.ts:222-228`）加一条 `%`→`%25`，实际会**腐蚀已有文档**——`ui/imageEditTool/index.ts:134` 用 `Object.assign(this._state, imageInfo.token.attrs)` 把**已解析的目的地**灌进图片面板，`block/base/format.ts:382` 每次 confirm 再编一次，而 `:383-389` 的守卫只要 alt 或 title 变了就放行；于是文档里已有的 `My%20Image.png` 会变成 `My%2520Image.png`，**每编辑一次就再翻倍**。今天这个集合恰好幂等（不碰 `%`，而 `%20` 里没有空格字符），加 `%` 会把这个巧合打破。要做得先给图片目的地配一个解析侧的解码（与 `decodeLinkPathname` 同口径），那是引擎往返改动，必须连 `test/spec/roundTrip.spec.ts` 与一致性套件一起做。
+- **方法论记一笔**：这类"会不会坏"由**消费者**（Chromium 的 URL 解析、markdown-it 的目的地处理、rg 的 glob 解析器）决定，不能由"本仓这一行没写 encode/decode"推断——本轮两条撤回都是这么错的。同 §14.1 与"绿不等于跑过"那条教训同源。
 
 ## 16. 已关闭的功能候选与重启条件（2026-09-29 重评估）
 
