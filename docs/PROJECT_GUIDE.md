@@ -457,6 +457,12 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 我自己的一次用例错判：第三条用例我先按"顶级标题"构造，`getHtmlToc` 在未设 `tocIncludeTopHeading` 时**本来就要丢掉 lvl≤1 的条目并返回空串**——那是功能不是缺陷。红要先问"为什么红"，否则会把正确行为钉成回归。**已改成 lvl 2**，并加了一条 `expect(toc).not.toBe('')` 守住用例自身。
 - **同批改完提交后才发现的连带破坏（值得单独记）**：`source-code-image-action.spec.ts` 与 `search-prefill.spec.ts` 靠"逐行删掉 `import` 行 + `new Function` 注入依赖清单"来跑真实 SFC setup。本批只改了 `sourceCode.vue` 里一个表达式，提交钩子的 prettier 顺手把文件里那行 88 列的 `import { a, b, c } from '…'` 折成四行，而逐行过滤器只删第一行——剩下三行 `  findMarkdownHeadingLine,` 变成"求值即抛"的表达式语句，**11 条用例（含 10 条既有）在装载阶段全红**。修法是把剥 import 做成按语句（`test/unit/sfcScriptHarness.ts`，深度跟踪 `import { … } from`），并补 `sfc-import-strip.spec.ts` 6 条把折行形状钉住。教训两条：**prettier 重排的不是"无关空白"，它是会改变逐行文本处理器的输入**；以及"我只改了一个表达式"不能推出"只有测那个表达式的用例会受影响"。
 
+**#27 第 1 条：文档里的链接目标含裸 `%` 让主进程抛 `URIError`（本批已修）**。`main/menu/actions/file.ts` 的 `mt::format-link-click` 处理器对拼好的路径直接调 `decodeURIComponent`，而 `typedOn`（`main/ipc/typedOn.ts:25-31`）**不加 try/catch**——`%` 后面不是两位十六进制就抛（实测：`100%done.md`、`50%.md`、`%.md`、`%zz.md` 全抛 `URIError: URI malformed`），异常沿 `process.on('uncaughtException')` 走到 `main/exceptionHandler.ts:108,125` 弹**模态错误框**，而链接本身什么都没发生。修法是把解码收进 `common/filesystem/paths.ts` 的 `decodeLinkPathname()`：抛了就按原样返回。
+
+- 语义边界要说清：`My%20Image.png` → `My Image.png`、`100%25done.md` → `100%done.md` 这些**仍然是解码**（那正是 issue #57 加这条通路的原因）；而**真名叫 `a%41b.md` 的文件会被打开成 `aAb.md`**——两种写法在字符串层面不可区分，本批不假装解决，只把它钉成一条用例（`link-click-pathname.spec.ts` 第 4 条）并注明这是接受的残余，避免以后有人"顺手"把解码整个去掉。
+- 回归：单测 5 条（六种抛法都不抛、合法编码照旧、普通路径不变、歧义残余、空串）；e2e 走**真实通道** `window.electron.ipcRenderer.send('mt::format-link-click', …)`，修复前红在 `toHaveCount(2)`（`Expected: 2 / Received: 1`，第二个标签页根本没出现，即"点了没反应"），修复后 2 passed。
+- 同面未做：**#27 第 2 条**（导出把路径拼成 `file://…` 却不编码，名字含 `#` 或 `%20` 的图片在导出的 HTML/PDF 里失效）与**第 3 条**（quick-open 查询未转义进 `rg --iglob`）是另外两条独立通路，各自单独一批；**三条"需要测量"的**（保留设备名走对话框默认值、尾点、侧栏新建用 `/` 硬拼）也留在 #27 里等复现结论。
+
 ## 16. 已关闭的功能候选与重启条件（2026-09-29 重评估）
 
 评估结论：七项全部不做——各项代价都落在刚建好的安全边界或架构稳定性上，而收益属于低频或无证据场景。重启条件（成立时单独立项，其余不预支）：

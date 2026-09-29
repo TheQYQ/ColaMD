@@ -13,6 +13,7 @@ import log from 'electron-log'
 import { isDirectory, isFile, exists } from 'common/filesystem'
 import {
   MARKDOWN_EXTENSIONS,
+  decodeLinkPathname,
   isDangerousExecutableFile,
   isMarkdownFile
 } from 'common/filesystem/paths'
@@ -742,7 +743,10 @@ typedOn('mt::format-link-click', async (e, { data, dirname }: FormatLinkPayload)
 
   if (pathname) {
     // decodeURIComponent() CommonMark #503, allow percent encoded path names to open files. https://github.com/TheQYQ/ColaMD/issues/57
-    pathname = path.normalize(decodeURIComponent(pathname))
+    // `decodeLinkPathname` rather than `decodeURIComponent` directly: a literal
+    // `%` in a file name (`100%done.md`) makes the latter throw URIError, which
+    // surfaced as a main-process error dialog with the link doing nothing (#27).
+    pathname = path.normalize(decodeLinkPathname(pathname))
     if (isMarkdownFile(pathname)) {
       const innerWin = BrowserWindow.fromWebContents(e.sender)
       if (innerWin) {
