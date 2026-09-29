@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject, type Ref, onMounted, nextTick } from 'vue'
+import { ref, inject, type Ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
 import { showContextMenu } from '../../contextMenu/sideBar'
@@ -150,6 +150,12 @@ onMounted(() => {
   }
   bus.on('SIDEBAR::show-new-input', handleInputFocus)
   bus.on('SIDEBAR::show-rename-input', focusRenameInput)
+})
+
+// Same accumulation concern as treeFile: folders collapse/unmount often.
+onBeforeUnmount(() => {
+  bus.off('SIDEBAR::show-new-input', handleInputFocus)
+  bus.off('SIDEBAR::show-rename-input', focusRenameInput)
 })
 </script>
 
