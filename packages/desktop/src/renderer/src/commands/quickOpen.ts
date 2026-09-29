@@ -79,15 +79,20 @@ class QuickOpenCommand {
   }
 
   search = async (query: string): Promise<QuickOpenSubcommand[]> => {
-    // Show opened files when no query given.
-    if (!query) {
-      return this.subcommands
-    }
-
+    // Cancel what the previous keystroke started before answering anything. The
+    // empty-query branch below never touches the searcher, so backspacing to
+    // clear the box used to leave a running `rg --files` alive -- and since a
+    // cancelled searcher resolves instead of rejecting, that scan's results were
+    // still handed back to the palette afterwards. #28 item 4.
     const { _cancelFn } = this
     if (_cancelFn) {
       _cancelFn()
       this._cancelFn = null
+    }
+
+    // Show opened files when no query given.
+    if (!query) {
+      return this.subcommands
     }
 
     const timeout = delay(300)
@@ -180,25 +185,29 @@ class QuickOpenCommand {
     // Search root directory on disk.
     return new Promise<QuickOpenSubcommand[]>((resolve, reject) => {
       let canceled = false
-      const promises: Promise<void> & { cancel?: () => void } = this._directorySearcher
-        .search([rootPath!], '', {
-          didMatch: (result: unknown) => {
-            if (canceled) return
-            searchResult.push(result as string)
-          },
-          didSearchPaths: (numPathsFound: unknown) => {
-            // Cancel when more than 30 files were found. User should specify the search query.
-            if (!canceled && (numPathsFound as number) > 30) {
-              canceled = true
-              if (promises.cancel) {
-                promises.cancel()
-              }
-            }
-          },
+      // `cancel` lives on the promise the searcher returns. Chaining `.then` and
+      // `.catch` onto it, as this used to do, produces plain promises that lost
+      // the method, so both abort paths below silently did nothing: the scan ran
+      // to the end of the tree on every keystroke, and cancelling a superseded
+      // search cancelled nothing.
+      const search = this._directorySearcher.search([rootPath!], '', {
+        didMatch: (result: unknown) => {
+          if (canceled) return
+          searchResult.push(result as string)
+        },
+        didSearchPaths: (numPathsFound: unknown) => {
+          // Cancel when more than 30 files were found. User should specify the search query.
+          if (!canceled && (numPathsFound as number) > 30) {
+            canceled = true
+            search.cancel()
+          }
+        },
 
-          // Only search markdown files that contain the query string.
-          inclusions: this._getInclusions(query)
-        })
+        // Only search markdown files that contain the query string.
+        inclusions: this._getInclusions(query)
+      })
+
+      search
         .then(() => {
           this._cancelFn = null
           resolve(
@@ -217,9 +226,7 @@ class QuickOpenCommand {
       this._cancelFn = () => {
         this._cancelFn = null
         canceled = true
-        if (promises.cancel) {
-          promises.cancel()
-        }
+        search.cancel()
       }
     })
   }

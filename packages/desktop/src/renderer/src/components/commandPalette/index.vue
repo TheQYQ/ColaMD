@@ -254,7 +254,16 @@ const search = (commandId: string | null = null) => {
   updateCommands()
 }
 
+// Newest-call-wins. `cmd.search()` can answer out of order: backspacing to an
+// empty query returns the tab list immediately while the directory search
+// started by the previous keystroke is still running, and a cancelled ripgrep
+// *resolves* instead of rejecting -- so the answer for the query the user just
+// deleted used to refill the panel (and a late failure used to wipe it). #28
+// item 4.
+let searchSeq = 0
+
 const updateCommands = () => {
+  const seq = ++searchSeq
   const queryString = query.value.trim()
   const cmd = currentCommand.value
   if (!cmd) return
@@ -262,13 +271,16 @@ const updateCommands = () => {
   // Allow to handle search result by command (e.g. quick search).
   if (cmd.search) {
     searcherBusy.value = true
-    cmd.search(queryString)
+    cmd
+      .search(queryString)
       .then((result) => {
+        if (seq !== searchSeq) return
         searcherBusy.value = false
         availableCommands.value = result || []
         selectedCommandIndex.value = availableCommands.value.length ? 0 : -1
       })
       .catch((error: unknown) => {
+        if (seq !== searchSeq) return
         // The query was cancel or restarted if `message` is null.
         const err = error as { message?: string } | null | undefined
         if (err && err.message) {
@@ -285,8 +297,8 @@ const updateCommands = () => {
   if (!queryString) {
     availableCommands.value = cmd.subcommands ?? []
   } else {
-    availableCommands.value = (cmd.subcommands ?? []).filter(
-      (c) => (c.description ?? '').toLowerCase().includes(queryString.toLowerCase())
+    availableCommands.value = (cmd.subcommands ?? []).filter((c) =>
+      (c.description ?? '').toLowerCase().includes(queryString.toLowerCase())
     )
   }
   selectedCommandIndex.value = availableCommands.value.length ? 0 : -1
