@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { scanWithBudget } from '@/components/search/regexProbeShared'
+import { probeResultFromReply, scanWithBudget } from '@/components/search/regexProbeShared'
 
 describe('scanWithBudget — the search probe scanner', () => {
   it('counts matches for a benign pattern', () => {
@@ -26,5 +26,26 @@ describe('scanWithBudget — the search probe scanner', () => {
     reg.exec('ba')
     const { matchCount } = scanWithBudget(reg, 'aa', Date.now() + 1000)
     expect(matchCount).toBe(2)
+  })
+})
+
+describe('probeResultFromReply — the budget decision', () => {
+  it('refuses a scan that ran out of budget instead of reporting it as ok', () => {
+    // The real search would cost at least this much on the main thread, so a
+    // partial count is a refusal, not a pass. Reporting `ok` here was the hole.
+    expect(probeResultFromReply({ id: 1, status: 'ok', matchCount: 9, timedOut: true })).toEqual({
+      status: 'timeout'
+    })
+  })
+
+  it('passes a scan that finished inside the budget', () => {
+    expect(probeResultFromReply({ id: 1, status: 'ok', matchCount: 2, timedOut: false })).toEqual({
+      status: 'ok',
+      matchCount: 2
+    })
+  })
+
+  it('keeps an uncompilable pattern distinguishable from a timeout', () => {
+    expect(probeResultFromReply({ id: 1, status: 'invalid' })).toEqual({ status: 'invalid' })
   })
 })
