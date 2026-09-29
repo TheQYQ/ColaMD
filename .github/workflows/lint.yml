@@ -7,6 +7,23 @@ on:
     # Skip the desktop lint+typecheck on muya-only PRs.
     paths-ignore:
       - 'packages/muya/**'
+  # Issue #20: a merge into develop used to produce ZERO remote runs (measured on
+  # two separate merge commits: `check-suites` and `actions/runs?head_sha` both
+  # `total_count: 0`), so the PR gate was the only remote verification and the
+  # integrated tip of develop was never checked until a promote PR re-ran it.
+  # Push triggers only evaluate required checks on PRs, so this cannot conflict
+  # with the branch protection in #21.
+  #
+  # Trigger-only change -- no job, step or matrix was touched. The same
+  # paths-ignore as the PR event, so a muya-only merge stays excluded here too.
+  # Cost is the light group only (~18 min of job minutes measured on PR #19's
+  # 18.05 / PR #22's 18.73); packaging (~31 min) and the full E2E (~22 min) stay
+  # PR-only, and e2e.yml is deliberately NOT given a push trigger.
+  push:
+    branches:
+      - develop
+    paths-ignore:
+      - 'packages/muya/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
