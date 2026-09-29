@@ -20,6 +20,19 @@ interface ImagePathSuggestion {
   [key: string]: unknown
 }
 
+/** Expands the `${filename}` token of an image path template. Both operands are
+ *  user data -- `template` is the `imageFolderPath` / relative-directory
+ *  preference, `filename` is the open document's name -- so the substitution is
+ *  handed to `replace` as a FUNCTION. As a replacement *string* the filename
+ *  would be interpreted: a document named `my$$file.md` silently wrote its
+ *  images into `my$file/`, and `a$&b.md` into a literal `${filename}` folder. */
+export const resolveImageFilenameToken = (
+  template: string,
+  filename: string,
+  useFilename: boolean
+): string =>
+  template.replace(/\$\{filename\}/g, () => (useFilename ? filename.replace(/\.[^/.]+$/, '') : ''))
+
 export const useEditorImages = () => {
   const editorStore = useEditorStore()
   const projectStore = useProjectStore()
@@ -77,12 +90,8 @@ export const useEditorImages = () => {
       }
     }
 
-    const getResolvedImagePath = (imagePath: string) => {
-      const replacement = isTabSavedOnDisk
-        ? filename.replace(/\.[^/.]+$/, '') // Filename w/o extension
-        : ''
-      return imagePath.replace(/\${filename}/g, replacement)
-    }
+    const getResolvedImagePath = (imagePath: string) =>
+      resolveImageFilenameToken(imagePath, filename, isTabSavedOnDisk)
 
     const resolvedGlobalImageFolderPath = getResolvedImagePath(imageFolderPath.value)
     const resolvedImageRelativeDirectoryName = getResolvedImagePath(

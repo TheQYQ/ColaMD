@@ -210,10 +210,12 @@ export const exportStyledHTML = async (
   // back to a raw `[TOC]` if present.
   const hasTocMarker = /<p>\s*\[TOC\]\s*<\/p>/i.test(article) || TOC_REG.test(article)
   if (toc && hasTocMarker) {
+    // `() => toc`, not `toc`: the TOC is built from the document's own headings,
+    // and a replacement *string* interprets `$&`, `$``, `$'` and `$$` in it.
     if (/<p>\s*\[TOC\]\s*<\/p>/i.test(article)) {
-      article = article.replace(/<p>\s*\[TOC\]\s*<\/p>/i, toc)
+      article = article.replace(/<p>\s*\[TOC\]\s*<\/p>/i, () => toc)
     } else if (TOC_REG.test(article)) {
-      article = article.replace(TOC_REG, toc)
+      article = article.replace(TOC_REG, () => toc)
     }
   }
 
@@ -244,5 +246,10 @@ export const exportStyledHTML = async (
   }
 
   // Re-emit the engine document shell with the (possibly augmented) body.
-  return fullDoc.replace(/<body>[\s\S]*<\/body>/, `<body>\n  ${bodyHtml}\n</body>`)
+  // The body must go in as a FUNCTION: `bodyHtml` carries the rendered document,
+  // so a plain string replacement would expand `$&` (a document that writes
+  // `` `$&` `` gets its own <body> pasted back into itself), `$`` / `$'` and
+  // `$$` (a literal `$$` in a code span silently loses one `$`). `&` being
+  // escaped to `&amp;` upstream does not remove the `$&` pattern.
+  return fullDoc.replace(/<body>[\s\S]*<\/body>/, () => `<body>\n  ${bodyHtml}\n</body>`)
 }
