@@ -50,7 +50,6 @@ export interface IUserPreferences {
   preferLooseListItem?: boolean
   bulletListMarker?: '-' | '*' | '+'
   orderListDelimiter?: '.' | ')'
-  preferHeadingStyle?: 'atx' | 'setext'
   tabSize?: number
   listIndentation?: number | string
   frontmatterType?: '-' | ';' | '+' | '{'

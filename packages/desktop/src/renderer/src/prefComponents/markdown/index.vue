@@ -129,23 +129,6 @@
         />
       </template>
     </compound>
-
-    <compound>
-      <template #head>
-        <h6 class="title">
-          {{ t('preferences.markdown.misc.title') }}
-        </h6>
-      </template>
-      <template #children>
-        <cur-select
-          :description="t('preferences.markdown.misc.preferHeadingStyle.title')"
-          :value="preferHeadingStyle"
-          :options="getPreferHeadingStyleOptions()"
-          :on-change="(value) => onSelectChange('preferHeadingStyle', value)"
-          :disable="true"
-        />
-      </template>
-    </compound>
   </div>
 </template>
 
@@ -160,7 +143,6 @@ import TextBox from '../common/textBox/index.vue'
 import {
   bulletListMarkerOptions,
   orderListDelimiterOptions,
-  getPreferHeadingStyleOptions,
   getListIndentationOptions,
   getFrontmatterTypeOptions,
   getSequenceThemeOptions
@@ -175,7 +157,6 @@ const {
   preferLooseListItem,
   bulletListMarker,
   orderListDelimiter,
-  preferHeadingStyle,
   listIndentation,
   frontmatterType,
   superSubScript,

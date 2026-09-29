@@ -417,7 +417,6 @@
         "preferLooseListItem": "Tercih edilen liste türü",
         "bulletListMarker": "Sırasız listede kullanılan işaret",
         "orderListDelimiter": "Sıralı listede kullanılan ayraç",
-        "preferHeadingStyle": "ColaMD'te tercih edilen başlık stili",
         "tabSize": "Sekmeyi x boşlukla değiştir",
         "listIndentation": "Liste girintisini seçin",
         "frontmatterType": "Ön bilgi türü",
@@ -673,14 +672,6 @@
         "plantumlServer": {
           "title": "PlantUML Sunucu URL'si"
         }
-      },
-      "misc": {
-        "preferHeadingStyle": {
-          "title": "Tercih Edilen Başlık Stili",
-          "atx": "ATX Stili",
-          "setext": "Setext Stili"
-        },
-        "title": "Çeşitli"
       },
       "compatibility": {
         "enableGitlab": "GitLab uyumluluğunu etkinleştir",

@@ -418,7 +418,6 @@
         "preferLooseListItem": "優先されるリストタイプ",
         "bulletListMarker": "箇条書きリストで使用されるマーカー",
         "orderListDelimiter": "順序付きリストで使用される区切り文字",
-        "preferHeadingStyle": "ColaMD で優先される見出しスタイル",
         "tabSize": "タブを x個 のスペースに置き換える",
         "listIndentation": "リストのインデントを選択",
         "frontmatterType": "フロントマターのタイプ",
@@ -673,14 +672,6 @@
         "plantumlServer": {
           "title": "PlantUML サーバーの URL"
         }
-      },
-      "misc": {
-        "preferHeadingStyle": {
-          "title": "優先見出しスタイル",
-          "atx": "ATX スタイル",
-          "setext": "Setext スタイル"
-        },
-        "title": "その他"
       },
       "compatibility": {
         "enableGitlab": "GitLab 互換性を有効",

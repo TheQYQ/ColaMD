@@ -27,17 +27,6 @@ export const orderListDelimiterOptions: PrefSelectOption<string>[] = [
   }
 ]
 
-export const getPreferHeadingStyleOptions = (): PrefSelectOption<string>[] => [
-  {
-    label: t('preferences.markdown.misc.preferHeadingStyle.atx'),
-    value: 'atx'
-  },
-  {
-    label: t('preferences.markdown.misc.preferHeadingStyle.setext'),
-    value: 'setext'
-  }
-]
-
 export const getListIndentationOptions = (): PrefSelectOption<string | number>[] => [
   {
     label: t('preferences.markdown.lists.listIndentation.dfm'),

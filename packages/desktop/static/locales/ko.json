@@ -418,7 +418,6 @@
         "preferLooseListItem": "선호하는 목록 유형",
         "bulletListMarker": "글머리 기호 목록에서 사용되는 마커",
         "orderListDelimiter": "순서가 있는 목록에서 사용되는 구분자",
-        "preferHeadingStyle": "ColaMD에서 선호하는 제목 스타일",
         "tabSize": "탭을 x개의 공백으로 바꾸기",
         "listIndentation": "목록의 들여쓰기 선택",
         "frontmatterType": "프론트매터 유형",
@@ -673,14 +672,6 @@
         "plantumlServer": {
           "title": "PlantUML 서버 URL"
         }
-      },
-      "misc": {
-        "preferHeadingStyle": {
-          "title": "제목 스타일 선호",
-          "atx": "ATX 스타일",
-          "setext": "Setext 스타일"
-        },
-        "title": "기타"
       },
       "compatibility": {
         "enableGitlab": "GitLab 호환성 활성화",
