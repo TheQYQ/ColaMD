@@ -28,6 +28,7 @@ interface Bindings {
   searchValue: { value: string }
   showSearch: { value: boolean }
   isRegexp: { value: boolean }
+  searchErrorMsg: { value: string }
   listenFind: () => void
   emptySearch: (selectHighlight?: boolean) => void
 }
@@ -144,7 +145,7 @@ describe('find-bar prefill from selection', () => {
 // bar is hidden -- so nothing took a newer sequence number, and a `searchFn`
 // parked on the ReDoS probe stayed "latest" and seconds later handed the engine
 // back a query the user had already thrown away.
-const withDeferredProbe = () => {
+const withDeferredProbe = (resolution: unknown = { status: 'ok', matchCount: 2 }) => {
   let settle: ((value: unknown) => void) | undefined
   const deps = {
     useEditorStore: () => ({ currentFile: { markdown: 'banana banana\n' } }),
@@ -156,7 +157,7 @@ const withDeferredProbe = () => {
     )
   }
   const bindings = makeBindings(deps)
-  return { ...bindings, settle: () => settle?.({ status: 'ok', matchCount: 2 }) }
+  return { ...bindings, settle: () => settle?.(resolution) }
 }
 
 const startRegexSearch = async (ret: Bindings): Promise<void> => {
@@ -192,5 +193,20 @@ describe('discarding the find bar while the ReDoS probe is in flight', () => {
     await nextTick()
 
     expect(emit).toHaveBeenCalledWith('searchValue', expect.objectContaining({ value: '(a+)+' }))
+  })
+
+  // The same guard is what keeps a late timeout off the bar: the report is
+  // written after the await, so before this it could name a query the user had
+  // already discarded.
+  it('does not report a timeout for a query that was discarded', async () => {
+    const { ret, settle } = withDeferredProbe({ status: 'timeout', matchCount: 0 })
+    await startRegexSearch(ret)
+
+    ret.emptySearch()
+    settle()
+    await nextTick()
+    await nextTick()
+
+    expect(ret.searchErrorMsg.value).toBe('')
   })
 })
