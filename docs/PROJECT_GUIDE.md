@@ -246,15 +246,17 @@ electron-builder（`packages/desktop/electron-builder.yml`）：`appId com.colam
 
 ### 10.3 测试规模
 
+> 口径（2026-09-29 重数）：`spec 文件` 一列与 desktop 单测的用例量是当天实测（`find`/`pnpm test:unit` 退出 0），其余 `~用例量级` 仍是上一轮估算，别当基线引用。
+
 | 套件                           | spec 文件                | 用例量级                            | 配置                                                                      |
 | ------------------------------ | ------------------------ | ----------------------------------- | ------------------------------------------------------------------------- |
-| desktop 单测 `test/unit/specs` | 61                       | ~383                                | `vitest.config.ts`，jsdom                                                 |
-| desktop E2E `test/e2e`         | 63（+12 个 `data/*.md`） | ~444                                | `test/e2e/playwright.config.ts`，`workers: 1`，30s 超时                   |
-| muya 单测 `src/**/__tests__`   | 223                      | ~1398                               | 默认配置在 `vite.config.ts`（引擎无独立 `vitest.config.ts`），`css: true` |
-| muya 一致性 `test/spec`        | 4                        | ~670 CommonMark + 672 GFM + 11 往返 | `vitest.spec.config.ts`，happy-dom                                        |
+| desktop 单测 `test/unit/specs` | 98                       | 1146（+1 跳过）                     | `vitest.config.ts`，jsdom                                                 |
+| desktop E2E `test/e2e`         | 70（+12 个 `data/*.md`） | ~444                                | `test/e2e/playwright.config.ts`，`workers: 1`，30s 超时                   |
+| muya 单测 `src/**/__tests__`   | 224                      | ~1398                               | 默认配置在 `vite.config.ts`（引擎无独立 `vitest.config.ts`），`css: true` |
+| muya 一致性 `test/spec`        | 5                        | ~670 CommonMark + 672 GFM + 11 往返 | `vitest.spec.config.ts`，happy-dom                                        |
 | muya E2E `e2e/tests`           | 71                       | ~323                                | 独立工作区，`webServer` Vite :5174 载 `e2e/host/`                         |
 
-一致性套件采用"只能变好"的钉死语义：`test/spec/expected-failures.json` 列了 78 个 CommonMark + 90 个 GFM 已知失败，**预期失败变成通过也会让套件失败**（`test/spec/runner.ts`），基线记录在 `test/spec/conformance.md`（CommonMark 87.7% / GFM 86.3%）。
+一致性套件采用"只能变好"的钉死语义：`test/spec/expected-failures.json` 列了 78 个 CommonMark + 90 个 GFM 已知失败，**预期失败变成通过也会让套件失败**（`test/spec/runner.ts`），基线记录在 `test/spec/conformance.md`（CommonMark 88.0% / GFM 86.6%，2026-09-26 按 `expected-failures.json` 重算）。
 
 E2E 通过 `_electron.launch` 起真应用（`test/e2e/helpers.ts:74`），会代点未保存对话框、经 `mt::handle-renderer-error` 统计渲染端错误、并用 `Menu.getApplicationMenu().getMenuItemById(id).click()` 驱动原生菜单。已知 `test.fixme`：`loose-list-toggle.spec.ts:54`、`view-modes.spec.ts:314`；`test.skip`：`paragraph-blocks.spec.ts:92,126`。
 
@@ -390,7 +392,7 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 | 最大文件     | `store/editor.ts` 924（第十一至二十刀连做九簇：关闭标签、保存与改名、内容变更与自动保存、标签新建与切换、窗口引导与缓冲还原、图片补全与清理、文件重载与关闭询问、大纲与选区、导出与打印，从 1970 共减 1,046 行；前五步从 2347 提出 370 行，见 §3 O12）、`editor.vue` 1768（第九刀搬掉 17 个插件注册与 31 条 bus 清单后从 1840 降到 1768）、`prefComponents/image/…/uploader/index.vue` 1186、`main/menu/actions/file.ts` 982、`main/app/index.ts` 897、`commands/index.ts` 766（2026-09-26 重测）。**菜单模板已不在榜上**：`file/edit/paragraph/format` 由 259/181/206/131 降到 147/74/97/39（2026-09-22 重测）。`store/project.ts` 整文件只剩 269 行，其中 setup 按长度门口径 167 行                                                                                                                           | `wc -l`                                                                                                                               |
 | runtime 依赖 | 桌面 35 个，**零引用 0 个**；引擎 28 个 `dependencies` 同样零冗余（2026-09-27 实测：26 直接引用 + `vega`/`vega-lite` 作 `vega-embed` 的 peer 供给，方法与结论见 §8 S1）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | 纯 Node 扫描 477 个源/配置/测试文件；`node node_modules/knip/bin/knip.js --workspace packages/desktop --dependencies` 退出 0 且无输出 |
 | IPC 面       | 三个方向都绑到契约上（2026-09-23 实测）：**invoke** 41 条全走 `typedHandle`（唯一的裸 `ipcMain.handle` 就是垫片自己 `ipc/typedHandle.ts:23`）；**on** 64 个 `ipcMain.on` 站点全走 `typedOn`/`typedSyncOn`，唯一豁免是 `utils/internalIpc.ts`（通道名为运行期字符串）；**send** 99 个推送站点里 93 个走 `typedSend`，6 个运行期拼通道名的逐个带理由豁免。契约声明数 41 invoke + 83 send + 2 sync + 69 主→渲染                                                                                                                                                                                                                                                                                                                                                                                                    | `grep -c` 于 `src/main`，契约计数于 `src/shared/types/ipc.ts`，`npx eslint packages/desktop/src/main` 0 error                         |
-| 测试面       | 5 套共 461 个 spec 文件：desktop 单测 **95**（2026-09-24 第二十刀后重数，含 O12 各刀新增的 store 簇 spec；第十九刀那行的 87 是 2026-09-23 的数）、desktop E2E **67**（+2：长图与 pandoc 导出走查、偏好入口；再前两处是 Markdown 扩展锚点、阅读位置锚点）、muya 单测 223、muya 一致性 **5**（+1：`fixtureEol.spec.ts`，见 §3 O12 末段）、muya E2E 71（desktop 两套 2026-09-24 重数；muya 三套仍为 2026-09-21 的数）                                                                                                                                                                                                                                                                                                                                                                                              | `find … -name '*.spec.ts' \→ wc -l`                                                                                                   |
+| 测试面       | 5 套共 **468** 个 spec 文件（2026-09-29 重数）：desktop 单测 **98**（1146 通过 + 1 跳过）、desktop E2E **70**（本批 +2：`search-redos.spec.ts`、`crash-ref-link-label.spec.ts`）、muya 单测 **224**、muya 一致性 **5**（+1：`fixtureEol.spec.ts`，见 §3 O12 末段）、muya E2E **71**。改前记的是 461/95/67/223（2026-09-24 第二十刀后），此后 PR #5–#17 各自补了用例。                                                                                                                                                                                                                                                                                                                                                                                                                                           | `find … -name '*.spec.ts' \→ wc -l`                                                                                                   |
 | 一致性       | CommonMark **88.0%** / GFM **86.6%**（2026-09-26 重跑一致性套件后同步：574/652 与 582/672；钉死在 `test/spec/expected-failures.json`，78 + 90 条）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `packages/muya/CLAUDE.md`、`test/spec/conformance.md`                                                                                 |
 | CI           | 12 个工作流（2026-09-26 删掉 `claude.yml` 后重数；**该删除已于 2026-09-27 经 PR #41 落到默认分支，注册表 `total_count` 从 13 变 12**）；**双平台腿有四条**——`test.yml`（ubuntu + windows 单测 + 一张非阻断 `coverage`）、`e2e.yml`（ubuntu-24.04 + macos-15 全量 E2E）、`muya-test.yml` 与 `muya-spec.yml`（各 ubuntu + windows，2026-09-27 补，见 O14 条目末尾的尾巴关闭记录），另 `build.yml` 五条平台腿在各自打包前先跑本平台单测（O14 ①②③，2026-09-22/23 已拿到真跑证据并随 PR #37 promote）。**故意保持单平台的**：`lint.yml` 与 `muya-{lint,build,circular,e2e}.yml`，理由写在 O14 条目末尾                                                                                                                                                                                                               | `ls .github/workflows \→ wc -l` + 逐文件读                                                                                            |
 | 击键热路径   | 1MB `edit+flush` p50 2.9 / p95 4.0 ms（验收线 P95 < 16 ms，余量 4×）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `packages/muya/docs/perf-baseline.md`（M1.2b 轮，2026-09-12）                                                                         |
@@ -405,3 +407,49 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 ```
 
 > 本机 `pnpm` 不在 Git Bash 的 PATH 上（`/c/Users/lyg/AppData/Local/pnpm` 里没有可执行文件）。本轮做法：`corepack prepare pnpm@10.33.4 --activate` 装钉定版本，再放两个垫片到 PATH 前面——`pnpm`（`exec corepack pnpm "$@"`）与 `pnpm.cmd`（后者必需，因为 `pnpm --filter` 会派生 cmd.exe，而 cmd 认不了无后缀脚本）。**不用 `--no-verify` 绕门禁。**
+
+## 15. 稳定期审计记录（2026-09-29 起）
+
+进入稳定期后按类扫描找 bug，每轮的覆盖面与结论记录于此。
+
+**第一轮**（监听器与解析类）：泄漏扫描 18 命中 → 3 真泄漏修复（tree.vue 的 bus+3 个 document 监听、treeFile/treeFolder 的行级 bus 监听——均无清理，树卸载/折叠后按行累积；已对称清理）+ history.vue 过期响应竞态守卫（PR #16）。JSON.parse 三处全有 try、空 catch 零命中、v-html 单处且消毒、deep watcher 仍为 0。
+
+**第二轮**（跨进程与生命周期类）：
+
+- IPC 面复核：裸 `ipcMain.handle` 仍只有 `typedHandle.ts` 自身，裸 `ipcMain.on` 唯一豁免点仍是 `utils/internalIpc.ts`（运行期字符串通道），`typedHandle` 站点 41 → 45（版本历史 4 条）。
+- muya 事件总线对账：22 emit 对 on/subscribe 消费者，**0 死发射**（注意对账必须把 `eventCenter.subscribe` 算进消费者形式，漏了会误报 11 条）。
+- main 浮动 Promise：唯一命中是 `editorBufferStore` 的两参 `then(() => {}, () => {})`（拒绝已处理）——无未处理拒绝崩溃风险。
+- 资源生命周期：watcher 的 close/unwatchByWindowId 链在 windowManager 三处关闭路径完整接线；ripgrep 子进程可取消；离屏导出窗口 try/finally + destroy + 临时文件清理。
+
+**第三轮**（正则执行面，2026-09-29）：起因是第二轮末尾那条"已知边界"——它后来被立项并修掉了（PR #17 + 本批收尾），而这一轮顺着同一类问题又找出引擎里的一处。**搜索框**原先把用户正则同步编译执行（`new RegExp(searchValue)`），病态正则 × 大文档会冻结渲染进程。当时的结论是"自伤型健壮性、不立项"，理由是修复要分块执行器或非回溯引擎（re2 与依赖瘦身冲突）；该结论已被下面这套**零新依赖**的做法取代：正则在交给引擎之前先在 Worker 里预跑（`packages/desktop/src/renderer/src/components/search/searchRegexProbe.ts`），Worker 内的扫描在两次 `exec` 之间查预算（`regexProbeShared.ts:14` `scanWithBudget`，4s），单次不返回的 `exec` 由主线程看门狗 5.5s `terminate()` 兜住（`searchRegexProbe.ts:18`），拒绝时给 11 份语言的 `search.regexTimeout` 提示。正则构造逐条镜像 muya 的 `matchString`（`packages/muya/src/utils/search.ts:4-34`：同样的 flags 规则、纯文本转义、`\b` 包裹），普通文本搜索不探测（转义后的字面量是线性的）。
+
+**本批在已合入的 `74f0f6f` 之上补的三处**（该提交信息称"§15 已记录"，但它改的 16 个文件里没有 `docs/`，本节记录是这次才补上的）：
+
+- Worker 已经上报 `timedOut`，主线程却只看 `status` 就判成 `ok`——于是"慢但有限"的扫描（探针自己花了 4s 才停）照样放行，真正的同步搜索仍在主线程花同样长的时间，预算层形同虚设。修法是把映射做成纯函数 `probeResultFromReply`（`regexProbeShared.ts:39`）并让 `timedOut` 映射为 `timeout`，配 3 条单测。**变异验证**：把该映射改回旧写法（忽略 `timedOut`）重跑，`regex-probe.spec.ts` 正好红 1 条且就是新写的那条（7 条里 1 failed / 6 passed）。
+- `searchFn` 变成 `async` 之后，`await` 探针最长 5.5s，返回时用的是**发射时刻**的 `searchValue`：既能发出一个从未被探测的值（闸门被绕过），也会把超时提示挂到另一个模式上。改成调用时快照 `value`/`opt`、`await` 后丢弃被取代的结果、`bus.emit` 只发快照（`search/index.vue:316-361`）。其中"最新调用才有效"这段判定已抽成纯函数 `createSeqGuard`（`searchRegexProbe.ts:81-88`）并配 3 条单测；**变异验证**：把 `isLatest` 改成恒真 → 正好红 1 条（"被取代的调用不可执行"那条）。
+- **顺带挖出一个 harness 空洞**：`test/unit/specs/search-prefill.spec.ts` 会把 SFC 的`<script setup>` 里所有 `import` 行剥掉，再用 `new Function` 注入一份**手写**的依赖清单去跑真实的 setup 代码。清单里缺的符号不会编译报错，只在该表达式真被求值时抛 `ReferenceError`——所以 PR #17 加进去的 `probeSearchRegex` 一直没人补进清单也没暴露（那两个用例不走正则分支）。本批给 SFC 加了 setup 期就要求值的 `createSeqGuard`，`pnpm test:unit` 当场红 2 条才把它揪出来，两个绑定一并补齐（`probeSearchRegex` 用 `vi.fn` 桩、`createSeqGuard` 用真实实现）。
+- 挂死的探针会拖住下一个查询：Worker 是单线程的，新请求的消息排在永不返回的 `exec` 后面，只能等看门狗 5.5s 后连同新请求一起被判超时。改成新请求先 `killWorker()` 再接管（`searchRegexProbe.ts:92`），看门狗随之重新计时。**变异验证**：删掉那行 `killWorker()` 重构建，`test/e2e/search-redos.spec.ts` 第二条 15s 内计数器纹丝不动（红），第一条不受影响；恢复后第二条 1.0s 绿。
+
+**同一类问题在引擎里另有一处，已修（本批第二处）**：`ScrollPage.updateRefLinkAndImage` 把**参考式链接定义的标签**直接拼进 `RegExp` 的模式串（模式形如 `\[` 标签 `\](?!:)`，见 `packages/muya/src/block/scrollPage/index.ts:120-127`），而 label 来自文档内容（`paragraphContent/index.ts:214-217` 取 `getLabelInfo`），随后对**每个内容块**跑 `REG.test(node.text)`。后果实测两种：标签写成 `a(b` 时 `new RegExp` 抛 `SyntaxError: Unterminated group` 并直达渲染端错误处理（`crash-ref-link-label.spec.ts` 第一条修复前红，记录到两条错误栈，都经 `ParagraphContent.keyupHandler` → `ParagraphContent.update` → `updateRefLinkAndImage`；同一份文档的**初次加载不报错**，触发点是让那个定义段落走一次 `update`）；标签写成 `(a+)+b` 且文档里另有一段 `[` + 一长串 `a` 时，单次 `REG.test` 在 node 里量到 **2206 ms（28 个 a）**，34 个 a 直接把真窗口跑到 30 s 测试上限（第二条修复前红、修复后 2.2 s 绿）。修法是把标签按字面量转义（一行），行为变化只影响本来就匹配错的标签（`[v1.2.0]:` 这类含 `.` 的标签此前是"点号通配"）。引擎侧回归：`pnpm -C packages/muya test` 223 文件 / 1498 通过、`test:spec` 5 文件 / 1359 通过、`pnpm -C packages/muya lint` 9 warnings / 0 errors，全部退出 0。
+
+**这套闸门的实测前提与限度（都验过，别再当作等价证明）**：
+
+- Worker 在**打包态**确实加载并执行：生产渲染进程走 `file://`（`packages/desktop/src/main/windows/editor.ts:287` → `windows/base.ts:124`），Vite 把它切成独立 chunk（构建产物 `out/renderer/assets/searchProbe.worker-*.js`），E2E 跑的就是这份构建产物并真拿到了超时提示（`search-redos.spec.ts` 第一条耗时 6.4s ≈ 看门狗 5.5s）。CSP 是 `default-src 'self'; script-src 'self'`（`packages/desktop/src/renderer/index.html:7-13`），`worker-src` 回落到 `default-src` 即放行同源。
+- 探针扫的是**整篇 raw markdown**，而 muya 实搜是**逐内容块**（`packages/muya/src/search/index.ts:171-175` 深度优先遍历里 `matchString(block.text, ...)`）；块文本会剥掉行内标记，与 raw markdown 不总是子串关系。所以这是一次启发式预检：误拒与漏拒两个方向都可能存在，误拒是安全方向。
+- `probe === null`（Worker 建不起来，或文档为空）时**不加闸门直接搜**，只 `console.warn` 一次——宁可退回旧行为，也不因为探针自身故障而拒绝用户的正常搜索。
+- 代价的量级：合法正则每次输入（150ms 防抖）都要多一遍全篇扫描 + 一次整篇文本的结构化克隆；命中预算的模式先花 4s 探测再拒绝。
+
+## 16. 已关闭的功能候选与重启条件（2026-09-29 重评估）
+
+评估结论：七项全部不做——各项代价都落在刚建好的安全边界或架构稳定性上，而收益属于低频或无证据场景。重启条件（成立时单独立项，其余不预支）：
+
+| 候选               | 重启条件                                                                 |
+| ------------------ | ------------------------------------------------------------------------ |
+| 大纲拖拽重排       | 写长文档时重组章节的痛点真实出现（需动 muya 块移动语义并保住撤销栈）     |
+| 文件树虚拟化       | 实测大目录渲染卡顿（当前自定义递归树，先测基线）                         |
+| 文件夹搜索面板     | 自己开始想念跨文件搜索（V1 曾有意下线，恢复是产品决策）                  |
+| 浮动格式工具栏对齐 | 拿到 Typora 1.14 可对照的具体形态差异清单                                |
+| 多根工作区         | 出现同时挂载多个根目录的真实需求（需重设计 pathScope 授权模型）          |
+| 插件系统           | 引擎发版后出现真实的第三方扩展需求                                       |
+| 协同编辑           | 决定把产品转向服务型应用（OT 底座保留，已为撤销系统服务）                |
+| AI 辅助写作        | 你做出明确的产品方向决策（目标用户、交互形态、密钥与隐私边界）并单独立项 |

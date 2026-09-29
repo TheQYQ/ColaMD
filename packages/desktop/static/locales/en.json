@@ -226,7 +226,8 @@
     "replaceAll": "Replace All",
     "replaceSingle": "Replace Single",
     "invalidRegex": "Invalid regular expression \"{pattern}\"",
-    "regexMatchEmpty": "Regular expression matches empty string \"{pattern}\""
+    "regexMatchEmpty": "Regular expression matches empty string \"{pattern}\"",
+    "regexTimeout": "Regex timed out"
   },
   "sideBar": {
     "tree": {

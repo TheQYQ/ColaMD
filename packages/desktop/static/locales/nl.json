@@ -226,7 +226,8 @@
     "replaceAll": "Alles vervangen",
     "replaceSingle": "Enkele vervanging",
     "invalidRegex": "Ongeldige reguliere expressie \"{pattern}\"",
-    "regexMatchEmpty": "Reguliere expressie matcht lege tekenreeks \"{pattern}\""
+    "regexMatchEmpty": "Reguliere expressie matcht lege tekenreeks \"{pattern}\"",
+    "regexTimeout": "Time-out reguliere expressie"
   },
   "sideBar": {
     "tree": {

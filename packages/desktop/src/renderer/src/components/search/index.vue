@@ -145,6 +145,7 @@ import { useEditorStore } from '@/store/editor'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import debounce from 'lodash/debounce'
+import { createSeqGuard, probeSearchRegex } from './searchRegexProbe'
 import { ArrowDown, ArrowUp, RefreshRight, Switch } from '@element-plus/icons-vue'
 
 const { t } = useI18n()
@@ -306,37 +307,57 @@ const handleEnterKey = (event: KeyboardEvent) => {
   }
 }
 
-const searchFn = () => {
-  if (isRegexp.value) {
+// Newest-call-wins: an awaited probe can resolve after a newer query has taken
+// over; emitting then would hand the engines a pattern no probe ever checked
+// (and report the timeout against the wrong pattern), so a superseded call drops
+// its own result.
+const seqGuard = createSeqGuard()
+
+const searchFn = async () => {
+  const seq = seqGuard.take()
+  const value = searchValue.value
+  const opt = {
+    isCaseSensitive: isCaseSensitive.value,
+    isWholeWord: isWholeWord.value,
+    isRegexp: isRegexp.value
+  }
+  if (opt.isRegexp) {
     // Handle invalid regexp.
     try {
-      RegExp(searchValue.value)
+      RegExp(value)
       searchErrorMsg.value = ''
     } catch {
-      searchErrorMsg.value = t('search.invalidRegex', { pattern: searchValue.value })
+      searchErrorMsg.value = t('search.invalidRegex', { pattern: value })
       return
     }
     // Handle match empty string, no need to search.
     try {
-      const SEARCH_REG = new RegExp(searchValue.value)
-      if (searchValue.value && SEARCH_REG.test('')) {
+      const SEARCH_REG = new RegExp(value)
+      if (value && SEARCH_REG.test('')) {
         throw new Error()
       }
       searchErrorMsg.value = ''
     } catch {
-      searchErrorMsg.value = t('search.regexMatchEmpty', { pattern: searchValue.value })
+      searchErrorMsg.value = t('search.regexMatchEmpty', { pattern: value })
       return
     }
-  }
-
-  bus.emit('searchValue', {
-    value: searchValue.value,
-    opt: {
-      isCaseSensitive: isCaseSensitive.value,
-      isWholeWord: isWholeWord.value,
-      isRegexp: isRegexp.value
+    // ReDoS guard: pre-flight the pattern against the document in a worker
+    // with a hard timeout. muya and CodeMirror both scan synchronously on the
+    // main thread, so a catastrophic regex must be refused here instead of
+    // freezing the window.
+    const text = editorStore.currentFile?.markdown ?? ''
+    if (text) {
+      const probe = await probeSearchRegex(value, opt, text)
+      if (!seqGuard.isLatest(seq)) return
+      if (probe?.status === 'timeout') {
+        searchErrorMsg.value = t('search.regexTimeout', { pattern: value })
+        return
+      }
     }
-  })
+  }
+  if (!seqGuard.isLatest(seq)) return
+
+  bus.emit('searchValue', { value, opt })
 }
 
 const debouncedSearchFn = debounce(searchFn, 150)

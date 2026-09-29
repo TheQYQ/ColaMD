@@ -226,7 +226,8 @@
     "replaceAll": "모두 바꾸기",
     "replaceSingle": "하나 바꾸기",
     "invalidRegex": "잘못된 정규식 \"{pattern}\"",
-    "regexMatchEmpty": "정규식이 빈 문자열 \"{pattern}\"과 일치"
+    "regexMatchEmpty": "정규식이 빈 문자열 \"{pattern}\"과 일치",
+    "regexTimeout": "정규식 시간 초과"
   },
   "sideBar": {
     "tree": {

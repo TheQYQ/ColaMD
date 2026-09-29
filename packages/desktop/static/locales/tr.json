@@ -226,7 +226,8 @@
     "replaceAll": "Tümünü Değiştir",
     "replaceSingle": "Tek Değiştir",
     "invalidRegex": "Geçersiz düzenli ifade \"{pattern}\"",
-    "regexMatchEmpty": "Düzenli ifade boş dizeyle eşleşiyor \"{pattern}\""
+    "regexMatchEmpty": "Düzenli ifade boş dizeyle eşleşiyor \"{pattern}\"",
+    "regexTimeout": "Düzenli ifade zaman aşımı"
   },
   "sideBar": {
     "tree": {

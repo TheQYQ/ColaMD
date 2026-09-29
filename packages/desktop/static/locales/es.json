@@ -226,7 +226,8 @@
     "replaceAll": "Reemplazar",
     "replaceSingle": "Reemplazar Uno",
     "invalidRegex": "Expresión regular inválida \"{pattern}\"",
-    "regexMatchEmpty": "La expresión regular coincide con la cadena vacía \"{pattern}\""
+    "regexMatchEmpty": "La expresión regular coincide con la cadena vacía \"{pattern}\"",
+    "regexTimeout": "Tiempo de espera de la expresión regular"
   },
   "sideBar": {
     "tree": {

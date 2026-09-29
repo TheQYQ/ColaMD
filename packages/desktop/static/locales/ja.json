@@ -226,7 +226,8 @@
     "replaceAll": "すべて置換",
     "replaceSingle": "単一置換",
     "invalidRegex": "無効な正規表現 \"{pattern}\"",
-    "regexMatchEmpty": "正規表現が空文字列 \"{pattern}\" にマッチ"
+    "regexMatchEmpty": "正規表現が空文字列 \"{pattern}\" にマッチ",
+    "regexTimeout": "正規表現がタイムアウトしました"
   },
   "sideBar": {
     "tree": {
