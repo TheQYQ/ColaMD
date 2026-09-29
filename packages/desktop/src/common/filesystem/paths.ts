@@ -91,6 +91,26 @@ export const isDangerousExecutableFile = (filepath: string): boolean => {
 }
 
 /**
+ * Percent-decodes a pathname taken from a markdown link, keeping the string as
+ * typed when it is not a valid encoding. `decodeURIComponent` throws
+ * `URIError: URI malformed` on any `%` that is not followed by two hex digits,
+ * and a bare `%` is a perfectly legal character in a file name -- `100%done.md`,
+ * `50%.md`. Throwing inside the `mt::format-link-click` handler surfaced as a
+ * main-process error dialog while the link silently did nothing.
+ *
+ * A name that DOES look encoded (`a%41b.md`) is still decoded to `aAb.md`: the
+ * two forms cannot be told apart, and decoding is the documented behaviour
+ * (issue #57).
+ */
+export const decodeLinkPathname = (rawPathname: string): string => {
+  try {
+    return decodeURIComponent(rawPathname)
+  } catch {
+    return rawPathname
+  }
+}
+
+/**
  * Returns true if the path is an image file.
  */
 export const isImageFile = (filepath: string): boolean => {
