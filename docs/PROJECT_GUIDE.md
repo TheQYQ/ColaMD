@@ -406,6 +406,19 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 
 > 本机 `pnpm` 不在 Git Bash 的 PATH 上（`/c/Users/lyg/AppData/Local/pnpm` 里没有可执行文件）。本轮做法：`corepack prepare pnpm@10.33.4 --activate` 装钉定版本，再放两个垫片到 PATH 前面——`pnpm`（`exec corepack pnpm "$@"`）与 `pnpm.cmd`（后者必需，因为 `pnpm --filter` 会派生 cmd.exe，而 cmd 认不了无后缀脚本）。**不用 `--no-verify` 绕门禁。**
 
+### 14.1 E2E 抖动日志（红先用不含改动的对照跑定性，再分类）
+
+AGENTS.md 的门禁表把"已知间歇形状"指到这里。这里只收**有 run 号或本机复现**的形状，没证据的一律写明"未定性"。
+
+| 形状                                                                                                                                                 | 证据                                                                                                                                            | 定性                                                                                                                                                                                                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| mac 腿 `export-long-image-and-pandoc.spec.ts:83` 的 `pandoc latex converts for real` 两次 attempt 全红；同文件 `rtf` 那条重试转绿                    | run `36268664649`（2026-09-26，develop 的 PR）                                                                                                  | 独立用例的重试机制本身有效（`rtf` 就是证据）。该次红未再复现，pandoc 相关                                                                                                                                                                                       |
+| mac 腿 `find-replace.spec.ts:213` 首跳 `Expected "3 / 3" / Received "1 / 3"`（10 s 轮询超时），`retry #1` 变成 `Expected "1 / 3" / Received "0 / 0"` | run `36572698150`（PR #32，diff 只有侧栏 `history.vue` + 一份单测 + 文档）；对照跑 run `36575033113`（develop `e2f60f0`，零改动）**两条腿全绿** | **重试那一半已定性并修掉**：该用例继承了上一条的 `1/3` 基线，而 Playwright 的重试是"单独重跑失败那条 + `beforeAll` 重启干净 app"，所以它的重试必然读到 `0 / 0`——本机在 `e2f60f0` 上 `-g "findPrev from"` 稳定复现同一行同一字。**首跳那一半根因未确立**，见下段 |
+
+**未定性那半的边界要记清**。计数器停在 `1 / 3`（截图里第一个 apple 仍是活动高亮、页面上没有错误元素）说明 `SEARCH` 根本没被调到：`Search.find()` 在 `matches.length === 0` 时虽然原样返回，但随后的 `SEARCH` 仍会把计数器写成 `0 / 0`，所以"匹配空了"可排除。**也不是总线吞异常**——装的 mitt 3.x 的 `emit` 里没有 try/catch（实测 `node_modules/.pnpm/mitt@3*/node_modules/mitt/dist/mitt.mjs`），异常会同步抛回 IPC 回调。剩下的可能是链上某处抛了：`src/main/exceptionHandler.ts:21` 的 `SHOW_ERROR_DIALOG = !process.env.COLAMD_ERROR_INTERACTION` 在 e2e 下为真（helper 只在 `suppressErrorDialog` 时才设这个变量），于是会弹阻塞式原生框——页面截图看不见它，而主进程 `await dialog` 期间照常处理 IPC，所以"同文件其余 14 条仍然通过"**既不能证实也不能证伪**这条路径。基线数字：新库 35 次 e2e 跑里 2 次红，两次都只在 mac 腿。下次同一症状再现时，先给该 describe 开 `suppressErrorDialog`、动作前 `clearRendererErrors` 动作后 `expectNoRendererErrors`，把"抛了"和"没跑到"分开，再谈修法。
+
+**这个形状暴露的覆盖面（已实测，本批未处理，记在 issue #34）**：`playwright test --list` 口径下 `test/e2e` 共 **73** 个 spec 文件 / **258** 条用例，其中 **55** 个文件里有多条用例，而全仓 `mode: 'serial'` **零使用**——任何一条"靠上一条建状态"的用例都有同样的重试失效问题。逐条核查办法（本批对 `find-replace.spec.ts` 全 15 条就是这么跑的，结果 15/15 能独立通过）：先 `playwright test --config=… <file> --list` 取全部标题，再对每个叶子标题单独跑一次 `-g "<正则转义后的叶子标题>"`。
+
 ## 15. 稳定期审计记录（2026-09-29 起）
 
 进入稳定期后按类扫描找 bug，每轮的覆盖面与结论记录于此。
