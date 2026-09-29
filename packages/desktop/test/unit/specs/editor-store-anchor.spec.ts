@@ -172,7 +172,7 @@ describe('useEditorStore EXPORT (title derivation from listToc)', () => {
 
     const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
 
-    store.EXPORT({ type: 'pdf', pageOptions: {} })
+    store.EXPORT({ type: 'pdf', source: store.CAPTURE_EXPORT_SOURCE(), pageOptions: {} })
 
     expect(sendSpy).toHaveBeenCalledTimes(1)
     const [channel, payload] = sendSpy.mock.calls[0]
@@ -198,7 +198,7 @@ describe('useEditorStore EXPORT (title derivation from listToc)', () => {
 
     const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
 
-    store.EXPORT({ type: 'pdf', pageOptions: {} })
+    store.EXPORT({ type: 'pdf', source: store.CAPTURE_EXPORT_SOURCE(), pageOptions: {} })
 
     expect(sendSpy.mock.calls[0][1]).toMatchObject({ title: 'First' })
   })
@@ -210,7 +210,7 @@ describe('useEditorStore EXPORT (title derivation from listToc)', () => {
 
     const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
 
-    store.EXPORT({ type: 'pdf', pageOptions: {} })
+    store.EXPORT({ type: 'pdf', source: store.CAPTURE_EXPORT_SOURCE(), pageOptions: {} })
 
     expect(sendSpy).toHaveBeenCalledTimes(1)
     expect(sendSpy.mock.calls[0][1]).toMatchObject({ title: '' })
@@ -223,7 +223,7 @@ describe('useEditorStore EXPORT (title derivation from listToc)', () => {
 
     const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
 
-    store.EXPORT({ type: 'pdf', pageOptions: {} })
+    store.EXPORT({ type: 'pdf', source: store.CAPTURE_EXPORT_SOURCE(), pageOptions: {} })
 
     expect(sendSpy).not.toHaveBeenCalled()
   })
