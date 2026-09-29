@@ -172,7 +172,7 @@ class EditorBufferStore extends TypedEmitter<EditorBufferStoreEvents> {
     return buffer
   }
 
-  writeBufferStoreFile(filePath: string, newState: unknown): Promise<void> {
+  writeBufferStoreFile(filePath: string, newState: unknown): Promise<boolean> {
     // Durable atomic write: write-file-atomic writes to a temp file, fsyncs it,
     // then renames it over the target. The previous temp-file + rename here was
     // namespace-atomic (crash-safe) but omitted the fsync, so a power loss could
@@ -180,12 +180,22 @@ class EditorBufferStore extends TypedEmitter<EditorBufferStoreEvents> {
     // truncated or zero-filled, the same gap the document save path had (#3786).
     // Async variant keeps the identical durability contract without blocking
     // the main process (M1.4).
+    //
+    // The result is reported rather than swallowed: this buffer is the only
+    // copy of unsaved content, and a failed write used to resolve as if it had
+    // landed, so the caller kept believing the snapshot was on disk (#26 item 2).
     const prev = bufferWriteQueues.get(filePath) ?? Promise.resolve()
     const next = prev
       .then(() => writeFileAtomic(filePath, JSON.stringify(newState), 'utf8'))
-      .catch((err) => {
-        console.error('Failed to write editor buffer state:', err)
-      })
+      .then(
+        () => true,
+        (err: unknown) => {
+          console.error('Failed to write editor buffer state:', err)
+          return false
+        }
+      )
+    // The queue link must never reject, or one failure would poison every later
+    // write for this file.
     bufferWriteQueues.set(
       filePath,
       next.then(
@@ -196,7 +206,7 @@ class EditorBufferStore extends TypedEmitter<EditorBufferStoreEvents> {
     return next
   }
 
-  updateBufferState(e: IpcMainInvokeEvent, newState: unknown): boolean {
+  async updateBufferState(e: IpcMainInvokeEvent, newState: unknown): Promise<boolean> {
     const win = BrowserWindow.fromWebContents(e.sender)
     const restoreBufferId = (win as unknown as { restoreBufferId?: string })?.restoreBufferId
 
@@ -206,13 +216,11 @@ class EditorBufferStore extends TypedEmitter<EditorBufferStoreEvents> {
     }
 
     const bufferStore = this.getBufferStoreInfo(restoreBufferId)
-    // Fire-and-forget: the queued write preserves per-file ordering, and the
-    // handler returns before the fsync completes instead of stalling the main
-    // process (M1.4).
-    this.writeBufferStoreFile(bufferStore.filePath, newState).catch((err) => {
-      console.error('Buffer state write failed:', err)
-    })
-    return true
+    // Awaiting the queued write does not put the fsync back on the main
+    // process's synchronous path (M1.4): this is an `ipcMain.handle` handler, so
+    // returning the promise only decides when the *renderer's* invoke settles,
+    // and the renderer needs that answer to know whether its snapshot landed.
+    return this.writeBufferStoreFile(bufferStore.filePath, newState)
   }
 
   getUnUsedBufferUUID(): string {

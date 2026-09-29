@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'fs'
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import path from 'path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -6,7 +6,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 // The store registers ipcMain handlers in its constructor; stub electron so the
 // module imports without a real main process. writeBufferStoreFile no longer
 // touches `this`, so we exercise it via the prototype without booting the store.
-vi.mock('electron', () => ({}))
+vi.mock('electron', () => ({
+  BrowserWindow: {
+    fromWebContents: () => ({ restoreBufferId: 'buffer-under-test' })
+  }
+}))
 
 const { default: EditorBufferStore } = await import('main_renderer/editorBufferStore')
 
@@ -14,6 +18,10 @@ const { default: EditorBufferStore } = await import('main_renderer/editorBufferS
 // a temp+rename with no fsync — the same power-loss zero-fill gap the document
 // save path had. writeBufferStoreFile now writes durably via write-file-atomic.
 const writeBufferStoreFile = EditorBufferStore.prototype.writeBufferStoreFile
+// #26 item 2: the same write used to swallow its own error and the handler
+// returned `true` regardless, so the renderer kept believing the snapshot was
+// on disk. Both halves are pinned below.
+const updateBufferState = EditorBufferStore.prototype.updateBufferState
 
 const dirs: string[] = []
 function tempDir(): string {
@@ -63,5 +71,48 @@ describe('EditorBufferStore.writeBufferStoreFile — durable atomic write (#4852
 
     expect(JSON.parse(readFileSync(target, 'utf8'))).toEqual({ seq: 2 })
     expect(readdirSync(dir)).toEqual(['buffer.json'])
+  })
+})
+
+describe('the crash buffer reports what actually happened (#26 item 2)', () => {
+  it('reports success as a value the caller can trust', async () => {
+    const target = path.join(tempDir(), 'buffer.json')
+    expect(await writeBufferStoreFile(target, { tabs: [] })).toBe(true)
+  })
+
+  it('reports failure instead of resolving as if the write had landed', async () => {
+    const blocked = path.join(tempDir(), 'buffer.json')
+    mkdirSync(blocked)
+
+    expect(await writeBufferStoreFile(blocked, { tabs: ['unsaved'] })).toBe(false)
+  })
+
+  it('writes again after a failed write for the same file', async () => {
+    // The queue link must not carry a rejection forward, or one failure would
+    // silently freeze every later snapshot for that window.
+    const blocked = path.join(tempDir(), 'buffer.json')
+    mkdirSync(blocked)
+    expect(await writeBufferStoreFile(blocked, { seq: 1 })).toBe(false)
+    rmSync(blocked, { recursive: true, force: true })
+
+    expect(await writeBufferStoreFile(blocked, { seq: 2 })).toBe(true)
+    expect(JSON.parse(readFileSync(blocked, 'utf8'))).toEqual({ seq: 2 })
+  })
+
+  it('the invoke handler answers with the write result, not with `true`', async () => {
+    const dir = tempDir()
+    // Only `sender` is read, and the electron stub resolves it to a window that
+    // carries a `restoreBufferId`.
+    const event = { sender: {} } as unknown as Parameters<typeof updateBufferState>[0]
+    const stub = (filePath: string) => ({
+      getBufferStoreInfo: () => ({ filePath }),
+      writeBufferStoreFile
+    })
+    const good = path.join(dir, 'buffer.json')
+    expect(await updateBufferState.call(stub(good), event, { tabs: ['a'] })).toBe(true)
+
+    const blocked = path.join(dir, 'blocked.json')
+    mkdirSync(blocked)
+    expect(await updateBufferState.call(stub(blocked), event, { tabs: ['b'] })).toBe(false)
   })
 })
