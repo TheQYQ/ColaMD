@@ -118,7 +118,12 @@ export class ScrollPage extends Parent {
     }
 
     updateRefLinkAndImage(label: string) {
-        const REG = new RegExp(`\\[${label}\\](?!:)`);
+        // The label is document content, so it must never reach the pattern as
+        // syntax: `[a(b]: /u` throws during render (unterminated group), and a
+        // label with nested quantifiers backtracks against every content block
+        // on the main thread. Match the label literally.
+        const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const REG = new RegExp(`\\[${escaped}\\](?!:)`);
 
         this.breadthFirstTraverse((node) => {
             if (node.isContent() && REG.test(node.text))

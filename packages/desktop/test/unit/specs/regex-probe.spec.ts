@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { scanWithBudget } from '@/components/search/regexProbeShared'
+import { probeResultFromReply, scanWithBudget } from '@/components/search/regexProbeShared'
+import { createSeqGuard } from '@/components/search/searchRegexProbe'
 
 describe('scanWithBudget — the search probe scanner', () => {
   it('counts matches for a benign pattern', () => {
@@ -26,5 +27,49 @@ describe('scanWithBudget — the search probe scanner', () => {
     reg.exec('ba')
     const { matchCount } = scanWithBudget(reg, 'aa', Date.now() + 1000)
     expect(matchCount).toBe(2)
+  })
+})
+
+describe('probeResultFromReply — the budget decision', () => {
+  it('refuses a scan that ran out of budget instead of reporting it as ok', () => {
+    // The real search would cost at least this much on the main thread, so a
+    // partial count is a refusal, not a pass. Reporting `ok` here was the hole.
+    expect(probeResultFromReply({ id: 1, status: 'ok', matchCount: 9, timedOut: true })).toEqual({
+      status: 'timeout'
+    })
+  })
+
+  it('passes a scan that finished inside the budget', () => {
+    expect(probeResultFromReply({ id: 1, status: 'ok', matchCount: 2, timedOut: false })).toEqual({
+      status: 'ok',
+      matchCount: 2
+    })
+  })
+
+  it('keeps an uncompilable pattern distinguishable from a timeout', () => {
+    expect(probeResultFromReply({ id: 1, status: 'invalid' })).toEqual({ status: 'invalid' })
+  })
+})
+
+describe('createSeqGuard — the newest call owns the emit', () => {
+  it('a superseded call is not actionable', () => {
+    const guard = createSeqGuard()
+    const first = guard.take()
+    const second = guard.take()
+    expect(guard.isLatest(first)).toBe(false)
+    expect(guard.isLatest(second)).toBe(true)
+  })
+
+  it('a call with no successor stays actionable, so paths that never await still emit', () => {
+    const guard = createSeqGuard()
+    expect(guard.isLatest(guard.take())).toBe(true)
+  })
+
+  it('two guards do not supersede each other', () => {
+    const search = createSeqGuard()
+    const other = createSeqGuard()
+    const seq = search.take()
+    other.take()
+    expect(search.isLatest(seq)).toBe(true)
   })
 })

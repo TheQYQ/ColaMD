@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path'
 import { parse, compileScript } from 'vue/compiler-sfc'
 import ts from 'typescript'
 import { ref, computed, watch, nextTick } from 'vue'
+import { createSeqGuard } from '@/components/search/searchRegexProbe'
 
 // Regression guard for the find-bar prefill race (issue: the input showed a
 // stale single char like "T" instead of the selection). The bug lives entirely
@@ -46,7 +47,8 @@ const loadComponent = (deps: Record<string, unknown>) => {
     'module',
     `const { _defineComponent, ref, computed, watch, onMounted, onBeforeUnmount,
       nextTick, bus, FindCaseIcon, FindWordIcon, FindRegexIcon, useEditorStore,
-      storeToRefs, useI18n, debounce, ArrowDown, ArrowUp, RefreshRight, Switch } = __deps
+      storeToRefs, useI18n, debounce, createSeqGuard, probeSearchRegex,
+      ArrowDown, ArrowUp, RefreshRight, Switch } = __deps
     ${js}
     return module.exports`
   ) as (
@@ -87,7 +89,15 @@ const makeBindings = () => {
     useEditorStore: () => new Proxy({}, { get: () => () => {} }),
     storeToRefs: () => ({ currentFile }),
     useI18n: () => ({ t: (k: string) => k }),
-    debounce: (fn: (...a: unknown[]) => unknown) => fn
+    debounce: (fn: (...a: unknown[]) => unknown) => fn,
+    // Every binding the setup evaluates must be injected, not only the ones these
+    // cases exercise: setup calls createSeqGuard() immediately, while
+    // probeSearchRegex is only reached on the regex path — a missing binding is a
+    // run-time ReferenceError, so this harness silently drifts behind the
+    // component's import list. The real guard is imported rather than stubbed so
+    // the newest-call-wins behaviour exercised here is the shipped one.
+    createSeqGuard,
+    probeSearchRegex: vi.fn(async () => ({ status: 'ok', matchCount: 0 }))
   }
   const comp = loadComponent(deps)
   const ret = comp.setup({}, { expose: () => {} })

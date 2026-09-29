@@ -3,7 +3,7 @@
 // terminates this worker on a true hang (a single exec that never returns —
 // e.g. catastrophic backtracking — cannot check any deadline from inside).
 
-import { scanWithBudget } from './regexProbeShared'
+import { PROBE_BUDGET_MS, scanWithBudget, type ProbeReply } from './regexProbeShared'
 
 interface ProbeRequest {
   id: number
@@ -12,8 +12,8 @@ interface ProbeRequest {
   text: string
 }
 
-const post = (msg: unknown): void => {
-  ;(self as unknown as { postMessage: (m: unknown) => void }).postMessage(msg)
+const post = (msg: ProbeReply): void => {
+  ;(self as unknown as { postMessage: (m: ProbeReply) => void }).postMessage(msg)
 }
 
 self.onmessage = (event: MessageEvent): void => {
@@ -25,7 +25,6 @@ self.onmessage = (event: MessageEvent): void => {
     post({ id, status: 'invalid' })
     return
   }
-  const BUDGET_MS = 4000
-  const result = scanWithBudget(reg, text, Date.now() + BUDGET_MS)
+  const result = scanWithBudget(reg, text, Date.now() + PROBE_BUDGET_MS)
   post({ id, status: 'ok', matchCount: result.matchCount, timedOut: result.timedOut })
 }
