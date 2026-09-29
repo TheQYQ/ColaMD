@@ -22,7 +22,7 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 | 命令                                   | 退出码     | 现在的基线                                                                                                                                       |
 | -------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `pnpm check`（= `lint` + `typecheck`） | 0          | **94 warnings / 0 errors**，全部是 `no-non-null-assertion`                                                                                       |
-| `pnpm test:unit`                       | 0          | 98 文件 / **1143 通过 + 1 跳过**（2026-09-29 重测；上一行 94/0 同日重测）                                                                        |
+| `pnpm test:unit`                       | 0          | 98 文件 / **1146 通过 + 1 跳过**（2026-09-29 在 `f77d0cc` 上重测；上一行 94/0 同日）                                                             |
 | `pnpm build`                           | 0          | —                                                                                                                                                |
 | `pnpm knip`                            | 0          | 只查依赖，**这条才是门禁**                                                                                                                       |
 | `pnpm knip:full`                       | **1**      | 已知 4 项（1 unused export + 3 unused exported type），**故意不接进 CI**，别把它当回归                                                           |
@@ -49,6 +49,6 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 ## 流程
 
 - 一批一分支一 PR，目标 `develop`；promote 到 `main` 也走 PR，并按 `main` 惯例用 **merge commit**（不是 squash）。
-- **合进 `main` 不产生 CI run**（`build.yml` 在 2026-09-11 曾对 `main` 的 push 跑过一次并失败，此后触发条件收窄，`main` 上再无 run）。12 个工作流里 **11 个只认 `pull_request`**，其中 `e2e.yml` / `build.yml` / `muya-spec.yml` 另有 `workflow_dispatch`；`validate-licenses.yml` 额外认 **push 到 `develop`**（带 paths 过滤）；`release.yml` 只认 `v*` 标签。所以**推 `develop` 只能拿到 licenses 那一条**，PR 门禁才是一批改动的完整远端验证，promote 之后没有第二道门。
+- **合进 `main` 不产生 CI run**（`build.yml` 在 2026-09-11 曾对 `main` 的 push 跑过一次并失败，此后触发条件收窄，`main` 上再无 run）。12 个工作流里 **11 个只认 `pull_request`**，其中 `e2e.yml` / `build.yml` / `muya-spec.yml` 另有 `workflow_dispatch`；`validate-licenses.yml` 额外认 **push 到 `develop`**（带 paths 过滤）；`release.yml` 只认 `v*` 标签。所以**推 `develop` 通常一条 run 都没有**——licenses 那条只在 `package.json` / `pnpm-lock.yaml` 变化时才起（`validate-licenses.yml:11-12` 的 paths 过滤），实测 PR #19 合进 develop 的 merge commit `f77d0cc`：`GET /commits/f77d0cc/check-suites` 返回 `[]`，且全仓 12 个工作流里 `grep schedule:|cron:` 零命中（没有 nightly）。**PR 门禁是一批改动的唯一完整远端验证，合完到 promote 之间没有任何 CI 覆盖，本机门禁是唯一一道。**
 - 性能类改动必须先更新 `packages/muya/docs/perf-baseline.md`——它是性能数字的唯一来源。
 - 安全边界（哪些偏好键渲染端可写、选择器结果即授权、域收敛）见 `docs/PROJECT_GUIDE.md` §6；**不要为了让测试通过而放宽校验**。
