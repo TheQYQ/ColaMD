@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject, type Ref, onMounted, nextTick } from 'vue'
+import { ref, inject, type Ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
@@ -109,6 +109,12 @@ onMounted(() => {
   }
 
   bus.on('SIDEBAR::show-rename-input', focusRenameInput)
+})
+
+// The row unmounts on folder collapse / tree switch; without this the
+// listener accumulates one closure per mounted row per remount cycle.
+onBeforeUnmount(() => {
+  bus.off('SIDEBAR::show-rename-input', focusRenameInput)
 })
 </script>
 

@@ -141,19 +141,27 @@ const sortedSnapshots = computed<VersionSnapshotMeta[]>(() => {
 })
 
 const loadSnapshots = async (): Promise<void> => {
-  if (!currentPathname.value) {
+  const requested = currentPathname.value
+  if (!requested) {
     snapshots.value = []
+    loading.value = false
     return
   }
 
   loading.value = true
   try {
-    snapshots.value = (await window.versionHistory.list(currentPathname.value)) ?? []
+    const list = (await window.versionHistory.list(requested)) ?? []
+    // A rapid file switch starts a newer load while this one is in flight;
+    // a stale response must not overwrite the newer result (or clear its
+    // loading flag early).
+    if (requested !== currentPathname.value) return
+    snapshots.value = list
   } catch (err) {
+    if (requested !== currentPathname.value) return
     console.error('Failed to load version history:', err)
     snapshots.value = []
   } finally {
-    loading.value = false
+    if (requested === currentPathname.value) loading.value = false
   }
 }
 

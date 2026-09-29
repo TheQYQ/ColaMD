@@ -93,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, provide } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, provide } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
 import Folder from './treeFolder.vue'
@@ -272,34 +272,46 @@ const handleWrapperClick = (event: MouseEvent): void => {
   if (row?.dataset.pathname) kbFocusedPathname.value = row.dataset.pathname
 }
 
+// Hide rename / create inputs on outside clicks. Buttons that open these
+// inputs must use @click.stop so their click never reaches this listener.
+// Named handlers: the tree unmounts on every sidebar tab switch, so the
+// document listeners must be removed symmetrically or they accumulate.
+const handleDocClick = (event: MouseEvent): void => {
+  const target = event.target as HTMLElement | null
+  if (target && target.tagName !== 'INPUT') {
+    projectStore.CHANGE_ACTIVE_ITEM({})
+    projectStore.createCache = {}
+    projectStore.renameCache = null
+  }
+}
+
+const handleDocContextmenu = (event: MouseEvent): void => {
+  const target = event.target as HTMLElement | null
+  if (target && target.tagName !== 'INPUT') {
+    projectStore.createCache = {}
+    projectStore.renameCache = null
+  }
+}
+
+const handleDocKeydown = (event: KeyboardEvent): void => {
+  if (event.key === 'Escape') {
+    projectStore.createCache = {}
+    projectStore.renameCache = null
+  }
+}
+
 onMounted(() => {
   bus.on('SIDEBAR::show-new-input', handleInputFocus)
+  document.addEventListener('click', handleDocClick)
+  document.addEventListener('contextmenu', handleDocContextmenu)
+  document.addEventListener('keydown', handleDocKeydown)
+})
 
-  // Hide rename / create inputs on outside clicks. Buttons that open these
-  // inputs must use @click.stop so their click never reaches this listener.
-  document.addEventListener('click', (event) => {
-    const target = event.target as HTMLElement | null
-    if (target && target.tagName !== 'INPUT') {
-      projectStore.CHANGE_ACTIVE_ITEM({})
-      projectStore.createCache = {}
-      projectStore.renameCache = null
-    }
-  })
-
-  document.addEventListener('contextmenu', (event) => {
-    const target = event.target as HTMLElement | null
-    if (target && target.tagName !== 'INPUT') {
-      projectStore.createCache = {}
-      projectStore.renameCache = null
-    }
-  })
-
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      projectStore.createCache = {}
-      projectStore.renameCache = null
-    }
-  })
+onBeforeUnmount(() => {
+  bus.off('SIDEBAR::show-new-input', handleInputFocus)
+  document.removeEventListener('click', handleDocClick)
+  document.removeEventListener('contextmenu', handleDocContextmenu)
+  document.removeEventListener('keydown', handleDocKeydown)
 })
 </script>
 
