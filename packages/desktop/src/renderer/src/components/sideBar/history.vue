@@ -189,19 +189,31 @@ watch(
   { immediate: true }
 )
 
+// Newest-wins counter for the preview. Comparing identity would not work:
+// `preview` is `reactive()`, so what comes back out of `preview.meta` is a proxy,
+// never `===` the object that went in.
+let previewRequest = 0
+
 const openPreview = async (snapshot: VersionSnapshotMeta): Promise<void> => {
+  const seq = ++previewRequest
   preview.meta = snapshot
   preview.content = ''
   preview.visible = true
   preview.loading = true
   try {
     const content = await window.versionHistory.getContent(snapshot.pathname, snapshot.id)
+    // Reading a snapshot is a disk read, so a second click can overtake this one:
+    // a stale response must not land under the newly selected label, and its
+    // `finally` must not clear the loading flag of the request still in flight.
+    // Same guard as loadSnapshots above, which had one.
+    if (seq !== previewRequest) return
     preview.content = content ?? ''
   } catch (err) {
+    if (seq !== previewRequest) return
     console.error('Failed to load snapshot content:', err)
     preview.content = ''
   } finally {
-    preview.loading = false
+    if (seq === previewRequest) preview.loading = false
   }
 }
 
