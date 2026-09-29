@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { probeResultFromReply, scanWithBudget } from '@/components/search/regexProbeShared'
+import { createSeqGuard } from '@/components/search/searchRegexProbe'
 
 describe('scanWithBudget — the search probe scanner', () => {
   it('counts matches for a benign pattern', () => {
@@ -47,5 +48,28 @@ describe('probeResultFromReply — the budget decision', () => {
 
   it('keeps an uncompilable pattern distinguishable from a timeout', () => {
     expect(probeResultFromReply({ id: 1, status: 'invalid' })).toEqual({ status: 'invalid' })
+  })
+})
+
+describe('createSeqGuard — the newest call owns the emit', () => {
+  it('a superseded call is not actionable', () => {
+    const guard = createSeqGuard()
+    const first = guard.take()
+    const second = guard.take()
+    expect(guard.isLatest(first)).toBe(false)
+    expect(guard.isLatest(second)).toBe(true)
+  })
+
+  it('a call with no successor stays actionable, so paths that never await still emit', () => {
+    const guard = createSeqGuard()
+    expect(guard.isLatest(guard.take())).toBe(true)
+  })
+
+  it('two guards do not supersede each other', () => {
+    const search = createSeqGuard()
+    const other = createSeqGuard()
+    const seq = search.take()
+    other.take()
+    expect(search.isLatest(seq)).toBe(true)
   })
 })

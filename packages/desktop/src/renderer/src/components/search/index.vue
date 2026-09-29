@@ -145,7 +145,7 @@ import { useEditorStore } from '@/store/editor'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import debounce from 'lodash/debounce'
-import { probeSearchRegex } from './searchRegexProbe'
+import { createSeqGuard, probeSearchRegex } from './searchRegexProbe'
 import { ArrowDown, ArrowUp, RefreshRight, Switch } from '@element-plus/icons-vue'
 
 const { t } = useI18n()
@@ -307,14 +307,14 @@ const handleEnterKey = (event: KeyboardEvent) => {
   }
 }
 
-// Monotonic token for the async search pipeline. An awaited probe can resolve
-// after a newer query has taken over; emitting then would hand the engines a
-// pattern no probe ever checked (and report the timeout against the wrong
-// pattern), so a superseded call drops its own result.
-let searchSeq = 0
+// Newest-call-wins: an awaited probe can resolve after a newer query has taken
+// over; emitting then would hand the engines a pattern no probe ever checked
+// (and report the timeout against the wrong pattern), so a superseded call drops
+// its own result.
+const seqGuard = createSeqGuard()
 
 const searchFn = async () => {
-  const seq = ++searchSeq
+  const seq = seqGuard.take()
   const value = searchValue.value
   const opt = {
     isCaseSensitive: isCaseSensitive.value,
@@ -348,14 +348,14 @@ const searchFn = async () => {
     const text = editorStore.currentFile?.markdown ?? ''
     if (text) {
       const probe = await probeSearchRegex(value, opt, text)
-      if (seq !== searchSeq) return
+      if (!seqGuard.isLatest(seq)) return
       if (probe?.status === 'timeout') {
         searchErrorMsg.value = t('search.regexTimeout', { pattern: value })
         return
       }
     }
   }
-  if (seq !== searchSeq) return
+  if (!seqGuard.isLatest(seq)) return
 
   bus.emit('searchValue', { value, opt })
 }

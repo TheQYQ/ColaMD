@@ -43,6 +43,7 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 
 - 渲染端是 Pinia **options** store。把 action 簇外提成 `store/<cluster>.ts` 里的模块函数 `(store, ...)` 时，**store 内部的调用必须仍然走 `store.X()`**——绕过动作分派会被现有测试抓到。
 - 注释只在"为什么"不明显处写（隐藏的约束、微妙的不变量、针对某个 bug 的绕法）。规范见 `.github/COMMENTING-GUIDELINES.md`。
+- `test/unit/specs/search-prefill.spec.ts` 和 `source-code-image-action.spec.ts` 会剥掉 SFC 的 `import` 行、用 `new Function` 注入一份手写依赖清单来跑真实 setup。**给这两个 SFC 加 import 必须同步补那份清单**——漏掉的符号不报编译错，只在真被求值时抛 `ReferenceError`，走不到的路径会一直绿着掩盖它（2026-09-29 实测：PR #17 的 `probeSearchRegex` 就这样躺了一路）。
 - `prettier` 与根 ESLint 在 `async (` 的空格上直接对立，**它当不了门禁**；提交时 lint-staged 会跑它，后跑的赢。
 
 ## 流程

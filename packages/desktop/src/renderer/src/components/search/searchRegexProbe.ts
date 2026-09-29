@@ -72,6 +72,21 @@ export interface SearchProbeOptions {
 }
 
 /**
+ * Newest-call-wins token for an async pipeline: each call takes a number, and
+ * its result is actionable only while that number is still the latest. A call
+ * that resumes after being superseded must not act — in the search bar it would
+ * emit whatever the input holds at that moment, handing the engines a pattern no
+ * probe ever checked, and report a timeout against the wrong pattern.
+ */
+export function createSeqGuard() {
+  let latest = 0
+  return {
+    take: (): number => ++latest,
+    isLatest: (seq: number): boolean => seq === latest
+  }
+}
+
+/**
  * Pre-flight a search regex against the document text. Returns `null` when
  * the worker is unavailable or the text is empty (caller proceeds unguarded).
  *
