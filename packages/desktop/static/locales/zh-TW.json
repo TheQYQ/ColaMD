@@ -418,7 +418,6 @@
         "preferLooseListItem": "首選清單類型",
         "bulletListMarker": "項目符號清單中使用的標記",
         "orderListDelimiter": "有序清單中使用的分隔符",
-        "preferHeadingStyle": "ColaMD 中的首選標題樣式",
         "tabSize": "用 x 個空格替換製表符",
         "listIndentation": "選擇清單的縮排",
         "frontmatterType": "前言類型",
@@ -673,14 +672,6 @@
         "plantumlServer": {
           "title": "PlantUML 伺服器 URL"
         }
-      },
-      "misc": {
-        "preferHeadingStyle": {
-          "title": "偏好標題樣式",
-          "atx": "ATX 樣式",
-          "setext": "Setext 樣式"
-        },
-        "title": "其他"
       },
       "compatibility": {
         "enableGitlab": "啟用 GitLab 相容性",

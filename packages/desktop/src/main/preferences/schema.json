@@ -249,11 +249,6 @@
     "enum": [".", ")"],
     "default": "."
   },
-  "preferHeadingStyle": {
-    "description": "Markdown--The preferred heading style in ColaMD",
-    "enum": ["atx", "setext"],
-    "default": "atx"
-  },
   "tabSize": {
     "description": "Markdown--Replace the tab with x spaces",
     "type": "number",
