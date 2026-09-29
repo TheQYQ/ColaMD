@@ -446,6 +446,14 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - `probe === null`（Worker 建不起来，或文档为空）时**不加闸门直接搜**，只 `console.warn` 一次——宁可退回旧行为，也不因为探针自身故障而拒绝用户的正常搜索。
 - 代价的量级：合法正则每次输入（150ms 防抖）都要多一遍全篇扫描 + 一次整篇文本的结构化克隆；命中预算的模式先花 4s 探测再拒绝。
 
+**第四轮另三面（写路径自洽 / 文件名与路径 / 过期异步响应）已立案跟踪**：分别是 issue **#26**、**#27**、**#28**，条目、复现配方与"已确认干净"的清单都写在 issue 正文里，本节只记每批第一条的实测闭环。
+
+**#26 第 1 条：格式类动作把标签标成"已保存"→ 重启后静默丢内容（本批已修）**。`store/editor.ts` 的 `SET_LINE_ENDING`（`:755`）、`LISTEN_FOR_SET_ENCODING`（`:774`）、`LISTEN_FOR_SET_FINAL_NEWLINE`（`:786`）三处都写了 `this.currentFile.isSaved = true`，而**这三个动作根本不写盘**——`mt::set-line-ending` 只有菜单在发（`src/main/menu/actions/edit.ts:132`），主进程侧没有任何 handler；另两条是渲染端 bus 事件（`commands/fileEncoding.ts:77`、`commands/trailingNewline.ts:71`）。清掉脏标记之后：关标签不再询问（`store/tabClose.ts:30` 以 `isSaved` 判断），而重启时 `main/windows/editor.ts:641-646` 的规则是"已保存的标签可以用磁盘文本替换缓冲"——于是那次未保存的编辑**从磁盘、内存、崩溃缓冲三处同时消失**。修法就是把这三行去掉（元数据变更交给下一次保存落地），不新增"标成脏"的语义：那会让"打开菜单项点个值"凭空产生未保存工作，属产品决策，留在 #26。
+
+- 回归：`test/unit/specs/format-actions-dirty.spec.ts` 5 条（三个动作各一条 + 两条守住"干净标签不许变脏"和"同值重复调用无副作用"）。修复前**正好红 3 条**（`expected true to be false`），两条守卫修复前后都绿。
+- e2e：`test/e2e/format-line-ending-dirty.spec.ts`，真窗口里打字 → 发行尾切换 → 断言 `.editor-tabs li.unsaved` 还在。修复前红在**第二次**切换（`Expected: 1 / Received: 0`），因为第一次发送的值恰好等于文档当前行尾、被 `if (lineEnding !== oldLineEnding)` 早退吞掉——**这就是第一版用例空跑的原因**（初稿点一次菜单、断言标记还在，在未修复的构建上 2/2 全绿）。改成 `crlf → lf → crlf` 交替后，无论初始值是什么都至少两次是真切换。
+- 另两条同族动作没有 e2e：它们的唯一入口是命令面板的子命令流程（要开面板→选子命令），单条 IPC 打不到 `bus.on`；已按"覆盖到什么程度就说什么"记在 PR 里，store 层三条都有。
+
 ## 16. 已关闭的功能候选与重启条件（2026-09-29 重评估）
 
 评估结论：七项全部不做——各项代价都落在刚建好的安全边界或架构稳定性上，而收益属于低频或无证据场景。重启条件（成立时单独立项，其余不预支）：
