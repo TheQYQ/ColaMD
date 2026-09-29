@@ -226,7 +226,8 @@
     "replaceAll": "Substituir Todos",
     "replaceSingle": "Substituir Um",
     "invalidRegex": "Expressão regular inválida \"{pattern}\"",
-    "regexMatchEmpty": "Expressão regular corresponde à string vazia \"{pattern}\""
+    "regexMatchEmpty": "Expressão regular corresponde à string vazia \"{pattern}\"",
+    "regexTimeout": "Tempo limite da expressão regular"
   },
   "sideBar": {
     "tree": {

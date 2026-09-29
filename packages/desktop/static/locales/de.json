@@ -226,7 +226,8 @@
     "replaceAll": "Alle ersetzen",
     "replaceSingle": "Einzeln ersetzen",
     "invalidRegex": "Ungültiger regulärer Ausdruck \"{pattern}\"",
-    "regexMatchEmpty": "Regulärer Ausdruck entspricht leerem String \"{pattern}\""
+    "regexMatchEmpty": "Regulärer Ausdruck entspricht leerem String \"{pattern}\"",
+    "regexTimeout": "Timeout beim regulären Ausdruck"
   },
   "sideBar": {
     "tree": {

@@ -226,7 +226,8 @@
     "replaceAll": "Remplacer tout",
     "replaceSingle": "Remplacer un",
     "invalidRegex": "Expression régulière invalide \"{pattern}\"",
-    "regexMatchEmpty": "L'expression régulière correspond à une chaîne vide \"{pattern}\""
+    "regexMatchEmpty": "L'expression régulière correspond à une chaîne vide \"{pattern}\"",
+    "regexTimeout": "Délai dépassé pour l'expression régulière"
   },
   "sideBar": {
     "tree": {

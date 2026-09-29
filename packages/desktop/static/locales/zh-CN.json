@@ -226,7 +226,8 @@
     "replaceAll": "全部替换",
     "replaceSingle": "单个替换",
     "invalidRegex": "无效的正则表达式 \"{pattern}\"",
-    "regexMatchEmpty": "正则表达式 \"{pattern}\" 匹配到了空字符串"
+    "regexMatchEmpty": "正则表达式 \"{pattern}\" 匹配到了空字符串",
+    "regexTimeout": "正则执行超时"
   },
   "sideBar": {
     "tree": {

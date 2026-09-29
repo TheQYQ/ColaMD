@@ -145,6 +145,7 @@ import { useEditorStore } from '@/store/editor'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import debounce from 'lodash/debounce'
+import { probeSearchRegex } from './searchRegexProbe'
 import { ArrowDown, ArrowUp, RefreshRight, Switch } from '@element-plus/icons-vue'
 
 const { t } = useI18n()
@@ -306,7 +307,7 @@ const handleEnterKey = (event: KeyboardEvent) => {
   }
 }
 
-const searchFn = () => {
+const searchFn = async () => {
   if (isRegexp.value) {
     // Handle invalid regexp.
     try {
@@ -326,6 +327,26 @@ const searchFn = () => {
     } catch {
       searchErrorMsg.value = t('search.regexMatchEmpty', { pattern: searchValue.value })
       return
+    }
+    // ReDoS guard: pre-flight the pattern against the document in a worker
+    // with a hard timeout. muya and CodeMirror both scan synchronously on the
+    // main thread, so a catastrophic regex must be refused here instead of
+    // freezing the window.
+    const text = editorStore.currentFile?.markdown ?? ''
+    if (text) {
+      const probe = await probeSearchRegex(
+        searchValue.value,
+        {
+          isCaseSensitive: isCaseSensitive.value,
+          isWholeWord: isWholeWord.value,
+          isRegexp: isRegexp.value
+        },
+        text
+      )
+      if (probe?.status === 'timeout') {
+        searchErrorMsg.value = t('search.regexTimeout', { pattern: searchValue.value })
+        return
+      }
     }
   }
 
