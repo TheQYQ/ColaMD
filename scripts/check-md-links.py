@@ -84,4 +84,7 @@ if errors:
     for e in errors:
         print(' ', e)
     sys.exit(1)
-print(f'OK — all relative links, images and anchors in {len(FILES)} README files resolve.')
+print(
+    'OK — all relative links, images and anchors in '
+    f'{len(FILES)} markdown files (root README variants + docs/i18n + docs) resolve.'
+)

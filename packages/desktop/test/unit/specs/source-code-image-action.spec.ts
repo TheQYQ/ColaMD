@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path'
 import { parse, compileScript } from 'vue/compiler-sfc'
 import ts from 'typescript'
 import { ref } from 'vue'
+import { stripTopLevelImports } from '../sfcScriptHarness'
 
 // `handleImageAction` lives as a <script setup> closure in sourceCode.vue
 // (registered on the `image-action` bus during onMounted). The desktop unit
@@ -36,11 +37,9 @@ const loadComponent = (deps: Record<string, unknown>) => {
   const { descriptor } = parse(src)
   const compiled = compileScript(descriptor, { id: 'test' })
   // Drop every import; bindings come from the injected `__deps` object so the
-  // store/codeMirror/muya/config modules never load.
-  const noImports = compiled.content
-    .split('\n')
-    .filter((l) => !/^\s*import\s/.test(l))
-    .join('\n')
+  // store/codeMirror/muya/config modules never load. Stripping is per statement,
+  // not per line -- see test/unit/sfcScriptHarness.ts.
+  const noImports = stripTopLevelImports(compiled.content)
   // esbuild's transformSync trips over jsdom's TextEncoder realm, so transpile
   // the TS away with the (pure-JS) typescript compiler.
   const js = ts.transpileModule(noImports, {

@@ -6,6 +6,7 @@ import { parse, compileScript } from 'vue/compiler-sfc'
 import ts from 'typescript'
 import { ref, computed, watch, nextTick } from 'vue'
 import { createSeqGuard } from '@/components/search/searchRegexProbe'
+import { stripTopLevelImports } from '../sfcScriptHarness'
 
 // Regression guard for the find-bar prefill race (issue: the input showed a
 // stale single char like "T" instead of the selection). The bug lives entirely
@@ -33,10 +34,8 @@ const loadComponent = (deps: Record<string, unknown>) => {
   const src = readFileSync(vuePath, 'utf8')
   const { descriptor } = parse(src)
   const compiled = compileScript(descriptor, { id: 'test' })
-  const noImports = compiled.content
-    .split('\n')
-    .filter((l) => !/^\s*import\s/.test(l))
-    .join('\n')
+  // Per statement, not per line -- see test/unit/sfcScriptHarness.ts.
+  const noImports = stripTopLevelImports(compiled.content)
   const js = ts.transpileModule(noImports, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
   }).outputText
