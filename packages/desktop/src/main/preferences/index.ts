@@ -11,6 +11,10 @@ import type { IUserPreferences, StartUpAction } from '@shared/types/preferences'
 import schema from './schema.json'
 import { typedOn } from '../ipc/typedOn'
 import { typedSend } from '../ipc/typedSend'
+import {
+  compilePreferencesValidator,
+  quarantineInvalidPreferencesFile
+} from './preferencesFileGuard'
 
 // Retired value, accepted only to be rewritten by the 0.18.6 migration below.
 const LEGACY_LAST_STATE = 'lastState'
@@ -55,20 +59,29 @@ class Preference extends TypedEmitter<PreferenceEvents> {
     this.hasPreferencesFile = fs.existsSync(
       path.join(this.preferencesPath, `./${PREFERENCES_FILE_NAME}.json`)
     )
+    // Self-heal a corrupt or schema-violating preferences file BEFORE the
+    // Store constructor sees it: conf's clearInvalidConfig defaults to false,
+    // so such a file throws from the constructor and the app crash-loops on
+    // every launch until the file is deleted by hand. The quarantined copy is
+    // preserved beside the original; startup proceeds from defaults.
+    quarantineInvalidPreferencesFile(
+      path.join(this.preferencesPath, `${PREFERENCES_FILE_NAME}.json`),
+      compilePreferencesValidator(schema)
+    )
     this.store = new Store<IUserPreferences>({
       schema: schema as unknown as Schema<IUserPreferences>,
-      name: PREFERENCES_FILE_NAME,
-      migrations: {
-        '0.18.6': (store) => {
-          if ((store.get('startUpAction') as string) === LEGACY_LAST_STATE) {
-            store.set('startUpAction', START_UP_ACTION_AFTER_LAST_STATE)
-          }
-        }
-      },
-      beforeEachMigration: (_store, context) => {
-        log.info(`Preferences migration: ${context.fromVersion} -> ${context.toVersion}`)
-      }
+      name: PREFERENCES_FILE_NAME
     })
+
+    // MarkText-era stores can carry `startUpAction: 'lastState'`. The
+    // version-gated migration for it ('0.18.6') can never run under this
+    // app's 0.1.x versioning (conf requires candidate <= app version), so
+    // rewrite the legacy value unconditionally instead — resolveStartupPlan
+    // would otherwise treat it as "no plan" and silently drop the
+    // restore-last-session behavior.
+    if ((this.store.get('startUpAction') as string) === LEGACY_LAST_STATE) {
+      this.store.set('startUpAction', START_UP_ACTION_AFTER_LAST_STATE)
+    }
 
     this.staticPath = path.join(global.__static, 'preference.json')
     this.init()
@@ -168,13 +181,28 @@ class Preference extends TypedEmitter<PreferenceEvents> {
     // is merged. Subscribers fold the payload over getAll(), so looping the
     // emit woke each of them N times — a { theme, autoSave } pair rebuilt the
     // native menu twice.
+    //
+    // Each key is contained: conf throws "Config schema violation" on a value
+    // that fails the schema, and `mt::set-user-preference` is an on-channel
+    // fed by the renderer — an invalid write must be skipped with a warning,
+    // not surface as an uncaught exception in the main process. The broadcast
+    // carries only the keys that were actually applied.
     const keys = Object.keys(settings)
+    const applied: Record<string, unknown> = {}
     for (const key of keys) {
-      this.store.set(key, settings[key])
+      try {
+        this.store.set(key, settings[key])
+        applied[key] = settings[key]
+      } catch (err) {
+        log.warn(
+          `Rejected preference write for "${key}" (schema violation):`,
+          err instanceof Error ? err.message : err
+        )
+      }
     }
 
-    if (keys.length > 0) {
-      ipcMain.emit('broadcast-preferences-changed', { ...settings })
+    if (Object.keys(applied).length > 0) {
+      ipcMain.emit('broadcast-preferences-changed', applied)
     }
   }
 
