@@ -5,7 +5,8 @@ import {
   focusEditor,
   enterSourceMode,
   exitSourceMode,
-  sendIpcToRenderer
+  sendIpcToRenderer,
+  closeApp
 } from './helpers'
 
 // #3531 — the paragraph edit commands (e.g. the "Insert Table" wizard) still
@@ -29,7 +30,7 @@ test.describe('paragraph edit commands are suppressed in source mode (#3531)', (
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('the Insert Table wizard does not open while in source-code mode', async () => {

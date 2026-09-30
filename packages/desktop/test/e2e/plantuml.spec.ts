@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, focusEditor } from './helpers'
+import { launchWithMarkdown, focusEditor, closeApp } from './helpers'
 
 // Validates that @muyajs/core renders a plantuml code block to a plantuml.com
 // img. The new engine encodes the diagram via `plantuml-encoder` and builds a
@@ -22,7 +22,7 @@ test.describe('PlantUML render via plantuml-encoder', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('plantuml block renders an img with the default plantuml.com src', async () => {

@@ -5,7 +5,8 @@ import {
   waitForEditor,
   enterSourceMode,
   clickMenuById,
-  ensureTocVisible
+  ensureTocVisible,
+  closeApp
 } from './helpers'
 
 // colamd #3580: clicking a TOC entry in SOURCE CODE mode must scroll the
@@ -86,7 +87,7 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('clicking a deep heading scrolls down and lands it near the top', async () => {

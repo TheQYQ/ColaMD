@@ -4,7 +4,8 @@ import {
   launchWithMarkdown,
   getMarkdownContent,
   setSourceMarkdown,
-  placeCaretInEditor
+  placeCaretInEditor,
+  closeApp
 } from './helpers'
 
 // Item 95 — the live REAL-keyboard path that converts a paragraph into a
@@ -42,7 +43,7 @@ test.describe('Code block typing — real-keyboard fenced conversion (item 95)',
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test.beforeEach(async () => {

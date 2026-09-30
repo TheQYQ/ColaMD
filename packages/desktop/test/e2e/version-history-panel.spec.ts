@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, placeCaretInEditor, sendIpcToRenderer } from './helpers'
+import { launchWithMarkdown, placeCaretInEditor, sendIpcToRenderer, closeApp } from './helpers'
 
 // The version-history panel end to end: real saves create snapshots, the
 // sidebar panel lists them, and restoring puts an older body back into the
@@ -75,7 +75,7 @@ test.describe('version history panel', () => {
 
   test.afterAll(async () => {
     if (app) {
-      await app.close()
+      await closeApp(app)
     }
   })
 })

@@ -31,7 +31,8 @@ import {
   markAllTabsClean,
   sendIpcToRenderer,
   typeIntoEditor,
-  waitForEditor
+  waitForEditor,
+  closeApp
 } from './helpers'
 
 const TAB = '.editor-tabs li[data-id]'
@@ -56,7 +57,7 @@ test.describe('Format actions keep the unsaved marker', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('every line-ending transition keeps the tab unsaved', async () => {

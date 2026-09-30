@@ -4,7 +4,8 @@ import {
   launchWithMarkdown,
   getMarkdownContent,
   expectNoRendererErrors,
-  clearRendererErrors
+  clearRendererErrors,
+  closeApp
 } from './helpers'
 
 // Item 124 — Space on a selected image opens the desktop SimpleImageViewer;
@@ -75,7 +76,7 @@ test.describe('SimpleImageViewer (Space-to-preview + Esc close)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test.beforeEach(async () => {

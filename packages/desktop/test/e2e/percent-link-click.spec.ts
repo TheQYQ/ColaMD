@@ -12,7 +12,7 @@ import type { ElectronApplication, Page } from 'playwright'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { launchElectron, waitForEditor } from './helpers'
+import { launchElectron, waitForEditor, closeApp } from './helpers'
 
 const TAB = '.editor-tabs li[data-id]'
 
@@ -35,7 +35,7 @@ test.describe('Clicking a link whose target contains a literal percent', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
     if (dir) fs.rmSync(dir, { recursive: true, force: true })
   })
 

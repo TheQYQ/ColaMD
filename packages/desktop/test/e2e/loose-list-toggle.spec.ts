@@ -6,7 +6,8 @@ import {
   setSourceMarkdown,
   getMarkdownContent,
   placeCaretInEditor,
-  waitForMenuReady
+  waitForMenuReady,
+  closeApp
 } from './helpers'
 
 // Item 41 — desktop e2e half of the loose/tight list-item toggle.
@@ -41,7 +42,7 @@ test.describe('Loose/tight list-item toggle', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   // FIXME(headless): the loose/tight menu toggle acts on the engine's active

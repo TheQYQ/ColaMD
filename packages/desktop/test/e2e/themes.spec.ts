@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, clickMenuById, setSourceMarkdown } from './helpers'
+import { launchWithMarkdown, clickMenuById, setSourceMarkdown, closeApp } from './helpers'
 
 test.describe('Theme switching', () => {
   let app: ElectronApplication
@@ -13,7 +13,7 @@ test.describe('Theme switching', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('Switch to a dark theme adds body.dark', async () => {

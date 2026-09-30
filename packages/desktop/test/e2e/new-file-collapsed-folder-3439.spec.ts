@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchElectron } from './helpers'
+import { launchElectron, closeApp } from './helpers'
 
 // #3439 — invoking "New File" (sidebar context menu) on a COLLAPSED folder did
 // nothing: the create <input> only renders inside the folder's expanded
@@ -62,7 +62,7 @@ test.describe('New File on a collapsed folder (#3439)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('the create input appears when New File targets a collapsed folder', async () => {

@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, clickMenuById, enterSourceMode, exitSourceMode } from './helpers'
+import {
+  launchWithMarkdown,
+  clickMenuById,
+  enterSourceMode,
+  exitSourceMode,
+  closeApp
+} from './helpers'
 
 // Read the live `checked`/`enabled` state of a view-mode menu item straight
 // from the active application menu — the same Menu instance that
@@ -61,7 +67,7 @@ test.describe('View modes', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('Toggle focus mode adds and removes .focus on .editor-wrapper', async () => {
@@ -188,7 +194,7 @@ test.describe('View modes — focus mode dims non-active blocks (item 250)', () 
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('item 250: active top-level block is full opacity, siblings are dimmed', async () => {
@@ -277,7 +283,7 @@ test.describe('View modes — typewriter scrolling (item 173)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   // Caret block bounding-box top relative to the scroll container's viewport.

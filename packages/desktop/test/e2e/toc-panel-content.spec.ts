@@ -5,7 +5,8 @@ import {
   clickMenuById,
   waitForEditor,
   ensureTocVisible,
-  markAllTabsClean
+  markAllTabsClean,
+  closeApp
 } from './helpers'
 
 // Item 240 — TOC/outline panel CONTENT + live update.
@@ -95,7 +96,7 @@ test.describe('TOC panel content + live update', () => {
   test.afterAll(async () => {
     if (app) {
       await markAllTabsClean(app, page)
-      await app.close()
+      await closeApp(app)
     }
   })
 

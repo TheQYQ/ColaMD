@@ -3,7 +3,7 @@ import type { ElectronApplication, Page } from 'playwright'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { launchWithMarkdown, waitForEditor } from './helpers'
+import { launchWithMarkdown, waitForEditor, closeApp } from './helpers'
 
 // mt::rename / mt::move-file used to log a main-process error and return when
 // fsRename failed, leaving the tab state silently diverged from disk. The fix
@@ -39,7 +39,7 @@ test.describe('Rename failure surfaces an error notification', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('a failed rename shows a Rename failed notification', async () => {

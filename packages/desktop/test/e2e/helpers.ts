@@ -49,11 +49,13 @@ export interface LaunchResult {
 }
 
 export interface LaunchOptions {
-  // When true, sets COLAMD_ERROR_INTERACTION=1 in the launch env so
-  // src/main/exceptionHandler.ts suppresses the modal "Unexpected error"
-  // dialog. Only crash-guard specs that explicitly call expectNoRendererErrors
-  // should opt in — otherwise existing specs would silently ignore renderer
-  // exceptions that previously surfaced as a dialog (a hidden regression risk).
+  // Renderer exceptions must be visible in e2e by default (#34 candidate 2):
+  // every launch sets COLAMD_ERROR_INTERACTION=1 (src/main/exceptionHandler.ts
+  // suppresses the modal "Unexpected error" dialog) and installs the renderer
+  // error counter; closeApp() then fails the spec on any uncaught renderer
+  // exception instead of letting it pass silently behind an invisible dialog.
+  // Pass false only for specs that must exercise the real dialog (crash-guard
+  // class); the counter is installed either way.
   suppressErrorDialog?: boolean
 }
 
@@ -70,7 +72,10 @@ export const launchElectron = async (
   const env: Record<string, string> = {}
   for (const [k, v] of Object.entries(process.env)) if (v !== undefined) env[k] = v
   env.PERF_TESTING = 'true'
-  if (options.suppressErrorDialog) env.COLAMD_ERROR_INTERACTION = '1'
+  // Suppress the blocking dialog unless a spec explicitly opts out (crash-guard
+  // class). Note: must stay UNSET (not empty) for the dialog to come back —
+  // exceptionHandler reads the key's truthiness.
+  if (options.suppressErrorDialog !== false) env.COLAMD_ERROR_INTERACTION = '1'
   const app = await _electron.launch({
     executablePath,
     args,
@@ -78,7 +83,10 @@ export const launchElectron = async (
     env,
     timeout: 30000
   })
-  if (options.suppressErrorDialog) await installRendererErrorCounter(app)
+  // #34 candidate 2: the counter is installed on EVERY launch, so renderer
+  // exceptions are always captured (and closeApp() fails the spec on them) —
+  // not just in specs that remember to opt in.
+  await installRendererErrorCounter(app)
   await installUnsavedDialogAutoDismiss(app)
   const page = await app.firstWindow()
   await page.waitForLoadState('domcontentloaded')
@@ -155,6 +163,34 @@ export const expectNoRendererErrors = async (app: ElectronApplication): Promise<
     throw new Error(`Expected no renderer errors, captured ${errors.length}:\n\n${summary}`)
   }
   expect(errors.length).toBe(0)
+}
+
+// Standard teardown for every e2e app instance (#34 candidate 2): closes the
+// app and fails the spec when the counter captured uncaught renderer
+// exceptions during its lifetime. Specs that intentionally produce renderer
+// errors must clearRendererErrors() before closing (the crash-guard specs
+// already do). Tolerates an already-dead app so teardown never hangs.
+export const closeApp = async (app: ElectronApplication): Promise<void> => {
+  let errors: Array<{ message?: string; name?: string; stack?: string }> = []
+  try {
+    errors = await getRendererErrors(app)
+  } catch {
+    // The app process is already gone; nothing left to report.
+  }
+  try {
+    await app.close()
+  } catch (err) {
+    console.error('app.close() failed during closeApp:', err)
+  }
+  if (errors.length > 0) {
+    const detail = errors
+      .map(
+        (e, i) =>
+          `[${i + 1}] ${e.name ?? 'Error'}: ${e.message ?? '(no message)'}${e.stack ? `\n${e.stack}` : ''}`
+      )
+      .join('\n')
+    throw new Error(`${errors.length} uncaught renderer exception(s) during this spec:\n${detail}`)
+  }
 }
 
 // Poll until a renderer error matching `predicate` is captured (or timeout).

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, setSourceMarkdown } from './helpers'
+import { launchWithMarkdown, setSourceMarkdown, closeApp } from './helpers'
 
 // O14 ④ — four engine capabilities that shipped with no desktop-level test at
 // all. The engine package already proves the parsing (its `alert.spec.ts` and
@@ -34,7 +34,7 @@ test.describe('Markdown extension capabilities in the real renderer', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('a GitHub alert blockquote carries the alert type class', async () => {

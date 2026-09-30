@@ -8,7 +8,8 @@ import {
   focusEditor,
   typeIntoEditor,
   getMarkdownContent,
-  expectNoRendererErrors
+  expectNoRendererErrors,
+  closeApp
 } from './helpers'
 
 // Phase G — G7 / G8 parity.
@@ -85,7 +86,7 @@ test.describe('Parity G7 — WYSIWYG -> source caret sync', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('G7: source mode opens at the line/column the WYSIWYG caret was on', async () => {
@@ -136,7 +137,7 @@ test.describe('Parity G8 — language switch refreshes inline hints', () => {
     // The rendered hint changed language without re-typing/reloading.
     expect(zhHint).not.toBe(enHint)
 
-    await app.close()
+    await closeApp(app)
   })
 })
 
@@ -180,7 +181,7 @@ test.describe('Heading creation under zh-CN does not crash the renderer (item 27
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('typing `# Hello` renders an h1 with the right text under zh-CN', async () => {

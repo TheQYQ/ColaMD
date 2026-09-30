@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, setSourceMarkdown, getMarkdownContent } from './helpers'
+import { launchWithMarkdown, setSourceMarkdown, getMarkdownContent, closeApp } from './helpers'
 
 // ---------------------------------------------------------------------------
 // Coverage backfill (checklist items 30, 42). No e2e anywhere drives
@@ -85,7 +85,7 @@ test.describe('List Tab/Shift-Tab nesting (items 30, 42)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('Tab nests the second bullet item under the first; Shift-Tab flattens it', async () => {

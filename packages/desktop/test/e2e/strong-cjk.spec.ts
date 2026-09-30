@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, setSourceMarkdown } from './helpers'
+import { launchWithMarkdown, setSourceMarkdown, closeApp } from './helpers'
 
 test.describe('Strong emphasis with CJK boundaries (#4307)', () => {
   let app: ElectronApplication
@@ -13,7 +13,7 @@ test.describe('Strong emphasis with CJK boundaries (#4307)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   // ENGINE #4307 (now fixed): the @muyajs/core markdown parser recognises strong

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { launchElectron, launchWithMarkdown } from './helpers'
+import { launchElectron, launchWithMarkdown, closeApp } from './helpers'
 
 // Since the Typora-style sidebar rebuild the TOC panel never auto-opens (the
 // autoShowToc preference was removed end-to-end): opening a file leaves the
@@ -16,7 +16,7 @@ test.describe('TOC panel does not auto-open on file open', () => {
       await page.waitForTimeout(500)
       await expect(page.locator('.side-bar-toc')).toHaveCount(0)
     } finally {
-      await app.close()
+      await closeApp(app)
     }
   })
 
@@ -28,7 +28,7 @@ test.describe('TOC panel does not auto-open on file open', () => {
       // auto-selected.
       await expect(page.locator('.side-bar-toc')).toHaveCount(0)
     } finally {
-      await app.close()
+      await closeApp(app)
     }
   })
 })

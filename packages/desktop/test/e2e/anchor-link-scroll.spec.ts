@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, expectNoRendererErrors } from './helpers'
+import { launchWithMarkdown, expectNoRendererErrors, closeApp } from './helpers'
 
 // ---------------------------------------------------------------------------
 // Coverage backfill (checklist item 236). The store-level
@@ -81,7 +81,7 @@ test.describe('In-document anchor link click scrolls the editor (item 236)', () 
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('the rendered link resolves its href to the in-doc anchor and the heading is present', async () => {
