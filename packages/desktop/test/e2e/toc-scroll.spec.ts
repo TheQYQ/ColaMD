@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, clickMenuById, waitForEditor, ensureTocVisible } from './helpers'
+import {
+  launchWithMarkdown,
+  clickMenuById,
+  waitForEditor,
+  ensureTocVisible,
+  closeApp
+} from './helpers'
 
 // Build a long document with many top-level headings so the editor content
 // overflows its scroll container. Each heading title is unique so the sidebar
@@ -125,7 +131,7 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('clicking a deep outline entry scrolls the editor to that heading', async () => {

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import fs from 'fs'
-import { launchWithMarkdown, waitForMenuReady } from './helpers'
+import { launchWithMarkdown, waitForMenuReady, closeApp } from './helpers'
 
 // #1861 — rewriting the open file on disk with byte-identical content (e.g. a
 // git checkout that left it unchanged) fires a watcher 'change', but must NOT
@@ -35,6 +35,6 @@ test.describe('Issue #1861 — content-identical file change', () => {
     fs.writeFileSync(filePath, 'hello\nworld\nchanged\n', 'utf-8')
     await expect.poll(() => isDirty(page), { timeout: 8000 }).toBe(true)
 
-    await app.close()
+    await closeApp(app)
   })
 })

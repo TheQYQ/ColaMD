@@ -9,7 +9,8 @@ import {
   exitSourceMode,
   getMarkdownContent,
   setSourceMarkdown,
-  sendIpcToRenderer
+  sendIpcToRenderer,
+  closeApp
 } from './helpers'
 
 // ---------------------------------------------------------------------------
@@ -83,7 +84,7 @@ test.describe('All blocks round-trip + save byte-stability (item 39)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
     // Restore the fixture to its original bytes regardless of test outcome so
     // the working tree is left untouched.
     try {

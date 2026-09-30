@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication } from 'playwright'
-import { launchElectron } from './helpers'
+import { launchElectron, closeApp } from './helpers'
 
 test.describe('Test XSS Vulnerabilities', () => {
   let app: ElectronApplication
@@ -14,7 +14,7 @@ test.describe('Test XSS Vulnerabilities', () => {
   })
 
   test.afterAll(async () => {
-    await app.close()
+    await closeApp(app)
   })
 
   test('Load malicious document', async () => {

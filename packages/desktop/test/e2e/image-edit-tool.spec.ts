@@ -7,7 +7,8 @@ import {
   sendIpcToRenderer,
   setSourceMarkdown,
   expectNoRendererErrors,
-  clearRendererErrors
+  clearRendererErrors,
+  closeApp
 } from './helpers'
 
 // Item 113 — Format -> Image desktop e2e wiring.
@@ -84,7 +85,7 @@ test.describe('Format -> Image edit tool wiring', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test.beforeEach(async () => {

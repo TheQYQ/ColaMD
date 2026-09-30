@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, sendIpcToRenderer, focusEditor } from './helpers'
+import { launchWithMarkdown, sendIpcToRenderer, focusEditor, closeApp } from './helpers'
 
 // #3458 — re-pressing Find (Cmd/Ctrl-F) while the bar is already open just
 // re-focused the input without selecting it, so the caret landed after the
@@ -21,7 +21,7 @@ test.describe('Find bar reopen selects the existing term (#3458)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('re-opening Find highlights the existing query so it can be typed over', async () => {

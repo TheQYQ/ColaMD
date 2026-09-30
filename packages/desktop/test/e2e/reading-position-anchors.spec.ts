@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { ensureTocVisible, enterSourceMode, launchWithMarkdown } from './helpers'
+import { ensureTocVisible, enterSourceMode, launchWithMarkdown, closeApp } from './helpers'
 
 // O14 ④ — the two "keep the reading position" capabilities from Phase 1/2:
 //
@@ -96,7 +96,7 @@ test.describe('Outline follows the viewport', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('scrolling the editor moves the outline highlight to that section', async () => {
@@ -139,7 +139,7 @@ test.describe('Entering Source Code mode scrolls to the caret', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('the source editor opens scrolled to the line the WYSIWYG caret was on', async () => {

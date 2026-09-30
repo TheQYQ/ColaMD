@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown } from './helpers'
+import { launchWithMarkdown, closeApp } from './helpers'
 
 // Post-migration (muyajs -> @muyajs/core) coverage backfill for the
 // "Wrap Code Blocks" and "Code Block Line Numbers" editor preferences.
@@ -49,7 +49,7 @@ test.describe('Code block wrap + line-numbers preferences', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   // Item 99: wrap preference toggles white-space on .mu-code-block .mu-code.

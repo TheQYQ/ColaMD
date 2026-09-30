@@ -3,7 +3,7 @@ import type { ElectronApplication, Page } from 'playwright'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { launchElectron, waitForEditor, waitForMenuReady } from './helpers'
+import { launchElectron, waitForEditor, waitForMenuReady, closeApp } from './helpers'
 
 // These specs exercise the path-scope enforcement that guards the renderer-facing
 // mutating IPC channels. A compromised renderer (the threat model) must NOT be
@@ -38,7 +38,7 @@ test.describe('Path scope enforcement (M2 security package)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('write-file INSIDE the allowed root succeeds', async () => {

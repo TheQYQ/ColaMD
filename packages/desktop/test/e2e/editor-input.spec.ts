@@ -9,7 +9,8 @@ import {
   placeCaretInEditor,
   setSourceMarkdown,
   sendIpcToRenderer,
-  markAllTabsClean
+  markAllTabsClean,
+  closeApp
 } from './helpers'
 
 test.describe('Editor input and source-mode roundtrip', () => {
@@ -25,7 +26,7 @@ test.describe('Editor input and source-mode roundtrip', () => {
   test.afterAll(async () => {
     if (app) {
       await markAllTabsClean(app, page)
-      await app.close()
+      await closeApp(app)
     }
   })
 
@@ -114,7 +115,7 @@ test.describe('Status-bar word counter (item 24)', () => {
   test.afterAll(async () => {
     if (app) {
       await markAllTabsClean(app, page)
-      await app.close()
+      await closeApp(app)
     }
   })
 
@@ -208,7 +209,7 @@ test.describe('Edit > Select All (item 169)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('Select All escalates the selection to the whole WYSIWYG document', async () => {

@@ -14,7 +14,7 @@
 //    the repeated character freezes the window.
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { expectNoRendererErrors, focusEditor, launchWithMarkdown } from './helpers'
+import { expectNoRendererErrors, focusEditor, launchWithMarkdown, closeApp } from './helpers'
 
 const UNBALANCED_LABEL_DOC =
   '# Ref link\n\n[a(b]: http://example.com "title"\n\nSee [a(b] for details.\n'
@@ -45,7 +45,7 @@ test.describe('Reference-link label is not a regex', () => {
       await expect.poll(() => editorText(page)).toContain('example.com')
       await expectNoRendererErrors(app)
     } finally {
-      await app.close()
+      await closeApp(app)
     }
   })
 
@@ -58,7 +58,7 @@ test.describe('Reference-link label is not a regex', () => {
       await expect.poll(() => editorText(page)).toContain('example.com')
       await expectNoRendererErrors(app)
     } finally {
-      await app.close()
+      await closeApp(app)
     }
   })
 })

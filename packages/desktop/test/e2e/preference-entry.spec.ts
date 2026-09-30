@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { clickMenuById, launchElectron, waitForMenuReady } from './helpers'
+import { clickMenuById, launchElectron, waitForMenuReady, closeApp } from './helpers'
 
 // The preferences entry used to be verified only by a person clicking it once,
 // which leaves nothing to re-check. Two things are worth pinning: the menu item
@@ -34,7 +34,7 @@ test.describe('the Preferences entry', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('opens a rendered settings window', async () => {

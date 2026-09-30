@@ -23,7 +23,8 @@ import {
   clearRendererErrors,
   launchWithMarkdown,
   placeCaretInEditor,
-  typeIntoEditor
+  typeIntoEditor,
+  closeApp
 } from './helpers'
 
 test.describe('Crash: setStart Range offset', () => {
@@ -39,7 +40,7 @@ test.describe('Crash: setStart Range offset', () => {
   })
 
   test.afterEach(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('Issue #2526: typing escaped <pre>...</pre> then re-selecting does not crash', async () => {
@@ -215,7 +216,7 @@ test.describe('Crash: paste-induced setCursorRange', () => {
   })
 
   test.afterEach(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('Paste rich HTML into mid-paragraph does not crash', async () => {
@@ -300,7 +301,7 @@ test.describe('Crash counter sanity', () => {
       )
       expect(captured, 'expected the renderer-thrown error to reach the IPC sink').not.toBeNull()
     } finally {
-      await app.close()
+      await closeApp(app)
     }
   })
 })
