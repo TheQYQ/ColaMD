@@ -295,7 +295,7 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 1. **快速打开 `Ctrl+P` 退化为全文搜索。** `commands/quickOpen.ts:3` 写的是默认导入 `import FileSearcher from '@/node/ripgrepSearcher'`，而该文件的默认导出是 `RipgrepDirectorySearcher`（`node/ripgrepSearcher.ts:129-142`，`mode: 'text'`）；真正做文件名检索的具名 `export class FileSearcher`（`:144`，`mode: 'files'`）反而无人引用。根因是清理提交 `0646ad1` 删掉了 `node/fileSearcher.ts` —— 那 4 行只是 `export { FileSearcher as default } from './ripgrepSearcher'` 的转发垫片，被误判为死代码。**修法：改成具名导入。**
 2. **拼写检查可用性判断恒真**：`main/spellchecker/index.ts:46` 写成 `if (!win.webContents.session.isSpellCheckerEnabled)`，缺 `()`，"不可用"告警永不触发。
-3. **`startUpAction` 枚举跨进程不一致**：渲染端类型是 `'restoreAll' | 'lastSession' | 'blank'`（`store/preferences.ts:10`），主进程实际比较 `'restoreAll' | 'folder' | 'openLastFolder'`（`main/app/index.ts:288-299`），`'lastState'` 靠迁移改写（`main/preferences/index.ts:49-50`）。因为字段声明为 `StartUpAction | string`，编译不报错，但 `'lastSession'` 是死值、`'folder'`/`'openLastFolder'` 未被类型覆盖。
+3. **`startUpAction` 枚举跨进程不一致**：渲染端类型是 `'restoreAll' | 'lastSession' | 'blank'`（`store/preferences.ts:10`），主进程实际比较 `'restoreAll' | 'folder' | 'openLastFolder'`（`main/app/index.ts:288-299`），`'lastState'` 由构造函数无条件改写（原 0.18.6 版本门迁移永不执行，已移除；见 §15 第五轮）。因为字段声明为 `StartUpAction | string`，编译不报错，但 `'lastSession'` 是死值、`'folder'`/`'openLastFolder'` 未被类型覆盖。
 4. **偏好写入的同步广播**：`main/preferences/index.ts:135` 每次 `setItem` 都同步 `ipcMain.emit('broadcast-preferences-changed')`，`setItems` 逐键循环。**原判定"N×M 次原生菜单重建"不成立**：唯一的重建方 AppMenu 已在 `main/menu/index.ts:527-537` 按 key 判定（只有 `theme`/`followSystemTheme`/`language`/`autoSave` 才重建），而实测三处 `setItems` 调用方（`main/app/index.ts:521,842`、`main/windows/editor.ts:425`）每次只传一键。真正剩下的是批量写入时的广播条数与空对象也广播，见 O9。
 5. **无监听者的 IPC**：`main/dataCenter/index.ts:83,93` 广播 `broadcast-web-image-added/-removed`，全仓零监听且不在契约里。
 6. **空实现与名不副实的开关**：`main/preferences/index.ts` 的 `exportJSON`/`importJSON` 曾是空 `// todo`——**但全仓零调用方**（没有菜单项、没有 IPC、没有命令），所以不是"点了没反应"；`--safe`（`main/app/env.ts:101` 设 `global.COLAMD_SAFE_MODE`）也**并非无人消费**，`main/keyboard/shortcutHandler.ts:176-178` 会据此跳过用户键位文件，不实的是帮助文本"Disable plugins and other user configuration"（本仓无插件系统）。两条均已在 `fix/open-failure-visible`（`0c6df61`）按"摘掉入口"处理，见 O4。
@@ -567,6 +567,14 @@ AGENTS.md 的门禁表把"已知间歇形状"指到这里。这里只收**有 ru
 - 证据：每条"改前单跑红（核查已录）→ 改后单跑绿（各复跑两次）→ 所在文件按原序仍绿"；`toc-scroll` 那条的文件跑因为位置参数是正则而连带跑了 `source-toc-scroll`，实际是两文件 5 条一起绿。
 - 顺带修正三处 `路径:行号` 漂移（AGENTS.md 第 2 条说的"没有工具在守"又一处实例）：`playwright.config.ts` 注释里三个"重试即绿"的例子原先都指向**用例内部的语句行**（`editor-input.spec.ts:144`、`toc-panel-content.spec.ts:152`、`tab-switch-cursor.spec.ts:157`），改为声明行 `:127` / `:119` / `:150`；`PROJECT_GUIDE.md` 把 `view-modes` 的 `test.fixme` 写成 `:314`，实测在 `:309`。
 - **没做**：`mode: 'serial'` 一处都没加（它只把耦合制度化，`-g` 单跑仍坏，且前置失败会让后续用例 skip）；#34 的第二半（渲染端异常在 e2e 里默认不可见）不在本批。
+
+**第五轮**（设置迁移面，2026-09-30，PR #45）：三处真问题全部修复——
+
+1. **损坏/违反 schema 的 preferences.json = 启动崩溃循环**：conf 的 `clearInvalidConfig` 默认 false，这种文件让 Store 构造函数抛错，app 每次启动都崩直到手动删文件。修复：`main/preferences/preferencesFileGuard.ts` 在 Store 构造前预检（JSON.parse + 与 conf 同配置的 ajv 校验，注意必须按 conf 的包装方式编译成 `{type:'object', properties: <扁平映射>}`——直接编译扁平映射会在 ajv strict 下报 "unknown keyword"），不合格文件改名隔离（`.corrupt-<ts>` / `.invalid-<ts>`，原件保留），启动回落默认值。4 例单测。
+2. **渲染端写 schema 非法值 = main 未捕获异常**：`mt::set-user-preference` 是 on 通道、渲染端可发任意 JSON；conf 的 ajv 无 coerceTypes，非法值让 `conf.set` 抛 "Config schema violation"，经 exceptionHandler 变成阻塞弹框/日志。修复：`setItems` 逐键 try/catch，拒收键告警跳过；**广播只携带实际应用的键**——此前广播含被拒键，订阅方会折叠一个从未生效的值。
+3. **`0.18.6` 迁移是死代码**：conf 迁移门要求 candidate ≤ app 版本（0.1.4），`semver.gt('0.18.6','0.1.4')` = true → 永不执行；MarkText 时代的 `startUpAction: 'lastState'` 永远不会被改写，`resolveStartupPlan` 把它当 "no plan"，恢复上次会话的行为静默失效。修复：去掉版本门，构造后无条件改写旧值（幂等），死迁移条目移除。
+
+本批过程事故（留档）：本地对 PR #44 的合并提交误执行 `--amend`（把迁移改动卷进合并提交改写了哈希），远端未受影响；恢复路径 = 从远端真值建分支 + `cherry-pick -m 1` + 修正提交消息。
 
 ## 16. 已关闭的功能候选与重启条件（2026-09-29 重评估）
 
