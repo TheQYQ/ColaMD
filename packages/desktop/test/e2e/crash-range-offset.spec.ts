@@ -300,6 +300,10 @@ test.describe('Crash counter sanity', () => {
         5000
       )
       expect(captured, 'expected the renderer-thrown error to reach the IPC sink').not.toBeNull()
+      // The forced error has served its purpose — clear the sink so the
+      // standard closeApp teardown does not fail on this intentional throw.
+      const { clearRendererErrors } = await import('./helpers')
+      await clearRendererErrors(app)
     } finally {
       await closeApp(app)
     }
