@@ -71,9 +71,11 @@ import { askForImageAutoPath, cleanupUnreferencedImage, imageDeleted } from './i
 import {
   listenForExportSuccess,
   listenForPrintServiceClearup,
+  captureExportSource,
   sendExportResponse,
   sendPrintResponse,
-  type ExportPayload
+  type ExportPayload,
+  type ExportSource
 } from './exportPrint'
 import type { FormatLinkPayload, IpcMainEventChannels, VersionSnapshot } from '@shared/types/ipc'
 import type {
@@ -731,7 +733,17 @@ export const useEditorStore = defineStore('editor', {
     },
 
     EXPORT(payload: ExportPayload): void {
-      sendExportResponse(this, payload)
+      sendExportResponse(payload)
+    },
+
+    /**
+     * Freeze which document an export is for, at the moment the request starts.
+     * An export awaits (full-document render, native save dialog), so reading
+     * `currentFile` afterwards could name document A's output after document B
+     * if the user switched tabs meanwhile.
+     */
+    CAPTURE_EXPORT_SOURCE(): ExportSource | null {
+      return captureExportSource(this)
     },
 
     LISTEN_FOR_EXPORT_SUCCESS(): void {
@@ -752,7 +764,11 @@ export const useEditorStore = defineStore('editor', {
       if (lineEnding !== oldLineEnding) {
         this.currentFile.lineEnding = lineEnding
         this.currentFile.adjustLineEndingOnSave = lineEnding !== 'lf'
-        this.currentFile.isSaved = true
+        // Deliberately NOT touching `isSaved`: no write happens here -- there is no
+        // main-process handler for `mt::set-line-ending`, the new ending is applied
+        // by the next save. Marking the tab saved dropped the dirty flag, and the
+        // restart path (`main/windows/editor.ts:641-646`) then overwrites the
+        // unsaved buffer with the on-disk text. Regression: format-actions-dirty.spec.ts.
         this.UPDATE_LINE_ENDING_MENU()
         debouncedSendBufferedState()
       }
@@ -771,7 +787,8 @@ export const useEditorStore = defineStore('editor', {
         if (encoding !== encodingName) {
           this.currentFile.encoding.encoding = encodingName as string
           this.currentFile.encoding.isBom = false
-          this.currentFile.isSaved = true
+          // Same invariant as SET_LINE_ENDING: metadata only, nothing written, so
+          // the dirty flag survives and the next save carries the change.
           debouncedSendBufferedState()
         }
       })
@@ -783,7 +800,7 @@ export const useEditorStore = defineStore('editor', {
         const { trimTrailingNewline } = this.currentFile
         if (trimTrailingNewline !== value) {
           this.currentFile.trimTrailingNewline = value as number
-          this.currentFile.isSaved = true
+          // Third of the three metadata-only actions -- see SET_LINE_ENDING.
           debouncedSendBufferedState()
         }
       })

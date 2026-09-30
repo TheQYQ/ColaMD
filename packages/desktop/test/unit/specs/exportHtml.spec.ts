@@ -246,6 +246,44 @@ describe('exportStyledHTML — text direction (issue #4553)', () => {
   })
 })
 
+describe('exportStyledHTML — dollar patterns inside document content', () => {
+  // The body is re-emitted by replacing `<body>…</body>` in the engine document
+  // shell with a template built from `bodyHtml` (util/exportHtml.ts), and
+  // `bodyHtml` carries the rendered document -- i.e. user content lands in a
+  // **replacement string**, where `$&`, `` $` ``, `$'` and `$$` are not literal.
+  // `&` being escaped to `&amp;` by the renderer does not remove the `$&` pattern.
+  it('keeps a literal `$$` in the exported HTML instead of collapsing it', async () => {
+    const out = await exportStyledHTML(NO_MUYA, 'The shell pid is `$$` here.', {})
+
+    expect(out).toContain('<code>$$</code>')
+    expect(out).not.toContain('<code>$</code>')
+  })
+
+  it('does not paste the matched <body> back where the document had `$&`', async () => {
+    const out = await exportStyledHTML(NO_MUYA, 'Positional params: `$&` then `$1`.', {})
+
+    // One document shell, one article -- the expansion duplicates both.
+    expect((out.match(/<body>/g) || []).length).toBe(1)
+    expect((out.match(/<article class="markdown-body">/g) || []).length).toBe(1)
+    expect(out).toContain('<code>$&amp;</code>')
+  })
+
+  it('keeps a heading containing `$&` intact inside the injected [TOC]', async () => {
+    // Same class one level up: the TOC HTML is the replacement at the [TOC]
+    // injection. Level 2 because `getHtmlToc` drops a top heading unless
+    // `tocIncludeTopHeading` is set -- with only an H1 in the list it returns an
+    // empty TOC, which is the feature working, not this bug.
+    const toc = getHtmlToc([{ lvl: 2, content: 'Args $& and $1' }], {})
+    expect(toc).not.toBe('')
+
+    const out = await exportStyledHTML(NO_MUYA, '# Top\n\n## Args $& and $1\n\n[TOC]\n', { toc })
+
+    expect(out).not.toMatch(/<p>\s*\[TOC\]\s*<\/p>/i)
+    expect(out).toContain('Args $&amp; and $1')
+    expect((out.match(/<p class="toc-title">/g) || []).length).toBe(1)
+  })
+})
+
 describe('exportStyledHTML — relative image paths', () => {
   it('rewrites a relative img src to an absolute file:// URL (issue 230)', async () => {
     // window.DIRNAME is stubbed to '/docs', so `./a.png` resolves against it.

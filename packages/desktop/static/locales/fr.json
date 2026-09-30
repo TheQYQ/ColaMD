@@ -418,7 +418,6 @@
         "preferLooseListItem": "Le type de liste préféré",
         "bulletListMarker": "Le marqueur utilisé dans la liste à puces",
         "orderListDelimiter": "Le délimiteur utilisé dans la liste ordonnée",
-        "preferHeadingStyle": "Le style de titre préféré dans ColaMD",
         "tabSize": "Remplacer la tabulation par x espaces",
         "listIndentation": "Sélectionner l'indentation de liste",
         "frontmatterType": "Le type de frontmatter",
@@ -673,14 +672,6 @@
         "plantumlServer": {
           "title": "URL du serveur PlantUML"
         }
-      },
-      "misc": {
-        "preferHeadingStyle": {
-          "title": "Style de titre préféré",
-          "atx": "Style ATX",
-          "setext": "Style Setext"
-        },
-        "title": "Divers"
       },
       "compatibility": {
         "enableGitlab": "Activer la compatibilité GitLab",

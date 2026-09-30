@@ -7,6 +7,48 @@ import { t } from '../i18n'
 
 const SPECIAL_CHARS = /[\[\]\\^$.\|\?\*\+\(\)\/]{1}/g // eslint-disable-line no-useless-escape
 
+// `*` maps to `.*`, so a run of n stars becomes n nested `.*` groups that
+// backtrack against every non-matching tail: measured 23 s of a blocked
+// renderer main thread for six stars against one 69-character path. `.*.*`
+// accepts the same language as `.*`, so collapsing the run keeps results
+// identical. The only `*` the escaped source can contain is one produced by a
+// star, so a match always starts at a real star token -- a query's literal `.`
+// arrives as `\.` and never joins a run.
+const NESTED_STARS = /(?:\.\*)+/g
+
+/** Compiles a quick-open glob into a matcher, or returns null if the query is
+ *  not a valid pattern. `{` and `}` are not escaped, so a query like
+ *  `a{2,}{2,}` reaches the engine as a malformed quantifier ("Nothing to
+ *  repeat"); the caller then matches the query as literal text. */
+const compilePattern = (query: string): RegExp | null => {
+  const source = query
+    .replace(SPECIAL_CHARS, (p) => {
+      if (p === '*') return '.*'
+      return p === '\\' ? '\\\\' : `\\${p}`
+    })
+    .replace(NESTED_STARS, '.*')
+
+  try {
+    return new RegExp(source, 'i')
+  } catch {
+    return null
+  }
+}
+
+/**
+ * The query reaches ripgrep as an `--iglob` pattern, where `[` `]` `{` `}` `?`
+ * are syntax: searching `a[1]` matched `a1.md` and missed `a[1].md`, and an
+ * unbalanced one like `a{` made rg exit 2, which the panel shows as "nothing
+ * found". Each becomes a one-element bracket class -- measured against the
+ * bundled ripgrep 15.0.0, `*a[[]1[]].md` matches `a[1].md` and nothing else.
+ *
+ * A class rather than the usual `\` escape because `prepareGlobs`
+ * (`src/main/ipc/ripgrep.ts:142`) rewrites every `path.sep` in the pattern to
+ * `/`, which would eat the backslash on Windows. `*` stays the wildcard, as it
+ * does in the tab branch of this same command. #27 item 3.
+ */
+const escapeGlobLiteral = (query: string): string => query.replace(/[[\]{}?]/g, (c) => `[${c}]`)
+
 interface QuickOpenSubcommand {
   id: string
   description?: string
@@ -51,15 +93,20 @@ class QuickOpenCommand {
   }
 
   search = async (query: string): Promise<QuickOpenSubcommand[]> => {
-    // Show opened files when no query given.
-    if (!query) {
-      return this.subcommands
-    }
-
+    // Cancel what the previous keystroke started before answering anything. The
+    // empty-query branch below never touches the searcher, so backspacing to
+    // clear the box used to leave a running `rg --files` alive -- and since a
+    // cancelled searcher resolves instead of rejecting, that scan's results were
+    // still handed back to the palette afterwards. #28 item 4.
     const { _cancelFn } = this
     if (_cancelFn) {
       _cancelFn()
       this._cancelFn = null
+    }
+
+    // Show opened files when no query given.
+    if (!query) {
+      return this.subcommands
     }
 
     const timeout = delay(300)
@@ -122,19 +169,16 @@ class QuickOpenCommand {
 
     // Add files that are not in the current root directory but opened.
     if (tabsAvailable) {
-      const re = new RegExp(
-        query.replace(SPECIAL_CHARS, (p) => {
-          if (p === '*') return '.*'
-          return p === '\\' ? '\\\\' : `\\${p}`
-        }),
-        'i'
-      )
+      const re = compilePattern(query)
+      const lowerQuery = query.toLowerCase()
+      const matches = (pathname: string): boolean =>
+        re ? re.test(pathname) : pathname.toLowerCase().includes(lowerQuery)
 
       for (const tab of _editorState.tabs) {
         const { pathname } = tab
         if (
           pathname &&
-          re.test(pathname) &&
+          matches(pathname) &&
           (!rootPath || !window.fileUtils.isChildOfDirectory(rootPath, pathname))
         ) {
           searchResult.push(pathname)
@@ -155,25 +199,29 @@ class QuickOpenCommand {
     // Search root directory on disk.
     return new Promise<QuickOpenSubcommand[]>((resolve, reject) => {
       let canceled = false
-      const promises: Promise<void> & { cancel?: () => void } = this._directorySearcher
-        .search([rootPath!], '', {
-          didMatch: (result: unknown) => {
-            if (canceled) return
-            searchResult.push(result as string)
-          },
-          didSearchPaths: (numPathsFound: unknown) => {
-            // Cancel when more than 30 files were found. User should specify the search query.
-            if (!canceled && (numPathsFound as number) > 30) {
-              canceled = true
-              if (promises.cancel) {
-                promises.cancel()
-              }
-            }
-          },
+      // `cancel` lives on the promise the searcher returns. Chaining `.then` and
+      // `.catch` onto it, as this used to do, produces plain promises that lost
+      // the method, so both abort paths below silently did nothing: the scan ran
+      // to the end of the tree on every keystroke, and cancelling a superseded
+      // search cancelled nothing.
+      const search = this._directorySearcher.search([rootPath!], '', {
+        didMatch: (result: unknown) => {
+          if (canceled) return
+          searchResult.push(result as string)
+        },
+        didSearchPaths: (numPathsFound: unknown) => {
+          // Cancel when more than 30 files were found. User should specify the search query.
+          if (!canceled && (numPathsFound as number) > 30) {
+            canceled = true
+            search.cancel()
+          }
+        },
 
-          // Only search markdown files that contain the query string.
-          inclusions: this._getInclusions(query)
-        })
+        // Only search markdown files that contain the query string.
+        inclusions: this._getInclusions(query)
+      })
+
+      search
         .then(() => {
           this._cancelFn = null
           resolve(
@@ -192,22 +240,21 @@ class QuickOpenCommand {
       this._cancelFn = () => {
         this._cancelFn = null
         canceled = true
-        if (promises.cancel) {
-          promises.cancel()
-        }
+        search.cancel()
       }
     })
   }
 
   _getInclusions = (query: string): string[] => {
+    const glob = escapeGlobLiteral(query)
     // NOTE: This will fail on `foo.m` because we search for `foo.m.md`.
     if (window.fileUtils.hasMarkdownExtension(query)) {
-      return [`*${query}`]
+      return [`*${glob}`]
     }
 
     const inclusions: string[] = []
     for (let i = 0; i < window.fileUtils.MARKDOWN_INCLUSIONS.length; ++i) {
-      inclusions[i] = `*${query}` + window.fileUtils.MARKDOWN_INCLUSIONS[i]
+      inclusions[i] = `*${glob}` + window.fileUtils.MARKDOWN_INCLUSIONS[i]
     }
     return inclusions
   }

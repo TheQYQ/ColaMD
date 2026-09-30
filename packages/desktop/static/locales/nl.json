@@ -417,7 +417,6 @@
         "preferLooseListItem": "Het voorkeurs lijsttype",
         "bulletListMarker": "Het teken voor opsommingslijsten",
         "orderListDelimiter": "Het scheidingsteken voor genummerde lijsten",
-        "preferHeadingStyle": "De voorkeursstijl voor koppen",
         "tabSize": "Tab vervangen door x spaties",
         "listIndentation": "Inspringkeuze voor lijsten",
         "frontmatterType": "Het type Front Matter",
@@ -673,14 +672,6 @@
         "plantumlServer": {
           "title": "PlantUML server"
         }
-      },
-      "misc": {
-        "preferHeadingStyle": {
-          "title": "Voorkeursstijl koppen",
-          "atx": "ATX-stijl",
-          "setext": "Setext-stijl"
-        },
-        "title": "Diversen"
       },
       "compatibility": {
         "enableGitlab": "GitLab-compatibiliteit inschakelen",

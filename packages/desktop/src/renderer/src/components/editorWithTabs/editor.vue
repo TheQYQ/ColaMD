@@ -927,6 +927,13 @@ const handleExport = async (options: unknown) => {
     throw new Error(`Invalid type to export: "${type}".`)
   }
 
+  // Frozen before the first await: every branch below renders the whole
+  // document and then waits on a native save dialog, and the store used to read
+  // `currentFile` at that later moment -- which named document A's output after
+  // document B whenever the user switched tabs while A was rendering.
+  const source = editorStore.CAPTURE_EXPORT_SOURCE()
+  if (!source) return
+
   const extraCss = await getCssForOptions(opts as unknown as PdfCssOptions)
   const htmlToc = getHtmlToc(editor.value.getTOC(), opts as unknown as HtmlTocOptions)
   // The engine serializes only its flushed state; a keystroke in the last
@@ -946,7 +953,7 @@ const handleExport = async (options: unknown) => {
           toc: htmlToc,
           dir: props.textDirection
         })
-        editorStore.EXPORT({ type, content })
+        editorStore.EXPORT({ type, source, content })
       } catch (err) {
         log.error('Failed to export document:', err)
         notice.notify({
@@ -969,8 +976,8 @@ const handleExport = async (options: unknown) => {
           toc: htmlToc,
           dir: props.textDirection
         })
-        const bytes = exportDocx(content, htmlTitle || currentFile.value?.filename || 'Document')
-        editorStore.EXPORT({ type, bytes })
+        const bytes = exportDocx(content, htmlTitle || source.filename)
+        editorStore.EXPORT({ type, source, bytes })
       } catch (err) {
         log.error('Failed to export document:', err)
         notice.notify({
@@ -1005,7 +1012,7 @@ const handleExport = async (options: unknown) => {
           dir: props.textDirection
         })
         printer!.renderMarkdown(html, true, props.textDirection)
-        editorStore.EXPORT({ type, pageOptions })
+        editorStore.EXPORT({ type, source, pageOptions })
       } catch (err) {
         log.error('Failed to export document:', err)
         notice.notify({
@@ -1029,7 +1036,7 @@ const handleExport = async (options: unknown) => {
           toc: htmlToc,
           dir: props.textDirection
         })
-        editorStore.EXPORT({ type, content })
+        editorStore.EXPORT({ type, source, content })
       } catch (err) {
         log.error('Failed to export document:', err)
         notice.notify({
@@ -1046,7 +1053,7 @@ const handleExport = async (options: unknown) => {
     case 'rtf':
     case 'opml': {
       // Pandoc-converted formats: raw markdown goes to the CLI in main.
-      editorStore.EXPORT({ type, markdown })
+      editorStore.EXPORT({ type, source, markdown })
       break
     }
     case 'print': {

@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path'
 import { parse, compileScript } from 'vue/compiler-sfc'
 import ts from 'typescript'
 import { ref } from 'vue'
+import { stripTopLevelImports } from '../sfcScriptHarness'
 
 // `handleImageAction` lives as a <script setup> closure in sourceCode.vue
 // (registered on the `image-action` bus during onMounted). The desktop unit
@@ -36,11 +37,9 @@ const loadComponent = (deps: Record<string, unknown>) => {
   const { descriptor } = parse(src)
   const compiled = compileScript(descriptor, { id: 'test' })
   // Drop every import; bindings come from the injected `__deps` object so the
-  // store/codeMirror/muya/config modules never load.
-  const noImports = compiled.content
-    .split('\n')
-    .filter((l) => !/^\s*import\s/.test(l))
-    .join('\n')
+  // store/codeMirror/muya/config modules never load. Stripping is per statement,
+  // not per line -- see test/unit/sfcScriptHarness.ts.
+  const noImports = stripTopLevelImports(compiled.content)
   // esbuild's transformSync trips over jsdom's TextEncoder realm, so transpile
   // the TS away with the (pure-JS) typescript compiler.
   const js = ts.transpileModule(noImports, {
@@ -123,11 +122,7 @@ describe('sourceCode handleImageAction', () => {
   })
 
   it('rewrites only the line carrying the id, leaving siblings intact', () => {
-    const cm = makeCM(
-      'before\n![abc123](old.png)\nafter',
-      { line: 0, ch: 0 },
-      { line: 0, ch: 0 }
-    )
+    const cm = makeCM('before\n![abc123](old.png)\nafter', { line: 0, ch: 0 }, { line: 0, ch: 0 })
     bootHandler(cm)({ id: 'abc123', result: 'new.png', alt: 'cat' })
     expect(cm.getValue()).toBe('before\n![cat](new.png)\nafter')
   })
@@ -172,13 +167,30 @@ describe('sourceCode handleImageAction', () => {
     expect(anchor.ch).toBe(4)
   })
 
+  it('treats dollar patterns in the alt text and the path as literal text', () => {
+    // The rewrite passed `alt`/`result` as a replacement STRING, so `$&` expanded
+    // to the matched markup -- which also leaked the internal image id into the
+    // visible line -- and `$$` lost a character.
+    const cm = makeCM('![abc123](old.png) tail', { line: 0, ch: 0 }, { line: 0, ch: 0 })
+    bootHandler(cm)({ id: 'abc123', result: 'new.png', alt: 'cost $& here' })
+    expect(cm.getValue()).toBe('![cost $& here](new.png) tail')
+
+    const cm2 = makeCM('![abc123](old.png)', { line: 0, ch: 0 }, { line: 0, ch: 0 })
+    bootHandler(cm2)({ id: 'abc123', result: 'a$$b.png', alt: 'cat' })
+    expect(cm2.getValue()).toBe('![cat](a$$b.png)')
+
+    const cm3 = makeCM('![abc123](old.png) tail', { line: 0, ch: 0 }, { line: 0, ch: 0 })
+    bootHandler(cm3)({ id: 'abc123', result: 'new.png', alt: "see $' after" })
+    expect(cm3.getValue()).toBe("![see $' after](new.png) tail")
+  })
+
   it('does nothing when the id is absent from every line', () => {
     const deps = makeDeps()
     const cm = makeCM('no images here', { line: 0, ch: 3 }, { line: 0, ch: 3 })
     bootHandler(cm, deps)({ id: 'zzz', result: 'r.png', alt: 'x' })
     expect(cm.getValue()).toBe('no images here')
     expect(cm.setSelection).not.toHaveBeenCalled()
-    expect((deps.setCursorAtFirstLine as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled()
+    expect(deps.setCursorAtFirstLine as ReturnType<typeof vi.fn>).not.toHaveBeenCalled()
   })
 
   it('early-returns on the structure-deleted branch (id present, no image markup)', () => {
@@ -189,7 +201,7 @@ describe('sourceCode handleImageAction', () => {
     bootHandler(cm, deps)({ id: 'abc123', result: 'r.png', alt: 'x' })
     expect(cm.getValue()).toBe('see abc123 ref')
     expect(cm.setSelection).not.toHaveBeenCalled()
-    expect((deps.setCursorAtFirstLine as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled()
+    expect(deps.setCursorAtFirstLine as ReturnType<typeof vi.fn>).not.toHaveBeenCalled()
   })
 
   it('skips an image whose id starts at column 0 (indexOf > 0 quirk)', () => {
@@ -206,6 +218,6 @@ describe('sourceCode handleImageAction', () => {
     bootHandler(cm, deps)({ id: 'abc123', result: 'new.png', alt: 'cat' })
     expect(cm.getValue()).toBe('![cat](new.png)')
     expect(cm.setSelection).not.toHaveBeenCalled()
-    expect((deps.setCursorAtFirstLine as ReturnType<typeof vi.fn>)).toHaveBeenCalledTimes(1)
+    expect(deps.setCursorAtFirstLine as ReturnType<typeof vi.fn>).toHaveBeenCalledTimes(1)
   })
 })

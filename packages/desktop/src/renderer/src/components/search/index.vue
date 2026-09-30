@@ -283,6 +283,11 @@ const docClick = () => {
 }
 
 const emptySearch = (selectHighlight = false) => {
+  // Taking a newer sequence number is what actually discards the search: the
+  // `searchValue` watch below early-returns once the bar is hidden, so without
+  // this a `searchFn` parked on the ReDoS probe stays the latest call and,
+  // seconds later, hands the engine back a query the user already threw away.
+  seqGuard.take()
   showSearch.value = false
   searchValue.value = ''
   replaceValue.value = ''
