@@ -15,11 +15,13 @@ export default defineConfig({
   // queues behind the ones before it and the machine is busy the whole time.
   // Three specs have been observed failing on a *poll* of a value that is
   // already on its way there — the status-bar word counter
-  // (editor-input.spec.ts:144, `Expected: 9 / Received: 7`), the live outline
-  // node (toc-panel-content.spec.ts:152) and the per-tab undo stack
-  // (tab-switch-cursor.spec.ts:157) — each green when re-run alone. A
-  // deterministic failure still fails; it just spends 10 s doing it, and the
-  // 30 s test cap below is unchanged.
+  // (editor-input.spec.ts:127, `Expected: 9 / Received: 7`), the live outline
+  // node (toc-panel-content.spec.ts:119) and the per-tab undo stack
+  // (tab-switch-cursor.spec.ts:150) — each green when re-run alone. The three
+  // citations are declaration lines on purpose: `file:line` selects a test only
+  // when the line is where the test is declared, and these used to point at
+  // statements inside the case. A deterministic failure still fails; it just
+  // spends 10 s doing it, and the 30 s test cap below is unchanged.
   expect: { timeout: 10000 },
   // HTML report gives a browsable per-test view. Uploaded by e2e.yml.
   reporter: [['list'], ['html', { open: 'never' }]],

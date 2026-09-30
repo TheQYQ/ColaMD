@@ -259,7 +259,7 @@ electron-builder（`packages/desktop/electron-builder.yml`）：`appId com.colam
 
 一致性套件采用"只能变好"的钉死语义：`test/spec/expected-failures.json` 列了 78 个 CommonMark + 90 个 GFM 已知失败，**预期失败变成通过也会让套件失败**（`test/spec/runner.ts`），基线记录在 `test/spec/conformance.md`（CommonMark 88.0% / GFM 86.6%，2026-09-26 按 `expected-failures.json` 重算）。
 
-E2E 通过 `_electron.launch` 起真应用（`test/e2e/helpers.ts:74`），会代点未保存对话框、经 `mt::handle-renderer-error` 统计渲染端错误、并用 `Menu.getApplicationMenu().getMenuItemById(id).click()` 驱动原生菜单。已知 `test.fixme`：`loose-list-toggle.spec.ts:54`、`view-modes.spec.ts:314`；`test.skip`：`paragraph-blocks.spec.ts:92,126`。
+E2E 通过 `_electron.launch` 起真应用（`test/e2e/helpers.ts:74`），会代点未保存对话框、经 `mt::handle-renderer-error` 统计渲染端错误、并用 `Menu.getApplicationMenu().getMenuItemById(id).click()` 驱动原生菜单。已知 `test.fixme`：`loose-list-toggle.spec.ts:54`、`view-modes.spec.ts:309`；`test.skip`：`paragraph-blocks.spec.ts:92,126`。
 
 跑单条：
 
@@ -418,7 +418,11 @@ AGENTS.md 的门禁表把"已知间歇形状"指到这里。这里只收**有 ru
 
 **未定性那半的边界要记清**。计数器停在 `1 / 3`（截图里第一个 apple 仍是活动高亮、页面上没有错误元素）说明 `SEARCH` 根本没被调到：`Search.find()` 在 `matches.length === 0` 时虽然原样返回，但随后的 `SEARCH` 仍会把计数器写成 `0 / 0`，所以"匹配空了"可排除。**也不是总线吞异常**——装的 mitt 3.x 的 `emit` 里没有 try/catch（实测 `node_modules/.pnpm/mitt@3*/node_modules/mitt/dist/mitt.mjs`），异常会同步抛回 IPC 回调。剩下的可能是链上某处抛了：`src/main/exceptionHandler.ts:21` 的 `SHOW_ERROR_DIALOG = !process.env.COLAMD_ERROR_INTERACTION` 在 e2e 下为真（helper 只在 `suppressErrorDialog` 时才设这个变量），于是会弹阻塞式原生框——页面截图看不见它，而主进程 `await dialog` 期间照常处理 IPC，所以"同文件其余 14 条仍然通过"**既不能证实也不能证伪**这条路径。基线数字：新库 35 次 e2e 跑里 2 次红，两次都只在 mac 腿。下次同一症状再现时，先给该 describe 开 `suppressErrorDialog`、动作前 `clearRendererErrors` 动作后 `expectNoRendererErrors`，把"抛了"和"没跑到"分开，再谈修法。
 
-**这个形状暴露的覆盖面（已实测，本批未处理，记在 issue #34）**：`playwright test --list` 口径下 `test/e2e` 共 **73** 个 spec 文件 / **258** 条用例，其中 **55** 个文件里有多条用例，而全仓 `mode: 'serial'` **零使用**——任何一条"靠上一条建状态"的用例都有同样的重试失效问题。逐条核查办法（本批对 `find-replace.spec.ts` 全 15 条就是这么跑的，结果 15/15 能独立通过）：先 `playwright test --config=… <file> --list` 取全部标题，再对每个叶子标题单独跑一次 `-g "<正则转义后的叶子标题>"`。
+**这个形状暴露的覆盖面（已于 2026-09-30 全量核查完毕，见下一段）**：`playwright test --list` 口径下 `test/e2e` 共 **73** 个 spec 文件 / **258** 条用例，其中 **55** 个文件里有多条用例，而全仓 `mode: 'serial'` **零使用**——任何一条"靠上一条建状态"的用例都有同样的重试失效问题。
+
+**顺序独立性核查结果（2026-09-30，逐条单跑全部 258 条）**：`249 单跑绿 / 5 单跑红 / 4 既有的 skip-fixme`；5 条红的都在**同一文件内**继承状态（复跑两次仍红，把所在文件按原序跑则全绿），已各自改为自建基线：`percent-link-click.spec.ts:59`（原来断言绝对标签数 3，改为断增量并加标题断言）、`preference-entry.spec.ts:67`（原来在**请求之前**就 `prefPages(app)[0]`，改为先开窗口再取句柄）、`source-toc-scroll.spec.ts` 与 `toc-scroll.spec.ts` 的"回滚到更早标题"（原来复用上一条留下的滚动位置；现在自己点深层标题，并等滚动**停下**再取基线——单帧读数会拿到动画中途值，实测 `Expected: < 127 / Received: 631`）、`toc-panel-content.spec.ts` 的"新增标题"（原来断言含 `B1 Renamed` 的绝对列表，改为断"在原列表末尾追加 D"）。
+**核查办法（可复现，约 25 分钟）**：`--list` 取 258 条的 `file:line:col`，逐条 `node node_modules/playwright/cli.js test --config=test/e2e/playwright.config.ts <file>:<line>:<col> --reporter=line`，一条一个进程、严格**串行**（并发争抢的红与真继承的红不可区分）。走 `node …/cli.js` 而不是 `pnpm test:e2e`：每条省下约 7 s 的 corepack/pnpm 启动。用例侧墙钟合计 1341 s，中位数 3.4 s。当年为 PR #35 单独跑过的 `find-replace.spec.ts` 15 条，在这次全量核查里同样是 **15/15 单跑绿**。
+**两个必须避开的坑（都踩过）**：① **别用子串判红绿**——整段输出里含用例标题，标题带 `Error`（如 `getRendererErrors`）或 `failed`（如 "a failed rename…"）就会被误判，本轮一开始就是这么把 7 条当成红、实际是 5 条；要锚定 `\d+ failed` 这类带计数的模式。② **别用裸文件名选文件**——Playwright 的位置参数是按正则匹配文件路径的，`toc-scroll.spec.ts` 会同时命中 `source-toc-scroll.spec.ts`；要么给全相对路径 `test/e2e/<file>.spec.ts`，要么加结尾锚点。
 
 ## 15. 稳定期审计记录（2026-09-29 起）
 
@@ -555,6 +559,14 @@ AGENTS.md 的门禁表把"已知间歇形状"指到这里。这里只收**有 ru
 - **不修一（裸 `#`）**：按 CommonMark/URL 语义 `photo#1.png` 本就指"文件 `photo` + fragment"，应用符合规范；而编辑器预览那一支同样不转义（`packages/muya/src/inlineRenderer/lexer.ts:378` 用 `encodeURI`，实测 `encodeURI('a#b.png')` 原样返回）。只改 `exportHtml` 会得到"导出有图、编辑器没图"的自相矛盾，要改必须两处一起改 —— 属引擎语义决定。**重启条件**：出现真实用户报告，或专门做这个引擎级决定。
 - **不修二（字面名含 `%XX`）**：看着只差给 `encodeImageSrc`（`packages/muya/src/utils/image.ts:222-228`）加一条 `%`→`%25`，实际会**腐蚀已有文档**——`ui/imageEditTool/index.ts:134` 用 `Object.assign(this._state, imageInfo.token.attrs)` 把**已解析的目的地**灌进图片面板，`block/base/format.ts:382` 每次 confirm 再编一次，而 `:383-389` 的守卫只要 alt 或 title 变了就放行；于是文档里已有的 `My%20Image.png` 会变成 `My%2520Image.png`，**每编辑一次就再翻倍**。今天这个集合恰好幂等（不碰 `%`，而 `%20` 里没有空格字符），加 `%` 会把这个巧合打破。要做得先给图片目的地配一个解析侧的解码（与 `decodeLinkPathname` 同口径），那是引擎往返改动，必须连 `test/spec/roundTrip.spec.ts` 与一致性套件一起做。
 - **方法论记一笔**：这类"会不会坏"由**消费者**（Chromium 的 URL 解析、markdown-it 的目的地处理、rg 的 glob 解析器）决定，不能由"本仓这一行没写 encode/decode"推断——本轮两条撤回都是这么错的。同 §14.1 与"绿不等于跑过"那条教训同源。
+
+**#34 第一半：e2e 顺序独立性核查，以及因此改掉的 5 条用例（本批）**。核查本身的过程与全部数字在 §14.1 末段（逐条单跑 258 条 → 249 绿 / 5 红 / 4 skip）。这 5 条的共同点是**在同文件里读上一条留下的状态**，而 CI 的重试只单独重跑失败那条 + `beforeAll` 给干净 app，所以它们的重试**必然红**——报的是与症状无关的第二次失败。形状与 PR #35 修掉的 `find-replace.spec.ts:213` 完全一致。
+
+- 逐条改法（全部只动测试文件，产品代码零改动）：`percent-link-click.spec.ts:59` 断言由"绝对标签数 3"改为"相对当前值 +1"，并补一条标题断言（强度不降反升，顺带钉住"开的是 `plain.md`"）；`preference-entry.spec.ts:67` 原来在**请求窗口之前**就取 `prefPages(app)[0]`，改为先 `requestSettingsWindow(app)` 并轮询到窗口存在，再请求 `spelling` 分类；`source-toc-scroll.spec.ts` 与 `toc-scroll.spec.ts` 的"滚回更早标题"改为**自己**点深层标题，并且用 `settleScrollTop` 等滚动停下再取基线；`toc-panel-content.spec.ts` 的"新增标题"改为"在改动前的列表末尾追加 `D`（depth 2）"。
+- **为什么要加 `settleScrollTop`**：第一版改完单跑仍红，实测 `Expected: < 127 / Received: 631`——`fromTop` 读到了动画中途的帧值，比较基准本身就是错的（在文件里不暴露，因为上一条已经把它跑稳了）。改成"连续两次采样相等才算停下"之后两条都绿。这是 §14.1"绿不等于跑过"的第三种变体：**基线读数也要条件等待，不能读一帧**。
+- 证据：每条"改前单跑红（核查已录）→ 改后单跑绿（各复跑两次）→ 所在文件按原序仍绿"；`toc-scroll` 那条的文件跑因为位置参数是正则而连带跑了 `source-toc-scroll`，实际是两文件 5 条一起绿。
+- 顺带修正三处 `路径:行号` 漂移（AGENTS.md 第 2 条说的"没有工具在守"又一处实例）：`playwright.config.ts` 注释里三个"重试即绿"的例子原先都指向**用例内部的语句行**（`editor-input.spec.ts:144`、`toc-panel-content.spec.ts:152`、`tab-switch-cursor.spec.ts:157`），改为声明行 `:127` / `:119` / `:150`；`PROJECT_GUIDE.md` 把 `view-modes` 的 `test.fixme` 写成 `:314`，实测在 `:309`。
+- **没做**：`mode: 'serial'` 一处都没加（它只把耦合制度化，`-g` 单跑仍坏，且前置失败会让后续用例 skip）；#34 的第二半（渲染端异常在 e2e 里默认不可见）不在本批。
 
 ## 16. 已关闭的功能候选与重启条件（2026-09-29 重评估）
 
