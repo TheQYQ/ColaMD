@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, expectNoRendererErrors } from './helpers'
+import { launchWithMarkdown, expectNoRendererErrors, closeApp } from './helpers'
 
 // ---------------------------------------------------------------------------
 // Coverage backfill (checklist item 241). The hover-to-copy heading affordance
@@ -61,7 +61,7 @@ test.describe('Heading hover-to-copy anchor affordance (item 241)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('the heading renders an accessible copy-anchor affordance', async () => {

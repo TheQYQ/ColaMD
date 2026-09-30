@@ -4,7 +4,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { launchElectron, waitForEditor, waitForMenuReady } from './helpers'
+import { launchElectron, waitForEditor, waitForMenuReady, closeApp } from './helpers'
 
 // Checklist 122 — integration coverage for the Phase G "G1" blocker: a
 // relative-path image (`![](assets/cat.png)`) in a saved document must resolve
@@ -50,7 +50,7 @@ test.describe('Relative-path image resolves to a DIRNAME-anchored file:// URL', 
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
     for (const dir of createdDirs) {
       try {
         fs.rmSync(dir, { recursive: true, force: true })

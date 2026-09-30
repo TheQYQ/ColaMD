@@ -23,7 +23,8 @@ import {
   clearRendererErrors,
   launchWithMarkdown,
   placeCaretInEditor,
-  typeIntoEditor
+  typeIntoEditor,
+  closeApp
 } from './helpers'
 
 test.describe('Crash: setStart Range offset', () => {
@@ -39,7 +40,7 @@ test.describe('Crash: setStart Range offset', () => {
   })
 
   test.afterEach(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('Issue #2526: typing escaped <pre>...</pre> then re-selecting does not crash', async () => {
@@ -215,7 +216,7 @@ test.describe('Crash: paste-induced setCursorRange', () => {
   })
 
   test.afterEach(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('Paste rich HTML into mid-paragraph does not crash', async () => {
@@ -299,8 +300,12 @@ test.describe('Crash counter sanity', () => {
         5000
       )
       expect(captured, 'expected the renderer-thrown error to reach the IPC sink').not.toBeNull()
+      // The forced error has served its purpose — clear the sink so the
+      // standard closeApp teardown does not fail on this intentional throw.
+      const { clearRendererErrors } = await import('./helpers')
+      await clearRendererErrors(app)
     } finally {
-      await app.close()
+      await closeApp(app)
     }
   })
 })

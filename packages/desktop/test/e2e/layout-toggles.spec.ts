@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, clickMenuById } from './helpers'
+import { launchWithMarkdown, clickMenuById, closeApp } from './helpers'
 
 // Wait until a `v-show`-toggled element's visibility differs from `wasVisible`.
 // A missing element counts as "not visible", so the change-detection logic
@@ -27,7 +27,7 @@ test.describe('Layout panel toggles', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('Sidebar toggle changes .side-bar visibility', async () => {

@@ -5,7 +5,8 @@ import {
   enterSourceMode,
   launchWithMarkdown,
   sendIpcToRenderer,
-  waitForRendererError
+  waitForRendererError,
+  closeApp
 } from './helpers'
 
 const BASH_SCRIPT = `#!/usr/bin/env bash
@@ -127,6 +128,6 @@ test('Issue #4921: source-mode updates preserve CodeMirror line-tree identity', 
     const rendererError = await waitForRendererError(app, () => true, 1000)
     expect(rendererError).toBeNull()
   } finally {
-    await app.close()
+    await closeApp(app)
   }
 })

@@ -19,7 +19,7 @@
 //    `openQuickOpen` below.
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { expectNoRendererErrors, launchWithMarkdown, sendIpcToRenderer } from './helpers'
+import { expectNoRendererErrors, launchWithMarkdown, sendIpcToRenderer, closeApp } from './helpers'
 
 const INPUT = '.search-wrapper input.search, input.search'
 const RESULTS = 'ul.commands .title'
@@ -69,7 +69,7 @@ test.describe('Quick-open pattern safety', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('typing a query lists the open document', async () => {

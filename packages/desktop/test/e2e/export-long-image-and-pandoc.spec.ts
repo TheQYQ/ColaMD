@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
 import { spawnSync } from 'node:child_process'
-import { launchWithMarkdown, waitForMenuReady } from './helpers'
+import { launchWithMarkdown, waitForMenuReady, closeApp } from './helpers'
 import { installExportSuccessProbe, restoreSaveDialog, runExport } from './exportHarness'
 
 // The two export paths that used to end in "needs a real machine to check":
@@ -44,7 +44,7 @@ test.describe('Long image and pandoc exports (roadmap §7 walkthrough)', () => {
   test.afterAll(async () => {
     if (app) {
       await restoreSaveDialog(app)
-      await app.close()
+      await closeApp(app)
     }
   })
 

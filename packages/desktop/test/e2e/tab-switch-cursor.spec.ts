@@ -4,7 +4,8 @@ import {
   launchWithMarkdown,
   sendIpcToRenderer,
   waitForMenuReady,
-  markAllTabsClean
+  markAllTabsClean,
+  closeApp
 } from './helpers'
 
 const tabSelector = '.tabs-container > li'
@@ -77,7 +78,7 @@ test.describe('Tab switch restores the per-tab caret', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('caret returns to its original block after switching away and back', async () => {
@@ -123,7 +124,7 @@ test.describe('Tab switch restores the per-tab undo history', () => {
   test.afterAll(async () => {
     if (app) {
       await markAllTabsClean(app, page)
-      await app.close()
+      await closeApp(app)
     }
   })
 
@@ -205,7 +206,7 @@ test.describe('Tab switch restores the per-tab scroll position', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   const scrollTop = (): Promise<number> =>

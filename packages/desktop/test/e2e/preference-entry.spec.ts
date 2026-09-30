@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { clickMenuById, launchElectron, waitForMenuReady } from './helpers'
+import { clickMenuById, launchElectron, waitForMenuReady, closeApp } from './helpers'
 
 // The preferences entry used to be verified only by a person clicking it once,
 // which leaves nothing to re-check. Two things are worth pinning: the menu item
@@ -34,7 +34,7 @@ test.describe('the Preferences entry', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('opens a rendered settings window', async () => {
@@ -69,7 +69,14 @@ test.describe('the Preferences entry', () => {
     // (src/main/contextMenu/editor/spellcheck.ts:79), so the entry has to honour
     // it for a window that is already open. Asserted on the route, not on the
     // label: labels are translated.
+    //
+    // The window is opened here rather than inherited from the test above: a CI
+    // retry re-runs a failed test alone against a fresh app, and `prefPages()[0]`
+    // was `undefined` when that happened.
+    await requestSettingsWindow(app)
+    await expect.poll(() => prefPages(app).length, { timeout: 15_000 }).toBe(1)
     const pref = prefPages(app)[0]
+
     await requestSettingsWindow(app, 'spelling')
 
     await expect.poll(() => pref.url(), { timeout: 10_000 }).toContain('/preference/spelling')

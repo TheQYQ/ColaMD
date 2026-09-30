@@ -23,7 +23,8 @@ import {
   expectNoRendererErrors,
   launchWithMarkdown,
   placeCaretInEditor,
-  setSourceMarkdown
+  setSourceMarkdown,
+  closeApp
 } from './helpers'
 
 const placeCaretInSpanContaining = async (page: Page, needle: string) => {
@@ -61,7 +62,7 @@ test.describe('Issue #4374: enterHandler chopBlockByCursor nextSibling crash', (
   })
 
   test.afterEach(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('Enter inside the second paragraph of a loose list item does not crash', async () => {

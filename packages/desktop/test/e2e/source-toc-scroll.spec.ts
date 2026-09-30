@@ -5,7 +5,8 @@ import {
   waitForEditor,
   enterSourceMode,
   clickMenuById,
-  ensureTocVisible
+  ensureTocVisible,
+  closeApp
 } from './helpers'
 
 // colamd #3580: clicking a TOC entry in SOURCE CODE mode must scroll the
@@ -30,6 +31,24 @@ const srcScrollTop = (page: Page): Promise<number> =>
     const el = document.querySelector('.source-code') as HTMLElement | null
     return el ? Math.round(el.scrollTop) : -1
   })
+
+// A TOC click animates the scroll, so one reading is a mid-flight value. Wait
+// until two consecutive samples agree, then that is the resting position.
+const settleScrollTop = async (page: Page): Promise<number> => {
+  let last = -1
+  await expect
+    .poll(
+      async () => {
+        const now = await srcScrollTop(page)
+        const stable = now === last
+        last = now
+        return stable && now > 0 ? now : -1
+      },
+      { timeout: 10_000, intervals: [300, 300, 300] }
+    )
+    .toBeGreaterThan(0)
+  return last
+}
 
 // Distance of the `# Heading Number N` source line from the top of the
 // `.source-code` viewport (CodeMirror renders all lines, so the line is in the DOM).
@@ -68,7 +87,7 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('clicking a deep heading scrolls down and lands it near the top', async () => {
@@ -90,8 +109,14 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
   })
 
   test('clicking an earlier heading scrolls back up to it at the top', async () => {
-    const fromTop = await srcScrollTop(page)
-    expect(fromTop).toBeGreaterThan(0)
+    // Scrolls down here instead of reusing the position the test above left: a
+    // CI retry re-runs a failed test alone against a fresh app, where the
+    // editor starts at scrollTop 0 and the old `fromTop > 0` could not hold.
+    await page.locator('.side-bar-toc').getByText('Heading Number 18', { exact: true }).click()
+    // Read the resting position, not a frame of the animation: comparing the
+    // next click against a mid-flight value made this fail whenever the case
+    // ran without its predecessor.
+    const fromTop = await settleScrollTop(page)
     await page.locator('.side-bar-toc').getByText('Heading Number 3', { exact: true }).click()
     await expect.poll(() => srcScrollTop(page), { timeout: 8000 }).toBeLessThan(fromTop)
     await expect

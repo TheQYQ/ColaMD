@@ -14,7 +14,8 @@ import {
   clickMenuById,
   launchWithMarkdown,
   placeCaretInEditor,
-  waitForMenuReady
+  waitForMenuReady,
+  closeApp
 } from './helpers'
 
 test.describe('Crash: selectionChange null cursor', () => {
@@ -33,7 +34,7 @@ test.describe('Crash: selectionChange null cursor', () => {
   })
 
   test.afterEach(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('Blur the editor, clear DOM selection, then invoke a format menu item', async () => {

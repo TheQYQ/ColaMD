@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, clickMenuById, waitForEditor, ensureTocVisible } from './helpers'
+import {
+  launchWithMarkdown,
+  clickMenuById,
+  waitForEditor,
+  ensureTocVisible,
+  closeApp
+} from './helpers'
 
 // Build a long document with many top-level headings so the editor content
 // overflows its scroll container. Each heading title is unique so the sidebar
@@ -30,6 +36,24 @@ const getScrollTop = (page: Page): Promise<number> =>
     const el = document.querySelector('.editor-component') as HTMLElement | null
     return el ? el.scrollTop : -1
   })
+
+// A TOC click animates the scroll, so one reading is a mid-flight value. Wait
+// until two consecutive samples agree, then that is the resting position.
+const settleScrollTop = async (page: Page): Promise<number> => {
+  let last = -1
+  await expect
+    .poll(
+      async () => {
+        const now = Math.round(await getScrollTop(page))
+        const stable = now === last
+        last = now
+        return stable && now > 0 ? now : -1
+      },
+      { timeout: 10_000, intervals: [300, 300, 300] }
+    )
+    .toBeGreaterThan(0)
+  return last
+}
 
 // Returns the index (in document order, among `.mu-container > hN`) of the
 // top-level heading whose text matches `text`, or -1. The live ATX heading
@@ -107,7 +131,7 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('clicking a deep outline entry scrolls the editor to that heading', async () => {
@@ -135,9 +159,13 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
   })
 
   test('clicking an earlier heading scrolls back up toward it', async () => {
-    // After the previous test the editor is scrolled down near heading 18.
-    const fromTop = await getScrollTop(page)
-    expect(fromTop).toBeGreaterThan(0)
+    // Scrolls down here instead of reusing the position the test above left: a
+    // CI retry re-runs a failed test alone against a fresh app from `beforeAll`,
+    // where the editor starts at scrollTop 0 and `fromTop > 0` cannot hold.
+    await tocLabel(page, 'Heading Number 18').click()
+    // The resting position, not a frame of the animation: comparing the next
+    // click against a mid-flight value is what made this fail alone.
+    const fromTop = await settleScrollTop(page)
 
     const targetText = 'Heading Number 3'
     const targetIndex = await headingIndexByText(page, targetText)

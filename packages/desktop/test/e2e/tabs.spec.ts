@@ -5,7 +5,8 @@ import {
   launchWithMarkdown,
   placeCaretInEditor,
   sendIpcToRenderer,
-  typeIntoEditor
+  typeIntoEditor,
+  closeApp
 } from './helpers'
 
 const tabSelector = '.tabs-container > li'
@@ -67,7 +68,7 @@ test.describe('Tab management', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('Initial document loads as a single tab in the tab list', async () => {

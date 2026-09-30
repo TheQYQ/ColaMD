@@ -4,7 +4,8 @@ import {
   waitForMenuReady,
   getMarkdownContent,
   sendIpcToRenderer,
-  enterSourceMode
+  enterSourceMode,
+  closeApp
 } from './helpers'
 
 // Trigger an editor undo through the same IPC channel the Edit › Undo menu item
@@ -77,7 +78,7 @@ test.describe('External disk reload — undo restores the pre-change document', 
     await expect
       .poll(() => page.evaluate(() => !!document.querySelector('.editor-tabs li.unsaved')))
       .toBe(true)
-    await app.close()
+    await closeApp(app)
   })
 })
 
@@ -162,6 +163,6 @@ test.describe('External disk reload — source-mode scroll position survives a s
         { timeout: 4000 }
       )
       .toBeGreaterThan(maxCaptured * 0.5)
-    await app.close()
+    await closeApp(app)
   })
 })

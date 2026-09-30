@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
 import * as fs from 'node:fs'
-import { launchWithMarkdown, waitForMenuReady } from './helpers'
+import { launchWithMarkdown, waitForMenuReady, closeApp } from './helpers'
 import {
   clearExportSuccesses,
   exportSuccesses,
@@ -47,7 +47,7 @@ test.describe('PDF export to a real file (item 231)', () => {
   test.afterAll(async () => {
     if (app) {
       await restoreSaveDialog(app)
-      await app.close()
+      await closeApp(app)
     }
   })
 

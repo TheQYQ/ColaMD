@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, launchElectron, clickMenuById, markAllTabsClean } from './helpers'
+import {
+  launchWithMarkdown,
+  launchElectron,
+  clickMenuById,
+  markAllTabsClean,
+  closeApp
+} from './helpers'
 
 // #2421 — toggling the sidebar must not lose state.
 // Two bugs (fixed against the old icon-strip sidebar, re-locked here against
@@ -51,7 +57,7 @@ test.describe('#2421 sidebar state survives toggle', () => {
   test.afterAll(async () => {
     if (app) {
       await markAllTabsClean(app, page)
-      await app.close()
+      await closeApp(app)
     }
   })
 

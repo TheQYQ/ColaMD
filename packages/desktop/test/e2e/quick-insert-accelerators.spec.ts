@@ -4,7 +4,8 @@ import {
   launchWithMarkdown,
   setSourceMarkdown,
   placeCaretInEditor,
-  getMarkdownContent
+  getMarkdownContent,
+  closeApp
 } from './helpers'
 
 // Item 49 — the quick-insert accelerator shortcuts that convert an EMPTY
@@ -41,7 +42,7 @@ test.describe('Quick-insert accelerators (item 49)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test.beforeEach(async () => {

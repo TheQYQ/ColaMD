@@ -5,7 +5,8 @@ import {
   clickMenuById,
   waitForEditor,
   ensureTocVisible,
-  markAllTabsClean
+  markAllTabsClean,
+  closeApp
 } from './helpers'
 
 // #3028 — collapsing a heading in the TOC must survive a document edit.
@@ -91,7 +92,7 @@ test.describe('TOC collapse state survives edits (#3028)', () => {
   test.afterAll(async () => {
     if (app) {
       await markAllTabsClean(app, page)
-      await app.close()
+      await closeApp(app)
     }
   })
 

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, sendIpcToRenderer, waitForMenuReady } from './helpers'
+import { launchWithMarkdown, sendIpcToRenderer, waitForMenuReady, closeApp } from './helpers'
 
 // Checklist item 278 — switching the UI language must re-translate the Vue
 // shell (menu bar / command palette / preferences tabs), not just the engine
@@ -55,7 +55,7 @@ test.describe('i18n shell — language switch re-translates the Vue shell', () =
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('command palette placeholder re-translates en -> zh-CN', async () => {

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { focusEditor, launchWithMarkdown, sendIpcToRenderer } from './helpers'
+import { focusEditor, launchWithMarkdown, sendIpcToRenderer, closeApp } from './helpers'
 
 const SEARCH_BAR = '.search-bar'
 const FIND_INPUT = '.search-bar .search input'
@@ -26,7 +26,7 @@ test.describe('Search regex ReDoS guard', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   // Opening Find prefills the query from the editor selection, which would run

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { focusEditor, launchWithMarkdown } from './helpers'
+import { focusEditor, launchWithMarkdown, closeApp } from './helpers'
 
 // #3329 — moving the caret DOWN auto-scrolls the view (the #628 handler), but
 // moving it UP did not, so the caret slid above the viewport. The fix adds the
@@ -18,7 +18,7 @@ test.describe('Arrow-up scrolls the document (#3329)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   const scrollTop = () =>

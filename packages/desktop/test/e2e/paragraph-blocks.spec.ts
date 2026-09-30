@@ -8,7 +8,8 @@ import {
   placeCaretInEditor,
   enterSourceMode,
   exitSourceMode,
-  getMarkdownContent
+  getMarkdownContent,
+  closeApp
 } from './helpers'
 
 const resetTo = async (page: Page, app: ElectronApplication, text: string) => {
@@ -27,7 +28,7 @@ test.describe('Paragraph block transforms', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test.beforeEach(async () => {
@@ -165,7 +166,7 @@ test.describe('Insert table dialog (item 73)', () => {
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('opens the picker dialog, confirms, and inserts the 4x3 default table', async () => {
@@ -238,7 +239,7 @@ test.describe('Table source-mode round-trip + modified indicator (item 89)', () 
   })
 
   test.afterAll(async () => {
-    if (app) await app.close()
+    if (app) await closeApp(app)
   })
 
   test('source mode preserves the left/center/right alignment markers', async () => {
