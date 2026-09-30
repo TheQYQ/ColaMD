@@ -57,7 +57,12 @@ test.describe('Clicking a link whose target contains a literal percent', () => {
   })
 
   test('an ordinary relative link still opens', async () => {
+    // Counts the delta, not an absolute tab count: the tab opened by the test
+    // above is not a precondition this case may inherit (a CI retry re-runs a
+    // failed test alone against a fresh app from `beforeAll`, so an absolute
+    // count here could only ever fail).
     fs.writeFileSync(path.join(dir, 'plain.md'), '# Plain\n', 'utf-8')
+    const before = await page.locator(TAB).count()
 
     await page.evaluate(
       ({ href, dirname }) =>
@@ -68,6 +73,8 @@ test.describe('Clicking a link whose target contains a literal percent', () => {
       { href: 'plain.md', dirname: dir }
     )
 
-    await expect(page.locator(TAB)).toHaveCount(3, { timeout: 10000 })
+    await expect(page.locator(TAB)).toHaveCount(before + 1, { timeout: 10000 })
+    const titles = (await page.locator(`${TAB} span`).allInnerTexts()).map((t) => t.trim())
+    expect(titles).toContain('plain.md')
   })
 })

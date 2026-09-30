@@ -156,6 +156,12 @@ test.describe('TOC panel content + live update', () => {
   })
 
   test('adding a new heading adds a tree node live', async () => {
+    // Asserts the delta rather than an absolute heading list: the `B1 Renamed`
+    // label came from the test above, and a CI retry re-runs a failed test alone
+    // against a fresh app where that rename never happened.
+    const labelsBefore = await readTocLabels(page)
+    const treeBefore = await readTocTree(page)
+
     // Click directly on the last heading ("C") so the engine sets it as the
     // active content block, move the caret to the end, then split with Enter
     // and type a new ATX heading. Clicking the real DOM node (rather than a
@@ -170,19 +176,11 @@ test.describe('TOC panel content + live update', () => {
     await page.keyboard.press('Enter')
     await page.keyboard.type('## D ', { delay: 20 })
 
-    // The new heading appears as a fourth top-level subtree under A
-    // (level-2 sibling of B and C).
-    await expect
-      .poll(() => readTocLabels(page), { timeout: 8000 })
-      .toEqual(['A', 'B', 'B1 Renamed', 'C', 'D'])
+    // The new heading appears last, as a level-2 sibling of B and C under A.
+    await expect.poll(() => readTocLabels(page), { timeout: 8000 }).toEqual([...labelsBefore, 'D'])
 
-    const tree = await readTocTree(page)
-    expect(tree).toEqual([
-      { label: 'A', depth: 1 },
-      { label: 'B', depth: 2 },
-      { label: 'B1 Renamed', depth: 3 },
-      { label: 'C', depth: 2 },
-      { label: 'D', depth: 2 }
-    ])
+    await expect
+      .poll(() => readTocTree(page), { timeout: 8000 })
+      .toEqual([...treeBefore, { label: 'D', depth: 2 }])
   })
 })
