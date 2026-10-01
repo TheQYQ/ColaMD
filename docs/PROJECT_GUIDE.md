@@ -278,9 +278,23 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 | `release.yml`                                  | 校验 `v*` 语义化标签 → 构建 → SHA256SUMS → 草稿 Release → 提升              | tag push                                                                | 同上 5 腿（Linux 用 ubuntu-22.04）                                  |
 | `lint.yml`                                     | `pnpm lint` + `pnpm knip` + 引擎类型构建 + `typecheck`                      | PR + push `develop`（`paths-ignore: packages/muya/**`，两个事件同过滤） | ubuntu                                                              |
 | `test.yml`                                     | desktop 单测 + 非阻断 `coverage`                                            | PR + push `develop`（同 `paths-ignore`）                                | **ubuntu + windows**                                                |
-| `e2e.yml`                                      | apt 依赖 → postinstall → build → `xvfb-run test:e2e`                        | PR/dispatch                                                             | ubuntu-24.04                                                        |
-| `muya-{build,circular,lint,test,spec,e2e}.yml` | 引擎构建、`madge --circular`、lint+类型、单测、一致性、Playwright(chromium) | PR                                                                      | ubuntu                                                              |
+| `e2e.yml`                                      | apt 依赖 → postinstall → build → `xvfb-run test:e2e`                        | PR（`paths-ignore: packages/muya/**`）/dispatch                         | ubuntu-24.04                                                        |
+| `muya-{build,circular,lint,test,spec,e2e}.yml` | 引擎构建、`madge --circular`、lint+类型、单测、一致性、Playwright(chromium) | PR（**`paths` 包含过滤**，见下）                                        | ubuntu                                                              |
 | `validate-licenses.yml`                        | `pnpm run validate-licenses`                                                | PR + push `develop`（package.json/lock 变更）                           | ubuntu                                                              |
+
+#### **两套路径过滤器是互斥的**（2026-10-01 实测更正；此前这一节只记了桌面那四条）
+
+桌面四条（`build`/`e2e`/`lint`/`test`）对 `packages/muya/**` 是 **`paths-ignore`**，而 muya 六条对引擎路径是 **`paths` 包含过滤**（每条还各自加 `pnpm-lock.yaml` 与自身文件）：`muya-lint` 是 `packages/muya/**` 减 `examples/` 与 `e2e/`；`muya-build`/`muya-circular`/`muya-e2e`/`muya-test`/`muya-spec` 都以 `packages/muya/src/**` 为底，分别再加 `package.json`、`tsconfig.json`、`vite.config.ts`、`.madgerc`、`e2e/**`、`test/**` 等。后果：
+
+| 批次形状                                                    | 桌面四条  | muya 六条 | 拿到几套      |
+| ----------------------------------------------------------- | --------- | --------- | ------------- |
+| 只碰桌面（`packages/desktop/**`、`docs/**`、`.github/**`…） | ✅ 起     | ❌ 全不起 | **1 套**      |
+| 只碰引擎（`packages/muya/src/**`）                          | ❌ 全不起 | ✅ 起     | **1 套**      |
+| 同时碰两边                                                  | ✅ 起     | ✅ 起     | 2 套（10 条） |
+
+**所以"PR 门禁是一批改动的唯一完整远端验证"这句话是有条件的**（`AGENTS.md` 流程段与本文 §12 都写着它）：只有**同时碰了 `packages/muya/**`** 的批次才拿到全套。纯桌面批次拿不到任何引擎验证（`muya test`/`test:spec`/`madge --circular` / 引擎 lint 全都没跑），纯引擎批次拿不到任何桌面验证（desktop 单测 / E2E / 打包都没有）。**这个批次自己就撞上了**：PR #48 只改两份文档，`gh run list`只有 4 条（Lint / Test / E2E Test / PR Build，run`36814902924`/`36814902940`/`36814902970`/`36814902983`，12 个 job 全 success 且 `run_attempt` 全为 1），muya 六条一条没起。**证据强度要分清**：桌面-only 那一半是实测的（PR #43/#44/#45/#48 每个都是 4 条 workflow、零 muya）；引擎-only 那一半是从 YAML 直接读出的结构事实，当前窗口里没有"纯引擎 PR"可做实测。`muya`六条自 2026-09-29 起一直无 run，原因是`git log --since=2026-09-29 -- packages/muya/`只有一个提交`18514fb`（就是那天 muya 全绿的那次）——**不是 workflow 坏了**，12 个全是 `active`（`gh workflow list --all` 复核）。
+
+另有一个更窄的形状：只碰 `packages/muya/test/**`（比如只改一致性夹具）会触发 `muya-test` 与 `muya-spec`，但**不**触发另外四条 muya（它们的底是 `src/**`），而桌面四条又 `paths-ignore` 掉了 muya——于是这种 PR 只拿到 2 条 workflow。
 
 `.github/actions/setup/action.yml`：pnpm/action-setup@v4.4.0 → setup-node@v4.4.0（node 22.21.1 + 缓存）→ `pnpm install --frozen-lockfile --ignore-scripts`。**`--ignore-scripts` 意味着补丁与 rebuild 只在显式重跑 postinstall 的 `build/e2e/release` 里发生。**
 
