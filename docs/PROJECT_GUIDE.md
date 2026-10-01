@@ -298,6 +298,15 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 另有一个更窄的形状：只碰 `packages/muya/test/**`（比如只改一致性夹具）会触发 `muya-test` 与 `muya-spec`，但**不**触发另外四条 muya（它们的底是 `src/**`），而桌面四条又 `paths-ignore` 掉了 muya——于是这种 PR 只拿到 2 条 workflow。
 
+#### **push 路径上引擎侧是"结构性无门禁"，不是"被过滤挡掉"**（2026-10-01 实测更正）
+
+上表的互斥讲的是 **PR** 路径。**push 到 `develop` 这条路径上结论更强**：五条 muya 工作流的 `on:` 块里**根本没有 `push`**（只有 `pull_request`，`muya-spec` 另有 `workflow_dispatch`），而 `lint.yml` / `test.yml` 的 `push: branches: [develop]`（PR #30 加的）带的是同一份 `paths-ignore: packages/muya/**`。所以：
+
+- 合进 `develop` 之后，**引擎侧在任何批次形状下都拿不到远端验证**——没有那条通路，不是过滤器不匹配。
+- develop 的集成态最多就是 `lint` + `test`（ubuntu/windows）+ `coverage` 这**一条**腿。`develop` 的 merge commit 实测（`5222c9e`，PR #48 promote 合入）：`check-suites` **从历史那两个 `total_count: 0` 变成 `2`**，两个 run 的 event 都是 `push`（`36818207027` / `36818207031`），四个 job 各出现恰好一次、零重试。
+- **代价按批次形状分两档**：纯文档/纯桌面合并 **8.38 作业分钟**（lint 78 s + test ubuntu 85 s + test windows 117 s + coverage 223 s）；触及 `packages/muya/**` 的合并约 18 分钟（PR #19 的 18.05 / PR #22 的 18.73 是旧推算基线，那两批 muya 腿真的起了）。**两档相差的约 9.7 分钟是减出来的，没有独立测过**——没有"纯引擎合并"的样本可量那五条腿。#20 已按这份数据关闭。
+- 顺带一处更正：#20 正文第 8 行"12 个工作流里只有 `validate-licenses.yml` 认 push 到 `develop`"在 PR #30 之前是对的，现在 `lint` / `test` 也认，而 muya 六条**仍然不认**。
+
 `.github/actions/setup/action.yml`：pnpm/action-setup@v4.4.0 → setup-node@v4.4.0（node 22.21.1 + 缓存）→ `pnpm install --frozen-lockfile --ignore-scripts`。**`--ignore-scripts` 意味着补丁与 rebuild 只在显式重跑 postinstall 的 `build/e2e/release` 里发生。**
 
 代码风格：根 ESLint 9 flat（`@eslint/js` + neostandard + typescript-eslint + vue + jsonc），2 空格、无分号、单引号、`no-explicit-any: error`、`consistent-type-imports`；两处自定义规则值得记住——第 10 节（`eslint.config.js:206-239`）在 `src/renderer/**` 禁用 `Buffer`/`process`/`__dirname`/`__filename`/`require`（起因是一次静默的 SAVE*VERSION_SNAPSHOT 故障），第 7 节给测试注入 Vitest 全局。引擎侧是 antfu 配置：4 空格 + 分号、接口必须 `I` 前缀、私有成员必须 `*` 前缀、`complexity ≤ 20`、`max-lines-per-function ≤ 200`、禁 `as unknown as`。注释规范见 `.github/COMMENTING-GUIDELINES.md`。提交前 `pnpm lint && pnpm typecheck`（`.husky/pre-commit` 已跑 lint-staged）。
