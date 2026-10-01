@@ -61,29 +61,40 @@ const openIndex = ref<number | null>(null)
 const openItems = ref<MenuItemDef[]>([])
 const dropdownStyle = ref<Record<string, string>>({})
 
+// A superseded open must not be undone when the recent-documents fetch answers.
+// `openIndex` and `openItems` are both written after that await, so whatever
+// happens in between — sliding along the bar to another menu, an arrow-key move,
+// clicking away — would be rolled back. `closeAll` draws a number of its own,
+// since dismissing the menu is just as much a new intent as opening another one.
+let openRequest = 0
+
 const openMenu = async (index: number, anchor?: HTMLElement): Promise<void> => {
-  const menu = menus.value[index]
-  if (!menu) return
+  if (!menus.value[index]) return
+  const seq = ++openRequest
   const el =
-    anchor ??
-    (document.querySelector('.menu-bar')?.children[index] as HTMLElement | undefined)
+    anchor ?? (document.querySelector('.menu-bar')?.children[index] as HTMLElement | undefined)
   if (el) {
     const rect = el.getBoundingClientRect()
     const estimatedWidth = 260
-    const left = Math.max(
-      4,
-      Math.min(rect.left, window.innerWidth - estimatedWidth - 8)
-    )
+    const left = Math.max(4, Math.min(rect.left, window.innerWidth - estimatedWidth - 8))
     dropdownStyle.value = {
       left: `${left}px`,
       top: `${Math.round(rect.bottom) + 1}px`
     }
   }
-  if (menu.id === 'file') {
+  if (menus.value[index].id === 'file') {
     await fetchRecentFiles()
+    if (seq !== openRequest) return
   }
+  // Re-read the menu after the await instead of using the object captured above.
+  // `buildMenus` hands out `items` as a thunk that closes over the `recentFiles`
+  // array as it was when the computed last ran (menu/menus.ts:712), and
+  // `buildFileMenu` maps that array into the "Open Recent" children eagerly
+  // (menu/menus.ts:248). `fetchRecentFiles` reassigns `recentFiles.value` rather
+  // than mutating it, so the pre-fetch object keeps pointing at the old array and
+  // its items render the PREVIOUS list — on the first open, no list at all.
   openIndex.value = index
-  openItems.value = menu.items()
+  openItems.value = menus.value[index].items()
 }
 
 const toggleMenu = (index: number, event: MouseEvent): void => {
@@ -100,6 +111,9 @@ const hoverMenu = (index: number, event: MouseEvent): void => {
 }
 
 const closeAll = (): void => {
+  // Invalidate any open still waiting on the recent-documents fetch, so its late
+  // answer cannot reopen the menu the user just dismissed.
+  openRequest += 1
   openIndex.value = null
   openItems.value = []
 }
@@ -175,7 +189,9 @@ onBeforeUnmount(() => {
   align-items: center;
   padding: 0 9px;
   border-radius: 4px;
-  transition: background-color 120ms ease-out, color 120ms ease-out;
+  transition:
+    background-color 120ms ease-out,
+    color 120ms ease-out;
   cursor: default;
   white-space: nowrap;
   /* Own no-drag declaration: the shared `title-no-drag` class is scoped to
