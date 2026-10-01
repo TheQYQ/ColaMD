@@ -206,7 +206,13 @@ export const useProjectStore = defineStore('project', () => {
       name += '.md'
     }
 
-    const fullName = `${dirname}/${name}`
+    // Join with the platform separator, like RENAME_IN_SIDEBAR below. `dirname`
+    // comes from a tree node and the tree root went through `path.normalize`, so
+    // on Windows it carries backslashes; a hardcoded slash would make this a
+    // mixed path that the watcher's native pathname can never equal, and
+    // `treeEvents.ts` compares the two with a bare `===` to decide whether to
+    // adopt the new file into a tab.
+    const fullName = `${dirname}${PATH_SEPARATOR}${name}`
 
     // Creating over an existing path would silently overwrite it (outputFile
     // truncates). Refuse instead of destroying the existing file (#1946).
