@@ -609,6 +609,16 @@ AGENTS.md 的门禁表把"已知间歇形状"指到这里。这里只收**有 ru
 - **没做 e2e**（手工复核约 40 秒、**只在 Windows 上有意义**：侧栏右键"新建文件" → 输入 `zzz` → 文件建出来了但编辑器不自动切过去）。**这条现在有确切的预期形态了**：与路径形态无关，只与 `===` 两侧的形态差异有关。
 - 顺带纠正一条口径：`#27` 里"三条待测量"的**第 1、2 条（保留设备名、尾点）当时仍未测量**——**同日稍后已量完，两条的前提都被推翻，见下面那条**。
 
+**#27 那条"需要测量"的第 1、2 条：保留设备名与尾点（已量完，两条前提都不成立，2026-10-01）**。这两条一直在 issue 里挂着"待测量"，本轮用一段 Node 探针在**本机 NTFS** 上直接量，**结果与issue 里的假设相反**。
+
+- **量法与前提**（可复现）：`fs.mkdtempSync` 建临时目录，直接用 Node 的 `fs` 写文件，再 `readdirSync` / `existsSync` / `readFileSync` / `statSync` 复核。**先确认了文件系统**——`Get-Volume` 显示本机 C/D/E **三卷全是 NTFS**，临时目录在 `C:\Users\lyg\AppData\Local\Temp`，**所以这不是在某个特殊卷上测出来的**。
+- **第 1 条（保留设备名）**：issue 假设"除对话框外的所有写路径都必须有一个系统本地规则拒绝创建的文件名"。**实测 8 个全部 CREATED、零报错**：`CON`、`CON.pdf`、`NUL`、`NUL.txt`、`COM1.log`、`LPT1.md`、`AUX.pdf`、`PRN.pdf`。**"系统会拒绝"这条前提在本机不成立**——经 Node 的 `fs`（libuv → `CreateFileW`）这些名字就是普通文件。
+  - **而且即使写失败也不会出事**：导出侧 `file.ts:182` 起有 `try`，`:226` 的 `catch` 把错误转成 `mt::show-notification`（`title: 'Export failure'`），**不是弹框、也不是未捕获异常**。所以这条连"用户看到模态错误框"的后果都不成立。
+  - **仍未量的部分（如实写明）**：**原生保存对话框自己的校验**。`dialog.showSaveDialog` 是 Windows common dialog，用户在里面输入 `CON` 时对话框是否自己拦下，**在无头环境里测不到**。但即便它放行，写盘也会成功，**没有数据损失**。
+- **第 2 条（尾点）**：issue 假设"`path.extname('data.')` 是 `'.'`（truthy），于是不补 `.md`，Windows 会剥掉尾点写成 `data`"，进而路径与磁盘分叉。**前半句实测为真**（`path.extname('data.') === '.'`，`Boolean` 为 true），**后半句不成立**：写入后目录里出现的是**字面 `"data."`**，且 `existsSync('data.')` = **true**、`existsSync('data')` = **false**、`readFileSync('data.')` 读得到内容、`statSync('data.').size` = 5。**尾点没有被剥掉，所以不存在分叉。**
+  - **真正成立的那点残余**（很小，按判据不修）：`file.ts:295` 的 `const extension = path.extname(filePath) || '.md'` 会把这个**裸 `.`** 当成"已有扩展名"，于是 `data.` 不会被补成 `.md`，而 `hasMarkdownExtension('data.')` 为 false（`common/filesystem/markdownExtensions.ts:26` 用的是 `endsWith('.md')`）——**该文件从此不被 ColaMD 当作 markdown**，在按 `MARKDOWN_INCLUSIONS` 过滤的侧栏里也不出现。**但这是用户自己要求的名字，不算缺陷**；要改就得决定"尾点文件名该怎么归一化"，那是产品语义。**重启条件**：出现真实用户报告，或产品决定要替用户消掉裸尾点。
+- **这一轮的方法论收获，比两条结论本身更值钱**：**"平台依赖"这一轴最常被引用的两个实例（Windows 设备名、尾点剥离）在现代 Windows + Node 上都不复现。** 而 §15 那条"这类会不会坏由消费者决定"的方法论在这里再次生效——**由 `CreateFileW` 与 common dialog 决定，不由本仓那一行有没有校验决定**。所以**别把"平台依赖"当成一个高产轴直接开扫**（这与上一段刚写的"下一轮建议换轴"冲突，**以本条为准**：换轴可以，但要先降预期，且优先挑"症状稳定、可在任意机器断言"的子类）。
+
 **#27 第 2 条：导出/打印里的图片目的地编码（已量完，按判据不做代码改动，2026-09-30）**。原判据写的是"`util/resolveImageSrc.ts:13,17` 拼 `file://` 不做 URL 编码，所以名字含 `#`/`%20` 的图片在导出 HTML/PDF 里失效"。**两句被实测推翻**，一句成立但按判据不修。
 
 - **量法（可复现）**：用仓库里那份真 Electron 起窗口，把 `localPathToFileUrl` 逐字复制进探针页面，拼出的 URL 交给 `<img>` 后读 `naturalWidth` 与 `currentSrc`；磁盘上放的是**字面名**为 `plain.png` / `My Image.png` / `100%20done.png` / `photo#1.png` / `a(1).png` / `100%done.png` 的 PNG。对照项 `plain.png` 必须 LOADED 这一轮才算数（本轮 7/9，对照通过）。目的地按"应用插入（先过 `encodeImageSrc`）"和"手写/导入（不编码）"两种形态各测。结果：`%20`、`%23`、`%28…%29`、裸 `%` 全 LOADED；**手写的裸 `#`** 与**字面名含合法转义 `100%20done.png`** 两条 BROKEN。
