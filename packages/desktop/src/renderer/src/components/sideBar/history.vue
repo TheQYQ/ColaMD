@@ -276,7 +276,8 @@ const deleteSnapshot = async (snapshot: VersionSnapshotMeta): Promise<void> => {
 }
 
 const clearAll = async (): Promise<void> => {
-  if (!currentPathname.value) return
+  const requested = currentPathname.value
+  if (!requested) return
 
   try {
     await ElMessageBox.confirm(t('sideBar.history.clearConfirm'), t('sideBar.history.clearTitle'), {
@@ -289,9 +290,17 @@ const clearAll = async (): Promise<void> => {
     return
   }
 
-  const success = await window.versionHistory.clear(currentPathname.value)
+  // The pathname has to be the one the dialog was raised for, not whatever is
+  // current now: the confirm overlay blocks page clicks but not the
+  // main-process accelerators (Ctrl+Tab / Ctrl+1..9 / Ctrl+P), so the focused
+  // file can change while this box is open. `clearHistory` unlinks that whole
+  // file, so reading it late deletes the wrong file's history for good. This is
+  // the same identity-before-await rule as `openPreview` above; `clearAll` was
+  // the one left without it.
+  const success = await window.versionHistory.clear(requested)
   if (success) {
-    snapshots.value = []
+    // And the list may already have been reloaded for a different file.
+    if (requested === currentPathname.value) snapshots.value = []
     ElMessage.success(t('sideBar.history.clearSuccess'))
   } else {
     ElMessage.error(t('sideBar.history.clearFailed'))
