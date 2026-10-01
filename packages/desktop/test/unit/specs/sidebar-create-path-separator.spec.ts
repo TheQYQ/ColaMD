@@ -2,33 +2,39 @@ import type * as FileSystemModule from '@/util/fileSystem'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 
-// `CREATE_FILE_DIRECTORY` builds the target path by concatenating, and the
-// repository has both idioms side by side in that one file:
+// Characterization test, NOT a regression test for a fix.
 //
-//   :209  const fullName = `${dirname}/${name}`          <- hardcoded slash
-//   :240  const dest = dirname + PATH_SEPARATOR + name   <- the correct one
+// History: `CREATE_FILE_DIRECTORY` used to build its target as
+// `${dirname}/${name}`, and PR #59 "fixed" it to
+// `${dirname}${PATH_SEPARATOR}${name}` on the claim that a hardcoded slash
+// produces a mixed path on Windows. **That fix was a no-op and the claim was
+// wrong in every part.** Two facts, both verified:
 //
-// `dirname` comes from a tree node (`sidebarContextMenu.ts:35`), and the tree
-// root is passed through `window.path.normalize` (`project.ts:22`), so on
-// Windows it carries BACKSLASHES. The watcher event that the renderer compares
-// it against is produced by chokidar and is native too. So the hardcoded slash
-// yields a MIXED path:
+//   1. `PATH_SEPARATOR` (renderer/src/config.ts) is `window.path.sep`, and the
+//      preload exposes `sep: pathe.sep` (preload/index.ts:262). pathe is a
+//      POSIX-style library: `pathe.sep === '/'` on EVERY platform. So the two
+//      concatenations are byte-identical.
+//   2. `dirname` is always pathe-canonical, never mixed. It comes from
+//      `sidebarContextMenu.ts:34` — `isDirectory ? pathname : window.path.dirname(pathname)`
+//      — and both arms are pathe: folder pathnames are built by `treeCtrl.ts:131`
+//      as `${currentPath}${PATH_SEPARATOR}${dirName}` from a pathe-normalized
+//      root, and `window.path.dirname` is pathe too. On Windows that is
+//      `C:/docs`, forward slashes, no backslashes anywhere.
 //
-//   pendingNewFileName : C:\docs/fresh.md      (what the store publishes)
-//   watcher pathname   : C:\docs\fresh.md      (what chokidar reports)
+// So the slash was never the bug. The real mismatch is that the renderer's tree
+// is pathe (forward slashes) while the main process's chokidar watcher emits
+// NATIVE paths (backslashes on Windows) — those two meet at the bare `===` in
+// `treeEvents.ts:38`, which is why a newly created markdown file is never
+// adopted into a tab on Windows. That defect is real, is NOT fixed here, and
+// belongs in its own batch.
 //
-// and `treeEvents.ts:38` compares them with a bare `===`. That branch is what
-// adopts the newly created markdown file into a tab, so on Windows the file is
-// created but never adopted, and `newFileNameCache` is never cleared.
+// What this file does is pin the invariant that actually holds, so that a future
+// change to native-separator joining (which would silently break every
+// pathe-canonical comparison in the renderer) shows up here.
 //
-// The two existing specs on this behaviour cannot see it: `sidebar-create-conflict`
-// stubs `sep: '/'` with a `/docs` dirname (so the hardcoded slash coincidentally
-// matches), and `tree-events.spec.ts` feeds BOTH sides from the same
-// `/root/new.md` literal. Both are structurally blind to a separator mismatch.
-//
-// This file therefore pins the Windows shape: `sep` is `'\\'` and the dirname is
-// native, which is the only combination that distinguishes the two
-// concatenations.
+// Note the stub: `sep` MUST be '/'. An earlier draft of this spec stubbed it to
+// '\\' — a value the real preload can never return — and that fiction is exactly
+// what made the bogus fix look convincing (4 red, then 4 green).
 
 vi.hoisted(() => {
   const w = globalThis as unknown as {
@@ -48,12 +54,17 @@ vi.hoisted(() => {
   }
   w.window ??= {}
   w.window.path ??= {
-    // Windows shape. `@/config` reads `window.path.sep` at module scope, so this
-    // has to be in place before the import graph is evaluated.
-    sep: '\\',
-    normalize: (p) => p.replace(/\//g, '\\'),
-    basename: (p) => p.split(/[\\/]/).pop() ?? p,
-    dirname: (p) => p.split(/[\\/]/).slice(0, -1).join('\\')
+    // pathe.sep — '/' on every platform. Stubbing this to '\\' would be a lie.
+    sep: '/',
+    // pathe normalizes backslashes to forward slashes, so a native Windows path
+    // handed to the renderer comes out forward-slashed.
+    normalize: (p) => p.replace(/\\/g, '/').replace(/\/{2,}/g, '/'),
+    basename: (p) => p.split('/').filter(Boolean).pop() ?? p,
+    dirname: (p) => {
+      const parts = p.replace(/\\/g, '/').split('/')
+      parts.pop()
+      return parts.join('/')
+    }
   }
   w.window.fileUtils ??= {
     hasMarkdownExtension: (n: string) => n.endsWith('.md'),
@@ -74,61 +85,65 @@ vi.mock('@/util/fileSystem', async (orig) => {
 import { useProjectStore } from '@/store/project'
 import { create } from '@/util/fileSystem'
 
-const WIN_DIR = 'C:\\docs'
+const POSIX_DIR = '/docs'
+const NATIVE_DIR = 'C:\\docs'
 
-describe('CREATE_FILE_DIRECTORY builds a native path on Windows (#1946 sibling)', () => {
+describe('CREATE_FILE_DIRECTORY builds pathe-canonical paths (characterization)', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     window.fileUtils.pathExists = vi.fn(() => Promise.resolve(false))
   })
 
-  it('joins dirname and name with the platform separator, not a hardcoded slash', async () => {
+  it('joins a posix dirname with a slash', async () => {
     const store = useProjectStore()
-    store.createCache = { dirname: WIN_DIR, type: 'file' }
+    store.createCache = { dirname: POSIX_DIR, type: 'file' }
 
     await store.CREATE_FILE_DIRECTORY('fresh')
 
-    // Exactly one character distinguishes the two concatenations here: the
-    // junction. A mixed path is what breaks the strict comparison in
-    // `treeEvents.ts:38`.
-    expect(create).toHaveBeenCalledWith('C:\\docs\\fresh.md', 'file')
+    expect(create).toHaveBeenCalledWith('/docs/fresh.md', 'file')
   })
 
-  it('joins with the platform separator for directories too', async () => {
+  it('concatenates WITHOUT normalizing — the pathe form comes from sidebarContextMenu.ts:34', async () => {
+    // Pins what this function actually does, which is plain concatenation. It
+    // does NOT call `window.path.normalize`, so a native dirname handed to it
+    // would yield a mixed path. That case does not occur because
+    // `sidebarContextMenu.ts:34` derives `dirname` with pathe on both arms
+    // (`isDirectory ? pathname : window.path.dirname(pathname)`) and folder
+    // pathnames are pathe-joined in `treeCtrl.ts:131`.
+    //
+    // Asserting the absence of normalization is deliberate: if someone later adds
+    // `normalize` here, the mixed-path shape disappears — which is a behaviour
+    // change worth a look, not a silent improvement.
     const store = useProjectStore()
-    store.createCache = { dirname: WIN_DIR, type: 'directory' }
+    store.createCache = { dirname: NATIVE_DIR, type: 'file' }
+
+    await store.CREATE_FILE_DIRECTORY('fresh')
+
+    const target = vi.mocked(create).mock.calls[0]?.[0] as string
+    // Unnormalized: the native dirname survives verbatim and gains one slash.
+    expect(target).toBe('C:\\docs/fresh.md')
+  })
+
+  it('does not append .md for directories', async () => {
+    const store = useProjectStore()
+    store.createCache = { dirname: POSIX_DIR, type: 'directory' }
 
     await store.CREATE_FILE_DIRECTORY('sub')
 
-    // No `.md` is appended for directories, so the junction is the only
-    // difference from the file case as well.
-    expect(create).toHaveBeenCalledWith('C:\\docs\\sub', 'directory')
+    expect(create).toHaveBeenCalledWith('/docs/sub', 'directory')
   })
 
-  it('never emits a foreign separator alongside the native one', async () => {
-    const store = useProjectStore()
-    store.createCache = { dirname: WIN_DIR, type: 'file' }
-
-    await store.CREATE_FILE_DIRECTORY('mixed')
-
-    const target = vi.mocked(create).mock.calls[0]?.[0] as string
-    // `sep` is `\\` here, so a forward slash anywhere in the result means the
-    // two concatenations got mixed — which is exactly what chokidar's native
-    // path can never equal.
-    expect(target).not.toContain('/')
-    expect(target).toContain('\\')
-  })
-
-  it('keeps the conflict guard working with a native path (#1946)', async () => {
+  it('tests the conflict guard with the same string it would create (#1946)', async () => {
     window.fileUtils.pathExists = vi.fn(() => Promise.resolve(true))
     const store = useProjectStore()
-    store.createCache = { dirname: WIN_DIR, type: 'file' }
+    store.createCache = { dirname: POSIX_DIR, type: 'file' }
 
     await store.CREATE_FILE_DIRECTORY('taken')
 
-    // The guard must test the SAME string it would create, separator and all.
-    expect(window.fileUtils.pathExists).toHaveBeenCalledWith('C:\\docs\\taken.md')
+    // The guard must probe exactly the path that would be written, otherwise it
+    // is protecting a different string than the one that gets created.
+    expect(window.fileUtils.pathExists).toHaveBeenCalledWith('/docs/taken.md')
     expect(create).not.toHaveBeenCalled()
   })
 })

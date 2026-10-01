@@ -206,13 +206,15 @@ export const useProjectStore = defineStore('project', () => {
       name += '.md'
     }
 
-    // Join with the platform separator, like RENAME_IN_SIDEBAR below. `dirname`
-    // comes from a tree node and the tree root went through `path.normalize`, so
-    // on Windows it carries backslashes; a hardcoded slash would make this a
-    // mixed path that the watcher's native pathname can never equal, and
-    // `treeEvents.ts` compares the two with a bare `===` to decide whether to
-    // adopt the new file into a tab.
-    const fullName = `${dirname}${PATH_SEPARATOR}${name}`
+    // `dirname` comes from the sidebar tree, which is pathe-canonical
+    // (forward slashes on every platform), and `PATH_SEPARATOR` is
+    // `window.path.sep` = `pathe.sep` = '/' — so writing `${dirname}/${name}` and
+    // `${dirname}${PATH_SEPARATOR}${name}` produce byte-identical strings. This
+    // used to be `${dirname}/${name}` with a comment claiming the watcher sends a
+    // native path that a hardcoded slash cannot match; that was wrong in every
+    // part (see PROJECT_GUIDE §15, round 6). The real mismatch is pathe-vs-native
+    // and it lives at the comparison in `treeEvents.ts`, not here.
+    const fullName = `${dirname}/${name}`
 
     // Creating over an existing path would silently overwrite it (outputFile
     // truncates). Refuse instead of destroying the existing file (#1946).
