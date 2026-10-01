@@ -35,7 +35,16 @@ export const processTreeEvent = (
     case 'add': {
       const { pathname, data, isMarkdown } = change
       addFile(ctx.tree, change as Parameters<typeof addFile>[1], ctx.fileSortBy, ctx.fileSortOrder)
-      if (isMarkdown && ctx.pendingNewFileName && pathname === ctx.pendingNewFileName) {
+      // The watcher payload keeps the separator form chokidar was handed
+      // (native backslashes on win32), while `pendingNewFileName` is assembled
+      // from the pathe-canonical tree, so a bare `===` can never match on
+      // Windows (#63). pathe.normalize folds both to forward slashes and is a
+      // no-op on POSIX forms.
+      if (
+        isMarkdown &&
+        ctx.pendingNewFileName &&
+        window.path.normalize(pathname) === window.path.normalize(ctx.pendingNewFileName)
+      ) {
         ctx.adoptCreatedFile(getFileStateFromData(data as Record<string, unknown>))
         ctx.forgetPendingNewFileName()
       }

@@ -29,6 +29,7 @@ import {
 import { processTreeEvent, type TreeEventContext } from '@/store/treeEvents'
 import type { TreeNode } from '@/components/sideBar/types'
 import type { FileChangeDetail } from '@shared/types/files'
+import { normalize as patheNormalize } from 'pathe'
 
 const tree = { pathname: '/root' } as TreeNode
 
@@ -55,6 +56,12 @@ const makeContext = (
 
 beforeEach(() => {
   vi.clearAllMocks()
+  // The reducer canonicalizes both sides of the adoption comparison through
+  // `window.path.normalize`; the real pathe keeps the stub honest instead of
+  // inventing separator behavior.
+  ;(window as unknown as { path: { normalize: typeof patheNormalize } }).path = {
+    normalize: patheNormalize
+  }
 })
 
 describe('processTreeEvent', () => {
@@ -78,6 +85,38 @@ describe('processTreeEvent', () => {
 
     expect(spies.adoptCreatedFile).toHaveBeenCalledWith({ adoptedFrom: { markdown: '# hi' } })
     expect(spies.forgetPendingNewFileName).toHaveBeenCalledTimes(1)
+  })
+
+  it('adopts across the watcher-native vs tree-pathe separator mismatch (win32 shape, #63)', () => {
+    // Both strings are forms production really produces: chokidar v5 emits the
+    // separator form it was handed (native backslashes on Windows — probed
+    // 2026-10-02), while `pendingNewFileName` is assembled from the
+    // pathe-canonical tree. A bare `===` can never match them (#63).
+    const { ctx, spies } = makeContext({ pendingNewFileName: 'C:/docs/zzz.md' })
+    const change = {
+      pathname: 'C:\\docs\\zzz.md',
+      data: { markdown: '# hi' },
+      isMarkdown: true
+    } as FileChangeDetail
+
+    processTreeEvent(ctx, 'add', change)
+
+    expect(spies.adoptCreatedFile).toHaveBeenCalledWith({ adoptedFrom: { markdown: '# hi' } })
+    expect(spies.forgetPendingNewFileName).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not adopt when the watcher reports a different file (win32 shape)', () => {
+    const { ctx, spies } = makeContext({ pendingNewFileName: 'C:/docs/other.md' })
+    const change = {
+      pathname: 'C:\\docs\\zzz.md',
+      data: {},
+      isMarkdown: true
+    } as FileChangeDetail
+
+    processTreeEvent(ctx, 'add', change)
+
+    expect(spies.adoptCreatedFile).not.toHaveBeenCalled()
+    expect(spies.forgetPendingNewFileName).not.toHaveBeenCalled()
   })
 
   it('leaves an unrelated markdown addition alone', () => {
