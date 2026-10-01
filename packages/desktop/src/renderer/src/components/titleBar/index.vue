@@ -134,8 +134,16 @@ onMounted(async () => {
       window.electron.windowControl.isFullScreen(),
       window.electron.windowControl.isMaximized()
     ])
-    isFullScreen.value = !!fs
-    isMaximized.value = !!max
+    // The four listeners below are registered at setup top level, so they are
+    // already attached by the time this query is in flight — a `maximize` /
+    // `enter-full-screen` push that lands first is NEWER than the answer we just
+    // got (which was asked before it). Writing unconditionally flips the glyph
+    // back to the stale state and leaves it wrong until the next real toggle, e.g.
+    // for a window the window manager restores as maximized at startup.
+    if (!windowStateChanged) {
+      isFullScreen.value = !!fs
+      isMaximized.value = !!max
+    }
   } catch {}
 })
 
@@ -196,16 +204,24 @@ const rename = () => {
   }
 }
 
+// Set once a `maximize` / `unmaximize` / full-screen push has told us the real
+// state, so the mount-time query cannot overwrite it with a pre-event answer.
+let windowStateChanged = false
+
 const onMaximize = () => {
+  windowStateChanged = true
   isMaximized.value = true
 }
 const onUnmaximize = () => {
+  windowStateChanged = true
   isMaximized.value = false
 }
 const onEnterFullScreen = () => {
+  windowStateChanged = true
   isFullScreen.value = true
 }
 const onLeaveFullScreen = () => {
+  windowStateChanged = true
   isFullScreen.value = false
 }
 

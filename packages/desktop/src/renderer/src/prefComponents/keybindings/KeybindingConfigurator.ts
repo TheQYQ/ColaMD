@@ -26,6 +26,9 @@ export default class KeybindingConfigurator {
   defaultKeybindings: Map<string, string>
   keybindingList: UiKeybinding[]
   isDirty: boolean
+  // Bumped by every mutation of `keybindingList`, so `save` can tell whether the
+  // map it sent is still the whole story by the time the write comes back.
+  private _revision = 0
 
   /**
    * ctor
@@ -91,12 +94,19 @@ export default class KeybindingConfigurator {
     }
 
     const userKeybindings = this._getUserKeybindingMap()
+    const revision = this._revision
     const result = await window.electron.ipcRenderer.invoke(
       'mt::keybinding-save-user-keybindings',
       userKeybindings
     )
     if (result) {
-      this.isDirty = false
+      // Only clear the flag if nothing was edited while the write was on the wire.
+      // `userKeybindings` was built before the await, so a later edit is NOT in the
+      // file that just landed; clearing the flag anyway would drop it silently and
+      // stop the preferences window from warning on close.
+      if (this._revision === revision) {
+        this.isDirty = false
+      }
       return true
     }
     return false
@@ -127,6 +137,7 @@ export default class KeybindingConfigurator {
     entry.type = this._isDefaultBinding(id, accelerator)
       ? SHORTCUT_TYPE_DEFAULT
       : SHORTCUT_TYPE_USER
+    this._revision += 1
     this.isDirty = true
     return true
   }
@@ -155,6 +166,7 @@ export default class KeybindingConfigurator {
       }
       entry.type = SHORTCUT_TYPE_DEFAULT
     }
+    this._revision += 1
     this.isDirty = true
     return this.save()
   }
