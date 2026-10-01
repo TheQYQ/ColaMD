@@ -19,10 +19,10 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 
 ## 门禁（仓库根，附实测基线）
 
-| 命令                                   | 退出码 | 现在的基线                                                                                                                                       |
-| -------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `pnpm check`（= `lint` + `typecheck`） | 0      | **94 warnings / 0 errors**，全部是 `no-non-null-assertion`                                                                                       |
-| `pnpm test:unit`                       | 0      | 110 文件 / **1207 通过 + 1 跳过**（2026-09-30 在合入 develop 后的树上重测，新增 `close-requires-saved-tabs.spec.ts`；上一行 94/0 是 2026-09-29） |
+| 命令                                   | 退出码 | 现在的基线                                                                                                                                                                                                      |
+| -------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm check`（= `lint` + `typecheck`） | 0      | **94 warnings / 0 errors**，全部是 `no-non-null-assertion`                                                                                                                                                      |
+| `pnpm test:unit`                       | 0      | 111 文件 / **1211 通过 + 1 跳过**（2026-10-01 在 `develop 383622e` 上重测；此前那格写的 110 / 1207 是 2026-09-30 的数，漏了 PR #45 的 `preferences-file-guard.spec.ts`，4 例。上一行 94/0 是 2026-09-29，未变） |
 
 | `pnpm build` | 0 | — |
 | `pnpm knip` | 0 | 只查依赖，**这条才是门禁** |
@@ -51,6 +51,8 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 
 - 一批一分支一 PR，目标 `develop`；promote 到 `main` 也走 PR，并按 `main` 惯例用 **merge commit**（不是 squash）。
 - **合进 `main` 不产生 CI run**（`build.yml` 在 2026-09-11 曾对 `main` 的 push 跑过一次并失败，此后触发条件收窄，`main` 上再无 run）。12 个工作流按触发组合实测分四类：**5 条只认 `pull_request`**（`muya-build`/`muya-circular`/`muya-lint`/`muya-test`/`muya-e2e`）、**3 条 `pull_request` + `workflow_dispatch`**（`build`/`e2e`/`muya-spec`）、**3 条 `pull_request` + push 到 `develop`**（`validate-licenses`——只在 `package.json` / `pnpm-lock.yaml` 变化时起、**`lint` 与 `test`（2026-09-29 加，见下）**）、**1 条只认 `v*` 标签**（`release`）。全仓 `grep schedule:|cron:` 仍零命中（没有 nightly）。
-  **所以从今天起**：一次合进 `develop` 的改动会拿到 lint + 桌面单测（ubuntu/windows）+ 非阻断 coverage 这道远端验证，约 18 分钟作业分钟（实测基线：PR #19 的 18.05 / PR #22 的 18.73）；**但 E2E、打包、muya 五条腿与一致性仍然只在 PR 上跑**——所以"PR 门禁是一批改动的唯一**完整**远端验证"这句仍然成立，promote 到 `main` 之后依旧零 run，`main` 的门禁只能靠 promote PR 那一次加本机门禁。历史证据留档：`f77d0cc` 与 `52227b8` 两个 develop merge commit 当时 `check-suites` 与 `actions/runs?head_sha` 都是 `total_count: 0`（后者是本 change 之前的最后一次测量）。
+  **所以从今天起**：一次合进 `develop` 的改动会拿到 lint + 桌面单测（ubuntu/windows）+ 非阻断 coverage 这道远端验证，约 18 分钟作业分钟（实测基线：PR #19 的 18.05 / PR #22 的 18.73）；**但 E2E、打包仍然只在 PR 上跑**，promote 到 `main` 之后依旧零 run，`main` 的门禁只能靠 promote PR 那一次加本机门禁。历史证据留档：`f77d0cc` 与 `52227b8` 两个 develop merge commit 当时 `check-suites` 与 `actions/runs?head_sha` 都是 `total_count: 0`（后者是本 change 之前的最后一次测量）。
+- **"PR 门禁是一批改动的唯一完整远端验证"这句话是有条件的**（2026-10-01 实测更正，上面那句原文把它写成无条件成立）：**桌面四条与 muya 六条的路径过滤器互斥**。`build`/`lint`/`test`/`e2e` 对 `packages/muya/**` 是 `paths-ignore`，muya 六条对引擎路径是 `paths` 包含过滤。**只碰桌面（或只改文档）的批次，muya 六条一条都不起**——实测 PR #43/#44/#45/#48 每个都只有 4 条 workflow，PR #48 的 run 是 `36814902924`/`36814902940`/`36814902970`/`36814902983`。所以纯桌面批次**没有**任何引擎验证（`muya test`/`test:spec`/`madge`/引擎 lint 全没跑），只能靠本机那几门；反之纯引擎批次没有桌面单测/E2E/打包。**只有同时碰了 `packages/muya/**`的批次才拿到全套 10 条。** 逐条过滤器与更窄的形状见`PROJECT_GUIDE`§10.4。
+这条不是"CI 坏了"：12 个 workflow 全是`active`，muya 六条自 2026-09-29 起无 run 只是因为那之后没有批次碰过引擎（`git log --since=2026-09-29 -- packages/muya/`只有`18514fb`）。
 - 性能类改动必须先更新 `packages/muya/docs/perf-baseline.md`——它是性能数字的唯一来源。
 - 安全边界（哪些偏好键渲染端可写、选择器结果即授权、域收敛）见 `docs/PROJECT_GUIDE.md` §6；**不要为了让测试通过而放宽校验**。
