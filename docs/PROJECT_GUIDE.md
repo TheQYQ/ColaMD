@@ -582,33 +582,32 @@ AGENTS.md 的门禁表把"已知间歇形状"指到这里。这里只收**有 ru
 - 措辞上的一处取舍：取消对话框这种情况现在也复用既有的 `dialog.saveFailure` 文案（detail 里列出没写成的文件名）。新建一个 i18n 键要动 11 份语言文件，属产品文案决定，不在稳定期的健壮性批里顺手做。
 - #26 四条到此全部有批并已闭环（1=#29、2=#40 `195b337`、3=#38、4=本批 PR #41 `d77b51d`；issue #26 已于 2026-09-30 关闭，限度与手动步骤写在关闭评论里）。
 
-**#27 那条"需要测量"的第三项：侧栏新建用 `/` 硬拼（已量完并修，2026-10-01，win32 独有）**。原记录是"侧栏新建用 `/` 硬拼"待复现——**它不需要复现，是确定性的**，而且比"风格不一致"严重。
+**#27 那条"需要测量"的第三项：侧栏新建用 `/` 硬拼（2026-10-01 定性，并撤回我自己的修法）**。**这一段的结论经过一次自我推翻**：最初判成"win32 上真缺陷、已由 PR #59 修掉"，**两处都错**。下面是查实的链条与正确的结论。
 
-同一个文件里有两种写法并存：
+**链条（每一环都查实，不是推断）**：
 
-```
-:209  const fullName = `${dirname}/${name}`          <- 硬拼
-:240  const dest = dirname + PATH_SEPARATOR + name   <- 正确（同一个文件，30 行之下）
-```
+| 环                          | 位置                                                                                                    | 形态                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 渲染端暴露的 `path`         | `preload/index.ts:11,262`（`sep: pathe.sep`）                                                           | **pathe**，POSIX 风格   |
+| `window.path.sep`           | 实测 `pathe.sep === '/'`                                                                                | **恒为 `/`，所有平台**  |
+| 原生目录对话框 → 主进程存根 | `main/windows/editor.ts:424`                                                                            | **原生 `C:\docs`**      |
+| 主进程交给 chokidar         | `:425` → `watcher.watch(win, pathname, 'dir')`；`watcher.ts` 用 **Node 的 `path`**                      | **原生**                |
+| 主进程发给渲染端            | `:426` `mt::open-directory`                                                                             | **原生**                |
+| 渲染端建树根                | `store/project.ts:22` `window.path.normalize` = pathe                                                   | **`C:/docs`（正斜杠）** |
+| 树的**文件夹** pathname     | `store/treeCtrl.ts:131` `${currentPath}${PATH_SEPARATOR}${dirName}`，从 pathe 根起拼                    | **正斜杠**              |
+| 树的**文件** pathname       | `store/treeEvents.ts:37` `addFile(tree, change, …)`，`change` 是 watcher 载荷                           | **原生**                |
+| `createCache.dirname`       | `sidebarContextMenu.ts:34` `isDirectory ? pathname : window.path.dirname(pathname)`，**两臂都经 pathe** | **恒为正斜杠**          |
 
-**每一环都查实了**（不是推断）：
+**结论一：那个 `/` 不是缺陷。** `dirname` 恒为 pathe 形态，所以 `${dirname}/${name}` 本来就产出 `C:/docs/fresh.md`——**全正斜杠，压根没有"混合路径"**。PR #59 的修法 `${dirname}${PATH_SEPARATOR}${name}` 因为 `PATH_SEPARATOR === '/'` 而**与原式逐字节相同，是空操作**。已撤回（把 `project.ts` 改回原式，并把注释改成指向这条记录）。
 
-| 环                               | 位置                                                     | 结论                         |
-| -------------------------------- | -------------------------------------------------------- | ---------------------------- |
-| 树根被规范化                     | `store/project.ts:22` `window.path.normalize()`          | Windows 上转成**原生反斜杠** |
-| `createCache.dirname` 来自树节点 | `sidebarContextMenu.ts:35`                               | 原生                         |
-| 拼路径时硬插 `/`                 | `project.ts:209`                                         | **混合分隔符**               |
-| watcher 事件 pathname            | chokidar（`main/filesystem/watcher.ts`）                 | 原生                         |
-| 比较方式                         | `treeEvents.ts:38` `pathname === ctx.pendingNewFileName` | **裸 `===`**                 |
+**结论二：真正的缺陷存在，但更大、且不在 `project.ts`。** 渲染端的树是 pathe（正斜杠），主进程的 watcher 发**原生**路径（win32 上反斜杠），两者在 `treeEvents.ts:38` 的**裸 `===`** 上相遇——`pendingNewFileName` 恒为 `C:/docs/fresh.md`，watcher 恒为 `C:\docs\fresh.md`，**在 Windows 上永远不可能相等**。所以"侧栏新建的 markdown 文件自动接管进标签页"这个功能**在 win32 上是死的**（`adoptCreatedFile` 从不触发，`newFileNameCache` 也永不清空）。**这一条尚未修**（修法在比较处，不在拼接处），另开批次。
 
-后果：**侧栏新建 markdown 文件后，文件被建出来了，但不会被接管进标签页**（那一支正是 `adoptCreatedFile`，`treeEvents.ts:20-22` 的注释自己写明"the match is what adopts the opened document into the tab"），而且 `newFileNameCache` **永不清空**（`forgetPendingNewFileName` 只在匹配成功时才跑）。
+**我那条测试为什么会有说服力**：它把 `window.path.sep` 桩成 `'\'`——**一个真实 preload 永远不会返回的值**。于是"修前 4 红、修后 4 绿、变异恰好 4 红"整套流程都成立，却钉的是一个虚构的形态。**教训：桩一个值之前先确认生产环境真能产生它**；这与今晚记下的"没查过的东西不许先写进结论"是同一条的第 4 次复发。测试已改写成 **characterization test**（断言真实不变量：产出是 pathe 形态，且**本函数不做规范化**——pathe 形态来自 `sidebarContextMenu.ts:34`）。
 
-- 修法一行：`${dirname}${PATH_SEPARATOR}${name}`。**没有加重构**——`PATH_SEPARATOR` 本来就在这个文件的 import 里（`:10`），正确写法就在 30 行之下。
-- **两个既有 spec 都结构性地看不见这个缺陷**：`sidebar-create-conflict.spec.ts` 把 `window.path.sep` 桩成 `'/'` 且 dirname 也是 `'/docs'`，**硬拼的 `/` 恰好与期望同形**；`tree-events.spec.ts` 更彻底，它**两侧喂的是同一个 `/root/new.md` 字面量**。所以这条不是"没人想到"，是"测试的构造方式让它不可能被发现"。
-- 回归：`test/unit/specs/sidebar-create-path-separator.spec.ts` 4 条。**关键是那个 spec 的 `vi.hoisted` 把 `sep` 桩成 `'\\'` 且 dirname 用原生 `C:\docs`**——只有这个组合能区分两种拼接（差别恰好是 junction 那一个字符）。四条分别钉：文件、目录（不追加 `.md`）、结果里不得出现外来分隔符、以及**冲突守卫（#1946）用同一个字符串去测**（守卫与创建必须是同一个路径，否则守卫形同虚设）。
-- 修复前 **4 红**，红因都是那个字符；**变异验证**：换回硬拼 → **恰好那 4 条红**，而 `sidebar-create-conflict.spec.ts` 的 2 条仍绿（印证"既有 spec 看不见"）。
-- **没做 e2e，但能手工复核**（约 40 秒，**只在 Windows 上有意义**）：打开一个文件夹 → 侧栏右键"新建文件" → 输入 `zzz` → **新文件建出来了，但编辑器不会自动切到它**（修前）；目录同理（目录本来就不进这条接管分支，所以只验文件）。
-- 顺带纠正一条口径：`#27` 里"三条待测量"的**第 1、2 条（保留设备名、尾点）仍未测量**，不要因为这一条收口就说 #27 整条清了。
+**两个既有 spec 都看不见这类问题**：`sidebar-create-conflict.spec.ts` 把 `sep` 桩成 `'/'` 且 dirname 也是 `'/docs'`；`tree-events.spec.ts` **两侧喂的是同一个 `/root/new.md` 字面量**。两者都结构上无法区分两条来源的形态差异。
+
+- **没做 e2e**（手工复核约 40 秒、**只在 Windows 上有意义**：侧栏右键"新建文件" → 输入 `zzz` → 文件建出来了但编辑器不自动切过去）。**这条现在有确切的预期形态了**：与路径形态无关，只与 `===` 两侧的形态差异有关。
+- 顺带纠正一条口径：`#27` 里"三条待测量"的**第 1、2 条（保留设备名、尾点）当时仍未测量**——**同日稍后已量完，两条的前提都被推翻，见下面那条**。
 
 **#27 第 2 条：导出/打印里的图片目的地编码（已量完，按判据不做代码改动，2026-09-30）**。原判据写的是"`util/resolveImageSrc.ts:13,17` 拼 `file://` 不做 URL 编码，所以名字含 `#`/`%20` 的图片在导出 HTML/PDF 里失效"。**两句被实测推翻**，一句成立但按判据不修。
 
