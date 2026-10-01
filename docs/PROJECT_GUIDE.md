@@ -626,26 +626,34 @@ AGENTS.md 的门禁表把"已知间歇形状"指到这里。这里只收**有 ru
 
 **记档不修**：`main/filesystem/watcher.ts` 的 file watcher 在 `add` / `change` 上先 `stat` 再读内容再推送，两次事件理论上可能交错。**但 dir watcher 的 `change()` 根本不读内容**（`:178` 早退，`:189` 直接 `return`），而 `awaitWriteFinish` **只配在 `type === 'file'`**（条件在 `:295`，配置项 `:297`）——所以这个交错形状只存在于已被显著缓解的那条路上。要给出确定性证明需要**主进程 handler 级测试脚手架，而那是本仓记录在案的缺口**（见本节 #26 第 4 条的限度说明）。按"形状存在、未证明、不盲目修"处理。
 
-**剩余候选已定性（第二批，2026-10-01）**：上段那 9 处逐条人工读过，**6 条真缺陷、1 条记档不修、4 条已确认干净**。**命中率（9 → 6）远高于上一轮（58 → 3），但这不能推广成"这类面普遍没 bug"**：这 9 处本身就是上一轮扫描器筛过的**预筛清单**，不是原始扇面。"58 → 3"那个低产出比说明的是**扫描器噪声大**，不是缺陷少。两条修在本批（PR #52），其余留第三批。
+**剩余候选已定性（第二批，2026-10-01）**：上段那 9 处逐条人工读过，**6 条真缺陷、1 条记档不修、4 条已确认干净**（第三条 `commandCenter` 随后被自己的复核推翻，见本段末尾的撤回，所以真缺陷是 **2** 条）。**命中率（9 → 6）远高于上一轮（58 → 3），但这不能推广成"这类面普遍没 bug"**：这 9 处本身就是上一轮扫描器筛过的**预筛清单**，不是原始扇面。"58 → 3"那个低产出比说明的是**扫描器噪声大**，不是缺陷少。两条修在本批（PR #52），其余走第三批。
 
 **真缺陷 2（快捷键在保存进行中被改掉 → 静默丢失）**。`prefComponents/keybindings/KeybindingConfigurator.ts` 的 `save()` 入口用 `_getUserKeybindingMap()` 取一份 map，`await` 主进程写入，回来后**无条件** `this.isDirty = false`；而 `change()` 在 `:140` 置脏。await 期间的编辑因此输两次：它**不在**那份 map 里（map 是 await 前建的），迟到的清零又把表单说成干净——关窗不再询问，那条快捷键永远写不进去。**没有别名可救**：`_getUserKeybindingMap()` 每次新建 `Map`，发上 IPC 的那份不可能在背后自己长。修法是一个 revision 计数器（`change()` / `resetAll()` 自增，`save()` 比对），只在"我发出去的那份仍是全部"时才清脏。
 
 - 回归：`test/unit/specs/keybinding-save-dirty.spec.ts` 4 条（保存中的编辑不许清脏、下一次保存能把它写出去=可恢复性、没编辑时照常清空=正对照、写失败保持脏）。IPC 由测试手工结算。
 - **变异验证两个失效点各自独立**：只把守卫还原成无条件清零 → 恰好 2 条竞态红、两条正对照绿；保留守卫但拿掉 `change()` 里的自增 → **同样恰好 2 条红**，证明自增那一步是承重的而不是摆设。
+- **没做 e2e**：这条竞态要"写盘在飞的时候再改一条"，真窗口里只能靠时序撞，正是 §14.1 记的那类形状。**竞态本身也不适合手工复核**（按不到那个窗口），能手工确认的只有"修法没把正常保存弄坏"：偏好 →快捷键 → 改一条 → 保存 → 脏标记消失、再开偏好不再提示未保存（约 30 秒）。
 
 **真缺陷 3（标题栏的窗口状态被挂载查询覆盖）**。`components/titleBar/index.vue` 的 `onMounted` 用 `await Promise.all([isFullScreen(), isMaximized()])` 取一次状态就无条件写回，而**四个主进程事件处理器写的是同样的 ref**。关键在注册顺序：`mt::window-maximize` 等四个监听是在 **setup 顶层注册的（`:212-221`，早于 `onMounted` 回调）**，所以"事件先到、查询答案后到"是**默认顺序而不是罕见时序**。触发场景就是启动时被窗口管理器恢复成最大化的窗口：`onMaximize` 置 `true`，随后那次"恢复之前"问出来的 `false` 覆盖上来，**按钮显示错误，直到下一次真正最大化/还原才纠正**。修法是一个 `windowStateChanged` 标志，事件到达后不再让挂载查询写回。
 
 - 回归：`test/unit/specs/titlebar-window-state-identity.spec.ts` 4 条（最大化、全屏两条竞态；无事件时照常采用挂载答案=正对照；**挂载答案落下之后再来一次 unmaximize 仍要生效**，专防修法退化成"见过事件就永久忽略查询"）。走 `loadSfcSetup` 驱动真实 SFC，四个 IPC 监听由测试握在手里、两个 await 手工结算，所以顺序是**可证的**而不是撞的。
 - **变异验证**：去掉那个 `if (!windowStateChanged)` → 恰好 2 条竞态红、另两条（含上面那条防过修的）绿。
 - 写这份用例时又踩了一次 AGENTS.md 记的 harness 坑：`loadSfcSetup` 的注入名单是从 `deps` 推的，漏一个 `_defineComponent` 就是**装载期 ReferenceError、整份 spec 全红**，而不是某个断言红。
+- **没做 e2e，但这条能手工复核**（触发条件是启动时的事件顺序，不靠撞）：**让窗口保持最大化状态退出应用，再重新启动** —— 窗口管理器恢复成最大化会发 `mt::window-maximize`，修前那次"恢复前"的查询答案随后覆盖上来，标题栏的最大化按钮显示成未最大化，**直到手动最大化再还原一次才纠正**（约 20 秒）。这也是本轮唯一一条"症状可稳定手工复现"的竞态，所以单测之外这个手动步骤值得留给下一个人。
 
 **本批撤回一条自己的错判（写明，不偷偷删）**：定性时我把 `store/commandCenter.ts` 的 `rootCommand.value.subcommands = refreshedStatic` 判成"整数组替换会抹掉运行期注册的命令"，并把它列为本批最严重的一条（后果写成"换一次语言，编码/行尾/换语言子命令永久消失"）。**动手写代码前查引用语义时被推翻**：`commands/index.ts:766` 是 `export default commands`，`commandCenter.ts:18` 的 `allCommands` 就是那个数组，`:20` 的 `new RootCommand(allCommands)` 按引用持有它（`commands/index.ts:43`）；而 `getCommandsWithDescriptions()`（`:716`）**体内一个 `await` 都没有**，同步改写后 `return commands`（`:754-755`）——返回的是**同一个数组对象**。所以那行是原样赋回，而 `REGISTER_COMMAND` 推进去的正是这个数组，运行期命令不会丢。**顺带第二条理由也错**：既然函数体全同步，两次快速换语言根本没有可插入的交错点，"旧刷新覆盖新刷新"不可能发生。教训：**"整数组替换 = 删掉别人"这个表面形状会被别名骗**，`REGISTER_COMMAND` 的五个运行期 id（`file.change-encoding` / `file.line-ending` / `file.trailing-newline` / `file.quick-open` / `spellchecker.switch-language`）与静态清单无重叠也救不了这条——错的是"这是两个数组"这个前提。定性竞态候选时，**先确认被赋值的对象是不是同一个**。
 
 **本批已确认干净**：`prefComponents/theme/index.vue:183`（`onMounted` 只跑一次，无重入、无身份可言）、`prefComponents/image/components/uploader/index.vue:742`（PicGo 检测有**单飞守卫**：`:581` 的 `if (isDetecting.value) return` 加按钮 `:disabled="isDetecting"`，自动检测那侧 `:420` 也查同一个标志，双调不可达）、`commands/quickOpen.ts:118`（被 #28 第 4 条的面板侧 `searchSeq` 守卫覆盖，见 `commandPalette/index.vue:263`）、`commands/quickOpen.ts:141`（固定 `delay(100)`，无身份可保护；"重开面板"是它本来的意图，那期间按 Escape 落在已经关闭的面板上，无效）。
 
+**订正交接文档里的一处行号归属**：`quickOpen.ts:118` 与 `:141` 被记成在 `run` / `executeSubcommand` 里，实际分别在 `search`（`:118` 是那个 `await timeout`）与 `execute`（`:141` 是那个 `await delay(100)`）里；**`run`（`:122-137`）整个函数体里一个 `await` 都没有**，本来就没有可测的竞态点。上面那两条"已确认干净"是按实际所在的函数判的。
+
 **记档不修**：`store/project.ts:214` 与 `:225` 写 `createCache.value = {}` 无守卫。形状确实在（后一处是 `create()` 的 `.then`），但要真跨污染，得在一次 `pathExists` IPC 窗口内让 `createCache` 换身份——写方除本函数外还有 `sidebarContextMenu` 的侧栏右键"新建"，窗口很紧。**形状存在、未证明**，按 watcher 那条的判据处理。
 
-**尚未定性（第三批）**：`components/menuBar/index.vue:83` 与 `:109`（`await fetchRecentFiles()` 后才写 `openIndex`，无 newest-wins——悬停到别的菜单会被弹回"文件"）、`prefComponents/image/components/uploader/index.vue:318`（`watch(cliScript, async …)` 无守卫，`isFileExecutable` 是 IPC，输路径时每敲一个字符发一次）、`prefComponents/spellchecker/index.vue:126`（挂载取词表与 `:174` 的删除路径相撞，删掉的词会在界面上复活）。这三条**尚未逐条复核**，动代码前要按上面那条别名教训再查一遍。
+**剩余候选已按别名教训复核（第三批，2026-10-01）**：上一版把下面三条写成"尚未逐条复核"，并对其中一条给了错的可达性判断——**两条已复核，一条转入修**。**撤回一处**：原写"`uploader:318` 输路径时每敲一个字符发一次检测"是**错的**——模板里根本没有绑定 `cliScript` 的输入框（`:229`/`:231` 只**显示**它，`:237` 是 `pickCliScript` 按钮，路径来自**原生文件对话框**），所以逐字符触发这个形状不存在。
+
+- **转入修（第三批的 PR）**：`components/menuBar/index.vue:83`。复核先排除了别名（`recentFiles` `:56` 与 `openIndex` `:60` 是两个独立 ref），但发现**问题比"竞态"严重且不是竞态**：`menus.ts:712` 的 `items` 是 **thunk**（`() => buildFileMenu(recentFiles, hasFile)`），按引用闭包捕获 `buildMenus(recentFiles.value)` 那一刻的数组；而 `menuBar:65` 在 `await fetchRecentFiles()` **之前**取 menu 对象、`:86` 之后才调 `menu.items()`，`fetchRecentFiles` 又**重新赋值** `recentFiles`（`:110`，不是 mutate）——于是**"文件"菜单的"最近文档"恒定落后一拍，首次打开根本不显示刚取回的那份**。每次打开都必现，不是窄窗口。同一函数里另有一条独立竞态（`openIndex` 与 `openItems` 双双被 superseded 的 open 冲掉，悬停 / `onKeyDown:132` 的左右方向键 / `closeAll` 都能在 fetch 窗口内进来）。两条一起修，记录随该 PR。
+- **降级为记档**：`prefComponents/image/components/uploader/index.vue:318` —— 形状确实在（`watch` 回调里无 newest-wins 守卫地 `await isFileExecutable`，且 `cliScript` 的写方只有三处：`:328` 镜像 `prefCliScript`、`:486` onMounted 初值、以及选文件后经偏好回流），但窗口是"上一次检测还在飞时又用文件对话框选了另一个脚本"，**后果仅是那一行的可用/禁用状态短暂显示上一个脚本的结果**，纯装饰性。按"形状存在、影响轻微"记，不单独开 PR。
+- **降级为记档**：`prefComponents/spellchecker/index.vue:126` —— `:121` 的 `availableDictionaries` 只有一个写方，干净；`:126` 的 `wordsInCustomDictionary` 与 `:174` 的删除路径相撞，形状真，但窗口窄（mount 先 `await getAvailableDictionaries()` 才发取词表的 invoke），后果是界面复活一个磁盘上已删的词、用户再去删它会拿到 `false` 并弹一条"删除失败"。**同时删两个不同词是幂等的**（filter 可交换），不构成第二条缺陷。**重启条件**：若这处交互升级成可输入、或自定义词表大到取词表明显变慢，窗口会从"窄"变成"宽"，那时再修。
 
 ## 16. 已关闭的功能候选与重启条件（2026-09-29 重评估）
 
