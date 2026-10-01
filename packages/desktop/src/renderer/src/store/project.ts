@@ -206,6 +206,14 @@ export const useProjectStore = defineStore('project', () => {
       name += '.md'
     }
 
+    // `dirname` comes from the sidebar tree, which is pathe-canonical
+    // (forward slashes on every platform), and `PATH_SEPARATOR` is
+    // `window.path.sep` = `pathe.sep` = '/' — so writing `${dirname}/${name}` and
+    // `${dirname}${PATH_SEPARATOR}${name}` produce byte-identical strings. This
+    // used to be `${dirname}/${name}` with a comment claiming the watcher sends a
+    // native path that a hardcoded slash cannot match; that was wrong in every
+    // part (see PROJECT_GUIDE §15, round 6). The real mismatch is pathe-vs-native
+    // and it lives at the comparison in `treeEvents.ts`, not here.
     const fullName = `${dirname}/${name}`
 
     // Creating over an existing path would silently overwrite it (outputFile
