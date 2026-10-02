@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Link checker for the root README variants, docs/i18n/*.md and docs/*.md —
+# Link checker for the root README variants and docs/*.md (docs/i18n, removed 2026-10-03, still scanned when the directory exists) —
 # verifies every relative link/image target exists, and same-page anchors match
 # GitHub-style heading slugs. Mirrors GitHub's slugger closely enough for our
 # headings.
@@ -14,7 +14,7 @@ DOCS_DIR = os.path.join(ROOT, 'docs')
 FILES = sorted(
     f for f in os.listdir(ROOT)
     if f.startswith('README') and f.endswith('.md')) + sorted(
-    os.path.join('docs', 'i18n', f) for f in os.listdir(DOCS_I18N_DIR)
+    os.path.join('docs', 'i18n', f) for f in (os.listdir(DOCS_I18N_DIR) if os.path.isdir(DOCS_I18N_DIR) else [])
     if f.endswith('.md')) + sorted(
     os.path.join('docs', f) for f in os.listdir(DOCS_DIR) if f.endswith('.md'))
 
@@ -86,5 +86,5 @@ if errors:
     sys.exit(1)
 print(
     'OK — all relative links, images and anchors in '
-    f'{len(FILES)} markdown files (root README variants + docs/i18n + docs) resolve.'
+    f'{len(FILES)} markdown files (root README variants + docs) resolve.'
 )
