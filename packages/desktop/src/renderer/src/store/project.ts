@@ -219,7 +219,14 @@ export const useProjectStore = defineStore('project', () => {
     // Creating over an existing path would silently overwrite it (outputFile
     // truncates). Refuse instead of destroying the existing file (#1946).
     if (await window.fileUtils.pathExists(fullName)) {
-      createCache.value = {}
+      // `createCache.value` is a fresh object per dialog open (SIDEBAR::new),
+      // so identity tells whether this request still owns the cache. A request
+      // that settles after the user reopened the dialog must not wipe the
+      // newer dialog's dirname/type — its submit would then build
+      // "undefined/<name>".
+      if (createCache.value === cache) {
+        createCache.value = {}
+      }
       notice.notify({
         title: 'Error in Side Bar',
         type: 'error',
@@ -230,7 +237,9 @@ export const useProjectStore = defineStore('project', () => {
 
     create(fullName, type as FileCreateType)
       .then(() => {
-        createCache.value = {}
+        if (createCache.value === cache) {
+          createCache.value = {}
+        }
         if (type === 'file') {
           newFileNameCache.value = fullName
         }

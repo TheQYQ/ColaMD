@@ -315,9 +315,16 @@ watch(
       return
     }
     try {
-      cliScriptExecutable.value = await isFileExecutable(value)
+      const executable = await isFileExecutable(value)
+      // A newer cliScript may have been picked while this IPC was in flight;
+      // only the request for the current value may write the shared flag.
+      if (cliScript.value === value) {
+        cliScriptExecutable.value = executable
+      }
     } catch {
-      cliScriptExecutable.value = false
+      if (cliScript.value === value) {
+        cliScriptExecutable.value = false
+      }
     }
   },
   { immediate: true }
