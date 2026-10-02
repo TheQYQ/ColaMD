@@ -15,7 +15,7 @@ We are really excited that you are interested in contributing to ColaMD :tada:. 
 ## Philosophy
 
 🔑 Our philosophy is to keep things clean, simple and minimal.
-ColaMD is constantly changing and we want these improvements to align with our philosophy. For example, look at the side bar and tabs; these two panels provide awesome functionality _and_ aren't distracting to the user. We'll continue adding more features (like plugins) that can be activated via 'settings' to improve ColaMD. This will allow everyone to customize ColaMD for their needs and provide a minimal default interface.
+ColaMD is constantly changing and we want these improvements to align with our philosophy. For example, look at the side bar and tabs; these two panels provide awesome functionality _and_ aren't distracting to the user. We'll continue adding more features (like the version-history side panel) that can be activated via 'settings' to improve ColaMD. This will allow everyone to customize ColaMD for their needs and provide a minimal default interface.
 
 ## Issue Reporting Guidelines
 
@@ -47,12 +47,12 @@ If you fix a bug:
 
 ### Where should I start?
 
-A good way to start is to find an [issue](https://github.com/TheQYQ/ColaMD/issues) labeled as `bug`, `help wanted` or `feature request`. The `good first issue` issues are good for newcomers. Please discuss the solution for larger issues first and after the final solution is approved by the ColaMD members, you can submit/work on the PR. For small changes you can directly open a PR.
+A good way to start is to find an [issue](https://github.com/TheQYQ/ColaMD/issues) labeled as `bug`, `help wanted` or `feature request`. The `good first issue` issues are good for newcomers. Please discuss the solution for larger issues first and after the final solution is approved by the maintainer, you can submit/work on the PR. For small changes you can directly open a PR.
 
 Other ways to help:
 
 - Documentation
-- Translation (currently unavailable)
+- Translation — the READMEs are maintained in Simplified Chinese and English only; no other language files are kept
 - Design icons and logos
 - Improve the UI
 - Write tests for ColaMD
@@ -76,7 +76,7 @@ If there are conflicts or you want to update your local branch, please do the fo
 
 ### Build Instructions
 
-🔗 [Build Instructions](https://github.com/TheQYQ/ColaMD/docs/dev/build)
+🔗 [Build instructions](../README.md)
 
 ### Style Guide
 
@@ -93,4 +93,4 @@ When writing comments, please follow our [Commenting Guidelines](./COMMENTING-GU
 
 ## Developer Documentation
 
-Please [click here](https://github.com/TheQYQ/ColaMD/docs/dev/overview) for more details.
+Please see the [project guide](../docs/PROJECT_GUIDE.md) for more details.

@@ -3,7 +3,7 @@
 <h1 align="center">ColaMD</h1>
 
 <p align="center">
-  <sub><a href="README.md">简体中文</a> · <strong>English</strong> · <a href="docs/i18n/README-zh_tw.md">繁體中文</a> · <a href="docs/i18n/README-jp.md">日本語</a> · <a href="docs/i18n/README-kr.md">한국어</a> · <a href="docs/i18n/README-fr.md">Français</a> · <a href="docs/i18n/README-de.md">Deutsch</a> · <a href="docs/i18n/README-es.md">Español</a> · <a href="docs/i18n/README-pt.md">Português</a> · <a href="docs/i18n/README-tr.md">Türkçe</a> · <a href="docs/i18n/README-ar.md">العربية</a> · <a href="docs/i18n/README-bn.md">বাংলা</a></sub>
+  <sub><a href="README.md">简体中文</a> · <strong>English</strong></sub>
 </p>
 
 <div align="center">
@@ -59,13 +59,13 @@
 
 - Typora-style minimal interface: a slim title bar and menu bar on top, a distraction-free centered writing area, and a slim status bar (word count, source-code toggle).
 - Realtime preview (WYSIWYG) editing experience focused on speed and usability.
-- Support [CommonMark Spec](https://spec.commonmark.org), [GitHub Flavored Markdown Spec](https://github.github.com/gfm/) and selective support [Pandoc markdown](https://pandoc.org/MANUAL.html#pandocs-markdown).
+- Support [CommonMark Spec](https://spec.commonmark.org), [GitHub Flavored Markdown Spec](https://github.github.com/gfm/) and selective support [Pandoc markdown](https://pandoc.org/MANUAL.html#pandocs-markdown). Measured engine-side conformance: **CommonMark 88.0% / GFM 86.6%** — details in [`packages/muya/test/spec/conformance.md`](packages/muya/test/spec/conformance.md).
 - Markdown extensions such as math expressions (KaTeX), diagrams (Mermaid, Flowchart, Vega, PlantUML), front matter and emojis.
 - Sidebar with three panels: the file tree, the document outline, and version history.
 - Command palette (`Ctrl+Shift+P`) and quick open (`Ctrl+P`) for keyboard-driven workflows.
 - Paragraph and inline style shortcuts to improve your writing efficiency.
 - Export to **8 formats** from _File → Export_: **HTML**, **PDF**, **Word (.docx)** and a **long image (PNG)**, plus **EPUB**, **LaTeX**, **RTF** and **OPML** when Pandoc is installed.
-- 35 built-in themes (light & dark) plus a theme marketplace for importing custom themes.
+- 33 built-in themes (light & dark) plus a local theme marketplace for importing custom themes.
 - Various editing modes: **Source Code mode**, **Typewriter mode**, **Focus mode**.
 - Paste images directly from clipboard; unreferenced images can be cleaned up automatically.
 
@@ -93,13 +93,21 @@ Download the format you prefer from the release page: **AppImage**, **deb**, **r
 
 ## Development
 
-ColaMD is an Electron + Vue 3 monorepo managed with pnpm.
+ColaMD is an Electron + Vue 3 monorepo managed with pnpm (Node `>=20.19.0`).
 
 ```bash
 git clone git@github.com:TheQYQ/ColaMD.git
 cd ColaMD
-pnpm install
-pnpm run dev
+pnpm install      # downloads Electron, applies patches, rebuilds native modules, minifies locales
+pnpm run dev      # dev mode; restart the app when main-process code changes, the renderer has HMR
+```
+
+Gates to run before submitting:
+
+```bash
+pnpm check        # lint + typecheck
+pnpm test:unit    # unit tests
+pnpm build        # build check
 ```
 
 More resources:
