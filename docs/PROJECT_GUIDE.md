@@ -690,7 +690,7 @@ AGENTS.md 的门禁表把"已知间歇形状"指到这里。这里只收**有 ru
 
 **订正交接文档里的一处行号归属**：`quickOpen.ts:118` 与 `:141` 被记成在 `run` / `executeSubcommand` 里，实际分别在 `search`（`:118` 是那个 `await timeout`）与 `execute`（`:141` 是那个 `await delay(100)`）里；**`run`（`:122-137`）整个函数体里一个 `await` 都没有**，本来就没有可测的竞态点。上面那两条"已确认干净"是按实际所在的函数判的。
 
-**记档不修**：`store/project.ts:214` 与 `:225` 写 `createCache.value = {}` 无守卫。形状确实在（后一处是 `create()` 的 `.then`），但要真跨污染，得在一次 `pathExists` IPC 窗口内让 `createCache` 换身份——写方除本函数外还有 `sidebarContextMenu` 的侧栏右键"新建"，窗口很紧。**形状存在、未证明**，按 watcher 那条的判据处理。
+**`store/project.ts` 的 `createCache.value = {}` 无守卫——已于 2026-10-02 修复（批次 A）**。原记档：形状确实在（一处是冲突分支、一处是 `create()` 的 `.then`），要真跨污染，得在一次 `pathExists` IPC 窗口内让 `createCache` 换身份——写方除本函数外还有 `sidebarContextMenu` 的侧栏右键"新建"。修法：`SIDEBAR::new` 每次给缓存**新对象**，所以两处清空前比对 `createCache.value === cache`（入口快照的身份）即可——迟到结算的创建请求不再清掉新对话框的 `dirname/type`（原先其提交会拼出 `undefined/<name>`）；`newFileNameCache` 的接管不受守卫影响（文件确实创建成功，接管是正确行为）。回归：`sidebar-create-cache-race.spec.ts` 4 条（成功/冲突两条迟到结算 + 无并发正对照 + 接管正对照），**修前恰好 2 红、变异验证（检出父提交的无守卫版本）恰好同样 2 红、修后 4/4 绿**；harness 教训两条入档：`vi.clearAllMocks()` 不还原实现（deferred 实现会泄漏进后续用例），`await` 提交后要先冲洗微任务再驱动 deferred。
 
 **剩余候选已按别名教训复核（第三批，2026-10-01）**：上一版把下面三条写成"尚未逐条复核"，并对其中一条给了错的可达性判断——**两条已复核，一条转入修**。**撤回一处**：原写"`uploader:318` 输路径时每敲一个字符发一次检测"是**错的**——模板里根本没有绑定 `cliScript` 的输入框（`:229`/`:231` 只**显示**它，`:237` 是 `pickCliScript` 按钮，路径来自**原生文件对话框**），所以逐字符触发这个形状不存在。
 
