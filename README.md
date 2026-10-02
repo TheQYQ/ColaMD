@@ -3,7 +3,7 @@
 <h1 align="center">ColaMD</h1>
 
 <p align="center">
-  <sub><strong>简体中文</strong> · <a href="README.en.md">English</a> · <a href="docs/i18n/README-zh_tw.md">繁體中文</a> · <a href="docs/i18n/README-jp.md">日本語</a> · <a href="docs/i18n/README-kr.md">한국어</a> · <a href="docs/i18n/README-fr.md">Français</a> · <a href="docs/i18n/README-de.md">Deutsch</a> · <a href="docs/i18n/README-es.md">Español</a> · <a href="docs/i18n/README-pt.md">Português</a> · <a href="docs/i18n/README-tr.md">Türkçe</a> · <a href="docs/i18n/README-ar.md">العربية</a> · <a href="docs/i18n/README-bn.md">বাংলা</a></sub>
+  <sub><strong>简体中文</strong> · <a href="README.en.md">English</a></sub>
 </p>
 
 <div align="center">
@@ -57,7 +57,7 @@
 - **键盘优先**：命令面板（`Ctrl+Shift+P`）与快速打开（`Ctrl+P`）。
 - **段落与行内样式快捷键**，减少手碰鼠标。
 - **导出 8 种格式**（菜单「文件 → 导出」）：**HTML**、**PDF**、**Word (.docx)**、**长图 (PNG)**，以及需要本机安装 Pandoc 的 **EPUB**、**LaTeX**、**RTF**、**OPML**。
-- **35 套内置主题**（浅色与深色），外加主题市场，可导入自定义主题。
+- **33 套内置主题**（浅色与深色），外加本地主题市场，可导入自定义主题。
 - **三种编辑模式**：**源码模式**、**打字机模式**、**专注模式**。
 - **图片直接粘贴**自剪贴板；未引用的图片可自动清理。
 
