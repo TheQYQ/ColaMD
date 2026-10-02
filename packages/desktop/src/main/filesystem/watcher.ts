@@ -90,7 +90,50 @@ interface WatcherEntry {
   close: () => void
 }
 
-const add = async (
+/**
+ * Per-path serialization for the watcher work that reads file CONTENT.
+ *
+ * chokidar never awaits its async `add` / `change` handlers, and this file does
+ * not await `add()` / `change()` either, so two events for the same file ran as
+ * two concurrent async functions. `change()` awaits
+ * `Promise.all([loadMarkdownFile(...), stat(...)])`, so whichever read finished
+ * last won the push. When the earlier event's read finished last, a stale body
+ * reached the renderer last, and `handleDiskChange` (contentEvents.ts) only
+ * de-duplicates byte-identical content — it has no order guard — so a saved tab
+ * was rewritten back to older bytes with no later event to correct it.
+ *
+ * Keyed by pathname, never globally: two different files must stay concurrent,
+ * otherwise one large file's read would stall every unrelated change.
+ *
+ * Same shape as `editorBufferStore`'s `bufferWriteQueues` (a per-key never-reject
+ * chain), including the property that one failure must not poison later work.
+ */
+const watcherWorkQueues = new Map<string, Promise<void>>()
+
+const enqueueWatcherWork = (pathname: string, work: () => Promise<void>): Promise<void> => {
+  const prev = watcherWorkQueues.get(pathname) ?? Promise.resolve()
+  const next = prev.then(work)
+  // The queue link must never reject, or one failure would stall every later
+  // unit of work for this path. The returned promise is this link, not `next`:
+  // `add` / `change` already own their error handling, so handing back a
+  // never-rejecting promise keeps a rejection from surfacing as an unhandled
+  // rejection at the un-awaited call site.
+  const link = next.then(
+    () => {},
+    () => {}
+  )
+  watcherWorkQueues.set(pathname, link)
+  // Drop the key once this chain drains and nothing newer was queued, so a long
+  // session that watches many paths does not accumulate Map entries.
+  void link.then(() => {
+    if (watcherWorkQueues.get(pathname) === link) {
+      watcherWorkQueues.delete(pathname)
+    }
+  })
+  return link
+}
+
+const pushAdd = async (
   win: BrowserWindow,
   pathname: string,
   type: WatchType,
@@ -166,7 +209,7 @@ const unlink = (win: BrowserWindow, pathname: string, type: WatchType): void => 
   })
 }
 
-const change = async (
+const pushChange = async (
   win: BrowserWindow,
   pathname: string,
   type: WatchType,
@@ -218,6 +261,54 @@ const change = async (
     }
   }
 }
+
+// Serialized entry points. Only the CONTENT-reading paths go through the queue:
+// `add` reads the body for markdown files (the single-file watcher re-opens the
+// document this way) and `change` reads it for markdown files. The directory
+// watcher's `change` returns early above after a bare `stat`, so it is queued
+// too — same mechanism, and it keeps a sidebar re-sort from seeing an older
+// mtime after a newer one.
+const add = (
+  win: BrowserWindow,
+  pathname: string,
+  type: WatchType,
+  endOfLine: LineEnding,
+  autoGuessEncoding: boolean,
+  trimTrailingNewline: number,
+  autoNormalizeLineEndings: boolean
+): Promise<void> =>
+  enqueueWatcherWork(pathname, () =>
+    pushAdd(
+      win,
+      pathname,
+      type,
+      endOfLine,
+      autoGuessEncoding,
+      trimTrailingNewline,
+      autoNormalizeLineEndings
+    )
+  )
+
+const change = (
+  win: BrowserWindow,
+  pathname: string,
+  type: WatchType,
+  endOfLine: LineEnding,
+  autoGuessEncoding: boolean,
+  trimTrailingNewline: number,
+  autoNormalizeLineEndings: boolean
+): Promise<void> =>
+  enqueueWatcherWork(pathname, () =>
+    pushChange(
+      win,
+      pathname,
+      type,
+      endOfLine,
+      autoGuessEncoding,
+      trimTrailingNewline,
+      autoNormalizeLineEndings
+    )
+  )
 
 const addDir = (win: BrowserWindow, pathname: string, type: WatchType): void => {
   if (type === 'file') return
