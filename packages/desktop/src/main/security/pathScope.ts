@@ -43,6 +43,12 @@ import { realpath } from 'fs/promises'
 // dialog only (ignoring any path a caller sends), and `mt::set-user-preference`
 // drops it. What remains is the risk above — mutating files inside a root the
 // user already opened.
+//
+// Also out of scope on purpose: payload *shapes*. The IPC contracts are
+// compile-time only, so a compromised renderer can still write arbitrary
+// bytes with any shape into an already-granted root (e.g. `mt::fs::write-file`
+// accepts any Buffer-ish body). That residual risk is accepted and recorded
+// here rather than re-litigated per channel.
 // =============================================================================
 
 export class PathScopeError extends Error {

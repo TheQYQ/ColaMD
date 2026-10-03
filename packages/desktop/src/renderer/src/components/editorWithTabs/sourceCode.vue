@@ -602,13 +602,17 @@ onBeforeUnmount(() => {
   bus.off('replaceValue', handleSourceReplaceValue)
   bus.off('find-action', handleSourceFindAction)
 
-  const { cursor, markdown: newMarkdown } = getMarkdownAndCursor(editor.value)
-  bus.emit('file-changed', {
-    id: tabId.value,
-    markdown: newMarkdown,
-    muyaIndexCursor: cursor,
-    renderCursor: true
-  })
+  // Mount can bail early (no tab → the CodeMirror instance is never created);
+  // only flush when there is an engine to read from.
+  if (editor.value) {
+    const { cursor, markdown: newMarkdown } = getMarkdownAndCursor(editor.value)
+    bus.emit('file-changed', {
+      id: tabId.value,
+      markdown: newMarkdown,
+      muyaIndexCursor: cursor,
+      renderCursor: true
+    })
+  }
 })
 </script>
 

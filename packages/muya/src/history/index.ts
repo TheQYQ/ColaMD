@@ -153,10 +153,20 @@ class History {
         // Read-only, synchronous consumer (invertWithDoc never mutates its
         // doc argument) — the live tree skips the defensive full-document
         // clone that getState() would make on every undo/redo.
-        const inverseOperation = json1.type.invertWithDoc(
-            operation,
-            asDoc(this._muya.editor.jsonState.getStateLive()),
-        );
+        // A stale entry (e.g. restored across documents via setHistory) can
+        // fail to invert; dropping the popped entry beats throwing through
+        // mitt into the IPC callback.
+        let inverseOperation: JSONOpList;
+        try {
+            inverseOperation = json1.type.invertWithDoc(
+                operation,
+                asDoc(this._muya.editor.jsonState.getStateLive()),
+            ) as JSONOpList;
+        }
+        catch (err) {
+            console.error('[muya] history: failed to invert operation, entry dropped:', err);
+            return;
+        }
 
         this._stack[dest].push({
             operation: inverseOperation as JSONOpList,
@@ -301,7 +311,18 @@ class History {
 
         let selection = this._getLastSelection();
         this._stack.redo = [];
-        let undoOperation = json1.type.invertWithDoc(op, asDoc(doc));
+        // Same stale-entry tolerance as _change: if the op no longer inverts
+        // against the live doc, drop the undo entry instead of unwinding
+        // through the json-change listener chain.
+        let undoOperation: JSONOpList | null;
+        try {
+            undoOperation = json1.type.invertWithDoc(op, asDoc(doc));
+        }
+        catch (err) {
+            console.error('[muya] history: failed to invert recorded operation, entry dropped:', err);
+            this._lastRecorded = Date.now();
+            return;
+        }
 
         const timestamp = Date.now();
         if (
@@ -311,7 +332,14 @@ class History {
             const { operation: lastOperation, selection: lastSelection }
                 = this._stack.undo.pop()!;
             selection = lastSelection;
-            undoOperation = json1.type.compose(undoOperation, lastOperation);
+            try {
+                undoOperation = json1.type.compose(undoOperation, lastOperation);
+            }
+            catch (err) {
+                console.error('[muya] history: failed to compose operations, entries dropped:', err);
+                this._lastRecorded = timestamp;
+                return;
+            }
         }
         else {
             this._lastRecorded = timestamp;

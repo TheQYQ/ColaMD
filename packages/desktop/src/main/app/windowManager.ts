@@ -280,8 +280,16 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
       }
     }
 
+    // windowCount > 1 but no EDITOR window (e.g. only settings windows are
+    // open): the scoring loop never ran, so there is no candidate table —
+    // fall back to the most recently active editor like the single-window
+    // path instead of dereferencing null.
+    if (!filePathScores) {
+      return [{ windowId: lastActiveEditorId, fileList }]
+    }
+
     const buf: { windowId: number | null; fileList: string[] }[] = []
-    const len = filePathScores!.length
+    const len = filePathScores.length
     for (let i = 0; i < len; ++i) {
       let { id: windowId, score } = filePathScores![i]
 

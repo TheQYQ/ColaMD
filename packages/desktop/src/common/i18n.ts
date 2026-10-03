@@ -5,11 +5,21 @@ type Translations = Record<string, unknown>
 
 const translationsCache: Record<string, Translations> = {}
 
+// The language string is spliced into a locale file path, so only well-formed
+// locale names may pass: a renderer-forged `../x` would otherwise read any
+// .json on disk through the fallback logic.
+const LOCALE_RE = /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/
+
 /**
  * Loads the translation file for the specified language. Falls back to English
  * on error; returns null if even the English fallback can't be loaded.
  */
 function loadTranslations(language: string): Translations | null {
+  if (!LOCALE_RE.test(language)) {
+    console.error(`Rejected invalid language: ${language}`)
+    return language === 'en' ? null : loadTranslations('en')
+  }
+
   if (translationsCache[language]) {
     return translationsCache[language]
   }

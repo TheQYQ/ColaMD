@@ -3,9 +3,11 @@ import { tmpdir } from 'os'
 import { execFile } from 'child_process'
 import fs from 'fs-extra'
 import commandExists from 'command-exists'
+import log from 'electron-log'
 import { isFile } from 'common/filesystem'
 import { isImageFile } from 'common/filesystem/paths'
 import type Accessor from '../app/accessor'
+import { assertPathInScope } from '../security/pathScope'
 import { typedHandle } from './typedHandle'
 
 const buildPreferredPathEnv = (): string => {
@@ -192,6 +194,16 @@ export const registerUploaderHandlers = (accessor: Accessor): void => {
     if (isPath) {
       const dir = path.dirname(pathname)
       const imagePath = path.resolve(dir, image as string)
+      // `pathname`/`image` are renderer-controlled; handing the resolved file
+      // to an uploader exfiltrates it. Same gate as every other channel that
+      // discloses file content — legitimate image paths sit inside the
+      // document's or image-folder root, both granted on open.
+      try {
+        await assertPathInScope(imagePath)
+      } catch (err) {
+        log.warn('uploader: blocked image path outside the allowed scope:', imagePath)
+        return image
+      }
       const isImg = isImageFile(imagePath)
       if (!isImg) return image
       return uploadFromPath(imagePath, preferences)

@@ -375,7 +375,9 @@ export class Muya {
         if (selection && selection.isSelectionInSameBlock) {
             const begin = Math.min(selection.anchor.offset, selection.focus.offset);
             const end = Math.max(selection.anchor.offset, selection.focus.offset);
-            const cursorBlock = this.editor.scrollPage?.queryBlock(selection.anchor.path);
+            // queryBlock consumes (shifts) the path array — hand it a copy so
+            // the cached selection's anchor path survives for later use.
+            const cursorBlock = this.editor.scrollPage?.queryBlock([...selection.anchor.path]);
             if (cursorBlock && cursorBlock.isContent())
                 cursorBlock.setCursor(begin, end, true);
         }
