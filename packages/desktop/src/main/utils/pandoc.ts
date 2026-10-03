@@ -35,11 +35,24 @@ const pandoc = ((from: string, to: string, ...args: string[]): PandocConverter =
       const proc = spawn(command, option)
       proc.on('error', reject)
       let data = ''
+      let stderr = ''
       proc.stdout.on('data', (chunk: Buffer | string) => {
         data += chunk.toString()
       })
-      proc.stdout.on('end', () => resolve(data))
+      proc.stderr?.on('data', (chunk: Buffer | string) => {
+        stderr += chunk.toString()
+      })
       proc.stdout.on('error', reject)
+      // Resolving on stdout end alone let a non-zero exit surface as success
+      // with whatever partial output was collected — same close-code check
+      // exportViaPandoc below already applies.
+      proc.on('close', (code) => {
+        if (code === 0) {
+          resolve(data)
+        } else {
+          reject(new Error(stderr.trim() || `pandoc exited with code ${code}`))
+        }
+      })
       proc.stdin.end()
     })) as PandocConverter
 

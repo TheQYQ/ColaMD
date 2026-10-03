@@ -754,16 +754,26 @@ class App {
     })
 
     onInternalChannel('app-open-file-by-id', (windowId: number, filePath: string) => {
-      const openFilesInNewWindow =
-        this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
-      if (openFilesInNewWindow) {
-        this._createEditorWindow(null, [filePath])
-      } else {
-        const editor = this._windowManager.get(windowId) as EditorWindow | undefined
-        if (editor) {
-          editor.openTab(filePath, {}, true)
-        }
-      }
+      // `onInternalChannel` is just ipcMain.on — a compromised renderer can
+      // forge it. Trusted callers (dialog / sidebar picker) grant the root
+      // right before emitting, so the assert passes for them and only for
+      // them; opening a tab discloses the file content to the renderer.
+      void assertPathInScope(filePath)
+        .then(() => {
+          const openFilesInNewWindow =
+            this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
+          if (openFilesInNewWindow) {
+            this._createEditorWindow(null, [filePath])
+          } else {
+            const editor = this._windowManager.get(windowId) as EditorWindow | undefined
+            if (editor) {
+              editor.openTab(filePath, {}, true)
+            }
+          }
+        })
+        .catch((err: unknown) => {
+          log.warn('Rejected file open outside the allowed path scope:', filePath, err)
+        })
     })
     onInternalChannel('app-open-files-by-id', (windowId: number, fileList: string[]) => {
       const openFilesInNewWindow =
@@ -819,16 +829,26 @@ class App {
 
     typedOn('mt::open-file-by-window-id', (_e, windowId: number, filePath: string) => {
       const resolvedPath = normalizeAndResolvePath(filePath)
-      const openFilesInNewWindow =
-        this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
-      if (openFilesInNewWindow) {
-        this._createEditorWindow(null, [resolvedPath])
-      } else {
-        const editor = this._windowManager.get(windowId) as EditorWindow | undefined
-        if (editor) {
-          editor.openTab(resolvedPath, {}, true)
-        }
-      }
+      // Opening a tab discloses the file content to the renderer, so this
+      // renderer-forgable channel gets the same scope gate as
+      // mt::fs::read-file. The one legit caller (quickOpen) only opens hits
+      // found inside the already-granted search roots.
+      void assertPathInScope(resolvedPath)
+        .then(() => {
+          const openFilesInNewWindow =
+            this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
+          if (openFilesInNewWindow) {
+            this._createEditorWindow(null, [resolvedPath])
+          } else {
+            const editor = this._windowManager.get(windowId) as EditorWindow | undefined
+            if (editor) {
+              editor.openTab(resolvedPath, {}, true)
+            }
+          }
+        })
+        .catch((err: unknown) => {
+          log.warn('Rejected file open outside the allowed path scope:', resolvedPath, err)
+        })
     })
 
     typedOn('mt::select-default-directory-to-open', async (e) => {
