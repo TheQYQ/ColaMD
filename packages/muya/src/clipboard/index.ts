@@ -100,8 +100,14 @@ class Clipboard {
         };
 
         const pasteHandler = (event: Event) => {
-            if (ownsEvent() && isClipboardEvent(event))
-                this.pasteHandler(event);
+            if (ownsEvent() && isClipboardEvent(event)) {
+                // The DOM listener drops the promise; without a catch any
+                // paste failure surfaces as an unhandled rejection instead
+                // of a logged error.
+                this.pasteHandler(event).catch((err: unknown) =>
+                    console.error('[muya] paste failed:', err),
+                );
+            }
         };
 
         const { eventCenter } = this.muya;

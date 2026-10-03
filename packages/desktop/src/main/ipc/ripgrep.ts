@@ -262,8 +262,16 @@ const startTextSearch = (
     let pendingTrailingContexts: Set<unknown[]> = new Set()
 
     child.on('close', (code) => {
-      if (code !== null && code > 1 && bufferError) {
-        log.warn('Ripgrep finished with errors (exit code ' + code + '):', bufferError)
+      // Exit 1 is rg's "no matches" — still a successful search. Anything
+      // above that means rg itself failed (unreadable directory, bad
+      // regex…); finishing silently would report an incomplete result set
+      // as done, so the searcher gets the error event instead.
+      if (code !== null && code > 1) {
+        const message = bufferError.trim() || `ripgrep exited with code ${code}`
+        log.warn('Ripgrep failed (exit code ' + code + '):', message)
+        pendingDirs--
+        finishIfDone(new Error(message))
+        return
       }
       if (buffer && !cancelled) {
         try {

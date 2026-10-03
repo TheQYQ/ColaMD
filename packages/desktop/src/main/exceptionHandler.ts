@@ -47,10 +47,9 @@ const handleError = async (
 ): Promise<void> => {
   const { message, stack } = error
 
-  // Write error into file
-  if (type === 'main') {
-    logger(exceptionToString(error, type))
-  }
+  // Write error into file — renderer errors too: with the dialog suppressed
+  // (stable builds) a renderer error used to vanish without any trace.
+  logger(exceptionToString(error, type))
 
   if (EXIT_ON_ERROR) {
     console.log(t('error.terminatedDueToError'))
