@@ -282,15 +282,22 @@ class JSONState {
         // `compose` returns JSONOp (= null | JSONOpList). Multiple queued
         // operations may cancel each other out (for example during IME
         // composition), producing the identity operation (`null`).
-        const op = this._operationCache.reduce(
-            (acc, curr) => json1.type.compose(acc, curr) as JSONOpList,
-        );
-        // Same live-prevDoc contract as dispatch(): the pre-apply tree alias
-        // replaces the per-flush full-document deepClone (the last remaining
-        // clone on the keystroke path). Safe because json1.type.apply never
-        // mutates its input and consumers only read prevDoc.
+        // One unappliable batch must not wedge every later edit (the cache
+        // used to survive the throw and re-poison each flush): drop it and
+        // keep the editor alive; a full setContent re-syncs the tree.
         const prevDoc = this._state;
-        this._apply(op);
+        let op: JSONOp;
+        try {
+            op = this._operationCache.reduce(
+                (acc, curr) => json1.type.compose(acc, curr) as JSONOpList,
+            );
+            this._apply(op);
+        }
+        catch (err) {
+            this._operationCache = [];
+            console.error('[muya] jsonState: dropped unappliable operation batch:', err);
+            return;
+        }
         // Clear before emitting: a listener that edits synchronously then starts
         // a fresh batch instead of mutating the one being flushed.
         this._operationCache = [];

@@ -4,12 +4,20 @@ import type { Muya } from '../muya';
 import type { IRenderCursor } from '../selection/types';
 import type { IParagraphState, TContainerState, TState } from '../state/types';
 import type { IHighlight, Labels } from './types';
+import { escapeHTML } from '../utils';
 import logger from '../utils/logger';
 import { tokenizer } from './lexer';
 import Renderer from './renderer';
 import { beginRules } from './rules';
 
 const debug = logger('inlineRenderer:');
+
+// ponytail: the char-by-char lexer is polynomial on pathological input (one
+// multi-hundred-KB paragraph, audit P2). Above this threshold a block renders
+// as escaped plain text — inline formatting inside a giant paragraph
+// degrades, the renderer stays responsive. Chunk the lexer instead if real
+// documents ever get close.
+const INLINE_RENDER_TEXT_LIMIT = 20000;
 
 class InlineRenderer {
     public labels: Labels = new Map();
@@ -64,6 +72,12 @@ class InlineRenderer {
         const { domNode } = block;
         if (block.isParent())
             debug.error('Patch can only handle content block');
+
+        if (block.text.length > INLINE_RENDER_TEXT_LIMIT) {
+            debug.error(`block text over ${INLINE_RENDER_TEXT_LIMIT} chars — rendering as plain text`);
+            domNode!.innerHTML = escapeHTML(block.text);
+            return;
+        }
 
         const tokens = this._tokenizer(block, highlights);
         const html = this.renderer.output(

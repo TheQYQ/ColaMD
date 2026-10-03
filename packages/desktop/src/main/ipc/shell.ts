@@ -9,7 +9,11 @@ import { typedOn } from './typedOn'
 // links may leave the app. file:// / smb:// / custom schemes stay blocked.
 const OPEN_EXTERNAL_RE = /^https?:\/\//i
 
-const openExternalSafe = async (url: string): Promise<boolean> => {
+// Shared gate for every code path that opens a URL outside the app: the
+// desktop's native shell channel and markdown link clicks route through this
+// single whitelist so file:// / smb:// / custom schemes stay blocked in one
+// place.
+export const openExternalSafe = async (url: string): Promise<boolean> => {
   if (!OPEN_EXTERNAL_RE.test(url)) {
     log.warn('shell.openExternal blocked non-http(s) URL:', url)
     return false

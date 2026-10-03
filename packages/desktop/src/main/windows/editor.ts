@@ -683,6 +683,20 @@ class EditorWindow extends BaseWindow {
         })
     } catch (e) {
       log.error('Failed to restore editor state:', e)
+      // A poisoned buffer used to leave a dead zero-tab window (bootstrap
+      // disabled addBlankTab on this path) and would replay on every launch.
+      // Quarantine it beside the original and fall back to a blank tab.
+      try {
+        fs.renameSync(filePath, `${filePath}.corrupt-${Date.now()}`)
+      } catch {
+        /* best effort — the original stays in place for manual inspection */
+      }
+      typedSend(browserWindow?.webContents, 'mt::new-untitled-tab', true)
+      typedSend(browserWindow?.webContents, 'mt::show-notification', {
+        title: 'Failed to restore buffered state',
+        type: 'error',
+        message: e instanceof Error ? e.message : String(e)
+      })
     }
   }
 }
