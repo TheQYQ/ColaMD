@@ -436,14 +436,17 @@ export const registerRipgrepHandlers = (): void => {
   // through the typed wrapper: the renderer's object and main's destructure are
   // now checked against one declaration instead of each keeping its own copy.
   typedHandle('mt::rg::start', async (event, req) => {
-    const { searchId, mode, directories, pattern, options } = req
+    const { searchId, mode, pattern, options } = req
+    // A non-array `directories` used to TypeError deep in the search start —
+    // treat it as "nothing to search".
+    const directories = Array.isArray(req.directories) ? req.directories : []
     cleanupAtSenderDestroy(event.sender)
     // A search answers with file contents and paths, so it discloses the same
     // kind of data as `mt::fs::read-file` / `readdir` — recursively, which makes
     // it the widest one. Every directory the renderer names must therefore sit
     // inside a granted root; real callers only ever name an opened folder or a
     // document's own directory, both registered when the window opens them.
-    for (const dir of directories ?? []) {
+    for (const dir of directories) {
       await assertPathInScope(dir)
     }
     if (mode === 'files') startFileSearch(event.sender, searchId, directories, options || {})

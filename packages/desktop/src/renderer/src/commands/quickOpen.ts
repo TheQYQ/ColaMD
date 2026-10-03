@@ -260,8 +260,10 @@ class QuickOpenCommand {
   }
 
   _getPath = (pathname: string): { title?: string; description: string } => {
-    const rootPath: string = this._folderState.projectTree!.pathname
-    if (!window.fileUtils.isChildOfDirectory(rootPath, pathname)) {
+    // No folder opened → projectTree is null; results then come from opened
+    // tabs only and are shown as bare paths instead of crashing on `!`.
+    const rootPath: string | null = this._folderState.projectTree?.pathname ?? null
+    if (!rootPath || !window.fileUtils.isChildOfDirectory(rootPath, pathname)) {
       return { title: pathname, description: pathname }
     }
 

@@ -77,6 +77,18 @@ class VersionHistoryStore {
    * hit. Returns the stored snapshot, or null when deduplicated away.
    */
   async saveSnapshot(snapshot: VersionSnapshot): Promise<VersionSnapshot | null> {
+    // Renderer-forgable payloads must not reach crypto/fs with junk: a
+    // missing pathname used to throw deep inside sha1 hashing.
+    if (
+      !snapshot ||
+      typeof snapshot.pathname !== 'string' ||
+      !snapshot.pathname ||
+      typeof snapshot.markdown !== 'string' ||
+      typeof snapshot.id !== 'string'
+    ) {
+      return null
+    }
+
     const file = this._readFile(snapshot.pathname)
 
     const last = file.snapshots[file.snapshots.length - 1]

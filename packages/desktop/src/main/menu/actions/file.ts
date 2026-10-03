@@ -22,6 +22,7 @@ import { showTabBar } from './view'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
 import { EXTENSION_HASN, PANDOC_EXTENSIONS, URL_REG } from '../../config'
+import { openExternalSafe } from '../../ipc/shell'
 import { normalizeAndResolvePath, writeFile } from '../../filesystem'
 import { writeMarkdownFile } from '../../filesystem/markdown'
 import { addAllowedRoot, assertPathInScope } from '../../security/pathScope'
@@ -688,6 +689,19 @@ typedOn(
     if (!win) {
       return
     }
+    // `pathname` (the rename source) is renderer-controlled; the dialog only
+    // owns the target. Same gate as every other mutating fs channel.
+    try {
+      await assertPathInScope(pathname)
+    } catch (err) {
+      log.warn('move-to: blocked source outside the allowed scope:', pathname)
+      typedSend(win.webContents, 'mt::show-notification', {
+        title: t('dialog.moveFailure'),
+        type: 'error',
+        message: err instanceof Error ? err.message : String(err)
+      })
+      return
+    }
     const { filePath, canceled } = await dialog.showSaveDialog(win, {
       buttonLabel: 'Move to',
       nameFieldLabel: 'Filename:',
@@ -765,7 +779,10 @@ typedOn('mt::format-link-click', async (e, { data, dirname }: FormatLinkPayload)
   }
 
   if (URL_REG.test(urlCandidate)) {
-    shell.openExternal(urlCandidate)
+    // Single gate with the native shell channel (ipc/shell.ts): URL_REG only
+    // routes web links away from the local-path branch, the whitelist inside
+    // openExternalSafe is what actually decides.
+    void openExternalSafe(urlCandidate)
     return
   } else if (/^[a-z0-9]+:\/\//i.test(urlCandidate)) {
     // Prevent other URLs.
