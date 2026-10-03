@@ -119,10 +119,7 @@ More resources:
 
 ## Credits
 
-ColaMD started as a fork of [MarkText](https://github.com/marktext/marktext), originally
-created by [Luo Ran (Jocs)](https://github.com/Jocs) together with the
-[MarkText contributors](https://github.com/marktext/marktext/graphs/contributors).
-Huge thanks to them for building the foundation of this editor.
+This project is a fork of [MarkText](https://github.com/marktext/marktext).
 
 ## License
 

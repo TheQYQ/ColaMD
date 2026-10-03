@@ -111,10 +111,7 @@ pnpm build        # 构建校验
 
 ## 致谢
 
-ColaMD 起源于 [MarkText](https://github.com/marktext/marktext) 的 fork，原始项目由
-[Luo Ran (Jocs)](https://github.com/Jocs) 与
-[MarkText 的贡献者们](https://github.com/marktext/marktext/graphs/contributors)共同创建。
-感谢他们为这款编辑器打下基础。
+本项目基于 [MarkText](https://github.com/marktext/marktext) 的 fork。
 
 ## 许可证
 
