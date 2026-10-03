@@ -723,7 +723,13 @@ async function applyPaste(clipboard: Clipboard, data: IPasteData): Promise<void>
     html = await normalizeClipboardHtml(html, text, anchorBlock, hasClipboardHtml);
     const copyType = getCopyTextType(html, text, pasteType);
 
-    const { start, end } = anchorBlock.getCursor()!;
+    // The selection can move off `anchorBlock` while the awaits above yield
+    // (e.g. the user clicks another block mid-paste) — getCursor() then
+    // returns null and the destructure used to throw an unhandled rejection.
+    const cursor = anchorBlock.getCursor();
+    if (!cursor)
+        return;
+    const { start, end } = cursor;
     const { text: content } = anchorBlock;
     const wrapperBlock = anchorBlock.getAnchor();
     const ctx: IPasteContext = {

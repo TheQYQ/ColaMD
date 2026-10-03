@@ -10,6 +10,10 @@ import { TypedEmitter } from '@shared/types/typedEmitter'
 import { typedHandle } from '../ipc/typedHandle'
 import { typedOn } from '../ipc/typedOn'
 import { typedSend } from '../ipc/typedSend'
+import {
+  compilePreferencesValidator,
+  quarantineInvalidPreferencesFile
+} from '../preferences/preferencesFileGuard'
 
 const DATA_CENTER_NAME = 'dataCenter'
 
@@ -34,6 +38,19 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
     const { dataCenterPath, userDataPath } = paths
     this.dataCenterPath = dataCenterPath
     this.userDataPath = userDataPath
+    // Same self-heal the preferences store got (#18 round): a corrupt
+    // dataCenter.json throws from the Store constructor and crash-loops every
+    // launch. Quarantine it beside the original; hasDataCenterFile is computed
+    // afterwards so init() proceeds from defaults.
+    const quarantine = quarantineInvalidPreferencesFile(
+      path.join(this.dataCenterPath, `${DATA_CENTER_NAME}.json`),
+      compilePreferencesValidator(schema)
+    )
+    if (quarantine.quarantined) {
+      log.warn(
+        `dataCenter.json was invalid (${String(quarantine.reason)}) — quarantined to ${String(quarantine.backupPath)}`
+      )
+    }
     this.hasDataCenterFile = fs.existsSync(
       path.join(this.dataCenterPath, `./${DATA_CENTER_NAME}.json`)
     )

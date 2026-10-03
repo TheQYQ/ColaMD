@@ -24,7 +24,7 @@ import type { CommandManager } from '../../commands'
 import { EXTENSION_HASN, PANDOC_EXTENSIONS, URL_REG } from '../../config'
 import { normalizeAndResolvePath, writeFile } from '../../filesystem'
 import { writeMarkdownFile } from '../../filesystem/markdown'
-import { addAllowedRoot } from '../../security/pathScope'
+import { addAllowedRoot, assertPathInScope } from '../../security/pathScope'
 import { everyTabSaved, getPath, getRecommendTitleFromMarkdownString } from '../../utils'
 import pandoc, { exportViaPandoc } from '../../utils/pandoc'
 import { exportDocumentImage } from '../../utils/imageExport'
@@ -294,6 +294,27 @@ const handleResponseForSave = async (
   filePath = path.resolve(filePath)
   const extension = path.extname(filePath) || '.md'
   filePath = !filePath.endsWith(extension) ? (filePath += extension) : filePath
+  // `pathname` for already-open tabs is renderer-controlled. Legitimately it
+  // traces back to a trusted open flow (dialog/argv/tree-in-root), but a
+  // compromised renderer can forge this channel with any absolute path — put
+  // the write behind the same scope gate as every other mutating fs channel.
+  // A rejection must surface exactly like any other save failure: the missing
+  // id in the result drives the unsaved-files flow, and mt::tab-save-failure
+  // tells the renderer why.
+  if (alreadyExistOnDisk) {
+    try {
+      await assertPathInScope(filePath)
+    } catch (err) {
+      log.warn('Rejected save outside the allowed path scope:', filePath)
+      typedSend(
+        win.webContents,
+        'mt::tab-save-failure',
+        id,
+        err instanceof Error ? err.message : String(err)
+      )
+      return
+    }
+  }
   // The original JS passed `win` here; writeMarkdownFile only takes 3 args
   // (the 4th was silently ignored). Drop it explicitly under strict mode.
   // The IPC `SaveOptions` has every field optional, but writeMarkdownFile
