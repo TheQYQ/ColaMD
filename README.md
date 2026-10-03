@@ -8,7 +8,7 @@
 
 <div align="center">
   <strong>:high_brightness: 一款简单优雅的 Markdown 编辑器 :crescent_moon:</strong><br>
-  专注速度与易用性，Typora 式的无干扰界面。源自 <a href="https://github.com/marktext/marktext">MarkText</a> 的 fork。<br>
+  专注速度与易用性，Typora 式的无干扰界面。<br>
   <sub>支持 Linux、macOS 与 Windows。</sub>
 </div>
 
