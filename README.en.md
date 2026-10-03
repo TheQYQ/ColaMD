@@ -8,7 +8,7 @@
 
 <div align="center">
   <strong>:high_brightness: A simple and elegant Markdown editor :crescent_moon:</strong><br>
-  Focused on speed and usability, with a Typora-style distraction-free interface. A fork of <a href="https://github.com/marktext/marktext">MarkText</a>.<br>
+  Focused on speed and usability, with a Typora-style distraction-free interface.<br>
   <sub>Available for Linux, macOS and Windows.</sub>
 </div>
 
