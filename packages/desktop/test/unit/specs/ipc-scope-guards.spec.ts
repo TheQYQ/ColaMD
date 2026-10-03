@@ -1,3 +1,6 @@
+import fs from 'fs'
+import os from 'os'
+import path from 'path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('electron', async () => {
@@ -55,12 +58,15 @@ const makeWin = (): { webContents: { send: ReturnType<typeof vi.fn> } } => ({
 
 describe('mt::uploader::upload scope gate', () => {
   it('refuses to upload an image outside the allowed roots', async () => {
+    clearAllowedRootsForTest()
     registerUploaderHandlers({
       dataCenter: { getItem: vi.fn(() => 'picgo') },
       preferences: { getItem: vi.fn(() => '') }
     } as never)
 
-    const outside = 'C:\\definitely\\outside\\secret.png'
+    // Platform-neutral absolute path outside every granted root — a hardcoded
+    // "C:\..." is not absolute on POSIX and flips the test's meaning there.
+    const outside = path.join(os.tmpdir(), `scope-out-${Date.now()}`, 'secret.png')
     await expect(invokeUpload({ pathname: outside, image: outside, isPath: true })).resolves.toBe(
       outside
     )
@@ -72,12 +78,16 @@ describe('mt::uploader::upload scope gate', () => {
       preferences: { getItem: vi.fn(() => '') }
     } as never)
 
-    const root = 'C:\\granted\\docs'
-    addAllowedRoot(root)
-    const inside = `${root}\\picture.txt`
-    await expect(invokeUpload({ pathname: root, image: inside, isPath: true })).resolves.toBe(
-      inside
-    )
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'scope-granted-'))
+    try {
+      addAllowedRoot(root)
+      const inside = path.join(root, 'picture.txt')
+      await expect(invokeUpload({ pathname: root, image: inside, isPath: true })).resolves.toBe(
+        inside
+      )
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true })
+    }
   })
 })
 
@@ -93,13 +103,15 @@ function invokeHandle(channel: string, event: unknown, ...args: unknown[]): Prom
 
 describe('mt::response-file-move-to scope gate', () => {
   it('rejects a renderer-provided source path outside the allowed roots', async () => {
+    clearAllowedRootsForTest()
     const win = makeWin()
     fromWebContentsMock.mockReturnValue(win)
 
     const handler = ipcRegistry.on.get('mt::response-file-move-to')
     if (!handler) throw new Error('mt::response-file-move-to not registered')
 
-    await handler({ sender: {} }, { id: 'tab-1', pathname: 'C:\\outside\\doc.md' })
+    const outside = path.join(os.tmpdir(), `scope-out-${Date.now()}`, 'doc.md')
+    await handler({ sender: {} }, { id: 'tab-1', pathname: outside })
 
     expect(fsRename).not.toHaveBeenCalled()
     expect(win.webContents.send).toHaveBeenCalledWith(
@@ -119,11 +131,15 @@ describe('mt::response-file-move-to scope gate', () => {
     const handler = ipcRegistry.on.get('mt::response-file-move-to')
     if (!handler) throw new Error('mt::response-file-move-to not registered')
 
-    const root = 'C:\\granted\\docs'
-    addAllowedRoot(root)
-    await handler({ sender: {} }, { id: 'tab-1', pathname: `${root}\\doc.md` })
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'scope-granted-'))
+    try {
+      addAllowedRoot(root)
+      await handler({ sender: {} }, { id: 'tab-1', pathname: path.join(root, 'doc.md') })
 
-    expect(fsRename).not.toHaveBeenCalled() // dialog was canceled
-    expect(win.webContents.send).not.toHaveBeenCalled()
+      expect(fsRename).not.toHaveBeenCalled() // dialog was canceled
+      expect(win.webContents.send).not.toHaveBeenCalled()
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true })
+    }
   })
 })
