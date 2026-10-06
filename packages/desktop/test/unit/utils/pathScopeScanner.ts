@@ -11,14 +11,14 @@ import path from 'path'
 // typedOn contract types), so regex extraction is sufficient; a computed name
 // would fail the typedOn typing before it could hide from this scan.
 
-export interface ScannedRegistration {
+interface ScannedRegistration {
   channel: string
   via: 'typedOn' | 'typedHandle' | 'onInternalChannel'
   file: string
   line: number
 }
 
-export interface ScannedSite {
+interface ScannedSite {
   file: string
   snippet: string
 }

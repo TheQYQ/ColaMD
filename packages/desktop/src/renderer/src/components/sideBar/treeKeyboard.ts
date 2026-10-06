@@ -7,7 +7,7 @@
 // The DOM glue in tree.vue only reads row datasets and applies the returned
 // action.
 
-export type TreeRowKind = 'file' | 'folder'
+type TreeRowKind = 'file' | 'folder'
 
 export interface TreeRowModel {
   /** Row identity: the node pathname (unique within one opened project). */
@@ -86,7 +86,9 @@ export function nextTreeNavState(
       return { type: 'focus', index: rows.length - 1 }
     case 'ArrowRight':
       if (isFolder && !row.expanded) return { type: 'expand' }
-      if (isFolder && currentIndex < rows.length - 1) { return { type: 'focus', index: currentIndex + 1 } }
+      if (isFolder && currentIndex < rows.length - 1) {
+        return { type: 'focus', index: currentIndex + 1 }
+      }
       return { type: 'none' }
     case 'ArrowLeft': {
       if (isFolder && row.expanded) return { type: 'collapse' }

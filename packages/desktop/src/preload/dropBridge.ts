@@ -14,7 +14,7 @@
 export const DROP_CHANNEL = 'mt::window::drop'
 
 /** Channels page scripts may never trigger through the exposed send wrapper. */
-export const PAGE_BLOCKED_SEND_CHANNELS: ReadonlySet<string> = new Set([DROP_CHANNEL])
+const PAGE_BLOCKED_SEND_CHANNELS: ReadonlySet<string> = new Set([DROP_CHANNEL])
 
 export const isPageSendAllowed = (channel: string): boolean =>
   !PAGE_BLOCKED_SEND_CHANNELS.has(channel)
