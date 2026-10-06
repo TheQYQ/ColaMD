@@ -73,10 +73,12 @@ describe('pathScope grant/assert coverage inventory', () => {
   it('known-gap ledger only shrinks (count ratchet)', () => {
     // Ratchet baseline: seeded at 9 by the 2026-10 full-repo pathScope review;
     // batch A (mt::rename + mt::set-user-data) took it to 7; batch B
-    // (mt::open-file + mt::menu::open-path + mt::window::drop) took it to 4.
+    // (mt::open-file + mt::menu::open-path + mt::window::drop) took it to 4;
+    // batch C (app-open-files-by-id + app-open-directory-by-id +
+    // mt::ask-for-image-auto-path + mt::format-link-click) took it to 0.
     // Fixing a gap means gating it (class 'gated' + ledger entries) and then
     // lowering this number — never raising it.
-    const KNOWN_GAP_BASELINE = 4
+    const KNOWN_GAP_BASELINE = 0
     const gaps = Object.values(channelClasses).filter((cls) => cls.class === 'known-gap')
 
     expect(

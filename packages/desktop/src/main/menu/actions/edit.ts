@@ -4,6 +4,7 @@ import log from 'electron-log'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
 import { searchFilesAndDir } from '../../utils/imagePathAutoComplement'
+import { assertPathInScope } from '../../security/pathScope'
 import { typedOn } from '../../ipc/typedOn'
 import { typedSend } from '../../ipc/typedSend'
 import type { LineEnding } from '@shared/types/files'
@@ -11,12 +12,21 @@ import type { LineEnding } from '@shared/types/files'
 type Win = BrowserWindow | null | undefined
 
 // TODO(Refactor): Move to filesystem and provide generic API to search files in directories.
-typedOn('mt::ask-for-image-auto-path', (e, { pathname, src, id }) => {
+typedOn('mt::ask-for-image-auto-path', async (e, { pathname, src, id }) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return
   }
   if (!src || typeof src !== 'string') {
+    // eslint-disable-next-line no-restricted-syntax -- the channel is a per-request reply address (`mt::response-of-image-path-${id}`), so there is no contract key to check
+    win.webContents.send(`mt::response-of-image-path-${id}`, [])
+    return
+  }
+  if (typeof pathname !== 'string') {
+    // A forged payload without the document path cannot be turned into a
+    // directory below (path.dirname would throw inside the listener); reply
+    // empty like the other refusal paths instead.
+    log.warn('Rejected mt::ask-for-image-auto-path: payload has no pathname')
     // eslint-disable-next-line no-restricted-syntax -- the channel is a per-request reply address (`mt::response-of-image-path-${id}`), so there is no contract key to check
     win.webContents.send(`mt::response-of-image-path-${id}`, [])
     return
@@ -32,6 +42,18 @@ typedOn('mt::ask-for-image-auto-path', (e, { pathname, src, id }) => {
   } else {
     dir = path.dirname(fullPath)
     searchKey = path.basename(fullPath)
+  }
+  // The renderer controls `src`, so the derived directory gets the same scope
+  // gate as mt::fs::readdir: searchFilesAndDir lists, caches AND fs.watch'es
+  // whatever it is handed. Legit callers send the current document (granted at
+  // open) or the image folder (granted at startup).
+  try {
+    await assertPathInScope(dir)
+  } catch (err: unknown) {
+    log.warn('Rejected mt::ask-for-image-auto-path outside the path scope:', dir, err)
+    // eslint-disable-next-line no-restricted-syntax -- the channel is a per-request reply address (`mt::response-of-image-path-${id}`), so there is no contract key to check
+    win.webContents.send(`mt::response-of-image-path-${id}`, [])
+    return
   }
   searchFilesAndDir(dir, searchKey)
     .then((files) => {
