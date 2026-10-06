@@ -49,6 +49,10 @@ export const channelClasses: Record<string, ChannelClass> = {
     class: 'gated',
     note: 'batch C: Array.isArray normalization + assertPathInScope per path in the handler (app/index.ts); refusal logs — paired with the File > Open dialog grant in file.ts openFile'
   },
+  'menu-add-recently-used': {
+    class: 'gated',
+    note: 'batch D: assertPathInScope(pathname) in the handler (menu/index.ts), refusal logs; removed from IpcSendChannels so no typed renderer path remains — legit emitters are save flows (file.ts:329/498) whose target passed scope or a dialog grant first'
+  },
   'mt::ask-for-image-auto-path': {
     class: 'gated',
     note: 'batch C: pathname type check + assertPathInScope(dir) in the handler (menu/actions/edit.ts); refusal logs and replies []'
@@ -64,7 +68,7 @@ export const channelClasses: Record<string, ChannelClass> = {
   },
   'mt::menu::open-path': {
     class: 'gated',
-    note: 'batch B: membership in main-owned recently-used-documents list before openFileOrFolder (ipc/menu.ts); equivalent documented gate — cross-session recents sit outside the current pathScope roots by design; residual: menu-add-recently-used can plant an entry first (internal channel, recorded under its own note)'
+    note: 'batch B: membership in main-owned recently-used-documents list before openFileOrFolder (ipc/menu.ts); equivalent documented gate — cross-session recents sit outside the current pathScope roots by design; residual closed by batch D — the add channel now asserts pathScope and left IpcSendChannels'
   },
   'mt::window::drop': {
     class: 'gated',
@@ -165,10 +169,6 @@ export const channelClasses: Record<string, ChannelClass> = {
   'broadcast-user-data-changed': {
     class: 'internal',
     note: 'grant listener for imageFolderPath (app/index.ts:370) — safe because mt::set-user-data filters keys (gated since batch A)'
-  },
-  'menu-add-recently-used': {
-    class: 'internal',
-    note: 'in accidentalReachability; residual for the mt::menu::open-path gate: a renderer could plant a path here first (main-owned state written from a save flow; noted by batch B, not yet gated)'
   },
   'screen-capture': { class: 'internal', note: 'in accidentalReachability' },
   'set-user-preference': {
@@ -309,7 +309,8 @@ export const assertSites: LedgerSite[] = [
   { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(newPathname)' },
   { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(pathname)' },
   { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(pathname)' },
-  { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(pathname)' }
+  { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(pathname)' },
+  { file: 'src/main/menu/index.ts', snippet: 'assertPathInScope(pathname)' }
 ]
 
 /** Multiset of addAllowedRoot call sites (file + normalized call text). */
@@ -363,7 +364,6 @@ export const accidentalReachability: string[] = [
   'app-open-markdown-by-id',
   'broadcast-preferences-changed',
   'broadcast-user-data-changed',
-  'menu-add-recently-used',
   'screen-capture',
   'set-user-preference',
   'watcher-unwatch-all-by-id',

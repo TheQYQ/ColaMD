@@ -205,7 +205,10 @@ export interface IpcSendChannels {
   'app-open-markdown-by-id': [windowId: number, markdown: string, options?: unknown]
   'broadcast-preferences-changed': [partial: unknown]
   'broadcast-user-data-changed': [partial: unknown]
-  'menu-add-recently-used': [filePath: string]
+  // `menu-add-recently-used` is deliberately absent (batch D): the recents
+  // list is the authorization for mt::menu::open-path, so a typed renderer
+  // path to it would let a forged entry buy the gate. Main's save flows emit
+  // it internally and menu/index.ts asserts pathScope on the handler.
   'menu-clear-recently-used': []
   'mt::NEED_UPDATE': [payload: NeedUpdatePayload]
   'mt::app-try-quit': []
