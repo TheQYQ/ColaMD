@@ -643,6 +643,23 @@ typedOn('mt::rename', async (e, { id, pathname, newPathname }: RenamePayload) =>
     return
   }
 
+  // Renderer supplies both ends of the rename: the source must be in scope
+  // (same gate as every mutating fs channel), and the target too — a granted
+  // source with an ungranted target would move a file out of the scope.
+  // assertPathInScope accepts not-yet-existing targets, which renames usually are.
+  try {
+    await assertPathInScope(pathname)
+    await assertPathInScope(newPathname)
+  } catch (err) {
+    log.warn('rename: blocked path outside the allowed scope:', pathname, '->', newPathname)
+    typedSend(win.webContents, 'mt::show-notification', {
+      title: t('dialog.renameFailure'),
+      type: 'error',
+      message: err instanceof Error ? err.message : String(err)
+    })
+    return
+  }
+
   const doRename = (): void => {
     fsRename(pathname, newPathname, (err: NodeJS.ErrnoException | null) => {
       if (err) {

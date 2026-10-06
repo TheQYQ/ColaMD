@@ -37,11 +37,6 @@ export interface LedgerSite {
  */
 export const channelClasses: Record<string, ChannelClass> = {
   // --- known gaps (2026-10 review; fix batches shrink this list) -----------
-  'mt::set-user-data': {
-    class: 'known-gap',
-    issue:
-      'no key filter; renderer can write imageFolderPath and trigger addAllowedRoot via broadcast-user-data-changed (dataCenter/index.ts:180, app/index.ts:370)'
-  },
   'mt::open-file': {
     class: 'known-gap',
     issue:
@@ -56,11 +51,6 @@ export const channelClasses: Record<string, ChannelClass> = {
     class: 'known-gap',
     issue:
       'forged drop payload grants parent-dir root for any existing .md (file.ts:609 -> file.ts:938); pairs with open existence probes'
-  },
-  'mt::rename': {
-    class: 'known-gap',
-    issue:
-      'only mutating fs channel without assertPathInScope on either path (file.ts:639); sibling mt::response-file-move-to is gated'
   },
   'app-open-directory-by-id': {
     class: 'known-gap',
@@ -107,6 +97,14 @@ export const channelClasses: Record<string, ChannelClass> = {
     note: 'assertPathInScope on overwrite (file.ts:307); new-file target comes from main-side dialog'
   },
   'mt::response-file-move-to': { class: 'gated' },
+  'mt::rename': {
+    class: 'gated',
+    note: 'batch A: asserts both renderer-supplied ends, source and target (file.ts rename handler); target may not exist yet — assertPathInScope accepts that'
+  },
+  'mt::set-user-data': {
+    class: 'gated',
+    note: 'batch A: key allow-list (only currentUploader is renderer-owned); imageFolderPath/screenshotFolderPath stay dialog-assigned (dataCenter/index.ts set-user-data handler)'
+  },
   'mt::set-user-preference': {
     class: 'gated',
     note: 'key filter drops imageFolderPath/screenshotFolderPath (preferences/index.ts:229), not assertPathInScope'
@@ -306,6 +304,8 @@ export const assertSites: LedgerSite[] = [
   { file: 'src/main/ipc/shell.ts', snippet: 'assertPathInScope(fullPath)' },
   { file: 'src/main/ipc/uploader.ts', snippet: 'assertPathInScope(imagePath)' },
   { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(filePath)' },
+  { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(newPathname)' },
+  { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(pathname)' },
   { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(pathname)' }
 ]
 
