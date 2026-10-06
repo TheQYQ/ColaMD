@@ -37,28 +37,26 @@ export interface LedgerSite {
  */
 export const channelClasses: Record<string, ChannelClass> = {
   // --- known gaps (2026-10 review; fix batches shrink this list) -----------
-  'app-open-directory-by-id': {
-    class: 'known-gap',
-    issue:
-      'no assertPathInScope; sibling app-open-file-by-id has one (app/index.ts:756 vs :809); also in accidentalReachability'
-  },
-  'app-open-files-by-id': {
-    class: 'known-gap',
-    issue:
-      'no assertPathInScope; grants dirname per path when openFilesInNewWindow preference is true (app/index.ts:778)'
-  },
-  'mt::ask-for-image-auto-path': {
-    class: 'known-gap',
-    issue:
-      'no assertPathInScope; renderer src can enumerate arbitrary dir entries and spawn unbounded fs.watch (menu/actions/edit.ts:14)'
-  },
-  'mt::format-link-click': {
-    class: 'known-gap',
-    issue:
-      'document-controlled href can addAllowedRoot (file.ts:752) and shell.openPath without scope (file.ts:826)'
-  },
+  // Empty since batch C (seeded 9 → batch A 7 → batch B 4 → batch C 0); the
+  // ratchet in path-scope-coverage.spec.ts keeps it from growing again.
 
   // --- gated ---------------------------------------------------------------
+  'app-open-directory-by-id': {
+    class: 'gated',
+    note: 'batch C: assertPathInScope(pathname) in the handler (app/index.ts); refusal logs, no toast — mirrors app-open-file-by-id; sole legit emitter (file.ts openFileOrFolder) grants the root before emitting'
+  },
+  'app-open-files-by-id': {
+    class: 'gated',
+    note: 'batch C: Array.isArray normalization + assertPathInScope per path in the handler (app/index.ts); refusal logs — paired with the File > Open dialog grant in file.ts openFile'
+  },
+  'mt::ask-for-image-auto-path': {
+    class: 'gated',
+    note: 'batch C: pathname type check + assertPathInScope(dir) in the handler (menu/actions/edit.ts); refusal logs and replies []'
+  },
+  'mt::format-link-click': {
+    class: 'gated',
+    note: 'batch C: assertPathInScope(pathname) after decode/normalize, before both exits (menu/actions/file.ts); refusal logs and notifies dialog.openRefused — covers openFileOrFolder (document-controlled grant) and shell.openPath'
+  },
   'mt::fs::read-file': { class: 'gated' },
   'mt::open-file': {
     class: 'gated',
@@ -288,6 +286,8 @@ export const channelClasses: Record<string, ChannelClass> = {
 export const assertSites: LedgerSite[] = [
   { file: 'src/main/app/index.ts', snippet: 'assertPathInScope(filePath)' },
   { file: 'src/main/app/index.ts', snippet: 'assertPathInScope(fullPath)' },
+  { file: 'src/main/app/index.ts', snippet: 'assertPathInScope(pathname)' },
+  { file: 'src/main/app/index.ts', snippet: 'assertPathInScope(p)' },
   { file: 'src/main/app/index.ts', snippet: 'assertPathInScope(resolvedPath)' },
   { file: 'src/main/app/windowManager.ts', snippet: 'assertPathInScope(filePath)' },
   { file: 'src/main/ipc/fs.ts', snippet: 'assertPathInScope(dest)' },
@@ -304,8 +304,10 @@ export const assertSites: LedgerSite[] = [
   { file: 'src/main/ipc/shell.ts', snippet: 'assertPathInScope(fullPath)' },
   { file: 'src/main/ipc/shell.ts', snippet: 'assertPathInScope(fullPath)' },
   { file: 'src/main/ipc/uploader.ts', snippet: 'assertPathInScope(imagePath)' },
+  { file: 'src/main/menu/actions/edit.ts', snippet: 'assertPathInScope(dir)' },
   { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(filePath)' },
   { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(newPathname)' },
+  { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(pathname)' },
   { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(pathname)' },
   { file: 'src/main/menu/actions/file.ts', snippet: 'assertPathInScope(pathname)' }
 ]
@@ -320,6 +322,10 @@ export const grantSites: LedgerSite[] = [
   {
     file: 'src/main/ipc/dialog.ts',
     snippet: 'addAllowedRoot(isDirectory(picked)?picked:path.dirname(picked))'
+  },
+  {
+    file: 'src/main/menu/actions/file.ts',
+    snippet: 'addAllowedRoot(path.dirname(normalizeAndResolvePath(picked)))'
   },
   { file: 'src/main/menu/actions/file.ts', snippet: 'addAllowedRoot(path.dirname(resolvedPath))' },
   { file: 'src/main/menu/actions/file.ts', snippet: 'addAllowedRoot(path.dirname(resolvedPath))' },
