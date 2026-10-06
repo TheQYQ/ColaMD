@@ -929,7 +929,8 @@
     "openAnyway": "Yine de aç",
     "renameFailure": "Yeniden adlandırma hatası",
     "moveFailure": "Taşıma hatası",
-    "openFailure": "Açma hatası"
+    "openFailure": "Açma hatası",
+    "openRefused": "{name} açılamıyor: yol yetkili klasörlerin dışında."
   },
   "error": {
     "configSchemaViolation": "Yapılandırma şeması ihlali",

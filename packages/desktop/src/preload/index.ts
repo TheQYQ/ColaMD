@@ -10,6 +10,7 @@ import { contextBridge, ipcRenderer, webFrame, webUtils } from 'electron'
 import type { IpcRendererEvent } from 'electron'
 import pathe from 'pathe'
 import { MARKDOWN_INCLUSIONS, hasMarkdownExtension } from 'common/filesystem/markdownExtensions'
+import { DROP_CHANNEL, installDropBridge, isPageSendAllowed } from './dropBridge'
 
 import type {
   IpcInvokeChannels,
@@ -29,8 +30,20 @@ const invoke = <K extends keyof IpcInvokeChannels>(
   ...args: IpcInvokeChannels[K]['args']
 ): Promise<IpcInvokeChannels[K]['ret']> => ipcRenderer.invoke(channel, ...args)
 
-const send = <K extends keyof IpcSendChannels>(channel: K, ...args: IpcSendChannels[K]): void =>
+const send = <K extends keyof IpcSendChannels>(channel: K, ...args: IpcSendChannels[K]): void => {
+  // mt::window::drop grants a write-scope root, so only the preload's own
+  // drop listener may send it — page scripts get a silent no-op (dropBridge).
+  if (!isPageSendAllowed(channel)) return
   ipcRenderer.send(channel, ...args)
+}
+
+// Registered here — preload runs before any page script, so at the window
+// target this listener fires first and a page cannot preempt it (see the
+// spike record in dropBridge.ts).
+installDropBridge(window, {
+  getPathForFile: (file: File) => webUtils.getPathForFile(file),
+  send: (paths: string[]) => ipcRenderer.send(DROP_CHANNEL, paths)
+})
 
 // One synchronous handshake at startup so the renderer can read platform/env
 // without an `await` from inside Vue computed properties etc.

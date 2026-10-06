@@ -929,7 +929,8 @@
     "openAnyway": "仍然打开",
     "renameFailure": "重命名失败",
     "moveFailure": "移动失败",
-    "openFailure": "打开失败"
+    "openFailure": "打开失败",
+    "openRefused": "无法打开“{name}”：路径不在授权的文件夹内。"
   },
   "error": {
     "configSchemaViolation": "配置架构违规",

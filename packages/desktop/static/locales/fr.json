@@ -929,7 +929,8 @@
     "openAnyway": "Ouvrir quand même",
     "renameFailure": "Échec du renommage",
     "moveFailure": "Échec du déplacement",
-    "openFailure": "Échec d’ouverture"
+    "openFailure": "Échec d’ouverture",
+    "openRefused": "Impossible d’ouvrir {name} : le chemin est en dehors des dossiers autorisés."
   },
   "error": {
     "configSchemaViolation": "Violation du schéma de configuration",

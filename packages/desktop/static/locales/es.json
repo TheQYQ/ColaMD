@@ -929,7 +929,8 @@
     "openAnyway": "Abrir de todos modos",
     "renameFailure": "Error al renombrar",
     "moveFailure": "Error al mover",
-    "openFailure": "Error al abrir"
+    "openFailure": "Error al abrir",
+    "openRefused": "No se puede abrir {name}: la ruta está fuera de las carpetas autorizadas."
   },
   "error": {
     "configSchemaViolation": "Violación del esquema de configuración",

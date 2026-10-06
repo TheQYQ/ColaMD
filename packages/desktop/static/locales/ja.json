@@ -929,7 +929,8 @@
     "openAnyway": "それでも開く",
     "renameFailure": "名前の変更に失敗",
     "moveFailure": "移動に失敗",
-    "openFailure": "開けません"
+    "openFailure": "開けません",
+    "openRefused": "{name}を開けません：パスが許可されたフォルダー外です。"
   },
   "error": {
     "configSchemaViolation": "設定スキーマ違反",
