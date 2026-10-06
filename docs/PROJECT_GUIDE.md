@@ -138,6 +138,13 @@ ColaMD/
 
 > 渲染端全局变量的类型声明在 `src/types/global.d.ts`，新增桥接方法要同时改契约、preload、ambient 三处。
 
+### 6.3 pathScope 覆盖清单（防漂移）
+
+2026-10 全仓审查后加的**台账棘轮**：`packages/desktop/test/unit/utils/pathScopeInventory.ts` 手工登记每个已注册通道的处置类别（`gated` / `intentional-probe` / `known-gap` / `internal` / `non-path`）、全部 `assertPathInScope`（19 处）与 `addAllowedRoot`（13 处）调用点、授权文件白名单（4 文件）、`IpcSendChannels ∩ onInternalChannel` 误可达集合（21 条）；`test/unit/utils/pathScopeScanner.ts` 用静态正则扫描 `src/main/**` + `src/shared/types/ipc.ts` 提供扫描侧；断言在 `test/unit/specs/path-scope-coverage.spec.ts`（7 条，含 known-gap **只减不增**的计数棘轮，基线 9）。
+
+- 新增通道注册、新增 grant/assert 调用点、改动 `IpcSendChannels` 或 `onInternalChannel` 都会让该 spec 变红——必须同步更新台账（新 grant 点还要进 `grantSiteFiles` 白名单）。
+- 修掉一个 known-gap 时：给通道装门 → 更新调用点台账 → 改类别为 `gated` → 下调棘轮基线数字。**只把红字塞进台账而不修，是这套机制明令禁止的方向**（9 条种子清单与逐条理由见该 inventory 的 `known-gap` 段）。
+
 ## 7. 渲染进程地图（`src/renderer`，216 文件 / 47 `.vue` + 89 `.ts`）
 
 ### 7.1 启动与路由
