@@ -46,7 +46,7 @@ import type {
 // declaration here. `SelectionState` and `FormatLinkPayload` moved out of
 // `src/main/menu/…` for the same reason -- the main side now imports them
 // from here instead of declaring its own copy.
-export interface NeedUpdatePayload {
+interface NeedUpdatePayload {
   needUpdate: boolean
 }
 
@@ -58,7 +58,7 @@ export interface RendererErrorCopy {
   stack?: string
 }
 
-export interface ImageAutoPathRequest {
+interface ImageAutoPathRequest {
   pathname: string
   src: string
   id: string

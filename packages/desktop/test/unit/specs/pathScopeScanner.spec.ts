@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { scanText } from '../utils/pathScopeScanner'
+import { emptyScanResult, scanText } from '../utils/pathScopeScanner'
 
 // Fixture files are hand-authored; every expectation below is derived by hand
 // from the fixture text, never computed by the scanner.
@@ -102,5 +102,11 @@ describe('pathScopeScanner.scanText', () => {
     const { sendChannels } = scanText(FIXTURE)
 
     expect(sendChannels).toEqual(['mt::fs::read-file', 'app-open-file-by-id'])
+  })
+
+  it('returns an empty result when no registrations, call sites, or channels match', () => {
+    const empty = scanText({ 'noop.ts': '// nothing to scan here\n' })
+
+    expect(empty).toEqual(emptyScanResult)
   })
 })
