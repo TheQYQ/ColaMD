@@ -929,7 +929,8 @@
     "openAnyway": "Toch openen",
     "renameFailure": "Naam wijzigen mislukt",
     "moveFailure": "Verplaatsen mislukt",
-    "openFailure": "Fout bij openen"
+    "openFailure": "Fout bij openen",
+    "openRefused": "Kan {name} niet openen: het pad ligt buiten de geautoriseerde mappen."
   },
   "error": {
     "configSchemaViolation": "Configuratieschemaovertreding",

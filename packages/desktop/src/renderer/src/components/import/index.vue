@@ -63,25 +63,12 @@ const dragLeaveHandler = () => {
   isOver.value = false
 }
 
+// The drop itself is handled by the preload's own listener (dropBridge): it
+// resolves paths from the real OS drop and is the only sender the main
+// process trusts for mt::window::drop. The overlay only shows the affordance
+// and keeps the default navigation from swallowing the file.
 const dropHandler = (e: DragEvent) => {
-  const fileList: string[] = []
   e.preventDefault()
-  if (!e.dataTransfer) return
-  if (e.dataTransfer.files.length > 0) {
-    for (const file of Array.from(e.dataTransfer.files)) {
-      fileList.push(window.electron.webUtils.getPathForFile(file))
-    }
-  } else {
-    for (const file of Array.from(e.dataTransfer.items)) {
-      if (file.kind === 'file') {
-        const asFile = file.getAsFile()
-        if (asFile) {
-          fileList.push(window.electron.webUtils.getPathForFile(asFile))
-        }
-      }
-    }
-  }
-  window.electron.ipcRenderer.send('mt::window::drop', fileList)
 }
 
 onMounted(() => {

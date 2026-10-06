@@ -929,7 +929,8 @@
     "openAnyway": "仍要開啟",
     "renameFailure": "重新命名失敗",
     "moveFailure": "移動失敗",
-    "openFailure": "開啟失敗"
+    "openFailure": "開啟失敗",
+    "openRefused": "無法開啟「{name}」：路徑不在授權的資料夾內。"
   },
   "error": {
     "configSchemaViolation": "設定結構違規",

@@ -37,21 +37,6 @@ export interface LedgerSite {
  */
 export const channelClasses: Record<string, ChannelClass> = {
   // --- known gaps (2026-10 review; fix batches shrink this list) -----------
-  'mt::open-file': {
-    class: 'known-gap',
-    issue:
-      'no assertPathInScope; renderer-forgeable read of arbitrary file content into a tab (windowManager.ts:386), unlike gated mt::open-file-by-window-id'
-  },
-  'mt::menu::open-path': {
-    class: 'known-gap',
-    issue:
-      'no scope/recents check before openFileOrFolder grants a root (ipc/menu.ts:23 -> file.ts:933)'
-  },
-  'mt::window::drop': {
-    class: 'known-gap',
-    issue:
-      'forged drop payload grants parent-dir root for any existing .md (file.ts:609 -> file.ts:938); pairs with open existence probes'
-  },
   'app-open-directory-by-id': {
     class: 'known-gap',
     issue:
@@ -75,6 +60,18 @@ export const channelClasses: Record<string, ChannelClass> = {
 
   // --- gated ---------------------------------------------------------------
   'mt::fs::read-file': { class: 'gated' },
+  'mt::open-file': {
+    class: 'gated',
+    note: 'batch B: assertPathInScope in the handler (windowManager.ts mt::open-file); refusal logs and notifies dialog.openRefused'
+  },
+  'mt::menu::open-path': {
+    class: 'gated',
+    note: 'batch B: membership in main-owned recently-used-documents list before openFileOrFolder (ipc/menu.ts); equivalent documented gate — cross-session recents sit outside the current pathScope roots by design; residual: menu-add-recently-used can plant an entry first (internal channel, recorded under its own note)'
+  },
+  'mt::window::drop': {
+    class: 'gated',
+    note: 'batch B: preload trust anchor — page-facing send refuses the channel and the preload drop listener (src/preload/dropBridge.ts) is the only sender; webUtils.getPathForFile yields "" for JS-built Files, so a forged DragEvent produces no message (spike 2026-10-06); main handler openFileOrFolder unchanged'
+  },
   'mt::fs::readdir': { class: 'gated' },
   'mt::fs::copy': { class: 'gated' },
   'mt::fs::move': { class: 'gated' },
@@ -169,9 +166,12 @@ export const channelClasses: Record<string, ChannelClass> = {
   },
   'broadcast-user-data-changed': {
     class: 'internal',
-    note: 'grant listener for imageFolderPath (app/index.ts:370) — safe only because mt::set-user-data is supposed to filter keys (currently a known-gap)'
+    note: 'grant listener for imageFolderPath (app/index.ts:370) — safe because mt::set-user-data filters keys (gated since batch A)'
   },
-  'menu-add-recently-used': { class: 'internal', note: 'in accidentalReachability' },
+  'menu-add-recently-used': {
+    class: 'internal',
+    note: 'in accidentalReachability; residual for the mt::menu::open-path gate: a renderer could plant a path here first (main-owned state written from a save flow; noted by batch B, not yet gated)'
+  },
   'screen-capture': { class: 'internal', note: 'in accidentalReachability' },
   'set-user-preference': {
     class: 'internal',
@@ -289,6 +289,7 @@ export const assertSites: LedgerSite[] = [
   { file: 'src/main/app/index.ts', snippet: 'assertPathInScope(filePath)' },
   { file: 'src/main/app/index.ts', snippet: 'assertPathInScope(fullPath)' },
   { file: 'src/main/app/index.ts', snippet: 'assertPathInScope(resolvedPath)' },
+  { file: 'src/main/app/windowManager.ts', snippet: 'assertPathInScope(filePath)' },
   { file: 'src/main/ipc/fs.ts', snippet: 'assertPathInScope(dest)' },
   { file: 'src/main/ipc/fs.ts', snippet: 'assertPathInScope(dest)' },
   { file: 'src/main/ipc/fs.ts', snippet: 'assertPathInScope(p)' },
