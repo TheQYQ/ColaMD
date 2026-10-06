@@ -17,6 +17,11 @@ vi.mock('electron', async () => {
 vi.mock('electron-log', () => ({
   default: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }
 }))
+// ced is a native addon and CI's node ABI has no prebuilt binding for it
+// (electron-rebuild only produces the Electron one). windowManager pulls it
+// in via Watcher -> filesystem/markdown -> encoding, but none of these tests
+// call guessEncoding, so stub the import instead of loading the binding.
+vi.mock('ced', () => ({ default: vi.fn() }))
 vi.mock('main_renderer/i18n', () => ({
   t: (key: string) => key,
   setLanguage: vi.fn()
