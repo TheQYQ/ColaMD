@@ -54,10 +54,12 @@ vi.mock('../../../src/main/menu/actions/file', () => ({
 }))
 
 import log from 'electron-log'
+import { app } from 'electron'
 import { fromWebContentsMock, ipcRegistry, resetIpcRegistry } from '../mainHandlerHarness'
 import { openFileOrFolder } from '../../../src/main/menu/actions/file'
 import { registerMenuHandlers } from '../../../src/main/ipc/menu'
 import AppMenu from '../../../src/main/menu/index'
+import { isOsx } from '../../../src/main/config'
 import { addAllowedRoot, clearAllowedRootsForTest } from '../../../src/main/security/pathScope'
 import { RECENTLY_USED_DOCUMENTS_FILE_NAME } from '../../../src/main/utils/recentDocuments'
 
@@ -223,7 +225,14 @@ describe('menu-add-recently-used is scoped', () => {
 
     await driveAdd(inScope)
 
-    expect(recorded()).toEqual([inScope])
+    // macOS hands recents to the OS (app.addRecentDocument) and returns before
+    // the JSON write (menu/index.ts addRecentlyUsedDocument); win/linux write
+    // recently-used-documents.json here.
+    if (isOsx) {
+      expect(app.addRecentDocument).toHaveBeenCalledWith(inScope)
+    } else {
+      expect(recorded()).toEqual([inScope])
+    }
     expect(log.warn).not.toHaveBeenCalled()
   })
 })
