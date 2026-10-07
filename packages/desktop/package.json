@@ -99,7 +99,7 @@
     "dom-autoscroller": "^2.3.4",
     "dompurify": "^3.4.16",
     "dragula": "^3.7.3",
-    "electron": "~42.1.0",
+    "electron": "~42.10.0",
     "electron-builder": "^26.15.3",
     "electron-store": "^11.0.2",
     "electron-vite": "^5.0.0",
