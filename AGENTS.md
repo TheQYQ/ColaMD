@@ -14,6 +14,7 @@ Electron 桌面端所见即所得 Markdown 编辑器（Typora 式界面），mon
 
 - Node `>=20.19.0`、pnpm `>=10`（`packageManager: pnpm@10.33.4`）。没有全局 pnpm 时用 `corepack enable`。
 - `pnpm install` 会跑 `scripts/postinstall.ts`：还原 `native-keymap` 源 → 下载 Electron → `patch-package` → `electron-rebuild -f` → 压缩 locale。Windows 需要 VS Build Tools（或手工放预编译 `.node`）。
+- **`pnpm install --ignore-scripts` 会丢原生模块编译产物。** 2026-10-07 实测：带 `--ignore-scripts` 的安装重链接了 `node_modules/.pnpm/ced@*` 目录后 `ced.node` 消失（Electron 主进程启动即 `Could not locate the bindings file`），而 exit 0 毫无征兆。凡用 `--ignore-scripts` 装依赖且 node_modules 链接发生了变化，之后必须补一次**带脚本**的 `pnpm install`（allowBuilds 重建 ced / native-keymap，postinstall 链补 electron-rebuild），再跑任何会起 Electron 的测试。快速自检：`find node_modules/.pnpm -maxdepth 4 -name ced.node`。
 - 开发：`pnpm dev`。**改 `main` / `preload` 要重启进程**，只有渲染端接了 Vite HMR。本机（Windows）`pnpm` 不在 Git Bash 的 PATH 上：`corepack prepare pnpm@10.33.4 --activate` 后需在 PATH 前放两个垫片——`pnpm`（`exec corepack pnpm "$@"`）与 `pnpm.cmd`（后者必需，`pnpm --filter` 会派生 cmd.exe）。**不用 `--no-verify` 绕门禁。**
 - 换 Electron 版本后：`pnpm rebuild-native`。
 - **改文件一律用编辑工具，不要用 PowerShell 的 `Set-Content` / `Out-File` / `>`。** 在 PS 5.1 上实测：`Set-Content -Encoding UTF8` 会写 **BOM**（`unicode-bom` error），`-NoNewline` 会**丢末尾换行**（`@stylistic/eol-last` error），`>` 写的是 UTF-16。2026-10-01 因此吃了 3 个 eslint 错误。已污染的文件用 `eslint --fix <files>` 一次修掉，但别这么写。
