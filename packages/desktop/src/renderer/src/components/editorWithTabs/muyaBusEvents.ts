@@ -5,7 +5,7 @@ import bus from '@/bus'
 // parameter position -- which is assignable to every parameter type -- lets one
 // table hold all of them without reaching for `any`. Each handler stays
 // type-checked where it is defined.
-export type EditorBusHandler = (...args: never[]) => unknown
+type EditorBusHandler = (...args: never[]) => unknown
 
 export type EditorBusHandlers = Record<string, EditorBusHandler>
 

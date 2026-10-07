@@ -47,12 +47,11 @@ jobs:
       - name: Check dependency hygiene (knip)
         run: pnpm knip
 
-      # O24: the dependency-only sweep above is all `pnpm knip` ever looked at,
-      # so unused files/exports/types were invisible to CI while being the bulk of
-      # the debt. Reported here, not enforced, until the ignore list is reviewed
-      # (docs/OPTIMIZATION_ROADMAP.md O24) — the dependency gate stays blocking.
-      - name: Report unused files, exports and types (knip)
-        continue-on-error: true
+      # knip:full sweeps unused files/exports/types — the dependency-only `pnpm knip`
+      # above never looked at them. It ran report-only while the backlog existed
+      # (O24, retired with docs/OPTIMIZATION_ROADMAP.md); the last 9 items cleared
+      # 2026-10-07, so it blocks now. Reviewed exceptions live in knip.json.
+      - name: Check unused files, exports and types (knip:full)
         run: pnpm knip:full
 
       # @muyajs/core points its `types` condition at packages/muya/lib/types,

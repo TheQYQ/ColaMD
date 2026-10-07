@@ -1,17 +1,5 @@
 import DOMPurify, { type Config } from 'dompurify'
 
-export const PREVIEW_DOMPURIFY_CONFIG = Object.freeze({
-  FORBID_ATTR: ['style', 'contenteditable'],
-  ALLOW_DATA_ATTR: false,
-  USE_PROFILES: {
-    html: true,
-    svg: true,
-    svgFilters: true,
-    mathMl: false
-  },
-  RETURN_TRUSTED_TYPE: false
-})
-
 export const EXPORT_DOMPURIFY_CONFIG = Object.freeze({
   FORBID_ATTR: ['contenteditable'],
   ALLOW_DATA_ATTR: false,

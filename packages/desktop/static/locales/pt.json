@@ -929,7 +929,8 @@
     "openAnyway": "Abrir mesmo assim",
     "renameFailure": "Falha ao renomear",
     "moveFailure": "Falha ao mover",
-    "openFailure": "Falha ao abrir"
+    "openFailure": "Falha ao abrir",
+    "openRefused": "Não foi possível abrir {name}: o caminho está fora das pastas autorizadas."
   },
   "error": {
     "configSchemaViolation": "Violação do esquema de configuração",

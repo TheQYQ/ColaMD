@@ -6,6 +6,7 @@ import { updateSidebarMenu } from '../menu/actions/edit'
 import { updateFormatMenu } from '../menu/actions/format'
 import { updateSelectionMenus, type SelectionState } from '../menu/actions/paragraph'
 import { onInternalChannel } from '../utils/internalIpc'
+import { assertPathInScope } from '../security/pathScope'
 import {
   MAX_RECENTLY_USED_DOCUMENTS,
   readRecentlyUsedDocuments,
@@ -489,7 +490,21 @@ class AppMenu {
       }
     })
 
-    onInternalChannel('menu-add-recently-used', (pathname: string) => {
+    // Renderer-forgable (plain ipcMain.on via onInternalChannel — no signature
+    // adaptation, so a renderer send arrives event-first). Membership in the
+    // recents list is the authorization for mt::menu::open-path, which opens
+    // through the grant site openFileOrFolder — so planting here would buy the
+    // gate. Legit emitters are main's own save flows (menu/actions/file.ts)
+    // whose write target is already in scope (or dialog-granted) when the
+    // write succeeds; the channel also left IpcSendChannels so the renderer
+    // has no typed path to it (batch D).
+    onInternalChannel('menu-add-recently-used', async (pathname: string) => {
+      try {
+        await assertPathInScope(pathname)
+      } catch (err: unknown) {
+        log.warn('Rejected menu-add-recently-used outside the path scope:', pathname, err)
+        return
+      }
       this.addRecentlyUsedDocument(pathname)
     })
     typedOn('menu-clear-recently-used', () => {

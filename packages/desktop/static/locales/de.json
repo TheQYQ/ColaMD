@@ -929,7 +929,8 @@
     "openAnyway": "Trotzdem öffnen",
     "renameFailure": "Umbenennen fehlgeschlagen",
     "moveFailure": "Verschieben fehlgeschlagen",
-    "openFailure": "Fehler beim Öffnen"
+    "openFailure": "Fehler beim Öffnen",
+    "openRefused": "{name} kann nicht geöffnet werden: Der Pfad liegt außerhalb der autorisierten Ordner."
   },
   "error": {
     "configSchemaViolation": "Konfigurationsschema-Verletzung",

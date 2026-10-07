@@ -643,6 +643,23 @@ typedOn('mt::rename', async (e, { id, pathname, newPathname }: RenamePayload) =>
     return
   }
 
+  // Renderer supplies both ends of the rename: the source must be in scope
+  // (same gate as every mutating fs channel), and the target too — a granted
+  // source with an ungranted target would move a file out of the scope.
+  // assertPathInScope accepts not-yet-existing targets, which renames usually are.
+  try {
+    await assertPathInScope(pathname)
+    await assertPathInScope(newPathname)
+  } catch (err) {
+    log.warn('rename: blocked path outside the allowed scope:', pathname, '->', newPathname)
+    typedSend(win.webContents, 'mt::show-notification', {
+      title: t('dialog.renameFailure'),
+      type: 'error',
+      message: err instanceof Error ? err.message : String(err)
+    })
+    return
+  }
+
   const doRename = (): void => {
     fsRename(pathname, newPathname, (err: NodeJS.ErrnoException | null) => {
       if (err) {
@@ -800,6 +817,23 @@ typedOn('mt::format-link-click', async (e, { data, dirname }: FormatLinkPayload)
     // `%` in a file name (`100%done.md`) makes the latter throw URIError, which
     // surfaced as a main-process error dialog with the link doing nothing (#27).
     pathname = path.normalize(decodeLinkPathname(pathname))
+    // Scope gate: the href comes from the rendered document, so a hostile
+    // document controls both join inputs. Both exits below either upgrade the
+    // path scope (openFileOrFolder grants the target dirname — a
+    // document-controlled grant) or hand the path to the OS (shell.openPath).
+    // Links to what this session already opened keep working — argv/startup
+    // grants the document's own directory, which is where relative links point.
+    try {
+      await assertPathInScope(pathname)
+    } catch (err: unknown) {
+      log.warn('Rejected mt::format-link-click outside the path scope:', pathname, err)
+      typedSend(win.webContents, 'mt::show-notification', {
+        title: t('dialog.openFailure'),
+        type: 'error',
+        message: t('dialog.openRefused', { name: path.basename(pathname) })
+      })
+      return
+    }
     if (isMarkdownFile(pathname)) {
       const innerWin = BrowserWindow.fromWebContents(e.sender)
       if (innerWin) {
@@ -913,6 +947,12 @@ export const openFile = async (win: BrowserWindow | null): Promise<void> => {
   })
 
   if (Array.isArray(filePaths) && filePaths.length > 0) {
+    // Trusted grant site: the user just picked these files from the native
+    // dialog. app-open-files-by-id asserts scope in its handler, so the grant
+    // has to land before the emit (same pattern as ask-for-open-file-in-sidebar).
+    for (const picked of filePaths) {
+      addAllowedRoot(path.dirname(normalizeAndResolvePath(picked)))
+    }
     ipcMain.emit('app-open-files-by-id', win.id, filePaths)
   }
 }

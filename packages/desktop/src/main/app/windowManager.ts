@@ -1,3 +1,4 @@
+import path from 'path'
 import { app, BrowserWindow } from 'electron'
 import type { BrowserWindow as IBrowserWindow } from 'electron'
 import log from 'electron-log'
@@ -14,6 +15,8 @@ import type { WindowTypeValue } from '../windows/base'
 import type EditorWindow from '../windows/editor'
 import { typedOn } from '../ipc/typedOn'
 import { typedSend } from '../ipc/typedSend'
+import { t } from '../i18n'
+import { assertPathInScope } from '../security/pathScope'
 
 class WindowActivityList {
   // Oldest             Newest
@@ -383,12 +386,27 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
       this.forceClose(win)
     })
 
-    typedOn('mt::open-file', (e, filePath: string, options: Record<string, unknown>) => {
+    // Batch B: unlike the window-creation routes (which authorize before they
+    // ask this channel to open), a renderer could name any path here — and
+    // openTab reads it without further checks. Scope the path the same way
+    // every write-side channel now does.
+    typedOn('mt::open-file', async (e, filePath: string, options: Record<string, unknown>) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return
       const editor = this.get(win.id) as EditorWindow | undefined
       if (!editor) {
         log.error(`Cannot find window id "${win.id}" to open file.`)
+        return
+      }
+      try {
+        await assertPathInScope(filePath)
+      } catch (error) {
+        log.warn(`Refusing to open out-of-scope file "${filePath}": ${(error as Error).message}`)
+        typedSend(win.webContents, 'mt::show-notification', {
+          title: t('dialog.openFailure'),
+          type: 'error',
+          message: t('dialog.openRefused', { name: path.basename(filePath) })
+        })
         return
       }
       editor.openTab(filePath, options, true)

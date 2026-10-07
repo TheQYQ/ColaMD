@@ -775,22 +775,10 @@ class App {
           log.warn('Rejected file open outside the allowed path scope:', filePath, err)
         })
     })
-    onInternalChannel('app-open-files-by-id', (windowId: number, fileList: string[]) => {
-      const openFilesInNewWindow =
-        this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
-      if (openFilesInNewWindow) {
-        this._createEditorWindow(null, fileList)
-      } else {
-        const editor = this._windowManager.get(windowId) as EditorWindow | undefined
-        if (editor) {
-          editor.openTabsFromPaths(
-            fileList
-              .map((p) => normalizeMarkdownPath(p))
-              .filter((i): i is PathInfo => i !== null && !i.isDir)
-              .map((i) => i.path)
-          )
-        }
-      }
+    onInternalChannel('app-open-files-by-id', async (windowId: number, fileList: string[]) => {
+      // Renderer-forgable (plain ipcMain.on); the scope gate lives in
+      // _openFilesBy so this registration stays a thin forwarder.
+      await this._openFilesBy(windowId, fileList)
     })
 
     onInternalChannel('app-open-markdown-by-id', (windowId: number, data: string) => {
@@ -808,16 +796,10 @@ class App {
 
     onInternalChannel(
       'app-open-directory-by-id',
-      (windowId: number, pathname: string, openInSameWindow: boolean) => {
-        const { openFolderInNewWindow } = this._accessor.preferences.getAll()
-        if (openInSameWindow || !openFolderInNewWindow) {
-          const editor = this._windowManager.get(windowId) as EditorWindow | undefined
-          if (editor) {
-            editor.openFolder(pathname)
-            return
-          }
-        }
-        this._createEditorWindow(pathname)
+      async (windowId: number, pathname: string, openInSameWindow: boolean) => {
+        // Renderer-forgable (plain ipcMain.on); the scope gate lives in
+        // _openDirectoryBy so this registration stays a thin forwarder.
+        await this._openDirectoryBy(windowId, pathname, openInSameWindow)
       }
     )
 
@@ -911,6 +893,66 @@ class App {
       await assertPathInScope(fullPath)
       return shell.trashItem(fullPath)
     })
+  }
+
+  /**
+   * app-open-files-by-id body (batch C): renderer-forgable, so every path
+   * gets the same scope gate as the sibling app-open-file-by-id. Trusted
+   * callers grant each dirname before emitting (File > Open dialog in
+   * menu/actions/file.ts), so the assert passes for them and only for them.
+   * A forged non-array payload is normalized to nothing rather than throwing
+   * inside the listener.
+   */
+  private async _openFilesBy(windowId: number, fileList: string[]): Promise<void> {
+    const paths = Array.isArray(fileList) ? fileList : []
+    try {
+      await Promise.all(paths.map((p) => assertPathInScope(p)))
+    } catch (err: unknown) {
+      log.warn('Rejected app-open-files-by-id outside the path scope:', paths, err)
+      return
+    }
+    const openFilesInNewWindow = this._accessor.preferences.getItem<boolean>('openFilesInNewWindow')
+    if (openFilesInNewWindow) {
+      this._createEditorWindow(null, paths)
+    } else {
+      const editor = this._windowManager.get(windowId) as EditorWindow | undefined
+      if (editor) {
+        editor.openTabsFromPaths(
+          paths
+            .map((p) => normalizeMarkdownPath(p))
+            .filter((i): i is PathInfo => i !== null && !i.isDir)
+            .map((i) => i.path)
+        )
+      }
+    }
+  }
+
+  /**
+   * app-open-directory-by-id body (batch C): renderer-forgable — opening a
+   * folder discloses its tree and content. openFileOrFolder grants the
+   * directory right before emitting, so legitimate callers always pass;
+   * argv/CLI never routes through this channel (it opens windows directly).
+   */
+  private async _openDirectoryBy(
+    windowId: number,
+    pathname: string,
+    openInSameWindow: boolean
+  ): Promise<void> {
+    try {
+      await assertPathInScope(pathname)
+    } catch (err: unknown) {
+      log.warn('Rejected app-open-directory-by-id outside the path scope:', pathname, err)
+      return
+    }
+    const { openFolderInNewWindow } = this._accessor.preferences.getAll()
+    if (openInSameWindow || !openFolderInNewWindow) {
+      const editor = this._windowManager.get(windowId) as EditorWindow | undefined
+      if (editor) {
+        editor.openFolder(pathname)
+        return
+      }
+    }
+    this._createEditorWindow(pathname)
   }
 }
 

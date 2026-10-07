@@ -929,7 +929,8 @@
     "openAnyway": "그래도 열기",
     "renameFailure": "이름 변경 실패",
     "moveFailure": "이동 실패",
-    "openFailure": "열기 실패"
+    "openFailure": "열기 실패",
+    "openRefused": "{name}을(를) 열 수 없습니다. 경로가 허용된 폴더 밖에 있습니다."
   },
   "error": {
     "configSchemaViolation": "구성 스키마 위반",

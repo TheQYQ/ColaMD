@@ -929,7 +929,8 @@
     "openAnyway": "Open Anyway",
     "renameFailure": "Rename failure",
     "moveFailure": "Move failure",
-    "openFailure": "Open failure"
+    "openFailure": "Open failure",
+    "openRefused": "Cannot open {name}: the path is outside the authorized folders."
   },
   "error": {
     "configSchemaViolation": "Configuration schema violation",

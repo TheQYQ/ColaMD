@@ -1,4 +1,4 @@
-import { sanitize, PREVIEW_DOMPURIFY_CONFIG } from './dompurify'
+import { sanitize } from './dompurify'
 import { byteLengthUtf8 } from './byteLengthUtf8'
 
 /**
@@ -239,13 +239,17 @@ export const themeFileName = (id: string): string => {
  * theme metadata comes from untrusted `.colamd-theme` files. Used as a
  * fallback when the caller wants plain text.
  *
- * Deliberately uncalled today: the theme list renders metadata through escaped
- * interpolation and the preview through PREVIEW_DOMPURIFY_CONFIG, so nothing
- * needs plain-text stripping yet. Any new render of `.colamd-theme` text should
+ * Deliberately uncalled today: the theme list renders metadata through
+ * escaped interpolation and HTML previews are sanitized inside the engine
+ * (packages/muya owns its own PREVIEW_DOMPURIFY_CONFIG), so nothing needs
+ * plain-text stripping yet. Any new render of `.colamd-theme` text should
  * use this instead of deleting it as dead code.
  */
 export const sanitizeThemeText = (value: string | undefined): string => {
   if (!value) return ''
   // sanitize() runs DOMPurify to strip HTML/JS from untrusted content.
-  return sanitize(value, { ...PREVIEW_DOMPURIFY_CONFIG, ALLOWED_TAGS: [] })
+  // Pass ALLOWED_TAGS on its own: any USE_PROFILES next to it would make
+  // dompurify rebuild the tag set AFTER the config merge (purify.cjs),
+  // silently undoing ALLOWED_TAGS: [] — tags would pass through.
+  return sanitize(value, { ALLOWED_TAGS: [] })
 }

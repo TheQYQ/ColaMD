@@ -45,7 +45,8 @@ await import('main_renderer/menu/actions/file')
 
 // Batch 2 scope guards: the uploader used to hand any renderer-named local
 // image to the upload program (exfiltration), and mt::response-file-move-to
-// renamed from any renderer-named source path.
+// renamed from any renderer-named source path. Batch A adds mt::rename:
+// the renderer supplies BOTH the source and the target of a rename.
 
 afterEach(() => {
   clearAllowedRootsForTest()
@@ -137,6 +138,91 @@ describe('mt::response-file-move-to scope gate', () => {
       await handler({ sender: {} }, { id: 'tab-1', pathname: path.join(root, 'doc.md') })
 
       expect(fsRename).not.toHaveBeenCalled() // dialog was canceled
+      expect(win.webContents.send).not.toHaveBeenCalled()
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('mt::rename scope gate', () => {
+  it('refuses a source outside the allowed roots even when the target is granted', async () => {
+    clearAllowedRootsForTest()
+    const win = makeWin()
+    fromWebContentsMock.mockReturnValue(win)
+
+    const handler = ipcRegistry.on.get('mt::rename')
+    if (!handler) throw new Error('mt::rename not registered')
+
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'scope-granted-'))
+    try {
+      addAllowedRoot(root)
+      const outside = path.join(os.tmpdir(), `scope-out-${Date.now()}`, 'doc.md')
+      await handler(
+        { sender: {} },
+        { id: 'tab-1', pathname: outside, newPathname: path.join(root, 'taken.md') }
+      )
+
+      expect(fsRename).not.toHaveBeenCalled()
+      expect(win.webContents.send).toHaveBeenCalledWith(
+        'mt::show-notification',
+        expect.objectContaining({ type: 'error' })
+      )
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it('refuses a target outside the allowed roots even when the source is granted', async () => {
+    const win = makeWin()
+    fromWebContentsMock.mockReturnValue(win)
+
+    const handler = ipcRegistry.on.get('mt::rename')
+    if (!handler) throw new Error('mt::rename not registered')
+
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'scope-granted-'))
+    try {
+      addAllowedRoot(root)
+      const outside = path.join(os.tmpdir(), `scope-out-${Date.now()}`, 'doc.md')
+      await handler(
+        { sender: {} },
+        { id: 'tab-1', pathname: path.join(root, 'doc.md'), newPathname: outside }
+      )
+
+      expect(fsRename).not.toHaveBeenCalled()
+      expect(win.webContents.send).toHaveBeenCalledWith(
+        'mt::show-notification',
+        expect.objectContaining({ type: 'error' })
+      )
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it('renames when both source and target are inside a granted root', async () => {
+    const win = makeWin()
+    fromWebContentsMock.mockReturnValue(win)
+
+    const handler = ipcRegistry.on.get('mt::rename')
+    if (!handler) throw new Error('mt::rename not registered')
+
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'scope-granted-'))
+    try {
+      addAllowedRoot(root)
+      await handler(
+        { sender: {} },
+        {
+          id: 'tab-1',
+          pathname: path.join(root, 'doc.md'),
+          newPathname: path.join(root, 'renamed.md')
+        }
+      )
+
+      expect(fsRename).toHaveBeenCalledWith(
+        path.join(root, 'doc.md'),
+        path.join(root, 'renamed.md'),
+        expect.any(Function)
+      )
       expect(win.webContents.send).not.toHaveBeenCalled()
     } finally {
       fs.rmSync(root, { recursive: true, force: true })

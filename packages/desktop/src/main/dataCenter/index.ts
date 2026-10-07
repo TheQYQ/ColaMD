@@ -177,8 +177,30 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
       }
     })
 
+    // Only `currentUploader` is renderer-owned (uploader preference UI); the
+    // keys that double as main-process write targets — `imageFolderPath`
+    // (App registers it as an addAllowedRoot write-scope root when it
+    // broadcasts) and `screenshotFolderPath` (the write path runs
+    // ensureDirSync) — stay dialog-assigned. One allow-listed key is the
+    // whole surface; a new renderer-owned key must be added here on purpose.
     typedOn('mt::set-user-data', (_e, userData: Record<string, unknown>) => {
-      this.setItems(userData)
+      const allowed: Record<string, unknown> = {}
+      const rejected: string[] = []
+      for (const [key, value] of Object.entries(userData || {})) {
+        if (key === 'currentUploader') {
+          allowed[key] = value
+        } else {
+          rejected.push(key)
+        }
+      }
+      if (rejected.length > 0) {
+        log.warn(
+          `Rejected renderer-side writes of dataCenter keys: ${rejected.join(', ')}; only currentUploader is renderer-owned.`
+        )
+      }
+      if (Object.keys(allowed).length > 0) {
+        this.setItems(allowed)
+      }
     })
 
     typedHandle('mt::ask-for-image-path', async (e) => {
