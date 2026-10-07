@@ -289,7 +289,7 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 | `muya-{build,circular,lint,test,spec,e2e}.yml` | 引擎构建、`madge --circular`、lint+类型、单测、一致性、Playwright(chromium) | PR（**`paths` 包含过滤**，见下）                                        | ubuntu                                                              |
 | `validate-licenses.yml`                        | `pnpm run validate-licenses`                                                | PR + push `develop`（package.json/lock 变更）                           | ubuntu                                                              |
 
-#### **两套路径过滤器是互斥的**（2026-10-01 实测更正；此前这一节只记了桌面那四条）
+#### **两套路径过滤器在引擎源码路径上互斥，但 `pnpm-lock.yaml` 是双方共同触发**（2026-10-01 实测更正；2026-10-07 再更正，见本节结论句）
 
 桌面四条（`build`/`e2e`/`lint`/`test`）对 `packages/muya/**` 是 **`paths-ignore`**，而 muya 六条对引擎路径是 **`paths` 包含过滤**（每条还各自加 `pnpm-lock.yaml` 与自身文件）：`muya-lint` 是 `packages/muya/**` 减 `examples/` 与 `e2e/`；`muya-build`/`muya-circular`/`muya-e2e`/`muya-test`/`muya-spec` 都以 `packages/muya/src/**` 为底，分别再加 `package.json`、`tsconfig.json`、`vite.config.ts`、`.madgerc`、`e2e/**`、`test/**` 等。后果：
 
@@ -298,8 +298,9 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 | 只碰桌面（`packages/desktop/**`、`docs/**`、`.github/**`…） | ✅ 起     | ❌ 全不起 | **1 套**      |
 | 只碰引擎（`packages/muya/src/**`）                          | ❌ 全不起 | ✅ 起     | **1 套**      |
 | 同时碰两边                                                  | ✅ 起     | ✅ 起     | 2 套（10 条） |
+| 只碰锁文件（根/desktop 清单的依赖批次，PR #96/#97 形状）    | ✅ 起     | ✅ 起     | 2 套（10 条） |
 
-**所以"PR 门禁是一批改动的唯一完整远端验证"这句话是有条件的**（`AGENTS.md` 流程段写着它；本节与 §12 都没有第二份，§12 只在索引里指向本节）：只有**同时碰了 `packages/muya/**`** 的批次才拿到全套。纯桌面批次拿不到任何引擎验证（`muya test`/`test:spec`/`madge --circular` / 引擎 lint 全都没跑），纯引擎批次拿不到任何桌面验证（desktop 单测 / E2E / 打包都没有）。**这个批次自己就撞上了**：PR #48 只改两份文档，`gh run list`只有 4 条（Lint / Test / E2E Test / PR Build，run`36814902924`/`36814902940`/`36814902970`/`36814902983`，12 个 job 全 success 且 `run_attempt`全为 1），muya 六条一条没起。**证据强度要分清**：桌面-only 那一半是实测的（PR #43/#44/#45/#48 每个都是 4 条 workflow、零 muya；#48 的两个 head 各测一次，8 条 run 的形状完全一致，见`CI_RUN_LEDGER` 文末）；引擎-only 那一半是从 YAML 直接读出的结构事实，当前窗口里没有"纯引擎 PR"可做实测。`muya`六条自 2026-09-29 起一直无 run，原因是`git log --since=2026-09-29 -- packages/muya/`只有一个提交`18514fb`（就是那天 muya 全绿的那次）——**不是 workflow 坏了**，12 个全是 `active`（`gh workflow list --all` 复核）。
+**所以"PR 门禁是一批改动的唯一完整远端验证"这句话是有条件的**（`AGENTS.md` 流程段写着它；本节与 §12 都没有第二份，§12 只在索引里指向本节）：只有**同时碰了 `packages/muya/**`** 的批次才拿到全套。纯桌面批次拿不到任何引擎验证（`muya test`/`test:spec`/`madge --circular` / 引擎 lint 全都没跑），纯引擎批次拿不到任何桌面验证（desktop 单测 / E2E / 打包都没有）。**这个批次自己就撞上了**：PR #48 只改两份文档，`gh run list`只有 4 条（Lint / Test / E2E Test / PR Build，run`36814902924`/`36814902940`/`36814902970`/`36814902983`，12 个 job 全 success 且 `run_attempt`全为 1），muya 六条一条没起。**证据强度要分清**：桌面-only 那一半是实测的（PR #43/#44/#45/#48 每个都是 4 条 workflow、零 muya；#48 的两个 head 各测一次，8 条 run 的形状完全一致，见`CI_RUN_LEDGER` 文末）；引擎-only 那一半是从 YAML 直接读出的结构事实，当前窗口里没有"纯引擎 PR"可做实测。`muya`六条自 2026-09-29 起一直无 run，原因是`git log --since=2026-09-29 -- packages/muya/`只有一个提交`18514fb`（就是那天 muya 全绿的那次）——**不是 workflow 坏了**，12 个全是 `active`（`gh workflow list --all`复核）。**2026-10-07 更正**："只有同时碰了`packages/muya/**`才拿到全套"这句不完整——muya 六条的`paths` **每条都含 `pnpm-lock.yaml`**（本节 2026-10-01 的行内记录写了它，但本结论句与 `AGENTS.md` 流程段都漏了）。实测 PR #96 与 #97（都未碰 `packages/muya/src/**`）muya 六条全起、21 条 check 全绿：**依赖类批次只要动了锁文件就拿全套**。"互斥"仅对引擎源码路径成立；纯文档且不动锁文件的批次仍是 4 条（#48 证据不变）。
 
 **这个结论不是新发现，是"记对了但没传播"。** [#21](https://github.com/TheQYQ/ColaMD/issues/21)在 2026-09-29 就写了"两边**互斥**"，并给了旁证：PR #9/#13/#15（muya 文件数 0）的 check 列表里没有 `unit`/`spec`/`circular`/`build`，PR #11（5 个 muya 文件）才有。**#21 里同样把"纯 muya 的 PR 拿不到 `test`"标注为语义推论而非实测**（GitHub 文档原话是"当所有变更路径都命中 `paths-ignore` 时工作流不运行"；它当时统计的历史 18 个 PR 里没有 muya-only 的，最接近的 PR #7 是 3 个 muya + 1 个非 muya）。本轮补的正是把它传播进 `AGENTS.md` 流程段与本节触发列表；**两处口径统一，那半推论到今天仍然没有实测**。另注：#21 写"五条 muya 工作流"是当时的数目，现在 `muya-e2e` 已加入，共六条。
 
