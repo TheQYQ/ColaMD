@@ -1,0 +1,90 @@
+name: Audit Report
+
+# Weekly dependency-audit snapshot. `pnpm audit` reads pnpm-lock.yaml only —
+# no node_modules install needed. Non-blocking by design: findings land in the
+# job summary, and a single rolling issue is created/appended so the weekly
+# history stays in one place. The pull_request trigger exists only to validate
+# this workflow itself on edits (paths: this file) and skips the issue step.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/audit.yml'
+  schedule:
+    # Mondays 02:23 UTC — GitHub schedules drift near the top of the hour.
+    - cron: '23 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4.4.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4.4.0
+        with:
+          node-version: '22.21.1'
+          # No cache: this job installs nothing, so the post-run cache save
+          # would fail on a missing pnpm store (seen on promote PR #102).
+
+      - name: Run pnpm audit (non-blocking)
+        run: pnpm audit --json > /tmp/audit.json || true
+
+      - name: Render report
+        run: |
+          node -e '
+            const fs = require("fs");
+            const raw = JSON.parse(fs.readFileSync("/tmp/audit.json", "utf8"));
+            const advisories = Object.values(raw.advisories ?? {});
+            const bySeverity = { critical: 0, high: 0, moderate: 0, low: 0 };
+            for (const a of advisories) bySeverity[a.severity] = (bySeverity[a.severity] ?? 0) + 1;
+            const lines = [];
+            lines.push("## pnpm audit report");
+            lines.push("");
+            lines.push(`- Run: ${new Date().toISOString()} (commit ${(process.env.GITHUB_SHA ?? "n/a").slice(0, 7)})`);
+            lines.push(`- Findings: **${advisories.length}** (critical ${bySeverity.critical} / high ${bySeverity.high} / moderate ${bySeverity.moderate} / low ${bySeverity.low})`);
+            lines.push("");
+            if (advisories.length > 0) {
+              lines.push("<details><summary>All advisories</summary>");
+              lines.push("");
+              lines.push("| Package | Severity | Vulnerable | Patched | Title (first path) |");
+              lines.push("|---|---|---|---|---|");
+              for (const a of advisories) {
+                const title = String(a.title ?? "").replace(/\|/g, "/");
+                const via = (a.findings?.[0]?.paths ?? [])[0] ?? "";
+                lines.push(`| ${a.module_name} | ${a.severity} | ${a.vulnerable_versions} | ${a.patched_versions} | ${title} (via \`${via}\`) |`);
+              }
+              lines.push("");
+              lines.push("</details>");
+            } else {
+              lines.push("No known vulnerabilities.");
+            }
+            fs.writeFileSync("/tmp/audit-report.md", lines.join("\n") + "\n");
+          '
+          cat /tmp/audit-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upsert rolling report issue
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="pnpm audit weekly report"
+          NUMBER=$(gh issue list --search "$TITLE in:title" --state open --json number --jq '.[0].number')
+          if [ -n "$NUMBER" ]; then
+            gh issue comment "$NUMBER" --body-file /tmp/audit-report.md
+          else
+            gh issue create --title "$TITLE" --body-file /tmp/audit-report.md
+          fi
