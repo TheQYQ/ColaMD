@@ -144,8 +144,10 @@ export const useLayoutStore = defineStore('layout', () => {
   }
 
   function LISTEN_FOR_LAYOUT(): void {
+    // The channel payload is the contract's ViewLayoutPartial, which is
+    // structurally this store's LayoutPartial — no cast needed.
     window.electron.ipcRenderer.on('mt::set-view-layout', (_e, layout) => {
-      const l = layout as unknown as LayoutPartial
+      const l = layout
       if (l.rightColumn) {
         SET_LAYOUT({
           ...l,

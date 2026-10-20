@@ -3,13 +3,24 @@
 // in-renderer searcher (so call sites in quickOpen don't need to change).
 
 import { deepClone } from '../util'
+import type {
+  RipgrepSearchOptions as ContractRipgrepSearchOptions,
+  RipgrepMatchEvent,
+  RipgrepProgressEvent,
+  RipgrepDoneEvent,
+  RipgrepErrorEvent,
+  RipgrepCancelledEvent
+} from '@shared/types/ripgrep'
 
 type RipgrepMode = 'text' | 'files'
 
-interface RipgrepSearchOptions {
+// The legacy searcher shape: the contract's search options plus the two
+// callbacks the renderer strips before shipping across IPC (they are not
+// structured-cloneable and main never reads them). The event envelopes the
+// `mt::rg::*` listeners receive are the contract's own types now.
+interface RipgrepSearchOptions extends ContractRipgrepSearchOptions {
   didMatch?: (payload: unknown) => void
   didSearchPaths?: (num: unknown) => void
-  [key: string]: unknown
 }
 
 interface CancellableSearch extends Promise<void> {
@@ -21,13 +32,6 @@ interface StartArgs {
   directories: unknown
   pattern: unknown
   options: RipgrepSearchOptions
-}
-
-interface RipgrepPayloadEnvelope {
-  searchId: string
-  payload?: unknown
-  num?: unknown
-  error?: string
 }
 
 let nextId = 1
@@ -55,39 +59,36 @@ const startSearch = ({ mode, directories, pattern, options }: StartArgs): Cancel
   }
 
   const promise = new Promise<void>((resolve, reject) => {
-    offMatch = window.ripgrep.onMatch((payload: unknown) => {
-      const env = payload as RipgrepPayloadEnvelope | null
-      if (!env || env.searchId !== searchId) return
+    // The contract types the envelopes, so the searchId filter is the only
+    // runtime check left: concurrent searches share the five channels.
+    offMatch = window.ripgrep.onMatch((env: RipgrepMatchEvent) => {
+      if (env.searchId !== searchId) return
       try {
         didMatch(env.payload)
       } catch (err) {
         console.error(err)
       }
     })
-    offProgress = window.ripgrep.onProgress((payload: unknown) => {
-      const env = payload as RipgrepPayloadEnvelope | null
-      if (!env || env.searchId !== searchId) return
+    offProgress = window.ripgrep.onProgress((env: RipgrepProgressEvent) => {
+      if (env.searchId !== searchId) return
       try {
         didSearchPaths(env.num)
       } catch (err) {
         console.error(err)
       }
     })
-    offDone = window.ripgrep.onDone((payload: unknown) => {
-      const env = payload as RipgrepPayloadEnvelope | null
-      if (!env || env.searchId !== searchId) return
+    offDone = window.ripgrep.onDone((env: RipgrepDoneEvent) => {
+      if (env.searchId !== searchId) return
       cleanup()
       resolve()
     })
-    offError = window.ripgrep.onError((payload: unknown) => {
-      const env = payload as RipgrepPayloadEnvelope | null
-      if (!env || env.searchId !== searchId) return
+    offError = window.ripgrep.onError((env: RipgrepErrorEvent) => {
+      if (env.searchId !== searchId) return
       cleanup()
       reject(new Error(env.error || 'Ripgrep search failed'))
     })
-    offCancelled = window.ripgrep.onCancelled((payload: unknown) => {
-      const env = payload as RipgrepPayloadEnvelope | null
-      if (!env || env.searchId !== searchId) return
+    offCancelled = window.ripgrep.onCancelled((env: RipgrepCancelledEvent) => {
+      if (env.searchId !== searchId) return
       cleanup()
       resolve()
     })
@@ -97,7 +98,7 @@ const startSearch = ({ mode, directories, pattern, options }: StartArgs): Cancel
     // do a JSON round-trip on the remaining options to get plain values.
 
     const { didMatch: _a, didSearchPaths: _b, ...rest } = options
-    let serializable: unknown
+    let serializable: ContractRipgrepSearchOptions
     try {
       serializable = deepClone(rest)
     } catch {

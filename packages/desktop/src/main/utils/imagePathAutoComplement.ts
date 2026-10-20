@@ -4,14 +4,14 @@ import { filter } from 'fuzzaldrin'
 import log from 'electron-log'
 import { isDirectory, isFile } from 'common/filesystem'
 import { IMAGE_EXTENSIONS } from 'common/filesystem/paths'
+import type { ImageAutoPathEntry } from '@shared/types/ipc'
 import { BLACK_LIST } from '../config'
 
 // TODO(need::refactor): Refactor this file. Just return an array of directories and files without caching and watching?
 
-interface DirOrImageEntry {
-  file: string
-  type: string
-}
+// The entry shape lives in the shared contract: it is also the payload of
+// mt::response-of-image-path, so the reply is typed on both ends.
+type DirOrImageEntry = ImageAutoPathEntry
 
 // Both maps are per-directory and live for the process: `watchDirectory` refreshes
 // the cache in place via `rebuild`, and neither map evicts. Bounded by how many

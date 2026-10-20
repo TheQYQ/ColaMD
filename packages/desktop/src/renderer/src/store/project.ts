@@ -157,7 +157,7 @@ export const useProjectStore = defineStore('project', () => {
 
   function LISTEN_FOR_UPDATE_PROJECT(): void {
     window.electron.ipcRenderer.on('mt::update-object-tree', (_e, payload) => {
-      const { type, change } = (payload as { type: string; change: TreeChange }) ?? {}
+      const { type, change } = payload
       if (!projectTree.value) {
         pendingTreeEvents.value.push({ type, change })
         return

@@ -22,6 +22,8 @@ const EVENT_NAME = {
   file: 'mt::update-file' as const
 }
 
+// Both channels carry the same FileChangeDetail payload, so the union key
+// stays checkable under typedSend — no runtime-built channel name needed.
 type WatchType = 'dir' | 'file'
 
 export const isUncPath = (pathname: string): boolean =>
@@ -192,8 +194,7 @@ const pushAdd = async (
   // The single-file watcher stays markdown-only so mt::update-file only ever
   // carries openable documents.
   if (isMarkdown || type === 'dir') {
-    // eslint-disable-next-line no-restricted-syntax -- the channel comes from a lookup table, so the key is only known at runtime; typedSend() cannot check a union of tuples
-    win.webContents.send(EVENT_NAME[type], {
+    typedSend(win.webContents, EVENT_NAME[type], {
       type: 'add',
       change: file
     })
@@ -202,8 +203,7 @@ const pushAdd = async (
 
 const unlink = (win: BrowserWindow, pathname: string, type: WatchType): void => {
   const file = { pathname }
-  // eslint-disable-next-line no-restricted-syntax -- the channel comes from a lookup table, so the key is only known at runtime; typedSend() cannot check a union of tuples
-  win.webContents.send(EVENT_NAME[type], {
+  typedSend(win.webContents, EVENT_NAME[type], {
     type: 'unlink',
     change: file
   })

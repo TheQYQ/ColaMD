@@ -17,6 +17,16 @@ import { typedSend } from '../ipc/typedSend'
 
 type RawMarkdownDocument = Awaited<ReturnType<typeof loadMarkdownFile>>
 
+// Window-state events the renderer subscribes to. All four channels carry no
+// payload, so the union key stays checkable under typedSend — which is why
+// this bridge no longer builds `mt::window-${channel}` names at runtime.
+const WINDOW_EVENT = {
+  maximize: 'mt::window-maximize',
+  unmaximize: 'mt::window-unmaximize',
+  'enter-full-screen': 'mt::window-enter-full-screen',
+  'leave-full-screen': 'mt::window-leave-full-screen'
+} as const
+
 // The deferred file/markdown to open before the window finishes loading.
 interface PendingFile {
   doc: RawMarkdownDocument
@@ -261,8 +271,7 @@ class EditorWindow extends BaseWindow {
         // Electron's BrowserWindow.on() is heavily overloaded — the union of
         // event names can't be satisfied by a single overload, so we widen.
         ;(win as { on(event: string, listener: () => void): void }).on(channel, () => {
-          // eslint-disable-next-line no-restricted-syntax -- the channel comes from a lookup table, so the key is only known at runtime; typedSend() cannot check a union of tuples
-          win.webContents.send(`mt::window-${channel}`)
+          typedSend(win.webContents, WINDOW_EVENT[channel])
         })
       }
     )
