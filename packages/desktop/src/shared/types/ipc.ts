@@ -7,9 +7,13 @@
  *   - IpcSyncChannels        : renderer → main, synchronous
  *   - IpcMainEventChannels   : main → renderer, push events (renderer .on)
  *
- * Channel names are typed strictly; argument and return shapes are
- * intentionally permissive (`unknown[]` / `unknown`) during the migration.
- * Concrete types tighten as each handler/caller converts in commits 5–8.
+ * Channel names are typed strictly; argument and return shapes were
+ * intentionally permissive (`unknown` / `unknown[]`) during the migration.
+ * What remains is ratcheted debt, not a free-for-all:
+ * `test/unit/specs/ipc-unknown-ledger.spec.ts` counts every `unknown` in the
+ * four tables below and fails when a site is added without a ledger entry
+ * (test/unit/utils/ipcUnknownLedger.ts) or when the total grows. Tighten a
+ * channel → delete its ledger entry → the baseline only moves down.
  *
  * To register a new channel:
  *   1. Add an entry to the appropriate interface here.
@@ -18,7 +22,14 @@
  */
 
 import type { IKeyboardLayoutInfo, IKeyboardMapping } from 'native-keymap'
-import type { RipgrepRequest } from './ripgrep'
+import type {
+  RipgrepRequest,
+  RipgrepMatchEvent,
+  RipgrepProgressEvent,
+  RipgrepDoneEvent,
+  RipgrepCancelledEvent,
+  RipgrepErrorEvent
+} from './ripgrep'
 import type {
   TabOptions,
   BootstrapEditorConfig,
@@ -65,6 +76,16 @@ interface ImageAutoPathRequest {
   currentFile: unknown
 }
 
+/** One candidate in the image-path autocomplete reply (`mt::response-of-image-path`).
+ *  `type` is 'directory', 'image' or '' (neither) — see
+ *  main/utils/imagePathAutoComplement.ts. The reply payload used to be typed
+ *  `string[]` on the renderer while main actually sent these entries; the
+ *  consumer papered over the lie with a double cast. */
+export interface ImageAutoPathEntry {
+  file: string
+  type: string
+}
+
 export interface FormatLinkPayload {
   // muya's getLinkInfo yields `href: null` when the rendered link carries no
   // usable href (e.g. an unsupported protocol stripped by sanitizeHyperlink);
@@ -72,6 +93,19 @@ export interface FormatLinkPayload {
   // declared even though the renderer forwards the whole info object.
   data: { href: string | null; text?: string; [key: string]: unknown }
   dirname: string
+}
+
+/**
+ * A single-key (or few-key) view-layout record, emitted by
+ * `mt::set-view-layout`. Main builds it with a computed key
+ * (menu/actions/view.ts setLayout), which is why the emit site casts; the
+ * renderer narrows it to the same shape in store/layout.ts.
+ */
+export interface ViewLayoutPartial {
+  rightColumn?: string
+  showSideBar?: boolean
+  showTabBar?: boolean
+  sideBarWidth?: number | string
 }
 
 export interface SelectionState {
@@ -334,10 +368,13 @@ export interface IpcSyncChannels {
 
 export interface IpcMainEventChannels {
   'language-changed': [language: string]
-  'mt::UPDATE_AVAILABLE': [info?: unknown]
-  'mt::UPDATE_DOWNLOADED': [info?: unknown]
-  'mt::UPDATE_ERROR': [error: unknown]
-  'mt::UPDATE_NOT_AVAILABLE': [info?: unknown]
+  // The four update events carry a human-readable message string (see
+  // main/menu/actions/colamd.ts); they never carried electron-updater's
+  // UpdateInfo the old `info?: unknown` implied.
+  'mt::UPDATE_AVAILABLE': [message: string]
+  'mt::UPDATE_DOWNLOADED': [message: string]
+  'mt::UPDATE_ERROR': [message: string]
+  'mt::UPDATE_NOT_AVAILABLE': [message: string]
   'mt::about-dialog': []
   'mt::ask-for-close': []
   'mt::bootstrap-editor': [config: BootstrapEditorConfig]
@@ -360,13 +397,20 @@ export interface IpcMainEventChannels {
   'mt::discard-unsaved-tabs-and-close': [tabIds: string[]]
   'mt::show-unsaved-dialog': [count: number]
   'mt::invalidate-image-cache': []
-  'mt::keybindings-response': [bindings: unknown]
+  // The response is a plain object map (main does Object.fromEntries over the
+  // keybindings Map); it used to ride as `bindings: unknown`.
+  'mt::keybindings-response': [bindings: Record<string, string>]
   'mt::load-state': [state: BufferedStateType]
   'mt::menu::click': [payload: { windowId: number; id?: string }]
   'mt::menu::closed': [payload: { windowId: number }]
   'mt::new-untitled-tab': [selected?: boolean, markdown?: string]
   'mt::open-directory': [directoryPath: string]
   'mt::reload-directory': [directoryPath: string]
+  // Same correlation shape as mt::response-file-move-to: one static reply
+  // channel carrying the per-request id in the payload. The renderer used to
+  // listen on a per-request `mt::response-of-image-path-${id}` channel built
+  // at runtime, which no contract key could express.
+  'mt::response-of-image-path': [payload: { id: string; files: ImageAutoPathEntry[] }]
   'mt::open-new-tab': [
     markdownDocument: MarkdownDocumentRaw | null,
     options?: TabOptions,
@@ -374,15 +418,18 @@ export interface IpcMainEventChannels {
   ]
   'mt::pandoc-not-exists': [opts: Record<string, unknown>]
   'mt::print-service-clearup': []
-  'mt::rg::cancelled': [payload: unknown]
-  'mt::rg::done': [payload: unknown]
-  'mt::rg::error': [payload: unknown]
-  'mt::rg::match': [payload: unknown]
-  'mt::rg::progress': [payload: unknown]
+  'mt::rg::cancelled': [payload: RipgrepCancelledEvent]
+  'mt::rg::done': [payload: RipgrepDoneEvent]
+  'mt::rg::error': [payload: RipgrepErrorEvent]
+  'mt::rg::match': [payload: RipgrepMatchEvent]
+  'mt::rg::progress': [payload: RipgrepProgressEvent]
   'mt::screenshot-captured': [filePath: string]
   'mt::set-line-ending': [lineEnding: LineEnding]
   'mt::set-pathname': [payload: { id: string; pathname: string; filename: string }]
-  'mt::set-view-layout': [layout: unknown]
+  // Main builds a single-key record with a computed key
+  // (menu/actions/view.ts setLayout); the renderer narrows it to its layout
+  // store shape, which is structurally this interface.
+  'mt::set-view-layout': [layout: ViewLayoutPartial]
   'mt::show-command-palette': []
   'mt::show-export-dialog': [type: ExportType]
   'mt::show-notification': [payload: unknown]
@@ -397,7 +444,12 @@ export interface IpcMainEventChannels {
   'mt::toggle-view-layout-entry': [entry: string]
   'mt::toggle-view-mode-entry': [entry: string]
   'mt::update-file': [payload: { type: 'add' | 'change' | 'unlink'; change: FileChangeDetail }]
-  'mt::update-object-tree': [payload: unknown]
+  'mt::update-object-tree': [
+    payload: {
+      type: 'add' | 'change' | 'unlink' | 'addDir' | 'unlinkDir'
+      change: FileChangeDetail
+    }
+  ]
   'mt::user-preference': [partial: unknown]
   'mt::window-active-status': [payload: { status: boolean }]
   'mt::window-enter-full-screen': []

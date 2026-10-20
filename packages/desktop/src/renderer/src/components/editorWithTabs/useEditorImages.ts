@@ -14,12 +14,6 @@ import { dataURLToFile } from '@/util/dataURLToFile'
 // family reads (the five image preferences, `sourceCode`, `currentFile`,
 // `projectTree`) already comes from a store.
 
-interface ImagePathSuggestion {
-  type: 'directory' | 'file' | string
-  file: string
-  [key: string]: unknown
-}
-
 /** Expands the `${filename}` token of an image path template. Both operands are
  *  user data -- `template` is the `imageFolderPath` / relative-directory
  *  preference, `filename` is the open document's name -- so the substitution is
@@ -48,9 +42,7 @@ export const useEditorImages = () => {
   const { projectTree } = storeToRefs(projectStore)
 
   const imagePathAutoComplete = async (src: string) => {
-    const files = (await editorStore.ASK_FOR_IMAGE_AUTO_PATH(
-      src
-    )) as unknown as ImagePathSuggestion[]
+    const files = await editorStore.ASK_FOR_IMAGE_AUTO_PATH(src)
     return files.map((f) => {
       const iconClass = f.type === 'directory' ? 'icon-folder' : 'icon-image'
       return Object.assign(f, { iconClass, text: f.file + (f.type === 'directory' ? '/' : '') })

@@ -77,7 +77,12 @@ import {
   type ExportPayload,
   type ExportSource
 } from './exportPrint'
-import type { FormatLinkPayload, IpcMainEventChannels, VersionSnapshot } from '@shared/types/ipc'
+import type {
+  FormatLinkPayload,
+  ImageAutoPathEntry,
+  IpcMainEventChannels,
+  VersionSnapshot
+} from '@shared/types/ipc'
 import type {
   BootstrapEditorConfig,
   IFileState,
@@ -283,7 +288,7 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
-    ASK_FOR_IMAGE_AUTO_PATH(src: string): Promise<string[]> {
+    ASK_FOR_IMAGE_AUTO_PATH(src: string): Promise<ImageAutoPathEntry[]> {
       return askForImageAutoPath(this, src)
     },
 

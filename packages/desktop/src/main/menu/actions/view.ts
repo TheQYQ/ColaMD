@@ -2,6 +2,7 @@ import { ipcMain, type BrowserWindow, type Menu, type MenuItem } from 'electron'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
 import { typedSend } from '../../ipc/typedSend'
+import type { ViewLayoutPartial } from '@shared/types/ipc'
 
 type Win = BrowserWindow | null | undefined
 
@@ -14,9 +15,13 @@ const toggleTypeMode = (win: Win, type: string): void => {
   }
 }
 
-const setLayout = (win: Win, type: string, value: unknown): void => {
+// The layout record is built with a computed key, so the emit casts to the
+// contract's ViewLayoutPartial: `type` is one of the four layout keys and the
+// value union is what the callers actually pass. The renderer consumes the
+// same interface (store/layout.ts), so no side re-declares the shape.
+const setLayout = (win: Win, type: string, value: string | boolean | number): void => {
   if (win && win.webContents) {
-    typedSend(win.webContents, 'mt::set-view-layout', { [type]: value })
+    typedSend(win.webContents, 'mt::set-view-layout', { [type]: value } as ViewLayoutPartial)
   }
 }
 

@@ -267,13 +267,24 @@ export default [
   // `utils/internalIpc.ts`, whose channel argument is a runtime string.
   //
   // The third selector is the push direction (`typedSend`, src/main/ipc/typedSend.ts):
-  // 93 of the 99 `X.webContents.send` / `sender.send` sites are bound now, and
-  // checked both ways. The six exemptions are channels built at runtime — three
-  // `mt::response-of-image-path-${id}` reply addresses, `EVENT_NAME[type]` in the
-  // filesystem watcher, and `mt::window-${channel}` in the window-event bridge —
-  // where no static contract key exists to check against. The selector also covers a
+  // all 109 `X.webContents.send` / `sender.send` call sites are bound now, and
+  // checked both ways — the push direction carries no exemptions at all. It used
+  // to carry eight: five `mt::response-of-image-path-${id}` reply addresses,
+  // `EVENT_NAME[type]` in the filesystem watcher, and `mt::window-${channel}` in
+  // the window-event bridge, all channels built at runtime where no static
+  // contract key existed to check against. On 2026-10-20 all three families were
+  // collapsed into the contract: the two lookup tables now index contract keys
+  // whose union is checkable, and the per-request id moved into the payload of
+  // the single static `mt::response-of-image-path` channel (the shape
+  // `mt::response-file-move-to` already used). What remains of the rule's
+  // exemptions is the machinery itself — the typedHandle/typedOn wrappers it
+  // points at, plus the in-process bus in internalIpc.ts. The selector also covers a
   // bare `sender.send(…)`: two sites keep the WebContents in a local variable
   // instead of behind a property access, and the first pass missed both.
+  // test/unit/specs/dynamic-channel-ledger.spec.ts is the machine shadow of this
+  // list: every disable comment must be registered in
+  // test/unit/utils/dynamicChannelLedger.ts with a reason, and the count is
+  // ratcheted at 4.
   {
     files: ['packages/desktop/src/main/**/*.ts'],
     rules: {

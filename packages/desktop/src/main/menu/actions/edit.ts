@@ -18,8 +18,7 @@ typedOn('mt::ask-for-image-auto-path', async (e, { pathname, src, id }) => {
     return
   }
   if (!src || typeof src !== 'string') {
-    // eslint-disable-next-line no-restricted-syntax -- the channel is a per-request reply address (`mt::response-of-image-path-${id}`), so there is no contract key to check
-    win.webContents.send(`mt::response-of-image-path-${id}`, [])
+    typedSend(win.webContents, 'mt::response-of-image-path', { id, files: [] })
     return
   }
   if (typeof pathname !== 'string') {
@@ -27,8 +26,7 @@ typedOn('mt::ask-for-image-auto-path', async (e, { pathname, src, id }) => {
     // directory below (path.dirname would throw inside the listener); reply
     // empty like the other refusal paths instead.
     log.warn('Rejected mt::ask-for-image-auto-path: payload has no pathname')
-    // eslint-disable-next-line no-restricted-syntax -- the channel is a per-request reply address (`mt::response-of-image-path-${id}`), so there is no contract key to check
-    win.webContents.send(`mt::response-of-image-path-${id}`, [])
+    typedSend(win.webContents, 'mt::response-of-image-path', { id, files: [] })
     return
   }
 
@@ -51,19 +49,16 @@ typedOn('mt::ask-for-image-auto-path', async (e, { pathname, src, id }) => {
     await assertPathInScope(dir)
   } catch (err: unknown) {
     log.warn('Rejected mt::ask-for-image-auto-path outside the path scope:', dir, err)
-    // eslint-disable-next-line no-restricted-syntax -- the channel is a per-request reply address (`mt::response-of-image-path-${id}`), so there is no contract key to check
-    win.webContents.send(`mt::response-of-image-path-${id}`, [])
+    typedSend(win.webContents, 'mt::response-of-image-path', { id, files: [] })
     return
   }
   searchFilesAndDir(dir, searchKey)
     .then((files) => {
-      // eslint-disable-next-line no-restricted-syntax -- the channel is a per-request reply address (`mt::response-of-image-path-${id}`), so there is no contract key to check
-      return win.webContents.send(`mt::response-of-image-path-${id}`, files)
+      return typedSend(win.webContents, 'mt::response-of-image-path', { id, files })
     })
     .catch((err: unknown) => {
       log.error(err)
-      // eslint-disable-next-line no-restricted-syntax -- the channel is a per-request reply address (`mt::response-of-image-path-${id}`), so there is no contract key to check
-      return win.webContents.send(`mt::response-of-image-path-${id}`, [])
+      return typedSend(win.webContents, 'mt::response-of-image-path', { id, files: [] })
     })
 })
 

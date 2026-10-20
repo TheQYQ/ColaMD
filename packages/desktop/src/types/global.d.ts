@@ -13,6 +13,14 @@ import type {
   VersionSnapshotMeta
 } from '@shared/types/ipc'
 import type { MenuTemplate, MenuPopupPosition } from '@shared/types/menu'
+import type {
+  RipgrepRequest,
+  RipgrepMatchEvent,
+  RipgrepProgressEvent,
+  RipgrepDoneEvent,
+  RipgrepErrorEvent,
+  RipgrepCancelledEvent
+} from '@shared/types/ripgrep'
 
 declare global {
   // ---- Build-time defines (electron-vite `define`) ----
@@ -176,13 +184,13 @@ declare global {
   }
 
   interface RipgrepAPI {
-    start(req: unknown): Promise<{ searchId: string }>
+    start(req: RipgrepRequest): Promise<{ searchId: string }>
     cancel(searchId: string): void
-    onMatch(handler: (payload: unknown) => void): () => void
-    onProgress(handler: (payload: unknown) => void): () => void
-    onDone(handler: (payload: unknown) => void): () => void
-    onError(handler: (payload: unknown) => void): () => void
-    onCancelled(handler: (payload: unknown) => void): () => void
+    onMatch(handler: (payload: RipgrepMatchEvent) => void): () => void
+    onProgress(handler: (payload: RipgrepProgressEvent) => void): () => void
+    onDone(handler: (payload: RipgrepDoneEvent) => void): () => void
+    onError(handler: (payload: RipgrepErrorEvent) => void): () => void
+    onCancelled(handler: (payload: RipgrepCancelledEvent) => void): () => void
   }
 
   interface UploaderAPI {

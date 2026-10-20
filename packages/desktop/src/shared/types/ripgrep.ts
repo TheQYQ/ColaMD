@@ -31,3 +31,54 @@ export interface RipgrepRequest {
   pattern: string
   options: RipgrepSearchOptions
 }
+
+// ---------------------------------------------------------------------
+// Push-event payloads (main → renderer)
+//
+// The five `mt::rg::*` events below used to be declared `unknown` in
+// `shared/types/ipc.ts`, so neither the emitters in `src/main/ipc/ripgrep.ts`
+// nor the preload bridge was checked against the actual shapes. The envelopes
+// are now owned here, like `RipgrepRequest` above.
+
+/**
+ * One match inside a file, as emitted by `mt::rg::match` in text mode.
+ * `leadingContextLines` / `trailingContextLines` are plain text lines; the
+ * current main-side parser always emits them empty (rg `--context` output is
+ * not wired up yet), and `string[]` keeps that honest — populating them with
+ * anything else now fails at the emit site.
+ */
+export interface RipgrepMatch {
+  matchText: string
+  lineText: string
+  range: [[number, number], [number, number]]
+  leadingContextLines: string[]
+  trailingContextLines: string[]
+}
+
+/**
+ * `mt::rg::match` envelope. Text mode carries per-file match groups; files
+ * mode carries one raw ripgrep output line (a file path) per event — the
+ * renderer tells the two apart by the mode it asked for.
+ */
+export interface RipgrepMatchEvent {
+  searchId: string
+  payload: string | { filePath: string; matches: RipgrepMatch[] }
+}
+
+export interface RipgrepProgressEvent {
+  searchId: string
+  num: number
+}
+
+export interface RipgrepDoneEvent {
+  searchId: string
+}
+
+export interface RipgrepCancelledEvent {
+  searchId: string
+}
+
+export interface RipgrepErrorEvent {
+  searchId: string
+  error: string
+}

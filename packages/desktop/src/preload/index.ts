@@ -19,6 +19,14 @@ import type {
   IpcMainEventChannels,
   BootInfo
 } from '@shared/types/ipc'
+import type {
+  RipgrepRequest,
+  RipgrepMatchEvent,
+  RipgrepProgressEvent,
+  RipgrepDoneEvent,
+  RipgrepErrorEvent,
+  RipgrepCancelledEvent
+} from '@shared/types/ripgrep'
 
 type RendererEventListener<K extends keyof IpcMainEventChannels> = (
   event: IpcRendererEvent,
@@ -183,32 +191,37 @@ const i18nAPI = {
   loadTranslations: (language: string) => invoke('mt::i18n::load', language)
 }
 
-type RipgrepHandler = (payload: unknown) => void
+type RipgrepMatchHandler = (payload: RipgrepMatchEvent) => void
+type RipgrepProgressHandler = (payload: RipgrepProgressEvent) => void
+type RipgrepDoneHandler = (payload: RipgrepDoneEvent) => void
+type RipgrepErrorHandler = (payload: RipgrepErrorEvent) => void
+type RipgrepCancelledHandler = (payload: RipgrepCancelledEvent) => void
+
 const ripgrepAPI = {
-  start: (req: unknown) => invoke('mt::rg::start', req as never),
+  start: (req: RipgrepRequest) => invoke('mt::rg::start', req),
   cancel: (searchId: string) => send('mt::rg::cancel', searchId),
-  onMatch: (handler: RipgrepHandler) => {
-    const sub = (_e: IpcRendererEvent, payload: unknown) => handler(payload)
+  onMatch: (handler: RipgrepMatchHandler) => {
+    const sub = (_e: IpcRendererEvent, payload: RipgrepMatchEvent) => handler(payload)
     ipcRenderer.on('mt::rg::match', sub)
     return () => ipcRenderer.removeListener('mt::rg::match', sub)
   },
-  onProgress: (handler: RipgrepHandler) => {
-    const sub = (_e: IpcRendererEvent, payload: unknown) => handler(payload)
+  onProgress: (handler: RipgrepProgressHandler) => {
+    const sub = (_e: IpcRendererEvent, payload: RipgrepProgressEvent) => handler(payload)
     ipcRenderer.on('mt::rg::progress', sub)
     return () => ipcRenderer.removeListener('mt::rg::progress', sub)
   },
-  onDone: (handler: RipgrepHandler) => {
-    const sub = (_e: IpcRendererEvent, payload: unknown) => handler(payload)
+  onDone: (handler: RipgrepDoneHandler) => {
+    const sub = (_e: IpcRendererEvent, payload: RipgrepDoneEvent) => handler(payload)
     ipcRenderer.on('mt::rg::done', sub)
     return () => ipcRenderer.removeListener('mt::rg::done', sub)
   },
-  onError: (handler: RipgrepHandler) => {
-    const sub = (_e: IpcRendererEvent, payload: unknown) => handler(payload)
+  onError: (handler: RipgrepErrorHandler) => {
+    const sub = (_e: IpcRendererEvent, payload: RipgrepErrorEvent) => handler(payload)
     ipcRenderer.on('mt::rg::error', sub)
     return () => ipcRenderer.removeListener('mt::rg::error', sub)
   },
-  onCancelled: (handler: RipgrepHandler) => {
-    const sub = (_e: IpcRendererEvent, payload: unknown) => handler(payload)
+  onCancelled: (handler: RipgrepCancelledHandler) => {
+    const sub = (_e: IpcRendererEvent, payload: RipgrepCancelledEvent) => handler(payload)
     ipcRenderer.on('mt::rg::cancelled', sub)
     return () => ipcRenderer.removeListener('mt::rg::cancelled', sub)
   }

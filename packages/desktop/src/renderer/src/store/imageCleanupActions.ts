@@ -7,6 +7,7 @@ import {
   resolveCleanupCandidate,
   type CleanupCandidate
 } from '../util/imageCleanup'
+import type { ImageAutoPathEntry } from '@shared/types/ipc'
 import type { useEditorStore } from './editor'
 
 type EditorStore = ReturnType<typeof useEditorStore>
@@ -28,25 +29,43 @@ type EditorStore = ReturnType<typeof useEditorStore>
 const imageCleanupTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const IMAGE_CLEANUP_DELAY_MS = 5000
 
-/** Ask main for the paths that complete `src`, answered on a per-request channel. */
-export const askForImageAutoPath = (store: EditorStore, src: string): Promise<string[]> => {
+// Pending per-request replies, keyed by the correlation id the request carried.
+// Main answers every request on the single static `mt::response-of-image-path`
+// channel (the id rides in the payload, same shape as mt::response-file-move-to);
+// the map routes each answer back to the promise that asked. This used to be a
+// per-request `mt::response-of-image-path-${id}` channel built at runtime — no
+// contract key could express it, and the listener had to be cast to accept it.
+const pendingImageAutoPathReplies = new Map<string, (files: ImageAutoPathEntry[]) => void>()
+let replyListenerInstalled = false
+
+const ensureReplyListener = (): void => {
+  // Unit tests import this module under jsdom, where window.electron does not
+  // exist; the real renderer always has it, so install on the first real call.
+  if (replyListenerInstalled || !window.electron) return
+  replyListenerInstalled = true
+  window.electron.ipcRenderer.on('mt::response-of-image-path', (_e, { id, files }) => {
+    const resolve = pendingImageAutoPathReplies.get(id)
+    if (!resolve) return
+    pendingImageAutoPathReplies.delete(id)
+    resolve(files)
+  })
+}
+
+/** Ask main for the paths that complete `src`, answered on the static reply channel. */
+export const askForImageAutoPath = (
+  store: EditorStore,
+  src: string
+): Promise<ImageAutoPathEntry[]> => {
   if (!store.currentFile) return Promise.resolve([])
   const { pathname } = store.currentFile
   if (pathname) {
-    let rs: (value: string[]) => void = () => {}
-    const promise = new Promise<string[]>((resolve) => {
+    let rs: (value: ImageAutoPathEntry[]) => void = () => {}
+    const promise = new Promise<ImageAutoPathEntry[]>((resolve) => {
       rs = resolve
     })
     const id = getUniqueId()
-    // Dynamic IPC channel — not part of the static IpcMainEventChannels contract.
-    ;(
-      window.electron.ipcRenderer.once as (
-        channel: string,
-        listener: (event: unknown, files: string[]) => void
-      ) => void
-    )(`mt::response-of-image-path-${id}`, (_: unknown, files: string[]) => {
-      rs(files)
-    })
+    ensureReplyListener()
+    pendingImageAutoPathReplies.set(id, rs)
     window.electron.ipcRenderer.send('mt::ask-for-image-auto-path', {
       pathname,
       src,
