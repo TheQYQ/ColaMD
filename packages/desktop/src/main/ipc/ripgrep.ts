@@ -5,7 +5,7 @@ import log from 'electron-log'
 import { rgPath as bundledRgPath } from '@vscode/ripgrep'
 import { assertPathInScope } from '../security/pathScope'
 import { typedHandle } from './typedHandle'
-import type { RipgrepSearchOptions as SearchOptions } from '@shared/types/ripgrep'
+import type { RipgrepMatch, RipgrepSearchOptions as SearchOptions } from '@shared/types/ripgrep'
 import { typedOn } from './typedOn'
 import { typedSend } from './typedSend'
 import type { IpcMainEventChannels } from '@shared/types/ipc'
@@ -87,13 +87,9 @@ interface RgMatchData {
   path: TextInput
 }
 
-interface RgMatch {
-  matchText: string
-  lineText: string
-  range: [[number, number], [number, number]]
-  leadingContextLines: unknown[]
-  trailingContextLines: unknown[]
-}
+// The emitted per-file match shape (`RipgrepMatch`) lives in the contract so
+// the push events in `IpcMainEventChannels` can name it; the rg --json input
+// types above stay local to this parser.
 
 const processUnicodeMatch = (match: RgMatchData): void => {
   const text = getText(match.lines)
@@ -257,9 +253,9 @@ const startTextSearch = (
 
     let buffer = ''
     let bufferError = ''
-    let pendingEvent: { filePath: string; matches: RgMatch[] } | null = null
-    let pendingLeadingContext: unknown[] = []
-    let pendingTrailingContexts: Set<unknown[]> = new Set()
+    let pendingEvent: { filePath: string; matches: RipgrepMatch[] } | null = null
+    let pendingLeadingContext: string[] = []
+    let pendingTrailingContexts: Set<string[]> = new Set()
 
     child.on('close', (code) => {
       // Exit 1 is rg's "no matches" — still a successful search. Anything
@@ -306,7 +302,7 @@ const startTextSearch = (
             pendingLeadingContext = []
             pendingTrailingContexts = new Set()
           } else if (message.type === 'match') {
-            const trailingContextLines: unknown[] = []
+            const trailingContextLines: string[] = []
             pendingTrailingContexts.add(trailingContextLines)
             processUnicodeMatch(message.data)
             for (const submatch of message.data.submatches) {
@@ -326,7 +322,12 @@ const startTextSearch = (
           } else if (message.type === 'end') {
             pendingPaths++
             sendIfAlive(sender, 'mt::rg::progress', { searchId, num: pendingPaths })
-            sendIfAlive(sender, 'mt::rg::match', { searchId, payload: pendingEvent })
+            // A well-formed stream pairs every 'end' with a 'begin'; a null
+            // pendingEvent means it did not, and the typed contract no longer
+            // lets that reach the renderer as a null payload.
+            if (pendingEvent) {
+              sendIfAlive(sender, 'mt::rg::match', { searchId, payload: pendingEvent })
+            }
             pendingEvent = null
           }
         } catch (err) {

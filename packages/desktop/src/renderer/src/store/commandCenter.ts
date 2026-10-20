@@ -47,8 +47,7 @@ export const useCommandCenterStore = defineStore('commandCenter', () => {
       SORT_COMMANDS()
     })
 
-    window.electron.ipcRenderer.on('mt::keybindings-response', (_e, keybindingMap) => {
-      const map = keybindingMap as Record<string, string>
+    window.electron.ipcRenderer.on('mt::keybindings-response', (_e, map) => {
       const { subcommands } = rootCommand.value
       for (const entry of subcommands) {
         const value = map[entry.id]

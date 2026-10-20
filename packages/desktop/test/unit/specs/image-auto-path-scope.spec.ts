@@ -76,7 +76,7 @@ describe('mt::ask-for-image-auto-path is scoped', () => {
     })
 
     expect(searchFilesAndDir).not.toHaveBeenCalled()
-    expect(send).toHaveBeenCalledWith('mt::response-of-image-path-req-1', [])
+    expect(send).toHaveBeenCalledWith('mt::response-of-image-path', { id: 'req-1', files: [] })
     expect(log.warn).toHaveBeenCalledWith(
       expect.stringContaining('mt::ask-for-image-auto-path'),
       expect.anything(),
@@ -96,7 +96,7 @@ describe('mt::ask-for-image-auto-path is scoped', () => {
     })
 
     expect(searchFilesAndDir).toHaveBeenCalledWith(docDir, 'shot')
-    expect(send).toHaveBeenCalledWith('mt::response-of-image-path-req-2', hits)
+    expect(send).toHaveBeenCalledWith('mt::response-of-image-path', { id: 'req-2', files: hits })
     expect(log.warn).not.toHaveBeenCalled()
   })
 
@@ -104,14 +104,14 @@ describe('mt::ask-for-image-auto-path is scoped', () => {
     await drive({ pathname: path.join(docDir, 'doc.md'), src: '', id: 'req-3' })
 
     expect(searchFilesAndDir).not.toHaveBeenCalled()
-    expect(send).toHaveBeenCalledWith('mt::response-of-image-path-req-3', [])
+    expect(send).toHaveBeenCalledWith('mt::response-of-image-path', { id: 'req-3', files: [] })
   })
 
   it('refuses a forged payload without a pathname instead of throwing', async () => {
     await expect(drive({ src: 'anything.png', id: 'req-4' })).resolves.toBeUndefined()
 
     expect(searchFilesAndDir).not.toHaveBeenCalled()
-    expect(send).toHaveBeenCalledWith('mt::response-of-image-path-req-4', [])
+    expect(send).toHaveBeenCalledWith('mt::response-of-image-path', { id: 'req-4', files: [] })
     expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('mt::ask-for-image-auto-path'))
   })
 })

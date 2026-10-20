@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import type { IFileState } from '@shared/types/files'
+import type { ImageAutoPathEntry } from '@shared/types/ipc'
 
 // `@/store/editor` reads `window.path` at module load and `window.electron` at
 // runtime; stub those surfaces before the hoisted imports run. The path stub is
@@ -29,7 +30,6 @@ vi.hoisted(() => {
         ipcRenderer: {
           send: (...a: unknown[]) => void
           on: (...a: unknown[]) => void
-          once: (...a: unknown[]) => void
         }
       }
     }
@@ -63,7 +63,7 @@ vi.hoisted(() => {
   }
   w.window.electron ??= {
     clipboard: { writeText: () => {} },
-    ipcRenderer: { send: vi.fn(), on: () => {}, once: vi.fn() }
+    ipcRenderer: { send: vi.fn(), on: vi.fn() }
   }
 })
 
@@ -86,7 +86,7 @@ const IMAGE_CLEANUP_DELAY_MS = 5000
 const cleanupStub = () => vi.fn().mockResolvedValue(undefined)
 
 const send = (): ReturnType<typeof vi.fn> => vi.mocked(window.electron.ipcRenderer.send)
-const once = (): ReturnType<typeof vi.fn> => vi.mocked(window.electron.ipcRenderer.once)
+const on = (): ReturnType<typeof vi.fn> => vi.mocked(window.electron.ipcRenderer.on)
 
 const tab = (over: Partial<IFileState> = {}): IFileState =>
   ({
@@ -142,7 +142,7 @@ describe('ASK_FOR_IMAGE_AUTO_PATH', () => {
     expect(send().mock.calls).toEqual([])
   })
 
-  it('asks main on the shared channel and resolves on the per-request reply address', async () => {
+  it('asks main on the shared channel and resolves on the static reply channel', async () => {
     const store = seed([tab()])
 
     const pending = store.ASK_FOR_IMAGE_AUTO_PATH('./img/a.png')
@@ -152,14 +152,18 @@ describe('ASK_FOR_IMAGE_AUTO_PATH', () => {
       src: './img/a.png'
     })
     const id = (request?.[1] as { id: string }).id
-    // The reply channel is created per request, so it is not a contract channel.
-    const reply = once().mock.calls.find(
-      (c: unknown[]) => c[0] === `mt::response-of-image-path-${id}`
-    )
-    expect(reply).toBeTruthy()
-    ;(reply?.[1] as (event: unknown, files: string[]) => void)(null, ['/docs/img/a.png'])
+    // The reply rides the single contract channel mt::response-of-image-path;
+    // the correlation id in the payload routes it back to this request.
+    const subscribe = on().mock.calls.find((c: unknown[]) => c[0] === 'mt::response-of-image-path')
+    expect(subscribe).toBeTruthy()
+    ;(
+      subscribe?.[1] as (
+        event: unknown,
+        payload: { id: string; files: ImageAutoPathEntry[] }
+      ) => void
+    )(null, { id, files: [{ file: 'a.png', type: 'image' }] })
 
-    await expect(pending).resolves.toEqual(['/docs/img/a.png'])
+    await expect(pending).resolves.toEqual([{ file: 'a.png', type: 'image' }])
     // The document crosses the boundary as a detached copy, never the live tab.
     expect((request?.[1] as { currentFile: IFileState }).currentFile).not.toBe(store.currentFile)
   })

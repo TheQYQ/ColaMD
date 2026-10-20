@@ -1,6 +1,10 @@
 name: Muya Spec (CommonMark + GFM)
 
 on:
+  # Called by nightly.yml: the full gate set runs on the default branch on a
+  # schedule, with no path filters (see nightly.yml for why the PR filters
+  # alone leave pure-batch blind spots).
+  workflow_call:
   # Manual runs exist to exercise the suites without touching packages/muya
   # just to trip the path filter below.
   workflow_dispatch:

@@ -1,0 +1,69 @@
+name: Nightly Full Gate
+
+# Safety net for the PR path filters. The desktop four (build/lint/test/e2e)
+# ignore packages/muya/** and the muya six only run on muya paths plus
+# pnpm-lock.yaml, so a pure-desktop batch gets zero engine verification and a
+# pure-engine batch gets zero desktop verification (AGENTS.md 流程节 records
+# the measurements: PRs #43/#44/#45/#48 each ran only 4 workflows). Merges
+# into main produce no runs at all — build.yml and e2e.yml are PR-only and
+# main pushes match nothing. This workflow calls all ten legs on a schedule
+# with no path filters, on the default branch: the integrated state of what
+# users download is checked even when no batch shape would have checked it.
+#
+# Design notes:
+#   - The ten legs are called as reusable workflows (each carries a
+#     `workflow_call` trigger) instead of being re-implemented here, so a
+#     change to a leg applies to the nightly automatically — one source of
+#     truth per leg, no drift between "what PRs run" and "what nightly runs".
+#   - schedule always runs on the default branch, so the automated run covers
+#     main. To run the full gate set against another branch (e.g. develop
+#     right after a batch lands), use workflow_dispatch from the Actions tab
+#     and pick the branch there — that is also the "run the missing leg for
+#     this batch" tool.
+#   - Cost: the same ten legs a lock-file-touching batch runs on a PR. Public
+#     repository, standard runners are free. The PR cost profile is
+#     deliberately unchanged — this is additive. To dial back to weekly,
+#     change the cron below; nothing else needs to move.
+#   - validate-licenses.yml is intentionally not called: it only matters when
+#     package.json or pnpm-lock.yaml changes, and its push-to-develop trigger
+#     already covers exactly that case with no filter gap.
+#   - build.yml's comment-on-pr job is guarded on a pull_request event and is
+#     skipped in this context.
+
+on:
+  schedule:
+    # Daily 03:17 UTC — off the hour on purpose; GitHub schedules drift near
+    # the top of the hour (same reason audit.yml uses :23).
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop-lint:
+    uses: ./.github/workflows/lint.yml
+  desktop-test:
+    uses: ./.github/workflows/test.yml
+  desktop-build:
+    uses: ./.github/workflows/build.yml
+  desktop-e2e:
+    uses: ./.github/workflows/e2e.yml
+  muya-build:
+    uses: ./.github/workflows/muya-build.yml
+  muya-lint:
+    uses: ./.github/workflows/muya-lint.yml
+  muya-test:
+    uses: ./.github/workflows/muya-test.yml
+  muya-spec:
+    uses: ./.github/workflows/muya-spec.yml
+  muya-circular:
+    uses: ./.github/workflows/muya-circular.yml
+  muya-e2e:
+    uses: ./.github/workflows/muya-e2e.yml
