@@ -46,7 +46,7 @@ export interface IUserPreferences {
   defaultEncoding?: string
   autoGuessEncoding?: boolean
   trimTrailingNewline?: number
-  textDirection?: 'ltr' | 'rtl' | 'auto'
+  textDirection?: 'ltr' | 'rtl'
   preferLooseListItem?: boolean
   bulletListMarker?: '-' | '*' | '+'
   orderListDelimiter?: '.' | ')'
