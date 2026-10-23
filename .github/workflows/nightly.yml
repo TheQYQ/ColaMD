@@ -29,6 +29,22 @@ name: Nightly Full Gate
 #     already covers exactly that case with no filter gap.
 #   - build.yml's comment-on-pr job is guarded on a pull_request event and is
 #     skipped in this context.
+#   - Concurrency: every leg keeps its own group, but each prefix is the leg's
+#     name hardcoded rather than ${{ github.workflow }}. Inside a called
+#     workflow that context resolves to the CALLER's name, so with it all ten
+#     legs would collapse onto one group — the same string this workflow's own
+#     concurrency uses — deadlocking the run against itself while cancelling
+#     each other mid-flight. Measured 2026-10-23 on the first dispatch after
+#     the permissions fix below: ten legs, one group name,
+#     "Canceling since a deadlock was detected for concurrency group ...
+#     between a top level workflow and 'desktop-lint'", ~2s, zero jobs run.
+#     The hardcoded prefix evaluates to the identical string as
+#     ${{ github.workflow }} on the legs' direct PR/push paths, so nothing
+#     about their standalone behavior changes.
+#   - Permissions: the workflow-level grant is read-only; desktop-build alone
+#     gets pull-requests: write at the job level because build.yml's
+#     comment-on-pr job needs it (see that job's comment for the full story —
+#     a read-only caller makes GitHub refuse to compile the call at startup).
 
 on:
   schedule:
