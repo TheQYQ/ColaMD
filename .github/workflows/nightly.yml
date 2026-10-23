@@ -52,6 +52,29 @@ jobs:
   desktop-test:
     uses: ./.github/workflows/test.yml
   desktop-build:
+    # build.yml's comment-on-pr job requests `pull-requests: write` to post the
+    # artifact-links comment. Along a reusable-workflow chain permissions can
+    # only be maintained or reduced, never elevated, so a caller that grants
+    # only read makes GitHub refuse to compile the call at startup — measured
+    # 2026-10-21/22/23: three consecutive schedules died in ~1s with
+    # startup_failure, "The nested job 'comment-on-pr' is requesting
+    # 'pull-requests: write', but is only allowed 'pull-requests: read'", and
+    # the workflow had never run once since it was added on 2026-10-20.
+    #
+    # The write scope is granted to this job only: the other nine legs keep the
+    # workflow-level read-only grant below. It is also granted-but-unused here
+    # — comment-on-pr is guarded on a same-repo PR head
+    # (`github.event.pull_request.head.repo.full_name == github.repository`),
+    # which is null on a schedule event, so the job is skipped and no comment
+    # is ever posted from this context.
+    #
+    # Job-level permissions replace the workflow-level set for this job rather
+    # than merging with it (unspecified scopes become `none`), so all three
+    # scopes build.yml's two jobs need are restated here.
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
     uses: ./.github/workflows/build.yml
   desktop-e2e:
     uses: ./.github/workflows/e2e.yml
