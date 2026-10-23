@@ -17,7 +17,11 @@ on:
       - '.github/workflows/muya-test.yml'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Name prefix hardcoded on purpose: inside a called workflow (nightly.yml)
+  # ${{ github.workflow }} resolves to the CALLER's name, so all ten legs
+  # would collapse onto one group and cancel each other mid-run. On the
+  # direct PR/push paths this is the same string as before.
+  group: Muya Test-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
