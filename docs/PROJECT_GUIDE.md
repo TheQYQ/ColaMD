@@ -293,6 +293,8 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 
 10 条腿（桌面四条 + muya 六条）自 2026-10-20 起都带 `workflow_call` 触发器，只供 `nightly.yml` 调用；PR 侧的触发形状与代价不变。nightly 专补两个盲区：**纯批次互斥**（上表：纯桌面批次零引擎验证、纯引擎批次零桌面验证）与 **`main` 零 run**（没有任何工作流认 push 到 `main`，schedule 又只在默认分支跑）。要验 `develop` 的即时集成态或给某批补跑缺失的腿，用 nightly 的 `workflow_dispatch` 选分支手跑。
 
+**2026-10-24 修复：nightly 曾连续三天 `startup_failure`（1 秒即挂，0 jobs），根因是调用方权限不足**。可复用工作流链路上权限「只能维持或收窄、不能提升」：`nightly.yml` 工作流级只授 `pull-requests: read`，而被调的 `build.yml` 里 `comment-on-pr` 作业要 `pull-requests: write` 评论 PR 工件链接，GitHub 在**编译期**直接拒掉整个调用（`The nested job 'comment-on-pr' is requesting 'pull-requests: write', but is only allowed 'pull-requests: read'`）——该作业虽有 `if: github.event.pull_request.head.repo.full_name == github.repository` 守卫、schedule 场景恒被跳过，但权限校验与运行期守卫无关。修法是把 write 提权收窄到 `desktop-build` 这一个调用作业上（其余九腿保持只读；job 级 `permissions` 是**替换**而非合并工作流级，三个 scope 均显式重列），`comment-on-pr` 在 nightly 场景下授而不用。教训：**新增 `workflow_call` 调用方后，必须比对被调工作流各作业的权限声明与调用方授予集**——这类错误只在启动时暴露一次，PR 工作流本身不调用 nightly，CI 全绿也发现不了。
+
 #### **两套路径过滤器在引擎源码路径上互斥，但 `pnpm-lock.yaml` 是双方共同触发**（2026-10-01 实测更正；2026-10-07 再更正，见本节结论句）
 
 桌面四条（`build`/`e2e`/`lint`/`test`）对 `packages/muya/**` 是 **`paths-ignore`**，而 muya 六条对引擎路径是 **`paths` 包含过滤**（每条还各自加 `pnpm-lock.yaml` 与自身文件）：`muya-lint` 是 `packages/muya/**` 减 `examples/` 与 `e2e/`；`muya-build`/`muya-circular`/`muya-e2e`/`muya-test`/`muya-spec` 都以 `packages/muya/src/**` 为底，分别再加 `package.json`、`tsconfig.json`、`vite.config.ts`、`.madgerc`、`e2e/**`、`test/**` 等。后果：
