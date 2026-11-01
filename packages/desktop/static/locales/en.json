@@ -90,7 +90,10 @@
       "resetZoom": "Reset Zoom",
       "fullScreen": "Full Screen",
       "bringAllToFront": "Bring All to Front",
-      "alwaysOnTop": "Always on Top"
+      "alwaysOnTop": "Always on Top",
+      "maximize": "Maximize",
+      "restore": "Restore",
+      "close": "Close"
     },
     "help": {
       "help": "Help",
@@ -230,13 +233,15 @@
     "invalidRegex": "Invalid regular expression \"{pattern}\"",
     "regexMatchEmpty": "Regular expression matches empty string \"{pattern}\"",
     "regexTimeout": "Regex timed out",
-    "replacedCount": "Replaced {count} occurrence(s)"
+    "replacedCount": "Replaced {count} occurrence(s)",
+    "close": "Close"
   },
   "sideBar": {
     "tree": {
       "emptyProject": "Empty project",
       "createFile": "Create File",
-      "openFile": "Open File..."
+      "openFile": "Open File...",
+      "newFileNamePlaceholder": "Enter .md file name"
     },
     "icons": {
       "files": "Files",
@@ -274,7 +279,14 @@
     "confirmDeleteMessage": "Move \"{name}\" to the trash?",
     "deleted": "Moved to trash",
     "errors": {
-      "deleting": "Error while deleting"
+      "deleting": "Error while deleting",
+      "sideBarTitle": "Error in Side Bar",
+      "alreadyExists": "A {type} named \"{name}\" already exists in this folder.",
+      "file": "file",
+      "folder": "folder"
+    },
+    "toc": {
+      "empty": "This document has no headings"
     }
   },
   "commandPalette": {
@@ -283,7 +295,12 @@
       "selectOption": "Select an option",
       "searchFileToOpen": "Search file to open",
       "selectLanguage": "Select a language to switch to"
-    }
+    },
+    "noResult": "No matching results",
+    "quickOpenEmpty": "Open a folder to search files by name",
+    "currentSuffix": "{name} - current",
+    "textDirectionLtr": "Left to Right",
+    "textDirectionRtl": "Right to Left"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Auto numbering headings",
@@ -769,7 +786,8 @@
       "enableSpellChecking": "Enable spell checking",
       "hideMarksForErrors": "Hide marks for spelling errors",
       "title": "Spell Checker"
-    }
+    },
+    "moreInfo": "More information"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -916,7 +934,8 @@
   },
   "common": {
     "cancel": "Cancel",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "Loading"
   },
   "dialog": {
     "cancel": "Cancel",
@@ -940,7 +959,8 @@
     "renameFailure": "Rename failure",
     "moveFailure": "Move failure",
     "openFailure": "Open failure",
-    "openRefused": "Cannot open {name}: the path is outside the authorized folders."
+    "openRefused": "Cannot open {name}: the path is outside the authorized folders.",
+    "moreFiles": "and {count} more"
   },
   "error": {
     "configSchemaViolation": "Configuration schema violation",
@@ -993,7 +1013,8 @@
       "columns": "Columns"
     },
     "notifications": {
-      "notificationNotFound": "Notification not found"
+      "notificationNotFound": "Notification not found",
+      "uploadImage": "Upload Image"
     },
     "print": {
       "error": "Print error for \"{title}\"",
@@ -1028,5 +1049,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "Click to cycle the counter mode",
+    "readingTime": "{count} min"
+  },
+  "autoUpdates": {
+    "update": "Update",
+    "updateNotAvailable": "Update not Available",
+    "updateDownloaded": "Update Downloaded",
+    "updateAvailable": "Update Available"
   }
 }

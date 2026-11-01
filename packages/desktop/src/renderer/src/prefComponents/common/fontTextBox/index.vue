@@ -9,6 +9,7 @@
         v-if="more"
         :size="14"
         class="link-icon"
+        :label="t('preferences.moreInfo')"
         style="margin-left: 4px"
         @click="handleMoreClick"
       />

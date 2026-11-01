@@ -76,7 +76,7 @@
   --sideBarColor: rgba(211, 198, 170, 0.6);
   --sideBarIconColor: var(--iconColor);
   --sideBarTitleColor: rgba(211, 198, 170, 0.8);
-  --sideBarTextColor: rgba(211, 198, 170, 0.4);
+  --sideBarTextColor: #9C9B93;
   --sideBarBgColor: #2a3137;
   --sideBarItemHoverBgColor: rgba(211, 198, 170, 0.03);
   --itemBgColor: #343f44;
@@ -84,7 +84,7 @@
   --floatFontColor: rgba(211, 198, 170, 0.7);
   --floatBgColor: #343f44;
   --floatHoverColor: rgba(211, 198, 170, 0.04);
-  --floatBorderColor: rgba(0, 0, 0, 0.05);
+  --floatBorderColor: rgba(255, 255, 255, 0.08);
   --floatShadow: rgba(0, 0, 0, 0.2);
   --maskColor: rgba(0, 0, 0, 0.7);
   --editorAreaWidth: 800px;

@@ -90,7 +90,10 @@
       "resetZoom": "Zoom zurücksetzen",
       "fullScreen": "Vollbild",
       "bringAllToFront": "Alle nach vorne bringen",
-      "alwaysOnTop": "Immer im Vordergrund"
+      "alwaysOnTop": "Immer im Vordergrund",
+      "maximize": "Maximieren",
+      "restore": "Wiederherstellen",
+      "close": "Schließen"
     },
     "help": {
       "help": "Hilfe",
@@ -230,13 +233,15 @@
     "invalidRegex": "Ungültiger regulärer Ausdruck \"{pattern}\"",
     "regexMatchEmpty": "Regulärer Ausdruck entspricht leerem String \"{pattern}\"",
     "regexTimeout": "Timeout beim regulären Ausdruck",
-    "replacedCount": "{count} Vorkommen ersetzt"
+    "replacedCount": "{count} Vorkommen ersetzt",
+    "close": "Schließen"
   },
   "sideBar": {
     "tree": {
       "emptyProject": "Leeres Projekt",
       "createFile": "Datei erstellen",
-      "openFile": "Datei öffnen..."
+      "openFile": "Datei öffnen...",
+      "newFileNamePlaceholder": ".md-Dateinamen eingeben"
     },
     "icons": {
       "files": "Dateien",
@@ -274,7 +279,14 @@
     "confirmDeleteMessage": "„{name}\" in den Papierkorb verschieben?",
     "deleted": "In den Papierkorb verschoben",
     "errors": {
-      "deleting": "Fehler beim Löschen"
+      "deleting": "Fehler beim Löschen",
+      "sideBarTitle": "Fehler in der Seitenleiste",
+      "alreadyExists": "In diesem Ordner existiert bereits ein/e {type} namens \"{name}\".",
+      "file": "Datei",
+      "folder": "Ordner"
+    },
+    "toc": {
+      "empty": "Dieses Dokument hat keine Überschriften"
     }
   },
   "commandPalette": {
@@ -283,7 +295,12 @@
       "selectOption": "Option auswählen",
       "searchFileToOpen": "Datei zum Öffnen suchen",
       "selectLanguage": "Sprache auswählen"
-    }
+    },
+    "noResult": "Keine Treffer",
+    "quickOpenEmpty": "Öffne einen Ordner, um Dateien nach Name zu durchsuchen",
+    "currentSuffix": "{name} - aktuell",
+    "textDirectionLtr": "Links nach Rechts",
+    "textDirectionRtl": "Rechts nach Links"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Automatische Nummerierung der Überschriften",
@@ -769,7 +786,8 @@
       "enableSpellChecking": "Rechtschreibprüfung aktivieren",
       "hideMarksForErrors": "Markierungen für Rechtschreibfehler ausblenden",
       "title": "Rechtschreibprüfung"
-    }
+    },
+    "moreInfo": "Weitere Informationen"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -916,7 +934,8 @@
   },
   "common": {
     "cancel": "Abbrechen",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "Wird geladen"
   },
   "dialog": {
     "cancel": "Abbrechen",
@@ -940,7 +959,8 @@
     "renameFailure": "Umbenennen fehlgeschlagen",
     "moveFailure": "Verschieben fehlgeschlagen",
     "openFailure": "Fehler beim Öffnen",
-    "openRefused": "{name} kann nicht geöffnet werden: Der Pfad liegt außerhalb der autorisierten Ordner."
+    "openRefused": "{name} kann nicht geöffnet werden: Der Pfad liegt außerhalb der autorisierten Ordner.",
+    "moreFiles": "und {count} weitere"
   },
   "error": {
     "configSchemaViolation": "Konfigurationsschema-Verletzung",
@@ -993,7 +1013,8 @@
       "columns": "Spalten"
     },
     "notifications": {
-      "notificationNotFound": "Benachrichtigung nicht gefunden"
+      "notificationNotFound": "Benachrichtigung nicht gefunden",
+      "uploadImage": "Bild hochladen"
     },
     "print": {
       "error": "Druckfehler für \"{title}\"",
@@ -1028,5 +1049,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "Klicken, um den Zählermodus zu wechseln",
+    "readingTime": "{count} Min."
+  },
+  "autoUpdates": {
+    "update": "Aktualisieren",
+    "updateNotAvailable": "Kein Update verfügbar",
+    "updateDownloaded": "Update heruntergeladen",
+    "updateAvailable": "Update verfügbar"
   }
 }

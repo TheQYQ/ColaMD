@@ -4,6 +4,7 @@ import { resortTree } from './treeCtrl'
 import { processTreeEvent } from './treeEvents'
 import { registerSidebarContextMenuHandlers, type SidebarCreateCache } from './sidebarContextMenu'
 import { sidebarFail } from './sidebarFeedback'
+import { t } from '../i18n'
 import type { SidebarClipboardEntry } from './sidebarPaste'
 import { usePreferencesStore } from './preferences'
 import { create, rename, type FileCreateType } from '../util/fileSystem'
@@ -227,10 +228,11 @@ export const useProjectStore = defineStore('project', () => {
       if (createCache.value === cache) {
         createCache.value = {}
       }
+      const kindKey = type === 'folder' ? 'sideBar.errors.folder' : 'sideBar.errors.file'
       notice.notify({
-        title: 'Error in Side Bar',
+        title: t('sideBar.errors.sideBarTitle'),
         type: 'error',
-        message: `A ${type} named "${name}" already exists in this folder.`
+        message: t('sideBar.errors.alreadyExists', { type: t(kindKey), name })
       })
       return
     }
@@ -245,7 +247,7 @@ export const useProjectStore = defineStore('project', () => {
         }
       })
       .catch((err) => {
-        sidebarFail('Error in Side Bar', err)
+        sidebarFail(t('sideBar.errors.sideBarTitle'), err)
       })
   }
 

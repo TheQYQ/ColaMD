@@ -5,7 +5,12 @@
         class="status-btn"
         :class="{ active: preferencesStore.sourceCode }"
         :title="t('menu.view.sourceCodeMode')"
+        role="button"
+        tabindex="0"
+        :aria-label="t('menu.view.sourceCodeMode')"
+        :aria-pressed="preferencesStore.sourceCode"
         @click="toggleSourceCode"
+        @keydown="activateOnEnterOrSpace"
       >
         <svg
           width="16"
@@ -33,8 +38,12 @@
       <div
         v-if="wordCount"
         class="word-count"
-        :title="t('menu.counter.words')"
+        :title="t('statusBar.counterTooltip')"
+        role="button"
+        tabindex="0"
+        :aria-label="counterLabel(show)"
         @click="handleWordClick"
+        @keydown="activateOnEnterOrSpace"
       >
         <span class="text-center-vertical">{{ counterText }}</span>
       </div>
@@ -49,6 +58,7 @@ import { useI18n } from 'vue-i18n'
 import bus from '@/bus'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
 
 /**
  * Typora-style bottom status bar: the source-code-mode toggle on the left,
@@ -89,7 +99,9 @@ const counterLabel = (mode: CounterMode): string => {
 const counterText = computed(() => {
   if (!wordCount.value) return ''
   // ~200 words per minute, matching Typora's reading-time estimate.
-  if (show.value === 'reading') return `${Math.ceil((wordCount.value.word || 0) / 200)} min`
+  if (show.value === 'reading') {
+    return t('statusBar.readingTime', { count: Math.ceil((wordCount.value.word || 0) / 200) })
+  }
   const count = wordCount.value[show.value]
   return `${count} ${counterLabel(show.value)}`
 })

@@ -1,7 +1,7 @@
 import bus from '../bus'
+import { t } from '../i18n'
 import { registerSidebarPasteHandler, type SidebarClipboardEntry } from './sidebarPaste'
 import notice from '@/services/notification'
-import { t } from '../i18n'
 import { sidebarFail } from './sidebarFeedback'
 
 export interface SidebarCreateCache {

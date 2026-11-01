@@ -12,6 +12,7 @@
         v-if="more"
         :size="14"
         class="link-icon"
+        :label="t('preferences.moreInfo')"
         @click="handleMoreClick"
       />
       <el-tooltip
@@ -44,7 +45,10 @@
 import { ref, watch } from 'vue'
 import { InfoFilled } from '@element-plus/icons-vue'
 import LinkIcon from '@/components/icons/LinkIcon.vue'
+import { useI18n } from 'vue-i18n'
 import type { PrefControlBaseProps } from '../types'
+
+const { t } = useI18n()
 
 interface BoolProps extends PrefControlBaseProps {
   notes?: string

@@ -44,7 +44,7 @@
   --buttonFocusBorder: 1px solid #568af2;
 
   --buttonPrimaryFontColor: #ffffff;
-  --buttonPrimaryBgColor: linear-gradient(#557ecf, #4d78cc);
+  --buttonPrimaryBgColor: linear-gradient(#456fc4, #3d64b2);
   --buttonPrimaryBorder: 1px solid #181a1f;
   --buttonPrimaryShadow: none;
   --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
@@ -295,7 +295,9 @@ li.mu-task-list-item > input[type='checkbox'] {
   margin: 0;
   left: -24px;
   transform-origin: center;
-  transition: all 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 li.mu-task-list-item > input.mu-checkbox-checked {
   transform: rotate(0);
@@ -313,7 +315,9 @@ li.mu-task-list-item > input[type='checkbox']::before {
   position: absolute;
   top: 0;
   left: 0;
-  transition: all 0.2s ease;
+  transition:
+    border 0.2s ease,
+    background-color 0.2s ease;
 }
 li.mu-task-list-item > input.mu-checkbox-checked::before {
   border: transparent;
@@ -331,7 +335,7 @@ li.mu-task-list-item > input::after {
   display: inline-block;
   top: 1px;
   left: 5px;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease;
 }
 li.mu-task-list-item > input.mu-checkbox-checked::after {
   transform: rotate(-45deg) scale(1);

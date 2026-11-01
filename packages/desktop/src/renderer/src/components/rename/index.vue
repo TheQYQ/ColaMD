@@ -147,7 +147,7 @@ onBeforeUnmount(() => {
   width: 30px;
   height: 30px;
   color: var(--iconColor);
-  transition: all 0.3s ease-in-out;
+  transition: color 0.3s ease-in-out;
 }
 .search-wrapper svg:hover {
   color: var(--themeColor);

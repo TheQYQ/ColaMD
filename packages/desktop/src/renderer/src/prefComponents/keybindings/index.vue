@@ -6,9 +6,12 @@
         {{ t('preferences.keybindings.description') }}
         <a
           class="link"
+          role="button"
+          tabindex="0"
           :title="t('preferences.keybindings.online')"
           :aria-label="t('preferences.keybindings.online')"
           @click="openKeybindingDocs"
+          @keydown="activateOnEnterOrSpace"
         ><LinkIcon
           :size="14"
           class="link-icon"
@@ -120,6 +123,7 @@ import { Edit, RefreshRight, Delete } from '@element-plus/icons-vue'
 import LinkIcon from '@/components/icons/LinkIcon.vue'
 import { useI18n } from 'vue-i18n'
 import getCommandDescriptionById from '@/commands/descriptions'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
 
 const { t, locale } = useI18n()
 

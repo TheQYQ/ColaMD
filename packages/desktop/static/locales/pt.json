@@ -90,7 +90,10 @@
       "resetZoom": "Redefinir Zoom",
       "fullScreen": "Tela Cheia",
       "bringAllToFront": "Trazer Todas para Frente",
-      "alwaysOnTop": "Sempre no Topo"
+      "alwaysOnTop": "Sempre no Topo",
+      "maximize": "Maximizar",
+      "restore": "Restaurar",
+      "close": "Fechar"
     },
     "help": {
       "help": "Ajuda",
@@ -230,13 +233,15 @@
     "invalidRegex": "Expressão regular inválida \"{pattern}\"",
     "regexMatchEmpty": "Expressão regular corresponde à string vazia \"{pattern}\"",
     "regexTimeout": "Tempo limite da expressão regular",
-    "replacedCount": "{count} ocorrência(s) substituída(s)"
+    "replacedCount": "{count} ocorrência(s) substituída(s)",
+    "close": "Fechar"
   },
   "sideBar": {
     "tree": {
       "emptyProject": "Projeto vazio",
       "createFile": "Criar Arquivo",
-      "openFile": "Abrir Arquivo..."
+      "openFile": "Abrir Arquivo...",
+      "newFileNamePlaceholder": "Digite o nome do arquivo .md"
     },
     "icons": {
       "files": "Arquivos",
@@ -274,7 +279,14 @@
     "confirmDeleteMessage": "Mover \"{name}\" para a lixeira?",
     "deleted": "Movido para a lixeira",
     "errors": {
-      "deleting": "Erro ao excluir"
+      "deleting": "Erro ao excluir",
+      "sideBarTitle": "Erro na barra lateral",
+      "alreadyExists": "Já existe um/a {type} com o nome \"{name}\" nesta pasta.",
+      "file": "ficheiro",
+      "folder": "pasta"
+    },
+    "toc": {
+      "empty": "Este documento não tem títulos"
     }
   },
   "commandPalette": {
@@ -283,7 +295,12 @@
       "selectOption": "Selecionar opção",
       "searchFileToOpen": "Pesquisar arquivo para abrir",
       "selectLanguage": "Selecionar idioma"
-    }
+    },
+    "noResult": "Sem resultados",
+    "quickOpenEmpty": "Abra uma pasta para pesquisar ficheiros por nome",
+    "currentSuffix": "{name} - atual",
+    "textDirectionLtr": "Da esquerda para a direita",
+    "textDirectionRtl": "Da direita para a esquerda"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Numeração automática de cabeçalhos",
@@ -769,7 +786,8 @@
       "enableSpellChecking": "Habilitar verificação ortográfica",
       "hideMarksForErrors": "Ocultar marcas para erros ortográficos",
       "title": "Corretor Ortográfico"
-    }
+    },
+    "moreInfo": "Mais informações"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -916,7 +934,8 @@
   },
   "common": {
     "cancel": "Cancelar",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "Carregando"
   },
   "dialog": {
     "cancel": "Cancelar",
@@ -940,7 +959,8 @@
     "renameFailure": "Falha ao renomear",
     "moveFailure": "Falha ao mover",
     "openFailure": "Falha ao abrir",
-    "openRefused": "Não foi possível abrir {name}: o caminho está fora das pastas autorizadas."
+    "openRefused": "Não foi possível abrir {name}: o caminho está fora das pastas autorizadas.",
+    "moreFiles": "e mais {count}"
   },
   "error": {
     "configSchemaViolation": "Violação do esquema de configuração",
@@ -993,7 +1013,8 @@
       "columns": "Colunas"
     },
     "notifications": {
-      "notificationNotFound": "Notificação não encontrada"
+      "notificationNotFound": "Notificação não encontrada",
+      "uploadImage": "Enviar imagem"
     },
     "print": {
       "error": "Erro de impressão para \"{title}\"",
@@ -1028,5 +1049,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "Clique para alternar o modo do contador",
+    "readingTime": "{count} min"
+  },
+  "autoUpdates": {
+    "update": "Atualizar",
+    "updateNotAvailable": "Nenhuma atualização disponível",
+    "updateDownloaded": "Atualização baixada",
+    "updateAvailable": "Atualização disponível"
   }
 }

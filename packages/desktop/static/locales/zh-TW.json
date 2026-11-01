@@ -90,7 +90,10 @@
       "resetZoom": "重置縮放",
       "fullScreen": "全螢幕",
       "bringAllToFront": "將全部移到前面",
-      "alwaysOnTop": "總是在最上層"
+      "alwaysOnTop": "總是在最上層",
+      "maximize": "最大化",
+      "restore": "還原",
+      "close": "關閉"
     },
     "help": {
       "help": "說明",
@@ -230,13 +233,15 @@
     "invalidRegex": "無效的正規表示式 \"{pattern}\"",
     "regexMatchEmpty": "正規表示式 \"{pattern}\" 符合空字串",
     "regexTimeout": "正則執行逾時",
-    "replacedCount": "已替換 {count} 處"
+    "replacedCount": "已替換 {count} 處",
+    "close": "關閉"
   },
   "sideBar": {
     "tree": {
       "emptyProject": "空專案",
       "createFile": "建立檔案",
-      "openFile": "開啟檔案..."
+      "openFile": "開啟檔案...",
+      "newFileNamePlaceholder": "輸入 .md 檔案名稱"
     },
     "icons": {
       "files": "檔案",
@@ -274,7 +279,14 @@
     "confirmDeleteMessage": "將「{name}」移至廢紙簍？",
     "deleted": "已移至廢紙簍",
     "errors": {
-      "deleting": "刪除時出錯"
+      "deleting": "刪除時出錯",
+      "sideBarTitle": "側欄錯誤",
+      "alreadyExists": "此資料夾中已存在名為「{name}」的{type}。",
+      "file": "檔案",
+      "folder": "資料夾"
+    },
+    "toc": {
+      "empty": "此文件沒有標題"
     }
   },
   "commandPalette": {
@@ -283,7 +295,12 @@
       "selectOption": "選擇選項",
       "searchFileToOpen": "搜尋要開啟的檔案",
       "selectLanguage": "選擇語言"
-    }
+    },
+    "noResult": "無符合結果",
+    "quickOpenEmpty": "開啟資料夾後可依檔名搜尋檔案",
+    "currentSuffix": "{name} - 目前",
+    "textDirectionLtr": "從左到右",
+    "textDirectionRtl": "從右到左"
   },
   "exportSettings": {
     "autoNumberingHeadings": "自動編號標題",
@@ -769,7 +786,8 @@
       "enableSpellChecking": "啟用拼字檢查",
       "hideMarksForErrors": "隱藏拼字錯誤標記",
       "title": "拼字檢查"
-    }
+    },
+    "moreInfo": "查看詳細說明"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -916,7 +934,8 @@
   },
   "common": {
     "cancel": "取消",
-    "ok": "確定"
+    "ok": "確定",
+    "loading": "載入中"
   },
   "dialog": {
     "cancel": "取消",
@@ -940,7 +959,8 @@
     "renameFailure": "重新命名失敗",
     "moveFailure": "移動失敗",
     "openFailure": "開啟失敗",
-    "openRefused": "無法開啟「{name}」：路徑不在授權的資料夾內。"
+    "openRefused": "無法開啟「{name}」：路徑不在授權的資料夾內。",
+    "moreFiles": "等 {count} 個檔案"
   },
   "error": {
     "configSchemaViolation": "設定結構違規",
@@ -993,7 +1013,8 @@
       "columns": "欄"
     },
     "notifications": {
-      "notificationNotFound": "找不到通知"
+      "notificationNotFound": "找不到通知",
+      "uploadImage": "上傳圖片"
     },
     "print": {
       "error": "列印 \"{title}\" 時發生錯誤",
@@ -1028,5 +1049,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "點擊切換統計口徑",
+    "readingTime": "{count} 分鐘"
+  },
+  "autoUpdates": {
+    "update": "更新",
+    "updateNotAvailable": "暫無可用更新",
+    "updateDownloaded": "更新已下載",
+    "updateAvailable": "有可用更新"
   }
 }

@@ -50,7 +50,7 @@ export interface ContentChangePayload {
   //  - markdown null + edit true → keystroke-tier notification: the live engine
   //    holds the new content but no serialized snapshot exists yet; only the
   //    cheap dirty/auto-save bookkeeping runs.
-  //  - markdown null + edit falsy → derived-UI-state-only update (TOC/blocks).
+  //  - markdown null + edit falsy → derived-UI-state-only update (TOC).
   markdown: string | null
   edit?: boolean
   wordCount?: IFileState['wordCount'] | null
@@ -58,7 +58,6 @@ export interface ContentChangePayload {
   muyaIndexCursor?: unknown | null
   history?: IFileState['history'] | null
   toc?: TocItem[] | null
-  blocks?: unknown | null
 }
 
 /** Re-arm the per-tab auto-save timer for a tab the user just edited. */
@@ -98,9 +97,8 @@ const applyDerivedTier = (
   store: EditorStore,
   tab: IFileState,
   id: string,
-  { wordCount, toc, blocks }: ContentChangePayload
+  { wordCount, toc }: ContentChangePayload
 ): void => {
-  if (blocks) tab.blocks = blocks
   // wordCount rides this debounced tier too (sidebar counter only —
   // see the json-change callback in editor.vue); apply it when present.
   if (wordCount) tab.wordCount = wordCount
@@ -115,7 +113,7 @@ const applyCommitTier = (
   rawMarkdown: string
 ): void => {
   const { markdown: oldMarkdown, trimTrailingNewline } = tab
-  const { cursor, muyaIndexCursor, history, blocks, toc, wordCount } = payload
+  const { cursor, muyaIndexCursor, history, toc, wordCount } = payload
   const markdown = adjustTrailingNewlines(rawMarkdown, trimTrailingNewline)
 
   tab.markdown = markdown
@@ -129,7 +127,6 @@ const applyCommitTier = (
   if (cursor) tab.cursor = cursor
   if (muyaIndexCursor) tab.muyaIndexCursor = muyaIndexCursor
   if (history) tab.history = history
-  if (blocks) tab.blocks = blocks
 
   // Only update TOC if it's the current file
   store.refreshTocIfChanged(id, toc)

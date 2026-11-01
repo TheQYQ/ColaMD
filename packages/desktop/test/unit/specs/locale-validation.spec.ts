@@ -192,10 +192,10 @@ describe('desktop locale validation', () => {
       'zh-TW': 62,
       es: 84,
       fr: 91,
-      de: 85,
+      de: 84,
       ja: 68,
       ko: 66,
-      nl: 111,
+      nl: 112,
       pt: 82,
       tr: 92
     }

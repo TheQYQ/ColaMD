@@ -1,4 +1,4 @@
-import { watch, type Ref } from 'vue'
+import { nextTick, watch, type Ref } from 'vue'
 import type { PreferencesState } from '@/store/preferences'
 // The engine owns these settings; the component only mirrors them. Each mirror
 // used to be five written-out lines saying the same sentence -- "if the
@@ -84,7 +84,52 @@ export const useEngineOptionSync = ({
   preferencesStore: Pick<PreferencesState, 'plantumlServer'>
   resolveEditorFont: (family: string) => string
   prefs: { [K in MirrorKey]: Ref<PreferencesState[K]> }
-}): void => {
+}): { flushBootstrapOptions: () => void } => {
+  // PERF-06 (#GUI-B6): the first full preference application (the bootstrap
+  // broadcast that lands right after the engine mounts) used to fire one
+  // mirror per key — every `force` mirror triggering a whole-document
+  // Muya re-parse. The first tick's changes are collected instead and pushed
+  // as ONE `setOptions(batch, true)`; every later change stays per-mirror.
+  let bootstrapArmed = true
+  let bootstrapScheduled = false
+  const bootstrapBatch: Array<{ mirror: Mirror; value: unknown }> = []
+
+  const flushBootstrapOptions = (): void => {
+    if (!bootstrapArmed) return
+    bootstrapArmed = false
+    const batch = bootstrapBatch.splice(0)
+    if (!batch.length || !editor.value) return
+    const options: Record<string, unknown> = {}
+    let listIndentation: unknown
+    let hasListIndentation = false
+    const collector: Engine = {
+      setOptions: (o) => Object.assign(options, o),
+      setListIndentation: (v) => {
+        listIndentation = v
+        hasListIndentation = true
+      }
+    }
+    for (const { mirror, value } of batch) mirror.push(collector, value)
+    editor.value.setOptions(options, true)
+    if (hasListIndentation) editor.value.setListIndentation(listIndentation)
+  }
+
+  const pushMirror = (mirror: Mirror, value: unknown): void => {
+    if (!editor.value) return
+    if (bootstrapArmed) {
+      bootstrapBatch.push({ mirror, value })
+      if (!bootstrapScheduled) {
+        bootstrapScheduled = true
+        nextTick(() => {
+          bootstrapScheduled = false
+          flushBootstrapOptions()
+        })
+      }
+      return
+    }
+    mirror.push(editor.value, value)
+  }
+
   const mirrors: Mirror[] = [
     { source: prefs.fontSize, push: option('fontSize') },
     { source: prefs.lineHeight, push: option('lineHeight') },
@@ -147,9 +192,11 @@ export const useEngineOptionSync = ({
     { source: prefs.autoNumberMathBlocks, push: option('autoNumberMathBlocks') }
   ]
 
-  for (const { source, push } of mirrors) {
-    watch(source as never, (value: unknown, oldValue: unknown) => {
-      if (value !== oldValue && editor.value) push(editor.value, value)
+  for (const mirror of mirrors) {
+    watch(mirror.source as never, (value: unknown, oldValue: unknown) => {
+      if (value !== oldValue) pushMirror(mirror, value)
     })
   }
+
+  return { flushBootstrapOptions }
 }

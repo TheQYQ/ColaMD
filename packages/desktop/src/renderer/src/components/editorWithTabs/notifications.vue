@@ -4,6 +4,7 @@
     class="editor-notifications"
     :class="currentNotification.style"
     :style="{ 'max-width': `calc(100vw - ${effectiveSideBarWidth}px)` }"
+    :role="currentNotification.style === 'crit' ? 'alert' : 'status'"
   >
     <div class="msg">
       {{ currentNotification.msg }}
@@ -13,13 +14,21 @@
         <span
           v-if="currentNotification.showConfirm"
           class="inline-button"
+          role="button"
+          tabindex="0"
+          :aria-label="t('common.ok')"
           @click.stop="handleClick(true)"
+          @keydown="activateOnEnterOrSpace"
         >
           {{ t('common.ok') }}
         </span>
         <span
           class="inline-button"
+          role="button"
+          tabindex="0"
+          :aria-label="t('dialog.close')"
           @click.stop="handleClick(false)"
+          @keydown="activateOnEnterOrSpace"
         >
           <el-icon
             class="close-icon"
@@ -40,6 +49,7 @@ import { useLayoutStore } from '@/store/layout'
 import { storeToRefs } from 'pinia'
 import { Close } from '@element-plus/icons-vue'
 import { t } from '../../i18n'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
 
 const editorStore = useEditorStore()
 const layoutStore = useLayoutStore()

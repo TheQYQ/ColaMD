@@ -90,7 +90,10 @@
       "resetZoom": "ズームをリセット",
       "fullScreen": "フルスクリーン",
       "bringAllToFront": "すべてを前面に移動",
-      "alwaysOnTop": "常に手前に表示"
+      "alwaysOnTop": "常に手前に表示",
+      "maximize": "最大化",
+      "restore": "元に戻す",
+      "close": "閉じる"
     },
     "help": {
       "help": "ヘルプ",
@@ -230,13 +233,15 @@
     "invalidRegex": "無効な正規表現 \"{pattern}\"",
     "regexMatchEmpty": "正規表現が空文字列 \"{pattern}\" にマッチ",
     "regexTimeout": "正規表現がタイムアウトしました",
-    "replacedCount": "{count} 件を置換しました"
+    "replacedCount": "{count} 件を置換しました",
+    "close": "閉じる"
   },
   "sideBar": {
     "tree": {
       "emptyProject": "空のプロジェクト",
       "createFile": "ファイルの作成",
-      "openFile": "ファイルを開く..."
+      "openFile": "ファイルを開く...",
+      "newFileNamePlaceholder": ".mdファイル名を入力"
     },
     "icons": {
       "files": "ファイル",
@@ -274,7 +279,14 @@
     "confirmDeleteMessage": "「{name}」をゴミ箱へ移動しますか？",
     "deleted": "ゴミ箱に移動しました",
     "errors": {
-      "deleting": "削除中にエラー"
+      "deleting": "削除中にエラー",
+      "sideBarTitle": "サイドバーのエラー",
+      "alreadyExists": "このフォルダには同名の{type}「{name}」が既に存在します。",
+      "file": "ファイル",
+      "folder": "フォルダー"
+    },
+    "toc": {
+      "empty": "このドキュメントに見出しはありません"
     }
   },
   "commandPalette": {
@@ -283,7 +295,12 @@
       "selectOption": "オプションの選択",
       "searchFileToOpen": "開くファイルの検索",
       "selectLanguage": "言語の選択"
-    }
+    },
+    "noResult": "一致する結果はありません",
+    "quickOpenEmpty": "フォルダを開くとファイル名で検索できます",
+    "currentSuffix": "{name} - 現在",
+    "textDirectionLtr": "左から右へ",
+    "textDirectionRtl": "右から左へ"
   },
   "exportSettings": {
     "autoNumberingHeadings": "見出しの自動番号付け",
@@ -769,7 +786,8 @@
       "enableSpellChecking": "スペルチェックを有効",
       "hideMarksForErrors": "スペルエラーのマークを隠す",
       "title": "スペルチェック"
-    }
+    },
+    "moreInfo": "詳細を見る"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -916,7 +934,8 @@
   },
   "common": {
     "cancel": "キャンセル",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "読み込み中"
   },
   "dialog": {
     "cancel": "キャンセル",
@@ -940,7 +959,8 @@
     "renameFailure": "名前の変更に失敗",
     "moveFailure": "移動に失敗",
     "openFailure": "開けません",
-    "openRefused": "{name}を開けません：パスが許可されたフォルダー外です。"
+    "openRefused": "{name}を開けません：パスが許可されたフォルダー外です。",
+    "moreFiles": "ほか {count} 件"
   },
   "error": {
     "configSchemaViolation": "設定スキーマ違反",
@@ -993,7 +1013,8 @@
       "columns": "列"
     },
     "notifications": {
-      "notificationNotFound": "通知が見つかりません"
+      "notificationNotFound": "通知が見つかりません",
+      "uploadImage": "画像をアップロード"
     },
     "print": {
       "error": "\"{title}\" の印刷エラー",
@@ -1028,5 +1049,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "クリックでカウント表示を切り替え",
+    "readingTime": "{count} 分"
+  },
+  "autoUpdates": {
+    "update": "アップデート",
+    "updateNotAvailable": "利用可能なアップデートはありません",
+    "updateDownloaded": "アップデートをダウンロードしました",
+    "updateAvailable": "アップデートがあります"
   }
 }

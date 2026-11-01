@@ -104,6 +104,7 @@ import { addCommonStyle, setEditorWidth } from '@/util/theme'
 import { usePreferencesStore } from '@/store/preferences'
 import { useEditorStore } from '@/store/editor'
 import { useProjectStore } from '@/store/project'
+import { invalidateSelectionMenuCache } from '@/store/selectionState'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { SyntheticHistory, type IFileHistoryLike } from './syntheticHistory'
@@ -522,6 +523,11 @@ watch(sourceCode, (isSource) => {
   const windowId = window.colamd?.env?.windowId ?? -1
   if (isSource) {
     window.electron.ipcRenderer.send('mt::set-editor-format-menus-enabled', windowId, false)
+    // The main process just mutated both menus OUTSIDE the selection channel,
+    // so the "last state sent" cache no longer mirrors them — without this,
+    // re-applying the same selection state on exit would be skipped as
+    // "unchanged" and the menus would stay greyed out (#3531, PERF-03 gate).
+    invalidateSelectionMenuCache(windowId)
     return
   }
   nextTick(() => {
@@ -530,6 +536,7 @@ watch(sourceCode, (isSource) => {
     } else {
       window.electron.ipcRenderer.send('mt::set-editor-format-menus-enabled', windowId, true)
     }
+    invalidateSelectionMenuCache(windowId)
   })
 })
 
@@ -1239,7 +1246,6 @@ interface FileChangePayload {
   history?: unknown
   scrollTop?: number
   muyaIndexCursor?: unknown
-  blocks?: unknown
   isReload?: boolean
 }
 
@@ -1562,7 +1568,7 @@ onMounted(() => {
   //     land back on the saved content and clean-vs-dirty must resolve
   //     immediately (Phase G — G6).
   //   - debounced pause tier (~120ms): one serialization feeding markdown +
-  //     hash + TOC + wordCount + blocks; re-freshens `tab.markdown` too.
+  //     hash + TOC + wordCount; re-freshens `tab.markdown` too.
   // Markdown reads (save / close / switch / export / crash buffer) go through
   // `flushActiveEditor` → `pipeline.flushActive()`, the flush-on-read
   // primitive. See lazyMarkdownPipeline.ts for the full contract.
@@ -1772,7 +1778,7 @@ onBeforeUnmount(() => {
   right: 0;
   left: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: var(--maskColorStrong);
   z-index: 11;
   & .icon-close {
     z-index: 1000;
