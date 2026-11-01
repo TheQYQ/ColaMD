@@ -182,3 +182,50 @@ describe('search.replace() — replace all across multiple blocks', () => {
         expect(search.matches.length).toBe(0);
     });
 });
+
+// PERF-10 (#GUI-B7): a find jump re-renders ONLY the two blocks whose
+// highlight arrays actually change (old active loses the flag, new one gains
+// it) — the previous implementation cleared and re-added every matched block.
+describe('search.find() — only the involved blocks re-render', () => {
+    it('leaves untouched matched blocks unpatched on find-next', () => {
+        const markdown = [
+            'alpha beta',
+            '',
+            'alpha gamma',
+            '',
+            'delta alpha',
+            '',
+        ].join('\n');
+        const muya = bootMuya(markdown);
+        const searchModule = muya.editor.searchModule;
+        const search = searchModule.search('alpha');
+        expect(search.matches.length).toBe(3);
+
+        const involved = [...new Set(search.matches.map(m => m.block))];
+        expect(involved.length).toBe(3);
+
+        const updateSpies = new Map(
+            involved.map((block) => {
+                const spy = vi.spyOn(block, 'update');
+                return [block, spy] as const;
+            }),
+        );
+
+        search.find('next');
+
+        // Matches 0 and 1 live in different paragraphs, so the jump retouches
+        // exactly those two blocks (previous loses the flag, next gains it);
+        // the third matched block must stay unpatched.
+        const touched1 = [...updateSpies.entries()].filter(([, spy]) => spy.mock.calls.length > 0);
+        expect(touched1.length).toBe(2);
+        expect(touched1.map(([block]) => block)).not.toContain(involved[2]);
+        expect(search.index).toBe(1);
+
+        // The next jump moves on: the first block stays unpatched this time.
+        for (const spy of updateSpies.values()) spy.mockClear();
+        search.find('next');
+        const touched2 = [...updateSpies.entries()].filter(([, spy]) => spy.mock.calls.length > 0);
+        expect(touched2.length).toBe(2);
+        expect(touched2.map(([block]) => block)).not.toContain(involved[0]);
+    });
+});

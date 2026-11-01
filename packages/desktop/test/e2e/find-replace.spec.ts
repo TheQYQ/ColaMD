@@ -106,9 +106,10 @@ const editorText = (page: Page): Promise<string> =>
 const countOccurrences = (haystack: string, needle: string): number =>
   haystack.split(needle).length - 1
 
-// Close the find bar (if open) and reset its inputs to a clean slate so the
-// next scenario starts fresh. Escape -> emptySearch() clears searchValue and
-// replaceValue and removes engine highlights.
+// Close the find bar (if open) so the next scenario starts from a known state.
+// Escape -> closeSearch() hides the bar and drops the engine highlights, but
+// deliberately KEEPS the query term (#GUI-B2 UX-02: closing is not a verdict on
+// the search), so this does not reset the inputs — callers type their own term.
 const closeAndReset = async (page: Page): Promise<void> => {
   const bar = page.locator(SEARCH_BAR)
   if (await bar.isVisible()) {

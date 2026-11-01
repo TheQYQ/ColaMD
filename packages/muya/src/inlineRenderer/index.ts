@@ -88,7 +88,20 @@ class InlineRenderer {
         domNode!.innerHTML = html;
     }
 
+    // PERF-09 (#GUI-B7): the reference-definition labels used to rebuild on
+    // EVERY patched block — one full-tree walk per content block per render,
+    // K x O(N) for a K-block update on an N-paragraph document. The Map is now
+    // cached against the jsonState revision (bumped on every state mutation)
+    // and rebuilt at most once per document change.
+    private _labelsCache: Map<string, { href: string; title: string }> | null = null;
+    private _labelsRevision = -1;
+
     private _collectReferenceDefinitions() {
+        const revision = this.muya.editor.jsonState.revision;
+        if (this._labelsCache && this._labelsRevision === revision) {
+            this.labels = this._labelsCache;
+            return;
+        }
         // Read-only traversal of the live tree: this method extracts label/info
         // strings into a fresh Map and retains nothing else (no state refs
         // survive this call), so the deep clone is unnecessary on the
@@ -113,6 +126,8 @@ class InlineRenderer {
 
         travel(state);
 
+        this._labelsCache = labels;
+        this._labelsRevision = revision;
         this.labels = labels;
     }
 

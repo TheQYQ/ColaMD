@@ -218,6 +218,7 @@
     }
   },
   "search": {
+    "close": "Fermer",
     "searchPlaceholder": "Rechercher",
     "caseSensitive": "Sensible à la casse",
     "wholeWord": "Mot entier",
@@ -233,7 +234,8 @@
     "tree": {
       "emptyProject": "Projet vide",
       "createFile": "Créer un fichier",
-      "openFile": "Ouvrir un fichier..."
+      "openFile": "Ouvrir un fichier...",
+      "newFileNamePlaceholder": "Saisir le nom du fichier .md"
     },
     "icons": {
       "files": "Fichiers",
@@ -266,15 +268,30 @@
       "minutesAgo": "il y a {count} min",
       "hoursAgo": "il y a {count} h",
       "daysAgo": "il y a {count} j"
+    },
+    "errors": {
+      "sideBarTitle": "Erreur dans le panneau latéral",
+      "deleting": "Erreur lors de la suppression",
+      "alreadyExists": "Un {type} nommé « {name} » existe déjà dans ce dossier.",
+      "file": "fichier",
+      "folder": "dossier"
+    },
+    "toc": {
+      "empty": "Ce document n'a aucun titre"
     }
   },
   "commandPalette": {
     "placeholder": "Tapez une commande à exécuter",
+    "noResult": "Aucun résultat",
+    "quickOpenEmpty": "Ouvrez un dossier pour rechercher des fichiers par nom",
     "placeholders": {
       "selectOption": "Sélectionner une option",
       "searchFileToOpen": "Rechercher un fichier à ouvrir",
       "selectLanguage": "Sélectionner la langue"
-    }
+    },
+    "currentSuffix": "{name} - actuel",
+    "textDirectionLtr": "De gauche à droite",
+    "textDirectionRtl": "De droite à gauche"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Numérotation automatique des titres",
@@ -919,6 +936,7 @@
     "importWarning": "Avertissement d'importation",
     "installPandoc": "Installer Pandoc",
     "keepOpen": "Garder ouvert",
+    "moreFiles": "et {count} autres",
     "replace": "Remplacer",
     "save": "Enregistrer",
     "saveChanges": "Enregistrer les modifications",
@@ -983,7 +1001,8 @@
       "columns": "Colonnes"
     },
     "notifications": {
-      "notificationNotFound": "Notification introuvable"
+      "notificationNotFound": "Notification introuvable",
+      "uploadImage": "Téléverser l’image"
     },
     "print": {
       "error": "Erreur d'impression pour \"{title}\"",
@@ -1016,5 +1035,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "Cliquez pour changer de mode de comptage",
+    "readingTime": "{count} min"
+  },
+  "autoUpdates": {
+    "update": "Mettre à jour",
+    "updateNotAvailable": "Pas de mise à jour disponible",
+    "updateDownloaded": "Mise à jour téléchargée",
+    "updateAvailable": "Mise à jour disponible"
   }
 }

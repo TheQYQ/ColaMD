@@ -18,6 +18,12 @@
       @node-expand="onExpand"
       @node-collapse="onCollapse"
     />
+    <div
+      v-else
+      class="empty-hint"
+    >
+      {{ t('sideBar.toc.empty') }}
+    </div>
   </div>
 </template>
 
@@ -191,5 +197,16 @@ watch(
   white-space: normal;
   height: auto;
   min-height: 26px;
+}
+</style>
+
+<style scoped>
+/* Mirrors history.vue's .empty-hint so both sidebar panels render the same
+   quiet "nothing here" state. */
+.empty-hint {
+  padding: 20px 25px;
+  color: var(--sideBarTextColor);
+  opacity: 0.6;
+  font-size: 13px;
 }
 </style>

@@ -849,15 +849,15 @@ const testPicgo = async (): Promise<void> => {
 }
 
 .pref-image-uploader .status-info.success {
-  background: var(--successBgColor, #f0f9ff);
-  color: var(--successColor, #059669);
-  border: 1px solid var(--successColor, #059669);
+  background: var(--successBgColor);
+  color: var(--successColor);
+  border: 1px solid var(--successColor);
 }
 
 .pref-image-uploader .status-info.warning {
-  background: var(--warningBgColor, #fffbeb);
-  color: var(--warningColor, #d97706);
-  border: 1px solid var(--warningColor, #d97706);
+  background: var(--warningBgColor);
+  color: var(--warningColor);
+  border: 1px solid var(--warningColor);
 }
 
 .pref-image-uploader .status-text {
@@ -883,7 +883,7 @@ const testPicgo = async (): Promise<void> => {
   cursor: pointer;
   padding: 6px 8px;
   border-radius: 4px;
-  color: var(--editorColor70, #666);
+  color: var(--editorColor70);
   transition: color 0.2s ease;
   display: flex;
   align-items: center;
@@ -906,7 +906,7 @@ const testPicgo = async (): Promise<void> => {
 
 .pref-image-uploader .standalone-refresh-button:disabled:hover {
   background: none;
-  color: var(--editorColor70, #666);
+  color: var(--editorColor70);
   border-color: var(--editorColor30, #ddd);
 }
 
@@ -941,7 +941,7 @@ const testPicgo = async (): Promise<void> => {
   cursor: pointer;
   padding: 4px;
   border-radius: 3px;
-  color: var(--editorColor70, #666);
+  color: var(--editorColor70);
   transition: color 0.2s ease;
   display: flex;
   align-items: center;
@@ -960,7 +960,7 @@ const testPicgo = async (): Promise<void> => {
 
 .pref-image-uploader .refresh-button:disabled:hover {
   background: none;
-  color: var(--editorColor70, #666);
+  color: var(--editorColor70);
 }
 
 .pref-image-uploader .initial-button {
@@ -969,7 +969,7 @@ const testPicgo = async (): Promise<void> => {
   cursor: default;
   padding: 4px;
   border-radius: 3px;
-  color: var(--editorColor70, #666);
+  color: var(--editorColor70);
   transition: color 0.2s ease;
   display: flex;
   align-items: center;
@@ -995,7 +995,7 @@ const testPicgo = async (): Promise<void> => {
 }
 
 .pref-image-uploader .status-indicator.status-success {
-  color: var(--successColor, #059669);
+  color: var(--successColor);
 }
 
 .pref-image-uploader .status-indicator.status-error {
@@ -1003,7 +1003,7 @@ const testPicgo = async (): Promise<void> => {
 }
 
 .pref-image-uploader .status-indicator.status-not-found {
-  color: var(--editorColor70, #666);
+  color: var(--editorColor70);
 }
 
 .pref-image-uploader .status-indicator:hover {
@@ -1014,7 +1014,7 @@ const testPicgo = async (): Promise<void> => {
   font-size: 12px;
   opacity: 0.7;
   font-weight: normal;
-  color: var(--successColor, #059669);
+  color: var(--successColor);
 }
 
 .pref-image-uploader .detection-status-indicator {
@@ -1046,7 +1046,7 @@ const testPicgo = async (): Promise<void> => {
   padding: 12px;
   background-color: var(--floatBgColor);
   border-radius: 6px;
-  border-left: 4px solid var(--warningColor, #ffc107);
+  border-left: 4px solid var(--warningColor);
 }
 
 .pref-image-uploader .install-title {

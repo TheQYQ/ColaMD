@@ -31,6 +31,10 @@
       </ul>
     </div>
     <div
+      v-if="tabsOverflow"
+      class="tabs-fade"
+    />
+    <div
       class="new-file"
       @click.stop="newFile()"
     >
@@ -65,6 +69,14 @@ const tabContainer = ref<HTMLElement | null>(null)
 const tabDropContainer = ref<HTMLElement | null>(null)
 let autoScroller: AutoScroller | null = null
 let drake: dragula.Drake | null = null
+
+// UX-21: a right-edge fade shows there are more tabs off-screen (the strip
+// hides its scrollbar and only scrolls by wheel/drag).
+const tabsOverflow = ref(false)
+const measureTabsOverflow = (): void => {
+  const el = tabContainer.value
+  tabsOverflow.value = !!el && el.scrollWidth > el.clientWidth + 1
+}
 
 // Computed properties
 
@@ -177,7 +189,16 @@ watch(
   }
 )
 
+watch(
+  () => tabs.value.length,
+  () => {
+    nextTick(measureTabsOverflow)
+  }
+)
+
 onMounted(() => {
+  measureTabsOverflow()
+  window.addEventListener('resize', measureTabsOverflow)
   bus.on('TABS::close-this', closeTab)
   bus.on('TABS::close-others', closeOthers)
   bus.on('TABS::close-saved', closeSaved)
@@ -228,6 +249,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', measureTabsOverflow)
   const tabsEl = tabContainer.value
   if (tabsEl) {
     tabsEl.removeEventListener('wheel', handleTabScroll)
@@ -270,7 +292,7 @@ onBeforeUnmount(() => {
   user-select: none;
   overflow: hidden;
   &:hover > .new-file {
-    opacity: 1 !important;
+    opacity: 1;
   }
 }
 .scrollable-tabs {
@@ -367,11 +389,34 @@ onBeforeUnmount(() => {
     & > .close-icon {
       opacity: 1;
     }
-    & > .unsaved-dot {
-      opacity: 0;
+    /* UX-01: the active tab is the one being edited, so its unsaved dot must
+       stay visible there too — hiding it meant the marker only appeared after
+       switching away. The base :hover rules already swap dot for close-icon,
+       so only the resting state needs an override. */
+    &.unsaved {
+      & > .close-icon {
+        opacity: 0;
+      }
+      & > .unsaved-dot {
+        opacity: 1;
+      }
+      &:hover > .close-icon {
+        opacity: 1;
+      }
     }
   }
 }
+.tabs-fade {
+  position: absolute;
+  top: 0;
+  right: 36px;
+  width: 28px;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--sideBarBgColor));
+  z-index: 4;
+}
+
 .editor-tabs > .new-file {
   flex: 0 0 36px;
   width: 36px;
@@ -383,10 +428,9 @@ onBeforeUnmount(() => {
   justify-content: space-around;
   cursor: pointer;
   color: var(--text-tertiary);
-  opacity: 0;
-  &.always-visible {
-    opacity: 1;
-  }
+  /* UX-21: faintly visible at rest so new users can find the entry; full
+     opacity on hover of the tab strip (rule below). */
+  opacity: 0.6;
 }
 
 .editor-tabs > .new-file:hover {

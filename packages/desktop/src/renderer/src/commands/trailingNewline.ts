@@ -57,7 +57,9 @@ class TrailingNewlineCommand {
         value: 3
       }
     ]
-    this.subcommands[index].description = `${descriptions[index]} - current`
+    this.subcommands[index].description = t('commandPalette.currentSuffix', {
+      name: descriptions[index]
+    })
     this.subcommandSelectedIndex = index
   }
 

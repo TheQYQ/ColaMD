@@ -375,7 +375,13 @@ const showUnsavedFilesMessage = async (
 
     typedOn('mt::unsaved-dialog-response', onResponse)
     win.once('closed', onClosed)
-    typedSend(win.webContents, 'mt::show-unsaved-dialog', files.length)
+    // #GUI-B1 UX-03: the dialog names the unsaved files, so send the names
+    // rather than a bare count.
+    typedSend(
+      win.webContents,
+      'mt::show-unsaved-dialog',
+      files.map((file) => file.filename)
+    )
   })
 }
 
