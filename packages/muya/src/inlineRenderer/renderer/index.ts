@@ -172,18 +172,18 @@ class Renderer {
     }
 
     output(tokens: Token[], block: Format, cursor: IRenderCursor) {
-        const children: VNode[] = tokens.reduce(
-            (acc, token) => [
-                ...acc,
-                ...this.dispatch(snakeToCamel(token.type), {
-                    h,
-                    cursor,
-                    block,
-                    token,
-                }),
-            ],
-            [] as VNode[],
-        );
+        // PERF-15 (#GUI-B7): the reduce+spread rebuilt the accumulator array
+        // per token (O(n^2) copies on token-heavy paragraphs).
+        const children: VNode[] = [];
+        for (const token of tokens) {
+            const nodes = this.dispatch(snakeToCamel(token.type), {
+                h,
+                cursor,
+                block,
+                token,
+            });
+            for (const node of nodes) children.push(node);
+        }
         const vNode = h('span', children);
         const rawHtml = toHTML(vNode);
 
