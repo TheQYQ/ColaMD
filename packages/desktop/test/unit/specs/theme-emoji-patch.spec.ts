@@ -79,7 +79,7 @@ describe('theme.ts emoji-picker Linux font patch', () => {
 
   it('routes nothing emoji-related through addStyles off Linux', async () => {
     const { addStyles } = await loadTheme(false)
-    addStyles({ theme: 'light', ...commonOptions })
+    await addStyles({ theme: 'light', ...commonOptions })
 
     expect(commonStyleHtml()).not.toContain('.mu-emoji-picker')
   })

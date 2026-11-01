@@ -48,7 +48,19 @@ export const useEditorScroll = (deps: ScrollDeps) => {
   let cachedForToc: ReadonlyArray<{ slug?: string }> | null = null
   const getHeadings = (container: HTMLElement): HTMLElement[] => {
     const toc = getListToc()
-    if (cachedHeadings && cachedForToc === toc && cachedHeadings[0]?.isConnected !== false) {
+    // Nothing in the outline means no heading can match below, so skip the scan
+    // outright — that is the cheap half of PERF-11 for heading-less documents.
+    if (toc.length === 0) return []
+    // `length > 0` is load-bearing: `[0]?.isConnected` on an empty array is
+    // `undefined`, which is `!== false`, so an empty first-frame result (muya
+    // had not rendered the blocks yet) used to read as a valid cache hit and
+    // lock the highlight off until listToc changed identity.
+    if (
+      cachedHeadings &&
+      cachedHeadings.length > 0 &&
+      cachedForToc === toc &&
+      cachedHeadings[0].isConnected
+    ) {
       return cachedHeadings
     }
     cachedHeadings = Array.from(
