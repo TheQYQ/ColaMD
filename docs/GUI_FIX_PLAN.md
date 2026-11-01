@@ -1,6 +1,6 @@
 # ColaMD GUI 修复计划
 
-> **批次进度**：常规批次 1/11 · 专项 0/3（2026-11-01 建档；进度行随每批合入更新）。
+> **批次进度**：常规批次 3/11 · 专项 0/3（2026-11-01 建档；进度行随每批合入更新）。
 > 本文档是 GUI 修复工作的**唯一进度真值**；性能与门禁的数字基线仍以 `PROJECT_GUIDE.md` §14 为准。
 
 ## 0. 文档信息与生命周期
@@ -21,20 +21,20 @@
 | ID      | 严重性 | 问题                                                                                                    | 关键位置                                                                                                                 | 批次 | 状态             |
 | ------- | ------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---- | ---------------- |
 | PERF-01 | 高     | 渲染端 6.8MB 单体主包：全量 Element Plus + 全静态路由 + 无 manualChunks；设置窗口也解析执行编辑器全家桶 | `renderer/src/main.ts:8-9`、`router/index.ts:5-13`、`electron.vite.config.ts:62-113`、`src/main/windows/base.ts:121-124` | B5   | 进行中 (PR #114) |
-| PERF-02 | 高     | 源码模式每次 cursorActivity 做两次全文 `getValue()` + 一遍全文 wordCount，每键 O(N)                     | `editorWithTabs/sourceCode.vue:312-331, 67-99, 292-317`                                                                  | B3   | 进行中 (PR #112) |
-| PERF-03 | 高     | 每次光标移动发 2 条 IPC，主进程全量重写两份原生菜单的全部 item                                          | `store/selectionState.ts:47-81`、`src/main/menu/index.ts:448-477`、`menu/actions/paragraph.ts:220-277`                   | B3   | 进行中 (PR #112) |
+| PERF-02 | 高     | 源码模式每次 cursorActivity 做两次全文 `getValue()` + 一遍全文 wordCount，每键 O(N)                     | `editorWithTabs/sourceCode.vue:312-331, 67-99, 292-317`                                                                  | B3   | 已修复 (PR #112) |
+| PERF-03 | 高     | 每次光标移动发 2 条 IPC，主进程全量重写两份原生菜单的全部 item                                          | `store/selectionState.ts:47-81`、`src/main/menu/index.ts:448-477`、`menu/actions/paragraph.ts:220-277`                   | B3   | 已修复 (PR #112) |
 | PERF-04 | 高     | 大文档无虚拟化：`updateState` 全量重建 DOM；源码模式 `viewportMargin: Infinity` 关掉 CM5 虚拟化         | `muya/src/block/scrollPage/index.ts:51-105`、`sourceCode.vue:519`                                                        | SB   | 待修             |
 | PERF-05 | 中     | 56 个主题/代码高亮 CSS 以 `?inline` 全量打进主包，运行时一次只用一份                                    | `util/themeColor.ts:1-60`、`util/theme.ts:67-104`                                                                        | B6   | 进行中 (PR #115) |
 | PERF-06 | 中     | 启动时偏好镜像逐个触发全文档 force 重建（每个含全文档 structuredClone + DOM 重建）                      | `useEngineOptionSync.ts:111-145`、`muya/src/muya.ts:338-384`                                                             | B6   | 进行中 (PR #115) |
-| PERF-07 | 中     | 打字暂停档 `blocks: engine.getState()` 全文档深拷贝后无人消费（唯一"消费者"写 undefined）               | `lazyMarkdownPipeline.ts:118`、`store/contentEvents.ts:103,132`、`sourceCode.vue:507`                                    | B3   | 进行中 (PR #112) |
-| PERF-08 | 中     | WYSIWYG 每键对所在段落做约 5 次完整 inline tokenize                                                     | `muya/src/block/base/format.ts:610-700, 265-335`                                                                         | B7   | 进行中 (PR #116) |
-| PERF-09 | 中     | 每次 `patch()` 对整棵文档树递归重建引用定义 labels                                                      | `muya/src/inlineRenderer/index.ts:70-117`                                                                                | B7   | 进行中 (PR #116) |
-| PERF-10 | 中     | 搜索跳转把所有匹配块各重渲染两遍（高亮集合大的常见词一次跳转数百次 innerHTML 替换）                     | `muya/src/search/index.ts:32-64, 126-148`                                                                                | B7   | 进行中 (PR #116) |
+| PERF-07 | 中     | 打字暂停档 `blocks: engine.getState()` 全文档深拷贝后无人消费（唯一"消费者"写 undefined）               | `lazyMarkdownPipeline.ts:118`、`store/contentEvents.ts:103,132`、`sourceCode.vue:507`                                    | B3   | 已修复 (PR #112) |
+| PERF-08 | 中     | WYSIWYG 每键对所在段落做约 5 次完整 inline tokenize                                                     | `muya/src/block/base/format.ts:610-700, 265-335`                                                                         | B7   | 已修复 (PR #116) |
+| PERF-09 | 中     | 每次 `patch()` 对整棵文档树递归重建引用定义 labels                                                      | `muya/src/inlineRenderer/index.ts:70-117`                                                                                | B7   | 已修复 (PR #116) |
+| PERF-10 | 中     | 搜索跳转把所有匹配块各重渲染两遍（高亮集合大的常见词一次跳转数百次 innerHTML 替换）                     | `muya/src/search/index.ts:32-64, 126-148`                                                                                | B7   | 已修复 (PR #116) |
 | PERF-11 | 低-中  | TOC 跟随滚动每帧对全部标题做 `getBoundingClientRect` + 选择器全扫                                       | `useEditorScroll.ts:40-64`                                                                                               | B6   | 进行中 (PR #115) |
-| PERF-12 | 低-中  | muya UI 4 处常驻 document 级 mousemove + `elementsFromPoint` 命中测试                                   | `muya/src/ui/paragraphFrontButton/index.ts:114-153` 等 4 处                                                              | B7   | 进行中 (PR #116) |
+| PERF-12 | 低-中  | muya UI 4 处常驻 document 级 mousemove + `elementsFromPoint` 命中测试                                   | `muya/src/ui/paragraphFrontButton/index.ts:114-153` 等 4 处                                                              | B7   | 已修复 (PR #116) |
 | PERF-13 | 低     | `transition: all` 反模式 7 处                                                                           | `titleBar/index.vue:285-287`、`rename/index.vue:123`、`uploader/index.vue:887-991` 等                                    | B6   | 进行中 (PR #115) |
-| PERF-14 | 低     | `dispatch` 内无条件 `JSON.stringify(op)`，粘贴大内容时白付 MB 级序列化                                  | `muya/src/state/index.ts:203`                                                                                            | B7   | 进行中 (PR #116) |
-| PERF-15 | 低     | inline 渲染输出用 reduce + spread 构造数组，O(n²) 拷贝                                                  | `muya/src/inlineRenderer/renderer/index.ts:174-183`                                                                      | B7   | 进行中 (PR #116) |
+| PERF-14 | 低     | `dispatch` 内无条件 `JSON.stringify(op)`，粘贴大内容时白付 MB 级序列化                                  | `muya/src/state/index.ts:203`                                                                                            | B7   | 已修复 (PR #116) |
+| PERF-15 | 低     | inline 渲染输出用 reduce + spread 构造数组，O(n²) 拷贝                                                  | `muya/src/inlineRenderer/renderer/index.ts:174-183`                                                                      | B7   | 已修复 (PR #116) |
 
 ### 1.2 用户体验（UX，21 项）
 
@@ -91,7 +91,7 @@
 | A11Y-06 | 中     | 文件树无 tree/treeitem 语义，展开/选中态只在 data-\* 与 class 里（键盘导航已实现但 AT 感知不到）                            | `tree.vue:27-75`、`treeFolder.vue:11-14`、`treeFile.vue:142-154`                                       | SC                        | 待修             |
 | A11Y-07 | 中     | 全局 `:focus { outline: none }` 补偿面太窄；图标按钮只靠 title 命名；LinkIcon 可点击却硬编码 aria-hidden                    | `assets/styles/index.css:135-137, 476-482`、`LinkIcon.vue:12`                                          | B8                        | 进行中 (PR #117) |
 | A11Y-08 | 中     | 命令面板结果列表无 listbox/option 语义，上下键选择对 SR 不可见                                                              | `commandPalette/index.vue:29-58`                                                                       | B8                        | 进行中 (PR #117) |
-| A11Y-09 | 中     | muya 图片加载失败/空图用自定义属性承载文案（SR 读不到）；失败分支 img 无 alt；三个 hover 图标无标签                         | `muya/src/inlineRenderer/renderer/image.ts:89-90, 200-229`                                             | B7                        | 进行中 (PR #116) |
+| A11Y-09 | 中     | muya 图片加载失败/空图用自定义属性承载文案（SR 读不到）；失败分支 img 无 alt；三个 hover 图标无标签                         | `muya/src/inlineRenderer/renderer/image.ts:89-90, 200-229`                                             | B7                        | 已修复 (PR #116) |
 | A11Y-10 | 低-中  | html 标签无 lang 且 10 语言切换不更新 documentElement.lang                                                                  | `renderer/index.html:5`、`i18n/index.ts:73-108`                                                        | B8                        | 进行中 (PR #117) |
 | A11Y-11 | 低     | 未显式启用 Chromium 无障碍树，contenteditable 富编辑器退化风险无实测记录                                                    | `src/main/index.ts`                                                                                    | SC                        | 待修             |
 | A11Y-12 | 低     | 侧栏宽度拖拽无键盘等价物；无 color-scheme 声明；无"跟随系统深浅色"                                                          | `sideBar/index.vue:30-33`                                                                              | SC                        | 待修             |
@@ -151,11 +151,11 @@ _消解_：逐项清理；DS-05 一类真 bug 靠"改样式必须人工过一遍
 - [x] **B0** 计划落地（0.5h）— 已合入 develop（PR #109，merge `8a51be9`）
 - [ ] **B1** 真 bug + 数据安全（4-5h）
 - [ ] **B2** 搜索高频打断（3-4h）
-- [ ] **B3** 性能快赢 · 桌面侧（4-5h）
+- [x] **B3** 性能快赢 · 桌面侧（4-5h）— 已合入 develop（PR #112）
 - [ ] **B4** i18n + 状态栏 + 空态（3-4h）
 - [ ] **B5** 构建优化（6-8h）
 - [ ] **B6** 性能中量 · 桌面侧（3-4h）
-- [ ] **B7** 性能中量 · muya 侧（4-5h，触引擎）
+- [x] **B7** 性能中量 · muya 侧（4-5h，触引擎）— 已合入 develop（PR #116）
 - [ ] **B8** 可访问性 · 键盘可达 + 焦点（6-8h）
 - [ ] **B9** 对比度 + 门禁脚本（4-6h）
 - [ ] **B10** UX 收尾 + token 归并（5-6h）
