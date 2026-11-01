@@ -56,7 +56,13 @@ const boot = (options: BootOptions = {}) => {
     maximizePath: 'max',
     closePath: 'close',
     isOsxPlatform: false,
-    shouldShowInAppTitleBar: () => true
+    shouldShowInAppTitleBar: () => true,
+    // Stubbed, not imported: #GUI-B8 adds `activateOnEnterOrSpace` to
+    // titleBar/index.vue's imports, and this harness destructures exactly the
+    // keys listed here out of __deps — an unlisted binding is a ReferenceError
+    // that only fires on the render path, so it would sit undetected until
+    // B1 and B8 meet in develop.
+    activateOnEnterOrSpace: () => {}
   }
 
   const setup = loadSfcSetup<Record<string, unknown>>(vuePath, deps)
