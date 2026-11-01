@@ -43,27 +43,33 @@ export function registerSidebarContextMenuHandlers(ctx: SidebarContextMenuContex
     // vanish on a stray click. The success toast closes the loop the old
     // silent delete left open.
     const name = window.path.basename(pathname)
-    notice.notify({
-      title: t('sideBar.confirmDeleteTitle'),
-      message: t('sideBar.confirmDeleteMessage', { name }),
-      type: 'primary',
-      showConfirm: true,
-      action: (status: boolean) => {
-        if (!status) return
-        window.electron.ipcRenderer
-          .invoke('mt::fs-trash-item', pathname)
-          .then(() => {
-            notice.notify({
-              title: t('sideBar.deleted'),
-              type: 'primary',
-              time: 3000
+    notice
+      .notify({
+        title: t('sideBar.confirmDeleteTitle'),
+        message: t('sideBar.confirmDeleteMessage', { name }),
+        type: 'primary',
+        showConfirm: true
+      })
+      .then(
+        () => {
+          // The confirm click resolves; the close button rejects, and a timeout
+          // leaves it pending — both non-resolve paths mean "not now", so they
+          // must not be mistaken for a failed trash below.
+          window.electron.ipcRenderer
+            .invoke('mt::fs-trash-item', pathname)
+            .then(() => {
+              notice.notify({
+                title: t('sideBar.deleted'),
+                type: 'primary',
+                time: 3000
+              })
             })
-          })
-          .catch((err: unknown) => {
-            sidebarFail(t('sideBar.errors.deleting'), err)
-          })
-      }
-    })
+            .catch((err: unknown) => {
+              sidebarFail(t('sideBar.errors.deleting'), err)
+            })
+        },
+        () => undefined
+      )
   })
   bus.on('SIDEBAR::copy-cut', (type: unknown) => {
     const { pathname: src } = ctx.activeItem.value

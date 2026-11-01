@@ -7,12 +7,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // the same IPC calls, so each one is asserted here -- including the Paste entry,
 // which is registered by delegation and would silently disappear in a bad move.
 
+type NotifyOpts = {
+  title?: string
+  type?: string
+  message?: string
+  showConfirm?: boolean
+  time?: number
+}
+
 const h = vi.hoisted(() => {
   const handlers = new Map<string, (arg?: unknown) => unknown>()
-  const notifications: Array<{ title: string; type: string; message: string }> = []
+  const notifications: NotifyOpts[] = []
+  // The real service signals the user's choice by settling the promise it
+  // returns: the confirm click resolves, the close button rejects, a timeout
+  // never settles. The delete path hangs off that settlement, so the stub has
+  // to hand the test the same two levers instead of a callback option.
+  const settles: Array<{ resolve: () => void; reject: () => void }> = []
   return {
     handlers,
     notifications,
+    settles,
     emitted: [] as string[],
     paste: vi.fn(async () => undefined),
     showItemInFolder: vi.fn(),
@@ -28,7 +42,11 @@ vi.mock('../../../src/renderer/src/bus', () => ({
 }))
 vi.mock('../../../src/renderer/src/services/notification', () => ({
   default: {
-    notify: (n: { title: string; type: string; message: string }) => h.notifications.push(n)
+    notify: (n: NotifyOpts): Promise<void> =>
+      new Promise((resolve, reject) => {
+        h.notifications.push(n)
+        h.settles.push({ resolve, reject })
+      })
   }
 }))
 vi.mock('../../../src/renderer/src/util/fileSystem', () => ({
@@ -52,13 +70,24 @@ const fire = async (name: string, arg?: unknown): Promise<void> => {
   await Promise.resolve()
 }
 
+// The accept path is a chain of three settlements deep (notify promise ->
+// trash invoke -> its own then), so a couple of microtask ticks is not
+// enough to observe it.
+const flush = async (): Promise<void> => {
+  for (let i = 0; i < 10; i++) await Promise.resolve()
+}
+
 describe('sidebar context menu', () => {
   beforeEach(() => {
     h.handlers.clear()
     h.notifications.length = 0
+    h.settles.length = 0
     h.emitted.length = 0
     h.paste.mockClear()
     h.showItemInFolder.mockClear()
+    // Without this the trash IPC history leaks across cases, so "nothing is
+    // deleted yet" only passes because of test order.
+    h.invoke.mockClear()
     h.invoke.mockResolvedValue(undefined)
     activeItem.value = { pathname: '/proj/docs', isDirectory: true }
     createCache.value = {}
@@ -97,21 +126,27 @@ describe('sidebar context menu', () => {
 
   it('trashes through IPC once the confirmation is accepted, and toasts', async () => {
     await fire('SIDEBAR::remove')
-    const confirm = h.notifications[0].action
-    expect(confirm).toBeTypeOf('function')
-    confirm(true)
-    await Promise.resolve()
-    await Promise.resolve()
+    h.settles[0].resolve()
+    await flush()
     expect(h.invoke).toHaveBeenCalledWith('mt::fs-trash-item', '/proj/docs')
     expect(h.notifications.some((n) => n.title === 'Moved to trash')).toBe(true)
+  })
+
+  it('deletes nothing when the confirmation is dismissed', async () => {
+    // The close button rejects the promise. That is a cancel, not a failure:
+    // neither the trash IPC nor an error toast may follow it.
+    await fire('SIDEBAR::remove')
+    h.settles[0].reject()
+    await flush()
+    expect(h.invoke).not.toHaveBeenCalledWith('mt::fs-trash-item', '/proj/docs')
+    expect(h.notifications).toHaveLength(1)
   })
 
   it('reports a failed trash with the error message after confirmation', async () => {
     h.invoke.mockRejectedValue(new Error('EBUSY'))
     await fire('SIDEBAR::remove')
-    h.notifications[0].action(true)
-    await Promise.resolve()
-    await Promise.resolve()
+    h.settles[0].resolve()
+    await flush()
     expect(h.notifications[1]).toEqual({
       title: 'Error while deleting',
       type: 'error',
@@ -122,9 +157,8 @@ describe('sidebar context menu', () => {
   it('records a non-Error rejection as text', async () => {
     h.invoke.mockRejectedValue('disk busy')
     await fire('SIDEBAR::remove')
-    h.notifications[0].action(true)
-    await Promise.resolve()
-    await Promise.resolve()
+    h.settles[0].resolve()
+    await flush()
     expect(h.notifications[1].message).toBe('disk busy')
   })
 
