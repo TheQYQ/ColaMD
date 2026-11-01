@@ -75,6 +75,14 @@
           </button>
           <button
             class="button"
+            @click="find('next')"
+          >
+            <el-icon :size="14">
+              <ArrowDown />
+            </el-icon>
+          </button>
+          <button
+            class="button"
             :title="t('search.close')"
             @click="closeSearch()"
           >
