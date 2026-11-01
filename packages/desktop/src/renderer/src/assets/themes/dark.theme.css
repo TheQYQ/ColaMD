@@ -17,7 +17,8 @@
   --editorColor80: rgba(255, 255, 255, 0.8);
   --editorColor60: rgba(255, 255, 255, 0.6);
   --editorColor50: rgba(255, 255, 255, 0.5);
-  --editorColor40: rgba(255, 255, 255, 0.4);
+  /* A11Y-02: 0.4 white = 3.7:1 on #282828; 0.62 clears 4.5:1. */
+  --editorColor40: rgba(255, 255, 255, 0.62);
   --editorColor30: rgba(255, 255, 255, 0.3);
   --editorColor10: rgba(255, 255, 255, 0.1);
   --editorColor04: rgba(255, 255, 255, 0.04);
@@ -43,14 +44,16 @@
   --buttonBorderActive: var(--buttonBorder);
 
   --buttonPrimaryFontColor: #ffffff;
-  --buttonPrimaryBgColor: var(--themeColor);
+  /* A11Y-02: white on the theme color #8791DE was 2.94:1; this darker
+     indigo keeps the hue family and clears 4.5:1. */
+  --buttonPrimaryBgColor: #4C56B8;
   --buttonPrimaryBorder: none;
   --buttonPrimaryShadow: none;
   --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
-  --buttonPrimaryBgColorHover: #97A0E6;
+  --buttonPrimaryBgColorHover: #5C66C4;
   --buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
   --buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
-  --buttonPrimaryBgColorActive: #8891DF;
+  --buttonPrimaryBgColorActive: #454FA6;
   --buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
   --buttonPrimaryFocusBorder: none;
   --buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(24, 26, 31, 0.5), 0 0 0 1px var(--themeColor);
@@ -76,7 +79,7 @@
   --sideBarColor: rgba(255, 255, 255, 0.6);
   --sideBarIconColor: var(--iconColor);
   --sideBarTitleColor: rgba(255, 255, 255, 0.8);
-  --sideBarTextColor: rgba(255, 255, 255, 0.4);
+  --sideBarTextColor: #8A8A8A;
   --sideBarBgColor: #232323;
   --sideBarItemHoverBgColor: rgba(255, 255, 255, 0.03);
   --itemBgColor: #3f3f3f;
@@ -84,7 +87,7 @@
   --floatFontColor: rgba(255, 255, 255, 0.7);
   --floatBgColor: #3f3f3f;
   --floatHoverColor: rgba(255, 255, 255, 0.04);
-  --floatBorderColor: rgba(0, 0, 0, 0.05);
+  --floatBorderColor: rgba(255, 255, 255, 0.08);
   --floatShadow: rgba(0, 0, 0, 0.2);
   --maskColor: rgba(0, 0, 0, 0.7);
   --editorAreaWidth: 800px;

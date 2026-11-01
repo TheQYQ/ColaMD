@@ -44,7 +44,7 @@
   --buttonFocusBorder: 1px solid #568af2;
 
   --buttonPrimaryFontColor: #ffffff;
-  --buttonPrimaryBgColor: linear-gradient(#557ecf, #4d78cc);
+  --buttonPrimaryBgColor: linear-gradient(#456fc4, #3d64b2);
   --buttonPrimaryBorder: 1px solid #181a1f;
   --buttonPrimaryShadow: none;
   --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);

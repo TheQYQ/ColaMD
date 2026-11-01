@@ -13,7 +13,7 @@
 
   --highlightColor: rgba(244, 130, 55, 0.4);
   --selectionColor: rgba(255, 255, 255, 0.2);
-  --editorColor: rgba(171, 178, 191, 0.8);
+  --editorColor: #9EA4AE;
   --editorColor80: rgba(171, 178, 191, 1);
   --editorColor60: rgba(171, 178, 191, 0.9);
   --editorColor50: rgba(171, 178, 191, 0.9);
@@ -42,7 +42,7 @@
   --buttonBorderActive: var(--buttonBorder);
 
   --buttonPrimaryFontColor: #ffffff;
-  --buttonPrimaryBgColor: var(--themeColor);
+  --buttonPrimaryBgColor: #5A2705;
   --buttonPrimaryBorder: none;
   --buttonPrimaryShadow: none;
   --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
@@ -75,7 +75,7 @@
   --sideBarColor: rgba(255, 255, 255, 0.6);
   --sideBarIconColor: var(--iconColor);
   --sideBarTitleColor: rgba(255, 255, 255, 1);
-  --sideBarTextColor: rgba(255, 255, 255, 0.4);
+  --sideBarTextColor: #9DA0A3;
   --sideBarBgColor: rgba(39, 45, 52, 0.95);
   --sideBarItemHoverBgColor: rgba(255, 255, 255, 0.03);
   --itemBgColor: rgba(71, 78, 86, 0.6);

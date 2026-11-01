@@ -171,7 +171,7 @@ onBeforeUnmount(() => {
   position: fixed;
   inset: 0;
   z-index: 12000;
-  background: rgba(0, 0, 0, 0.18);
+  background: var(--maskColor);
   display: flex;
   align-items: center;
   justify-content: center;
