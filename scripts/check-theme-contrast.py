@@ -9,7 +9,10 @@ checks the fixed text pairs against WCAG 2.1 contrast:
   3. editorColor           on editorBgColor          (editor body text)
 
 Alpha colors are composited over their pair's background before measuring,
-mirroring how the browser actually paints them.
+mirroring how the browser actually paints them. A gradient background is
+measured against EACH of its hex stops (text sits over the whole ramp, so the
+worst stop has to clear the bar), and a pair whose value cannot be parsed at
+all FAILS rather than being skipped — a blind spot is not a pass.
 
 Usage:
   python scripts/check-theme-contrast.py            # gate mode, exit 1 on failure
@@ -116,6 +119,49 @@ def rgb_to_hex(rgb):
     return "#%02X%02X%02X" % rgb
 
 
+GRADIENT_STOP_RE = re.compile(r"#[0-9a-fA-F]{6}")
+
+
+def resolve_raw(name, variables, seen=None):
+    """Follow var() indirection and hand back the declared value."""
+    seen = seen or set()
+    if name in seen:
+        return None
+    seen.add(name)
+    raw = variables.get(name)
+    if raw is None:
+        return None
+    raw = raw.strip()
+    ref = re.fullmatch(r"var\(\s*--([A-Za-z0-9]+)\s*\)", raw)
+    if ref:
+        return resolve_raw(ref.group(1), variables, seen)
+    return raw
+
+
+def resolve_candidates(name, variables):
+    """Every color a pair can paint with.
+
+    A flat declaration gives one. A gradient gives one per hex stop: text sits
+    over the whole ramp, so the WORST stop is the one that has to clear the
+    bar — measuring only the first stop (or skipping the pair, which is what
+    this script did before) let one-dark's white-on-gradient primary button
+    through at 3.98:1 while the gate reported all-clear.
+    """
+    raw = resolve_raw(name, variables)
+    if raw is None:
+        return []
+    color = parse_color(raw)
+    if color is not None:
+        return [color]
+    if "gradient" in raw:
+        return [
+            c
+            for c in (parse_color(m.group(0)) for m in GRADIENT_STOP_RE.finditer(raw))
+            if c is not None
+        ]
+    return []
+
+
 def adjust_for_contrast(start_rgb, bg_rgb, threshold=THRESHOLD, darken=None):
     """Return a color with the same hue as `start_rgb` whose lightness walks
     (2% steps, toward darker or lighter) until its contrast against `bg_rgb`
@@ -181,15 +227,18 @@ def check_file(path):
         variables[m.group(1)] = m.group(2).strip()
 
     failures = []
+    unresolved = []
     for fg_name, bg_name in PAIRS:
-        fg = resolve(fg_name, variables)
-        bg = resolve(bg_name, variables)
-        if fg is None or bg is None:
+        fgs = resolve_candidates(fg_name, variables)
+        bgs = [opaque(b) for b in resolve_candidates(bg_name, variables)]
+        if not fgs or not bgs:
+            # A pair this script cannot read is a blind spot, not a pass.
+            unresolved.append((fg_name, bg_name))
             continue
-        ratio = contrast(composite(fg, bg), bg)
+        ratio = min(contrast(composite(fg, bg), bg) for fg in fgs for bg in bgs)
         if ratio < THRESHOLD:
             failures.append((fg_name, fg_name, ratio))
-    return variables, failures
+    return variables, failures, unresolved
 
 
 def fix_file(path, variables, failures):
@@ -199,6 +248,16 @@ def fix_file(path, variables, failures):
         bg_name = next(b for f, b in PAIRS if f == fg_name)
         fg = resolve(fg_name, variables)
         bg = resolve(bg_name, variables)
+        if fg is None or bg is None:
+            # A gradient (or any value `resolve` cannot flatten to one color)
+            # cannot be rewritten by walking a single lightness: which stop to
+            # move, and by how much, is a design call. The gate still fails it,
+            # so it cannot be quietly ignored.
+            report.append(
+                f"  {fg_name} on {bg_name}: {ratio:.2f} — not auto-fixable "
+                "(multi-stop or unreadable value), edit by hand"
+            )
+            continue
         # Primary buttons: the audit's strategy is to darken the ACCENT
         # background so the white label stays white. Text pairs: adjust the
         # text color itself toward the background.
@@ -231,8 +290,8 @@ def main():
     failing_files = 0
     for path in sorted(glob.glob(os.path.join(THEME_DIR, "*.theme.css"))):
         name = os.path.basename(path)
-        variables, failures = check_file(path)
-        if not failures:
+        variables, failures, unresolved = check_file(path)
+        if not failures and not unresolved:
             continue
         failing_files += 1
         if not fix:
@@ -240,10 +299,18 @@ def main():
             for fg_name, _, ratio in failures:
                 bg_name = next(b for f, b in PAIRS if f == fg_name)
                 print(f"  {fg_name} on {bg_name}: {ratio:.2f} (threshold {THRESHOLD})")
+            for fg_name, bg_name in unresolved:
+                print(
+                    f"  {fg_name} on {bg_name}: UNREADABLE value — the gate cannot "
+                    "measure it, so it fails (use a hex or rgba() color, or a plain "
+                    "var() reference)"
+                )
             continue
         print(f"FIX  {name}")
         for line in fix_file(path, variables, failures):
             print(line)
+        for fg_name, bg_name in unresolved:
+            print(f"  {fg_name} on {bg_name}: unreadable, left for a human hand")
 
     if fix:
         print("\n--fix pass complete: review the diff, then rerun in gate mode.")
