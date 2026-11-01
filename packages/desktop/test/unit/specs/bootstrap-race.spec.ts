@@ -15,6 +15,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 interface IpcLike {
   handlers: Record<string, Array<(...args: unknown[]) => void>>
   on: (channel: string, handler: (...args: unknown[]) => void) => () => void
+  send: (...args: unknown[]) => void
+  invoke: (...args: unknown[]) => Promise<unknown>
   emit: (channel: string, ...args: unknown[]) => void
 }
 

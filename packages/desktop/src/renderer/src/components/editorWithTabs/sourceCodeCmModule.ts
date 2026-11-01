@@ -8,7 +8,11 @@
 // @typescript-eslint/consistent-type-imports (disallowTypeAnnotations) forbids
 // import() type annotations outright.
 interface CodeMirrorModule {
-  default: (container: HTMLElement, config: Record<string, unknown>) => unknown
+  // The runtime default export is the loose `codemirror/lib/codemirror` shim,
+  // so this mirrors the pre-B5 call site: the container ref is only ever read
+  // inside `onMounted` (where the template ref is already set), and the editor
+  // instance is used through the component's own `CMInstance` alias.
+  default: (container: Element | null, config: Record<string, unknown>) => object
   setCursorAtFirstLine: (editor: unknown) => void
   setTextDirection: (editor: unknown, dir: string) => void
   [key: string]: unknown

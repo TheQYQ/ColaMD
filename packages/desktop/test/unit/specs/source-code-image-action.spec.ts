@@ -117,8 +117,8 @@ const bootHandler = (cm: StubCM, deps: Record<string, unknown> = makeDeps()) => 
   // assertion keeps working unchanged.
   setCodeMirrorModule({
     default: () => ({}),
-    setCursorAtFirstLine: deps.setCursorAtFirstLine,
-    setTextDirection: deps.setTextDirection
+    setCursorAtFirstLine: deps.setCursorAtFirstLine as (editor: unknown) => void,
+    setTextDirection: deps.setTextDirection as (editor: unknown, dir: string) => void
   })
   const ret = comp.setup(
     { markdown: '', muyaIndexCursor: null, textDirection: 'ltr' },

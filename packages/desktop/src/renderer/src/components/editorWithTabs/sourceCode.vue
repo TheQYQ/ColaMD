@@ -555,7 +555,7 @@ onMounted(async () => {
   if (viewDestroyed.value || !currentTab.value) return
 
   // CodeMirror's line tree relies on object identity and must not be proxied by Vue.
-  const codeMirrorInstance = markRaw(cm.default(container, codeMirrorConfig))
+  const codeMirrorInstance: CMInstance = markRaw(cm.default(container, codeMirrorConfig))
 
   // `markdown-math` wraps the standard Markdown mode and delegates `$...$` and
   // `$$...$$` spans to stex so subscript underscores in math do not flip the
