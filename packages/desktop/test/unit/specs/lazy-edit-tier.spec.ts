@@ -148,8 +148,7 @@ describe('useEditorStore LISTEN_FOR_CONTENT_CHANGE — lazy-serialization tiers'
       wordCount: null,
       cursor: null,
       history: { stack: [{ id: 5 }], index: 0, lastEditIndex: 0, lastInitIndex: -1 },
-      toc: null,
-      blocks: null
+      toc: null
     })
 
     expect(tab.markdown).toBe('saved content\n')

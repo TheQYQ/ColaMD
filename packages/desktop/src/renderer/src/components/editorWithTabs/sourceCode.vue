@@ -339,7 +339,7 @@ const runPendingCommit = () => {
 
 const handleCmChange = () => {
   if (viewDestroyed.value || !tabId.value) return
-  editorStore.LISTEN_FOR_CONTENT_CHANGE({ id: tabId.value, edit: true })
+  editorStore.LISTEN_FOR_CONTENT_CHANGE({ id: tabId.value, markdown: null, edit: true })
   if (commitTimer.value) clearTimeout(commitTimer.value)
   commitTimer.value = setTimeout(runPendingCommit, COMMIT_DEBOUNCE_MS)
 }
@@ -553,7 +553,7 @@ onMounted(() => {
   currentTab.value.cursor = undefined
 
   const { markdown, muyaIndexCursor, textDirection } = props
-  committedMarkdown = markdown
+  committedMarkdown = markdown ?? ''
   const container = sourceCodeContainer.value
   const codeMirrorConfig: Record<string, unknown> = {
     value: markdown,

@@ -229,7 +229,8 @@ export const updateSelectionMenus = (applicationMenu: Menu, state: SelectionStat
   } = state
 
   const inList = !!(affiliation.ul || affiliation.ol || affiliation.task)
-  const hasCodeLine = isCodeContent && Object.keys(affiliation).some((b) => /code$/.test(b))
+  const hasCodeLine: boolean =
+    !!isCodeContent && Object.keys(affiliation).some((b) => /code$/.test(b))
 
   // Final desired enabled value per Paragraph item. Branch order mirrors the
   // original cascade: disabled → code-fences (with the code-line re-enable) →

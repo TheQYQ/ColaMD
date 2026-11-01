@@ -165,7 +165,9 @@ describe('SELECTION_CHANGE: unchanged state is not re-sent', () => {
 
   // The `xyz-perf-gate` affiliation key makes the derived state unique within
   // this file, so the module-level cache cannot collide with an earlier case.
-  const changesWith = (...affiliation: Array<{ type: string; blockName: string }>) => ({
+  const changesWith = (
+    ...affiliation: Array<{ type: string; blockName: string; listType?: string }>
+  ) => ({
     start: { key: 'a', offset: 0, type: 'span', block: { functionType: 'paragraphContent' } },
     end: { key: 'a', offset: 0, type: 'span', block: { functionType: 'paragraphContent' } },
     affiliation

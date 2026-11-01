@@ -108,7 +108,7 @@ export const selectionChange = (store: EditorStore, changes: SelectionChange): v
 // Persist the caret for a tab without the heavy content-change pipeline: a pure
 // caret move (click / arrow key) fires `selection-change` but NOT `json-change`, so
 // `tab.cursor` would otherwise only ever track the last EDIT. Lightweight by design:
-// it stores the serialized caret and skips the markdown/blocks/TOC re-derivation.
+// it stores the serialized caret and skips the markdown/TOC re-derivation.
 export const persistCursor = (store: EditorStore, id: string, cursor: unknown): void => {
   if (!id || !cursor) return
   const index = store.tabIdToIndex[id]
