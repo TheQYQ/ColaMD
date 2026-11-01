@@ -299,7 +299,7 @@ img {
   padding: 0 142px;
   height: 100%;
   line-height: var(--titleBarHeight);
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
   transition: color 0.25s ease-in-out;
   & .filename {

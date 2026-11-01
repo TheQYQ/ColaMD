@@ -33,7 +33,8 @@
       "exportEpub": "EPUB",
       "exportLatex": "LaTeX",
       "exportRtf": "RTF",
-      "exportOpml": "OPML"
+      "exportOpml": "OPML",
+      "saveAll": "Alles speichern"
     },
     "edit": {
       "edit": "Bearbeiten",
@@ -129,7 +130,8 @@
       "toggleTableOfContents": "Inhaltsverzeichnis umschalten",
       "reloadImages": "Bilder neu laden",
       "showDeveloperTools": "Entwicklertools anzeigen",
-      "reloadWindow": "Fenster neu laden"
+      "reloadWindow": "Fenster neu laden",
+      "zoom": "Zoom {count}%"
     },
     "format": {
       "format": "Format",
@@ -221,7 +223,6 @@
     }
   },
   "search": {
-    "close": "Schließen",
     "searchPlaceholder": "Suchen",
     "caseSensitive": "Groß-/Kleinschreibung beachten",
     "wholeWord": "Ganzes Wort",
@@ -231,7 +232,9 @@
     "replaceSingle": "Einzeln ersetzen",
     "invalidRegex": "Ungültiger regulärer Ausdruck \"{pattern}\"",
     "regexMatchEmpty": "Regulärer Ausdruck entspricht leerem String \"{pattern}\"",
-    "regexTimeout": "Timeout beim regulären Ausdruck"
+    "regexTimeout": "Timeout beim regulären Ausdruck",
+    "replacedCount": "{count} Vorkommen ersetzt",
+    "close": "Schließen"
   },
   "sideBar": {
     "tree": {
@@ -272,9 +275,12 @@
       "hoursAgo": "vor {count} Std.",
       "daysAgo": "vor {count} Tg."
     },
+    "confirmDeleteTitle": "Löschen",
+    "confirmDeleteMessage": "„{name}\" in den Papierkorb verschieben?",
+    "deleted": "In den Papierkorb verschoben",
     "errors": {
-      "sideBarTitle": "Fehler in der Seitenleiste",
       "deleting": "Fehler beim Löschen",
+      "sideBarTitle": "Fehler in der Seitenleiste",
       "alreadyExists": "In diesem Ordner existiert bereits ein/e {type} namens \"{name}\".",
       "file": "Datei",
       "folder": "Ordner"
@@ -285,13 +291,13 @@
   },
   "commandPalette": {
     "placeholder": "Befehl zum Ausführen eingeben",
-    "noResult": "Keine Treffer",
-    "quickOpenEmpty": "Öffne einen Ordner, um Dateien nach Name zu durchsuchen",
     "placeholders": {
       "selectOption": "Option auswählen",
       "searchFileToOpen": "Datei zum Öffnen suchen",
       "selectLanguage": "Sprache auswählen"
     },
+    "noResult": "Keine Treffer",
+    "quickOpenEmpty": "Öffne einen Ordner, um Dateien nach Name zu durchsuchen",
     "currentSuffix": "{name} - aktuell",
     "textDirectionLtr": "Links nach Rechts",
     "textDirectionRtl": "Rechts nach Links"
@@ -377,7 +383,8 @@
   },
   "recent": {
     "noTabsOpen": "Sie haben keine Tabs geöffnet.",
-    "newFile": "Neue Datei"
+    "newFile": "Neue Datei",
+    "recentHeading": "Zuletzt verwendet"
   },
   "import": {
     "title": "Importieren oder öffnen",
@@ -753,7 +760,7 @@
       "online": "Online",
       "saveError": "Fehler beim Speichern der Tastenkürzel",
       "shortcutInUse": "Tastenkürzel wird verwendet",
-      "shortcutInUseMessage": "Dieses Tastenkürzel ist bereits {accelerator} zugeordnet",
+      "shortcutInUseMessage": "Dieses Kürzel ist bereits „{command}“ ({accelerator}) zugewiesen",
       "table": {
         "description": "Beschreibung",
         "edit": "Bearbeiten",
@@ -941,7 +948,6 @@
     "importWarning": "Import-Warnung",
     "installPandoc": "Pandoc installieren",
     "keepOpen": "Offen halten",
-    "moreFiles": "und {count} weitere",
     "replace": "Ersetzen",
     "save": "Speichern",
     "saveChanges": "Änderungen speichern",
@@ -953,7 +959,8 @@
     "renameFailure": "Umbenennen fehlgeschlagen",
     "moveFailure": "Verschieben fehlgeschlagen",
     "openFailure": "Fehler beim Öffnen",
-    "openRefused": "{name} kann nicht geöffnet werden: Der Pfad liegt außerhalb der autorisierten Ordner."
+    "openRefused": "{name} kann nicht geöffnet werden: Der Pfad liegt außerhalb der autorisierten Ordner.",
+    "moreFiles": "und {count} weitere"
   },
   "error": {
     "configSchemaViolation": "Konfigurationsschema-Verletzung",
@@ -1023,7 +1030,9 @@
       "languageMissing": "Rechtschreibprüfungssprache fehlt {languageCode}",
       "switchError": "Rechtschreibprüfung-Wechselfehler für {languageCode}, {error}",
       "title": "Rechtschreibprüfung"
-    }
+    },
+    "exporting": "Wird exportiert…",
+    "exportDone": "Export abgeschlossen"
   },
   "themeMarket": {
     "error": {

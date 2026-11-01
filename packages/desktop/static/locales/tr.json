@@ -33,7 +33,8 @@
       "exportEpub": "EPUB",
       "exportLatex": "LaTeX",
       "exportRtf": "RTF",
-      "exportOpml": "OPML"
+      "exportOpml": "OPML",
+      "saveAll": "Tümünü kaydet"
     },
     "edit": {
       "edit": "Düzen",
@@ -129,7 +130,8 @@
       "toggleTableOfContents": "İçindekileri Aç/Kapat",
       "reloadImages": "Görselleri Yeniden Yükle",
       "showDeveloperTools": "Geliştirici Araçlarını Göster",
-      "reloadWindow": "Pencereyi Yeniden Yükle"
+      "reloadWindow": "Pencereyi Yeniden Yükle",
+      "zoom": "Yakınlaştırma %{count}"
     },
     "format": {
       "format": "Biçim",
@@ -221,7 +223,6 @@
     }
   },
   "search": {
-    "close": "Kapat",
     "searchPlaceholder": "Ara",
     "caseSensitive": "Büyük/Küçük Harf Duyarlı",
     "wholeWord": "Tam sözcük seç",
@@ -231,7 +232,9 @@
     "replaceSingle": "Tek Değiştir",
     "invalidRegex": "Geçersiz düzenli ifade \"{pattern}\"",
     "regexMatchEmpty": "Düzenli ifade boş dizeyle eşleşiyor \"{pattern}\"",
-    "regexTimeout": "Düzenli ifade zaman aşımı"
+    "regexTimeout": "Düzenli ifade zaman aşımı",
+    "replacedCount": "{count} eşleşme değiştirildi",
+    "close": "Kapat"
   },
   "sideBar": {
     "tree": {
@@ -272,9 +275,12 @@
       "hoursAgo": "{count} sa önce",
       "daysAgo": "{count} g önce"
     },
+    "confirmDeleteTitle": "Sil",
+    "confirmDeleteMessage": "\"{name}\" çöp kutusuna taşınsın mı?",
+    "deleted": "Çöp kutusuna taşındı",
     "errors": {
-      "sideBarTitle": "Kenar çubuğu hatası",
       "deleting": "Silme sırasında hata",
+      "sideBarTitle": "Kenar çubuğu hatası",
       "alreadyExists": "Bu klasörde \"{name}\" adında bir {type} zaten var.",
       "file": "dosya",
       "folder": "klasör"
@@ -285,13 +291,13 @@
   },
   "commandPalette": {
     "placeholder": "Çalıştırmak için bir komut yazın",
-    "noResult": "Sonuç bulunamadı",
-    "quickOpenEmpty": "Dosyaları ada göre aramak için bir klasör açın",
     "placeholders": {
       "selectOption": "Bir seçenek seçin",
       "searchFileToOpen": "Açılacak dosyayı arayın",
       "selectLanguage": "Geçilecek dili seçin"
     },
+    "noResult": "Sonuç bulunamadı",
+    "quickOpenEmpty": "Dosyaları ada göre aramak için bir klasör açın",
     "currentSuffix": "{name} - geçerli",
     "textDirectionLtr": "Soldan sağa",
     "textDirectionRtl": "Sağdan sola"
@@ -377,7 +383,8 @@
   },
   "recent": {
     "noTabsOpen": "Açık sekmeniz yok.",
-    "newFile": "Yeni Dosya"
+    "newFile": "Yeni Dosya",
+    "recentHeading": "Son kullanılanlar"
   },
   "import": {
     "title": "İçe Aktar veya Aç",
@@ -753,7 +760,7 @@
       "online": "Çevrimiçi",
       "saveError": "Kısayol tuşları kaydedilirken hata",
       "shortcutInUse": "Kısayol kullanımda",
-      "shortcutInUseMessage": "Bu kısayol zaten {accelerator} öğesine atanmış",
+      "shortcutInUseMessage": "Bu kısayol zaten {command} ({accelerator}) için atanmış",
       "table": {
         "description": "Açıklama",
         "edit": "Düzenle",
@@ -941,7 +948,6 @@
     "importWarning": "İçe aktarma uyarısı",
     "installPandoc": "Pandoc'u Yükle",
     "keepOpen": "Açık tut",
-    "moreFiles": "ve {count} tane daha",
     "replace": "Değiştir",
     "save": "Kaydet",
     "saveChanges": "Değişiklikleri kaydet",
@@ -953,7 +959,8 @@
     "renameFailure": "Yeniden adlandırma hatası",
     "moveFailure": "Taşıma hatası",
     "openFailure": "Açma hatası",
-    "openRefused": "{name} açılamıyor: yol yetkili klasörlerin dışında."
+    "openRefused": "{name} açılamıyor: yol yetkili klasörlerin dışında.",
+    "moreFiles": "ve {count} tane daha"
   },
   "error": {
     "configSchemaViolation": "Yapılandırma şeması ihlali",
@@ -1023,7 +1030,9 @@
       "languageMissing": "Yazım denetimi dili eksik {languageCode}",
       "switchError": "{languageCode} için yazım denetimi değiştirme hatası, {error}",
       "title": "Yazım Denetimi"
-    }
+    },
+    "exporting": "Dışa aktarılıyor…",
+    "exportDone": "Dışa aktarma tamamlandı"
   },
   "themeMarket": {
     "error": {

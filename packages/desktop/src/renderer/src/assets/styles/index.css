@@ -1,4 +1,11 @@
 /* Common CSS use by both light and dark themes */
+/** DS-07 (#GUI-B10): z-index ladder — one place to reason about stacking.
+ *  underlay/edge strips: 1-40 (tabs, title bar, sidebar overlay, search)
+ *  float:            10000  (command palette, menu bar, rename, dialogs)
+ *  modal:            11000  (reserved for overlays that must beat floats)
+ *  toast:            12000  (notifications top everything)
+ *  drag mirror:      9999   (dragula's gu-mirror, below floats on purpose)
+ */
 :root {
   --titleBarHeight: 36px;
   /* Rendered by the frameless menu bar (menuBar component); 0 elsewhere. */
@@ -7,7 +14,11 @@
   --editorAreaWidth: 800px;
 
   /*editor*/
-  /*Theme color cluster*/
+  /*Theme color cluster.
+    DS-04 (#GUI-B10) deprecation note: the camelCase tokens below are the
+    legacy layer kept for the 30+ theme files; new UI code uses the semantic
+    layer at the bottom of this file (bg / text / border / accent tokens).
+    The theme-slimming special (GUI plan SA) owns the migration. */
   --themeColor: #5B67C7;
   --themeColor90: rgba(91, 103, 199, 0.9);
   --themeColor80: rgba(91, 103, 199, 0.8);
@@ -161,6 +172,10 @@ html,
 body {
   margin: 0;
   padding: 0;
+  /* DS-04 (#GUI-B10): the UI font stack lives HERE, not per component —
+     before this line only the sidebar carried it and the rest of the chrome
+     fell back to the browser default. */
+  font-family: var(--font-ui);
   background: transparent !important;
   caret-color: var(--editorColor);
 }
@@ -285,7 +300,7 @@ div.el-tabs__item {
 
 div.el-tab-pane {
   color: var(--editorColor);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .ag-dialog-table .dialog-title svg {
@@ -448,10 +463,6 @@ button.button-primary:not(.custom):focus,
   background: var(--buttonPrimaryBgColor);
   border: var(--buttonPrimaryBorder);
   box-shadow: none;
-}
-
-.image-viewer {
-  z-index: 10001;
 }
 
 .el-tabs__active-bar {

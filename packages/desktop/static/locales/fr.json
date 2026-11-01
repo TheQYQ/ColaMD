@@ -33,7 +33,8 @@
       "exportEpub": "EPUB",
       "exportLatex": "LaTeX",
       "exportRtf": "RTF",
-      "exportOpml": "OPML"
+      "exportOpml": "OPML",
+      "saveAll": "Tout enregistrer"
     },
     "edit": {
       "edit": "Édition",
@@ -129,7 +130,8 @@
       "toggleTableOfContents": "Basculer la table des matières",
       "reloadImages": "Recharger les images",
       "showDeveloperTools": "Afficher les outils de développement",
-      "reloadWindow": "Recharger la fenêtre"
+      "reloadWindow": "Recharger la fenêtre",
+      "zoom": "Zoom {count}%"
     },
     "format": {
       "format": "Format",
@@ -221,7 +223,6 @@
     }
   },
   "search": {
-    "close": "Fermer",
     "searchPlaceholder": "Rechercher",
     "caseSensitive": "Sensible à la casse",
     "wholeWord": "Mot entier",
@@ -231,7 +232,9 @@
     "replaceSingle": "Remplacer un",
     "invalidRegex": "Expression régulière invalide \"{pattern}\"",
     "regexMatchEmpty": "L'expression régulière correspond à une chaîne vide \"{pattern}\"",
-    "regexTimeout": "Délai dépassé pour l'expression régulière"
+    "regexTimeout": "Délai dépassé pour l'expression régulière",
+    "replacedCount": "{count} remplacement(s) effectué(s)",
+    "close": "Fermer"
   },
   "sideBar": {
     "tree": {
@@ -272,9 +275,12 @@
       "hoursAgo": "il y a {count} h",
       "daysAgo": "il y a {count} j"
     },
+    "confirmDeleteTitle": "Supprimer",
+    "confirmDeleteMessage": "Déplacer « {name} » vers la corbeille ?",
+    "deleted": "Déplacé vers la corbeille",
     "errors": {
-      "sideBarTitle": "Erreur dans le panneau latéral",
       "deleting": "Erreur lors de la suppression",
+      "sideBarTitle": "Erreur dans le panneau latéral",
       "alreadyExists": "Un {type} nommé « {name} » existe déjà dans ce dossier.",
       "file": "fichier",
       "folder": "dossier"
@@ -285,13 +291,13 @@
   },
   "commandPalette": {
     "placeholder": "Tapez une commande à exécuter",
-    "noResult": "Aucun résultat",
-    "quickOpenEmpty": "Ouvrez un dossier pour rechercher des fichiers par nom",
     "placeholders": {
       "selectOption": "Sélectionner une option",
       "searchFileToOpen": "Rechercher un fichier à ouvrir",
       "selectLanguage": "Sélectionner la langue"
     },
+    "noResult": "Aucun résultat",
+    "quickOpenEmpty": "Ouvrez un dossier pour rechercher des fichiers par nom",
     "currentSuffix": "{name} - actuel",
     "textDirectionLtr": "De gauche à droite",
     "textDirectionRtl": "De droite à gauche"
@@ -377,7 +383,8 @@
   },
   "recent": {
     "noTabsOpen": "Vous n'avez aucun onglet ouvert.",
-    "newFile": "Nouveau fichier"
+    "newFile": "Nouveau fichier",
+    "recentHeading": "Récents"
   },
   "import": {
     "title": "Importer ou ouvrir",
@@ -753,7 +760,7 @@
       "online": "En ligne",
       "saveError": "Erreur lors de l'enregistrement des raccourcis clavier",
       "shortcutInUse": "Raccourci en cours d'utilisation",
-      "shortcutInUseMessage": "Ce raccourci est déjà assigné à {accelerator}",
+      "shortcutInUseMessage": "Ce raccourci est déjà attribué à {command} ({accelerator})",
       "table": {
         "description": "Description",
         "edit": "Modifier",
@@ -941,7 +948,6 @@
     "importWarning": "Avertissement d'importation",
     "installPandoc": "Installer Pandoc",
     "keepOpen": "Garder ouvert",
-    "moreFiles": "et {count} autres",
     "replace": "Remplacer",
     "save": "Enregistrer",
     "saveChanges": "Enregistrer les modifications",
@@ -953,7 +959,8 @@
     "renameFailure": "Échec du renommage",
     "moveFailure": "Échec du déplacement",
     "openFailure": "Échec d’ouverture",
-    "openRefused": "Impossible d’ouvrir {name} : le chemin est en dehors des dossiers autorisés."
+    "openRefused": "Impossible d’ouvrir {name} : le chemin est en dehors des dossiers autorisés.",
+    "moreFiles": "et {count} autres"
   },
   "error": {
     "configSchemaViolation": "Violation du schéma de configuration",
@@ -1023,7 +1030,9 @@
       "languageMissing": "Langue du correcteur manquante {languageCode}",
       "switchError": "Erreur de changement du correcteur pour {languageCode}, {error}",
       "title": "Vérification orthographique"
-    }
+    },
+    "exporting": "Export…",
+    "exportDone": "Export terminé"
   },
   "themeMarket": {
     "error": {

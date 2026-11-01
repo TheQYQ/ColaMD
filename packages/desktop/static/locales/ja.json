@@ -33,7 +33,8 @@
       "exportEpub": "EPUB",
       "exportLatex": "LaTeX",
       "exportRtf": "RTF",
-      "exportOpml": "OPML"
+      "exportOpml": "OPML",
+      "saveAll": "すべて保存"
     },
     "edit": {
       "edit": "編集",
@@ -129,7 +130,8 @@
       "toggleTableOfContents": "目次の切り替え",
       "reloadImages": "画像の再読み込み",
       "showDeveloperTools": "開発者ツールの表示",
-      "reloadWindow": "ウィンドウの再読み込み"
+      "reloadWindow": "ウィンドウの再読み込み",
+      "zoom": "ズーム {count}%"
     },
     "format": {
       "format": "フォーマット",
@@ -221,7 +223,6 @@
     }
   },
   "search": {
-    "close": "閉じる",
     "searchPlaceholder": "検索",
     "caseSensitive": "大文字と小文字を区別",
     "wholeWord": "単語全体",
@@ -231,7 +232,9 @@
     "replaceSingle": "単一置換",
     "invalidRegex": "無効な正規表現 \"{pattern}\"",
     "regexMatchEmpty": "正規表現が空文字列 \"{pattern}\" にマッチ",
-    "regexTimeout": "正規表現がタイムアウトしました"
+    "regexTimeout": "正規表現がタイムアウトしました",
+    "replacedCount": "{count} 件を置換しました",
+    "close": "閉じる"
   },
   "sideBar": {
     "tree": {
@@ -272,9 +275,12 @@
       "hoursAgo": "{count} 時間前",
       "daysAgo": "{count} 日前"
     },
+    "confirmDeleteTitle": "削除",
+    "confirmDeleteMessage": "「{name}」をゴミ箱へ移動しますか？",
+    "deleted": "ゴミ箱に移動しました",
     "errors": {
-      "sideBarTitle": "サイドバーのエラー",
       "deleting": "削除中にエラー",
+      "sideBarTitle": "サイドバーのエラー",
       "alreadyExists": "このフォルダには同名の{type}「{name}」が既に存在します。",
       "file": "ファイル",
       "folder": "フォルダー"
@@ -285,13 +291,13 @@
   },
   "commandPalette": {
     "placeholder": "実行するコマンドの入力",
-    "noResult": "一致する結果はありません",
-    "quickOpenEmpty": "フォルダを開くとファイル名で検索できます",
     "placeholders": {
       "selectOption": "オプションの選択",
       "searchFileToOpen": "開くファイルの検索",
       "selectLanguage": "言語の選択"
     },
+    "noResult": "一致する結果はありません",
+    "quickOpenEmpty": "フォルダを開くとファイル名で検索できます",
     "currentSuffix": "{name} - 現在",
     "textDirectionLtr": "左から右へ",
     "textDirectionRtl": "右から左へ"
@@ -377,7 +383,8 @@
   },
   "recent": {
     "noTabsOpen": "開いているタブがありません。",
-    "newFile": "新しいファイル"
+    "newFile": "新しいファイル",
+    "recentHeading": "最近使ったファイル"
   },
   "import": {
     "title": "インポートまたは開く",
@@ -753,7 +760,7 @@
       "online": "オンライン",
       "saveError": "キーバインドの保存エラー",
       "shortcutInUse": "ショートカットが使用中",
-      "shortcutInUseMessage": "このショートカットは既に {accelerator} に割り当てられています",
+      "shortcutInUseMessage": "このショートカットは {command}（{accelerator}）に割り当て済みです",
       "table": {
         "description": "説明",
         "edit": "編集",
@@ -941,7 +948,6 @@
     "importWarning": "インポート警告",
     "installPandoc": "Pandoc をインストール",
     "keepOpen": "開いたままにする",
-    "moreFiles": "ほか {count} 件",
     "replace": "置換",
     "save": "保存",
     "saveChanges": "変更を保存",
@@ -953,7 +959,8 @@
     "renameFailure": "名前の変更に失敗",
     "moveFailure": "移動に失敗",
     "openFailure": "開けません",
-    "openRefused": "{name}を開けません：パスが許可されたフォルダー外です。"
+    "openRefused": "{name}を開けません：パスが許可されたフォルダー外です。",
+    "moreFiles": "ほか {count} 件"
   },
   "error": {
     "configSchemaViolation": "設定スキーマ違反",
@@ -1023,7 +1030,9 @@
       "languageMissing": "スペルチェック言語が見つかりません {languageCode}",
       "switchError": "{languageCode} のスペルチェック切り替えエラー、{error}",
       "title": "スペルチェック"
-    }
+    },
+    "exporting": "エクスポート中…",
+    "exportDone": "エクスポートが完了しました"
   },
   "themeMarket": {
     "error": {

@@ -46,6 +46,7 @@ const COMMAND_KEY_MAP: Record<string, string> = {
   // File close
   'file.close': 'commands.file.closeTab',
   'file.close-tab': 'commands.file.closeTab',
+  'file.save-all': 'commands.file.saveAll',
   'file.close-window': 'commands.file.closeWindow',
   'file.quit': 'commands.file.quit',
 

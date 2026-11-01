@@ -33,7 +33,8 @@
       "exportEpub": "EPUB 电子书",
       "exportLatex": "LaTeX",
       "exportRtf": "RTF",
-      "exportOpml": "OPML 大纲"
+      "exportOpml": "OPML 大纲",
+      "saveAll": "全部保存"
     },
     "edit": {
       "edit": "编辑",
@@ -129,7 +130,8 @@
       "toggleTableOfContents": "切换目录",
       "reloadImages": "重新加载图片",
       "showDeveloperTools": "显示开发者工具",
-      "reloadWindow": "重新加载窗口"
+      "reloadWindow": "重新加载窗口",
+      "zoom": "缩放 {count}%"
     },
     "format": {
       "format": "格式",
@@ -221,7 +223,6 @@
     }
   },
   "search": {
-    "close": "关闭",
     "searchPlaceholder": "搜索",
     "caseSensitive": "区分大小写",
     "wholeWord": "选择整个单词",
@@ -231,7 +232,9 @@
     "replaceSingle": "单个替换",
     "invalidRegex": "无效的正则表达式 \"{pattern}\"",
     "regexMatchEmpty": "正则表达式 \"{pattern}\" 匹配到了空字符串",
-    "regexTimeout": "正则执行超时"
+    "regexTimeout": "正则执行超时",
+    "replacedCount": "已替换 {count} 处",
+    "close": "关闭"
   },
   "sideBar": {
     "tree": {
@@ -272,9 +275,12 @@
       "hoursAgo": "{count} 小时前",
       "daysAgo": "{count} 天前"
     },
+    "confirmDeleteTitle": "删除",
+    "confirmDeleteMessage": "将“{name}”移入废纸篓？",
+    "deleted": "已移入废纸篓",
     "errors": {
-      "sideBarTitle": "侧栏错误",
       "deleting": "删除时出错",
+      "sideBarTitle": "侧栏错误",
       "alreadyExists": "此文件夹中已存在名为“{name}”的{type}。",
       "file": "文件",
       "folder": "文件夹"
@@ -285,13 +291,13 @@
   },
   "commandPalette": {
     "placeholder": "输入要执行的命令",
-    "noResult": "无匹配结果",
-    "quickOpenEmpty": "打开文件夹后可按文件名搜索文件",
     "placeholders": {
       "selectOption": "选择一个选项",
       "searchFileToOpen": "搜索要打开的文件",
       "selectLanguage": "选择要切换的语言"
     },
+    "noResult": "无匹配结果",
+    "quickOpenEmpty": "打开文件夹后可按文件名搜索文件",
     "currentSuffix": "{name} - 当前",
     "textDirectionLtr": "从左到右",
     "textDirectionRtl": "从右到左"
@@ -377,7 +383,8 @@
   },
   "recent": {
     "noTabsOpen": "您没有打开的标签页。",
-    "newFile": "新建文件"
+    "newFile": "新建文件",
+    "recentHeading": "最近使用"
   },
   "import": {
     "title": "导入或打开",
@@ -753,7 +760,7 @@
       "online": "在线",
       "saveError": "保存快捷键时出错",
       "shortcutInUse": "快捷键正在使用",
-      "shortcutInUseMessage": "此快捷键已分配给 {accelerator}",
+      "shortcutInUseMessage": "该快捷键已被“{command}”（{accelerator}）占用",
       "table": {
         "description": "描述",
         "edit": "编辑",
@@ -941,7 +948,6 @@
     "importWarning": "导入警告",
     "installPandoc": "安装 Pandoc",
     "keepOpen": "保持打开",
-    "moreFiles": "等 {count} 个文件",
     "replace": "替换",
     "save": "保存",
     "saveChanges": "是否保存更改？",
@@ -953,7 +959,8 @@
     "renameFailure": "重命名失败",
     "moveFailure": "移动失败",
     "openFailure": "打开失败",
-    "openRefused": "无法打开“{name}”：路径不在授权的文件夹内。"
+    "openRefused": "无法打开“{name}”：路径不在授权的文件夹内。",
+    "moreFiles": "等 {count} 个文件"
   },
   "error": {
     "configSchemaViolation": "配置架构违规",
@@ -1023,7 +1030,9 @@
       "errorSwitchingLanguage": "切换拼写检查语言时出错 {languageCode}",
       "languageMissing": "拼写检查语言缺失 {languageCode}",
       "switchError": "{languageCode} 拼写检查切换错误，{error}"
-    }
+    },
+    "exporting": "正在导出…",
+    "exportDone": "导出完成"
   },
   "themeMarket": {
     "error": {

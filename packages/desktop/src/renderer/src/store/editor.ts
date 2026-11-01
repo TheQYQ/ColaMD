@@ -334,6 +334,12 @@ export const useEditorStore = defineStore('editor', {
 
     // need pass some data to main process when `save` menu item clicked
     LISTEN_FOR_SAVE(): void {
+      // UX-16 (#GUI-B10): bus relay so the file.save-all command (menu +
+      // command palette) reaches the store action.
+      bus.on('cmd::ask-save-all', () => {
+        this.ASK_FOR_SAVE_ALL(false)
+      })
+
       listenBoth('mt::editor-ask-file-save', () => {
         this.FILE_SAVE()
       })
@@ -840,6 +846,9 @@ export const useEditorStore = defineStore('editor', {
         preferencesStore.SET_SINGLE_PREFERENCE({ type: 'zoom', value: zoomFactor })
       }
       window.electron.webFrame.setZoomFactor(zoomFactor)
+      // UX-15 (#GUI-B10): every zoom path funnels here — flash the factor in
+      // the status bar so the user knows where 100% is.
+      bus.emit('zoom-flash', Math.round(zoomFactor * 100))
     },
 
     LISTEN_WINDOW_ZOOM(): void {

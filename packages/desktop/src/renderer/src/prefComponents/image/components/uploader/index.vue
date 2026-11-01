@@ -788,7 +788,7 @@ const testPicgo = async (): Promise<void> => {
 <style scoped>
 .pref-image-uploader {
   color: var(--editorColor);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .pref-image-uploader .current-uploader {
@@ -831,7 +831,7 @@ const testPicgo = async (): Promise<void> => {
 
 .pref-image-uploader .detection-status h6 {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--editorColor);
 }
@@ -940,7 +940,7 @@ const testPicgo = async (): Promise<void> => {
   border: none;
   cursor: pointer;
   padding: 4px;
-  border-radius: 3px;
+  border-radius: 4px;
   color: var(--editorColor70);
   transition: color 0.2s ease;
   display: flex;
@@ -968,7 +968,7 @@ const testPicgo = async (): Promise<void> => {
   border: none;
   cursor: default;
   padding: 4px;
-  border-radius: 3px;
+  border-radius: 4px;
   color: var(--editorColor70);
   transition: color 0.2s ease;
   display: flex;
@@ -987,7 +987,7 @@ const testPicgo = async (): Promise<void> => {
   border: none;
   cursor: pointer;
   padding: 4px;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: color 0.2s ease;
   display: flex;
   align-items: center;
@@ -1076,8 +1076,8 @@ const testPicgo = async (): Promise<void> => {
 .pref-image-uploader .install-command {
   background-color: var(--editorColor10);
   padding: 2px 6px;
-  border-radius: 3px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  border-radius: 4px;
+  font-family: var(--font-mono);
   font-size: 11px;
   color: var(--editorColor);
   border: 1px solid var(--editorColor20);
@@ -1101,7 +1101,7 @@ const testPicgo = async (): Promise<void> => {
   font-weight: 500;
   margin-bottom: 12px;
   color: var(--editorColor);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .pref-image-uploader .usage-content {
@@ -1130,8 +1130,8 @@ const testPicgo = async (): Promise<void> => {
 .pref-image-uploader .usage-command {
   background-color: var(--editorColor10);
   padding: 4px 8px;
-  border-radius: 3px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  border-radius: 4px;
+  font-family: var(--font-mono);
   font-size: 11px;
   color: var(--editorColor);
   border: 1px solid var(--editorColor20);

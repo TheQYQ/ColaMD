@@ -323,7 +323,7 @@ const persistInstalledThemes = (): void => {
     color: var(--editorColor);
     box-sizing: border-box;
     box-shadow: 0 9px 28px -9px rgba(0, 0, 0, 0.4);
-    border-radius: 5px;
+    border-radius: 6px;
     transition: opacity 0.2s ease;
 
     &.dark {
@@ -612,7 +612,7 @@ const persistInstalledThemes = (): void => {
 
 .custom-css {
   margin: 20px 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--editorColor);
   & .description {
     margin-bottom: 10px;
@@ -624,7 +624,7 @@ const persistInstalledThemes = (): void => {
     border: 1px solid var(--editorColor10);
     border-radius: 4px;
     padding: 8px 10px;
-    font-family: 'DejaVu Sans Mono', 'Source Code Pro', 'Droid Sans Mono', Consolas, monospace;
+    font-family: var(--font-mono);
     font-size: 12px;
     line-height: 1.5;
     box-sizing: border-box;
@@ -674,7 +674,7 @@ const persistInstalledThemes = (): void => {
     padding: 8px 10px;
     background: var(--editorBgColor);
     border: 1px solid var(--editorColor10);
-    border-radius: 5px;
+    border-radius: 6px;
     & .theme-name {
       flex: 1;
       font-weight: 500;

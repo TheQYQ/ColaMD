@@ -170,6 +170,8 @@ onBeforeUnmount(() => {
 .unsaved-dialog-mask {
   position: fixed;
   inset: 0;
+  /* Toast tier (see the ladder in styles/index.css): a data-loss decision
+     dialog must beat every float. */
   z-index: 12000;
   background: var(--maskColor);
   display: flex;
@@ -182,7 +184,7 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   background: var(--floatBgColor);
   border: 1px solid var(--floatBorderColor);
-  border-radius: 5px;
+  border-radius: 6px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
   padding: 20px 24px;
   color: var(--editorColor80);
@@ -235,7 +237,7 @@ onBeforeUnmount(() => {
   font-size: 12px;
   line-height: 1;
   padding: 6px 14px;
-  border-radius: 3px;
+  border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
 }

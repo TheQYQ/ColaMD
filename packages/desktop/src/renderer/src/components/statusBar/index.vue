@@ -29,6 +29,12 @@
       </div>
     </div>
     <div class="status-right">
+      <span
+        v-if="zoomFlash"
+        class="zoom-flash"
+      >{{
+        t('menu.view.zoom', { count: zoomFlash })
+      }}</span>
       <div
         v-if="wordCount"
         class="word-count"
@@ -46,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import bus from '@/bus'
@@ -64,6 +70,18 @@ const editorStore = useEditorStore()
 const preferencesStore = usePreferencesStore()
 
 const { currentFile } = storeToRefs(editorStore)
+
+// UX-15 (#GUI-B10): show the zoom factor for two seconds after each change.
+const zoomFlash = ref(0)
+let zoomFlashTimer: ReturnType<typeof setTimeout> | null = null
+const flashZoom = (percent: unknown): void => {
+  // The event already carries a percent (EDIT_ZOOM rounded factor * 100).
+  zoomFlash.value = Math.round(Number(percent))
+  if (zoomFlashTimer) clearTimeout(zoomFlashTimer)
+  zoomFlashTimer = setTimeout(() => {
+    zoomFlash.value = 0
+  }, 2000)
+}
 
 const wordCount = computed(() => currentFile.value?.wordCount ?? null)
 
@@ -92,6 +110,15 @@ const handleWordClick = (): void => {
   const index = MODES.indexOf(show.value)
   show.value = MODES[(index + 1) % MODES.length]!
 }
+
+onMounted(() => {
+  bus.on('zoom-flash', flashZoom)
+})
+
+onBeforeUnmount(() => {
+  bus.off('zoom-flash', flashZoom)
+  if (zoomFlashTimer) clearTimeout(zoomFlashTimer)
+})
 
 const toggleSourceCode = (): void => {
   bus.emit('view:toggle-view-entry', 'sourceCode')
@@ -141,6 +168,11 @@ const toggleSourceCode = (): void => {
 .status-right {
   display: flex;
   align-items: center;
+}
+.zoom-flash {
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--themeColor);
 }
 .word-count {
   cursor: pointer;

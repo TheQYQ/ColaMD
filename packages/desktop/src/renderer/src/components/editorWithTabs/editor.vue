@@ -876,7 +876,25 @@ const handleSearch = (payload: unknown) => {
 const handReplace = (payload: unknown) => {
   if (sourceCode.value) return
   const { value, opt } = payload as { value: string; opt: unknown }
-  editorStore.SEARCH(toSearchMatches(editor.value.replace(value, opt)))
+  // UX-17 (#GUI-B10): report how many occurrences a replace-all rewrote.
+  const isReplaceAll = (opt as { isSingle?: boolean } | undefined)?.isSingle === false
+  // The count comes from the store, not the engine: `searchModule` lives on
+  // Muya's inner Editor, so `editor.value.searchModule` was undefined and the
+  // property read threw BEFORE the replace ran — replace-all did nothing at
+  // all. The store holds the matches of the search the bar just performed,
+  // which is the "替换前匹配数" the plan sanctions for this toast.
+  const replacedCount = isReplaceAll
+    ? (editorStore.currentFile?.searchMatches?.matches.length ?? 0)
+    : 0
+  const result = editor.value.replace(value, opt)
+  editorStore.SEARCH(toSearchMatches(result))
+  if (isReplaceAll && replacedCount > 0) {
+    notice.notify({
+      title: t('search.replacedCount', { count: replacedCount }),
+      type: 'primary',
+      time: 4000
+    })
+  }
 }
 
 const {
@@ -940,6 +958,13 @@ const handleExport = async (options: unknown) => {
   // document B whenever the user switched tabs while A was rendering.
   const source = editorStore.CAPTURE_EXPORT_SOURCE()
   if (!source) return
+  // UX-11 (#GUI-B10): the native save dialog + write can take seconds with no
+  // on-screen change; the success/failure toasts already exist downstream.
+  notice.notify({
+    title: t('editor.exporting'),
+    type: 'primary',
+    time: 5000
+  })
 
   const extraCss = await getCssForOptions(opts as unknown as PdfCssOptions)
   const htmlToc = getHtmlToc(editor.value.getTOC(), opts as unknown as HtmlTocOptions)
