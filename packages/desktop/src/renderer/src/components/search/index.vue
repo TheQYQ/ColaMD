@@ -389,7 +389,7 @@ const noop = () => {}
   padding: 0;
   top: 0;
   right: 20px;
-  border-radius: 3px;
+  border-radius: 4px;
   box-shadow: var(--floatShadow);
   background: var(--floatBgColor);
   display: flex;
@@ -459,7 +459,7 @@ const noop = () => {}
   position: relative;
   border: 1px solid var(--inputBgColor);
   background: var(--inputBgColor);
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: visible;
 }
 .input-wrapper.error {
@@ -513,7 +513,7 @@ const noop = () => {}
   background: var(--notificationErrorBg);
   line-height: 28px;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
   z-index: 1;
 }
 
@@ -524,7 +524,7 @@ const noop = () => {}
   outline: none;
   border: none;
   box-sizing: border-box;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--editorColor);
   padding: 0 8px;
   background: transparent;

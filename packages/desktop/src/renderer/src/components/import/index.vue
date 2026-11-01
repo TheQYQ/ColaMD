@@ -82,7 +82,13 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .drop-container {
-  border-radius: 5px;
+  /* DS-06 (#GUI-B10): vertical centering via flex instead of a 70px
+     line-height tied to the box height. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
   color: var(--sideBarColor);
   border: 1px dashed var(--sideBarTextColor);
   -webkit-app-region: no-drag;
@@ -113,10 +119,10 @@ onBeforeUnmount(() => {
     width: 70px;
     height: 70px;
     border: 1px solid var(--sideBarTextColor);
-    border-radius: 3px;
+    border-radius: 4px;
     text-align: center;
     font-size: 18px;
-    line-height: 70px;
+    line-height: normal;
     color: var(--sideBarTitleColor);
   }
 }

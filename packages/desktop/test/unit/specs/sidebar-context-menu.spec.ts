@@ -87,24 +87,45 @@ describe('sidebar context menu', () => {
     expect(createCache.value).toEqual({ dirname: '/proj/docs', type: 'directory' })
   })
 
-  it('trashes the selection through IPC', async () => {
+  it('asks for confirmation before trashing (nothing is deleted yet)', async () => {
     await fire('SIDEBAR::remove')
-    expect(h.invoke).toHaveBeenCalledWith('mt::fs-trash-item', '/proj/docs')
-    expect(h.notifications).toEqual([])
+    // UX-07 (#GUI-B10): the confirm notification shows, but no IPC flies.
+    expect(h.invoke).not.toHaveBeenCalledWith('mt::fs-trash-item', '/proj/docs')
+    expect(h.notifications).toHaveLength(1)
+    expect(h.notifications[0].showConfirm).toBe(true)
   })
 
-  it('reports a failed trash with the error message', async () => {
+  it('trashes through IPC once the confirmation is accepted, and toasts', async () => {
+    await fire('SIDEBAR::remove')
+    const confirm = h.notifications[0].action
+    expect(confirm).toBeTypeOf('function')
+    confirm(true)
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(h.invoke).toHaveBeenCalledWith('mt::fs-trash-item', '/proj/docs')
+    expect(h.notifications.some((n) => n.title === 'Moved to trash')).toBe(true)
+  })
+
+  it('reports a failed trash with the error message after confirmation', async () => {
     h.invoke.mockRejectedValue(new Error('EBUSY'))
     await fire('SIDEBAR::remove')
-    expect(h.notifications).toEqual([
-      { title: 'Error while deleting', type: 'error', message: 'EBUSY' }
-    ])
+    h.notifications[0].action(true)
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(h.notifications[1]).toEqual({
+      title: 'Error while deleting',
+      type: 'error',
+      message: 'EBUSY'
+    })
   })
 
   it('records a non-Error rejection as text', async () => {
     h.invoke.mockRejectedValue('disk busy')
     await fire('SIDEBAR::remove')
-    expect(h.notifications[0].message).toBe('disk busy')
+    h.notifications[0].action(true)
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(h.notifications[1].message).toBe('disk busy')
   })
 
   it('stores what was copied or cut', async () => {

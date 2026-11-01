@@ -33,7 +33,8 @@
       "exportEpub": "EPUB 電子書",
       "exportLatex": "LaTeX",
       "exportRtf": "RTF",
-      "exportOpml": "OPML 大綱"
+      "exportOpml": "OPML 大綱",
+      "saveAll": "全部儲存"
     },
     "edit": {
       "edit": "編輯",
@@ -126,7 +127,8 @@
       "toggleTableOfContents": "切換目錄",
       "reloadImages": "重新載入圖片",
       "showDeveloperTools": "顯示開發者工具",
-      "reloadWindow": "重新載入視窗"
+      "reloadWindow": "重新載入視窗",
+      "zoom": "縮放 {count}%"
     },
     "format": {
       "format": "格式",
@@ -227,7 +229,8 @@
     "replaceSingle": "單一取代",
     "invalidRegex": "無效的正規表示式 \"{pattern}\"",
     "regexMatchEmpty": "正規表示式 \"{pattern}\" 符合空字串",
-    "regexTimeout": "正則執行逾時"
+    "regexTimeout": "正則執行逾時",
+    "replacedCount": "已替換 {count} 處"
   },
   "sideBar": {
     "tree": {
@@ -266,6 +269,12 @@
       "minutesAgo": "{count} 分鐘前",
       "hoursAgo": "{count} 小時前",
       "daysAgo": "{count} 天前"
+    },
+    "confirmDeleteTitle": "刪除",
+    "confirmDeleteMessage": "將「{name}」移至廢紙簍？",
+    "deleted": "已移至廢紙簍",
+    "errors": {
+      "deleting": "刪除時出錯"
     }
   },
   "commandPalette": {
@@ -357,7 +366,8 @@
   },
   "recent": {
     "noTabsOpen": "您沒有開啟的標籤頁。",
-    "newFile": "新建檔案"
+    "newFile": "新建檔案",
+    "recentHeading": "最近使用"
   },
   "import": {
     "title": "匯入或開啟",
@@ -733,7 +743,7 @@
       "online": "線上",
       "saveError": "儲存按鍵綁定時發生錯誤",
       "shortcutInUse": "快捷鍵使用中",
-      "shortcutInUseMessage": "此快捷鍵已指派給 {accelerator}",
+      "shortcutInUseMessage": "該快速鍵已被「{command}」（{accelerator}）佔用",
       "table": {
         "description": "描述",
         "edit": "編輯",
@@ -999,7 +1009,9 @@
       "languageMissing": "拼字檢查語言缺失 {languageCode}",
       "switchError": "{languageCode} 拼字檢查切換錯誤，{error}",
       "title": "拼字檢查"
-    }
+    },
+    "exporting": "正在匯出…",
+    "exportDone": "匯出完成"
   },
   "themeMarket": {
     "error": {

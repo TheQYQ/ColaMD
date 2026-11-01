@@ -83,7 +83,7 @@ const select = (value: SelectValue) => {
 <style>
 .pref-select-item {
   margin: 12px 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--editorColor);
   & .el-select {
     width: 100%;

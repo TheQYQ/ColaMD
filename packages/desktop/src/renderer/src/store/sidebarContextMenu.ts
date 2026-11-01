@@ -1,5 +1,7 @@
 import bus from '../bus'
 import { registerSidebarPasteHandler, type SidebarClipboardEntry } from './sidebarPaste'
+import notice from '@/services/notification'
+import { t } from '../i18n'
 import { sidebarFail } from './sidebarFeedback'
 
 export interface SidebarCreateCache {
@@ -37,8 +39,30 @@ export function registerSidebarContextMenuHandlers(ctx: SidebarContextMenuContex
   })
   bus.on('SIDEBAR::remove', () => {
     const { pathname } = ctx.activeItem.value
-    window.electron.ipcRenderer.invoke('mt::fs-trash-item', pathname).catch((err: unknown) => {
-      sidebarFail('Error while deleting', err)
+    // UX-07 (#GUI-B10): confirm before trashing — a folder of work should not
+    // vanish on a stray click. The success toast closes the loop the old
+    // silent delete left open.
+    const name = window.path.basename(pathname)
+    notice.notify({
+      title: t('sideBar.confirmDeleteTitle'),
+      message: t('sideBar.confirmDeleteMessage', { name }),
+      type: 'primary',
+      showConfirm: true,
+      action: (status: boolean) => {
+        if (!status) return
+        window.electron.ipcRenderer
+          .invoke('mt::fs-trash-item', pathname)
+          .then(() => {
+            notice.notify({
+              title: t('sideBar.deleted'),
+              type: 'primary',
+              time: 3000
+            })
+          })
+          .catch((err: unknown) => {
+            sidebarFail(t('sideBar.errors.deleting'), err)
+          })
+      }
     })
   })
   bus.on('SIDEBAR::copy-cut', (type: unknown) => {

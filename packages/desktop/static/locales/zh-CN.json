@@ -33,7 +33,8 @@
       "exportEpub": "EPUB 电子书",
       "exportLatex": "LaTeX",
       "exportRtf": "RTF",
-      "exportOpml": "OPML 大纲"
+      "exportOpml": "OPML 大纲",
+      "saveAll": "全部保存"
     },
     "edit": {
       "edit": "编辑",
@@ -126,7 +127,8 @@
       "toggleTableOfContents": "切换目录",
       "reloadImages": "重新加载图片",
       "showDeveloperTools": "显示开发者工具",
-      "reloadWindow": "重新加载窗口"
+      "reloadWindow": "重新加载窗口",
+      "zoom": "缩放 {count}%"
     },
     "format": {
       "format": "格式",
@@ -227,7 +229,8 @@
     "replaceSingle": "单个替换",
     "invalidRegex": "无效的正则表达式 \"{pattern}\"",
     "regexMatchEmpty": "正则表达式 \"{pattern}\" 匹配到了空字符串",
-    "regexTimeout": "正则执行超时"
+    "regexTimeout": "正则执行超时",
+    "replacedCount": "已替换 {count} 处"
   },
   "sideBar": {
     "tree": {
@@ -266,6 +269,12 @@
       "minutesAgo": "{count} 分钟前",
       "hoursAgo": "{count} 小时前",
       "daysAgo": "{count} 天前"
+    },
+    "confirmDeleteTitle": "删除",
+    "confirmDeleteMessage": "将“{name}”移入废纸篓？",
+    "deleted": "已移入废纸篓",
+    "errors": {
+      "deleting": "删除时出错"
     }
   },
   "commandPalette": {
@@ -357,7 +366,8 @@
   },
   "recent": {
     "noTabsOpen": "您没有打开的标签页。",
-    "newFile": "新建文件"
+    "newFile": "新建文件",
+    "recentHeading": "最近使用"
   },
   "import": {
     "title": "导入或打开",
@@ -733,7 +743,7 @@
       "online": "在线",
       "saveError": "保存快捷键时出错",
       "shortcutInUse": "快捷键正在使用",
-      "shortcutInUseMessage": "此快捷键已分配给 {accelerator}",
+      "shortcutInUseMessage": "该快捷键已被“{command}”（{accelerator}）占用",
       "table": {
         "description": "描述",
         "edit": "编辑",
@@ -999,7 +1009,9 @@
       "errorSwitchingLanguage": "切换拼写检查语言时出错 {languageCode}",
       "languageMissing": "拼写检查语言缺失 {languageCode}",
       "switchError": "{languageCode} 拼写检查切换错误，{error}"
-    }
+    },
+    "exporting": "正在导出…",
+    "exportDone": "导出完成"
   },
   "themeMarket": {
     "error": {

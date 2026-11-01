@@ -175,7 +175,7 @@ watch(
 }
 
 .side-bar-toc > li {
-  font-size: 14px;
+  font-size: 13px;
   margin-bottom: 15px;
   cursor: pointer;
 }

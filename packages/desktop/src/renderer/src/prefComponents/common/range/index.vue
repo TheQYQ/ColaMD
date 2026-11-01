@@ -82,7 +82,7 @@ const select = (value: number | number[]) => {
 <style>
 .pref-range-item {
   margin: 12px 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--editorColor);
   width: 100%;
   & .value {

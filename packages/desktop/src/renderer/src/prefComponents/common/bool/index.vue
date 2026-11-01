@@ -85,7 +85,7 @@ const handleSwitchChange = (value: boolean | string | number) => {
 
 <style>
 .pref-switch-item {
-  font-size: 14px;
+  font-size: 13px;
   user-select: none;
   margin: 12px 0;
   color: var(--editorColor);

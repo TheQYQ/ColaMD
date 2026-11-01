@@ -425,7 +425,7 @@ const formatSize = (bytes: number): string => {
   max-height: 50vh;
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
   margin: 0;
 }

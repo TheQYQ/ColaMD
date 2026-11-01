@@ -132,7 +132,7 @@ onMounted(async () => {
 
 .pref-font-input-item {
   margin: 12px 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--editorColor);
   & .font-autocomplete {
     width: 100%;

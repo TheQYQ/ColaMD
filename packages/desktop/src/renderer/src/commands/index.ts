@@ -99,6 +99,14 @@ const commands: CommandDescriptor[] = [
     }
   },
   {
+    // UX-16 (#GUI-B10): every dirty tab saves through the store's own
+    // save-all flow (closeTabs=false — plain save, no tab closing).
+    id: 'file.save-all',
+    execute: async () => {
+      bus.emit('cmd::ask-save-all')
+    }
+  },
+  {
     id: 'file.print',
     execute: async () => {
       await delay(50)
