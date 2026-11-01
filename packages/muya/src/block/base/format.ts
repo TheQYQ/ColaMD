@@ -631,9 +631,15 @@ class Format extends Content {
         // PERF-08 (#GUI-B7): this handler used to tokenize the same texts up to
         // six times per keystroke (two cursor-in-type probes on the pre-edit
         // text, old+new in the type-count compare, the render check and the
-        // emoji probe on the post-edit text). Each distinct stream is built
-        // once and passed down; option shapes are kept per call site so the
-        // token streams stay byte-identical to the previous behavior.
+        // emoji probe on the post-edit text). Each distinct stream is now built
+        // once and passed down — four streams, not three.
+        // Three of them keep the option shape of the call site they serve, so
+        // those streams are unchanged. The emoji probe does NOT: it used to run
+        // its own `hasBeginRules: false` stream without labels and now rides
+        // `tokensNew` (labels + begin rules on). For a paragraph whose first
+        // line is a link reference definition the two streams are not
+        // guaranteed to agree, which no unit test covers — the probe needs a
+        // DOM-level check before this can be called equivalent.
         const tokensPre = tokenizer(textContent, {
             hasBeginRules: false,
             options: this.muya.options,
