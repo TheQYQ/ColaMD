@@ -29,7 +29,10 @@
             @keyup="handleEnterKey"
           >
           <div class="controls">
-            <span class="search-result">{{ highlightIndex + 1 }} /
+            <span
+              class="search-result"
+              aria-live="polite"
+            >{{ highlightIndex + 1 }} /
               {{ highlightCount }}
             </span>
             <span

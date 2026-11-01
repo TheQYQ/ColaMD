@@ -6,6 +6,7 @@ import { parse, compileScript } from 'vue/compiler-sfc'
 import ts from 'typescript'
 import { ref, computed, watch, nextTick } from 'vue'
 import { createSeqGuard } from '@/components/search/searchRegexProbe'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
 import { stripTopLevelImports } from '../sfcScriptHarness'
 
 // Regression guard for the find-bar prefill race (issue: the input showed a
@@ -50,6 +51,7 @@ const loadComponent = (deps: Record<string, unknown>) => {
     `const { _defineComponent, ref, computed, watch, onMounted, onBeforeUnmount,
       nextTick, bus, FindCaseIcon, FindWordIcon, FindRegexIcon, useEditorStore,
       storeToRefs, useI18n, debounce, createSeqGuard, probeSearchRegex,
+      activateOnEnterOrSpace,
       ArrowDown, ArrowUp, RefreshRight, Switch } = __deps
     ${js}
     return module.exports`
@@ -100,6 +102,10 @@ const makeBindings = (overrides: Record<string, unknown> = {}) => {
     // component's import list. The real guard is imported rather than stubbed so
     // the newest-call-wins behaviour exercised here is the shipped one.
     createSeqGuard,
+    // Imported for real (not stubbed): the #GUI-B8 keyboard handler is
+    // dependency-free, and an unlisted binding here is a ReferenceError that
+    // only fires on the path these cases do not walk.
+    activateOnEnterOrSpace,
     probeSearchRegex: vi.fn(async () => ({ status: 'ok', matchCount: 0 })),
     ...overrides
   }
