@@ -367,8 +367,20 @@ onBeforeUnmount(() => {
     & > .close-icon {
       opacity: 1;
     }
-    & > .unsaved-dot {
-      opacity: 0;
+    /* UX-01: the active tab is the one being edited, so its unsaved dot must
+       stay visible there too — hiding it meant the marker only appeared after
+       switching away. The base :hover rules already swap dot for close-icon,
+       so only the resting state needs an override. */
+    &.unsaved {
+      & > .close-icon {
+        opacity: 0;
+      }
+      & > .unsaved-dot {
+        opacity: 1;
+      }
+      &:hover > .close-icon {
+        opacity: 1;
+      }
     }
   }
 }

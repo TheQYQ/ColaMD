@@ -270,6 +270,8 @@
   },
   "commandPalette": {
     "placeholder": "Çalıştırmak için bir komut yazın",
+    "noResult": "Sonuç bulunamadı",
+    "quickOpenEmpty": "Dosyaları ada göre aramak için bir klasör açın",
     "placeholders": {
       "selectOption": "Bir seçenek seçin",
       "searchFileToOpen": "Açılacak dosyayı arayın",
@@ -919,6 +921,7 @@
     "importWarning": "İçe aktarma uyarısı",
     "installPandoc": "Pandoc'u Yükle",
     "keepOpen": "Açık tut",
+    "moreFiles": "ve {count} tane daha",
     "replace": "Değiştir",
     "save": "Kaydet",
     "saveChanges": "Değişiklikleri kaydet",
