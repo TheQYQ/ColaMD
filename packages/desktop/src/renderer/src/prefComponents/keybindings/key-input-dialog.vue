@@ -245,7 +245,7 @@ input.input-textbox {
   align-items: center;
   font-size: 13px;
   color: var(--editorColor);
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--maskColor);
 }
 </style>
 <style>

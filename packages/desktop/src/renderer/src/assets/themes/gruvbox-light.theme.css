@@ -43,7 +43,7 @@
   --buttonBorderActive: var(--buttonBorder);
 
   --buttonPrimaryFontColor: #fbf1c7;
-  --buttonPrimaryBgColor: var(--themeColor);
+  --buttonPrimaryBgColor: #070E0E;
   --buttonPrimaryBorder: none;
   --buttonPrimaryShadow: none;
   --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
@@ -76,7 +76,7 @@
   --sideBarColor: rgba(60, 56, 54, 0.7);
   --sideBarIconColor: var(--iconColor);
   --sideBarTitleColor: rgba(60, 56, 54, 0.9);
-  --sideBarTextColor: rgba(60, 56, 54, 0.5);
+  --sideBarTextColor: #6C6553;
   --sideBarBgColor: #f3e6bc;
   --sideBarItemHoverBgColor: rgba(60, 56, 54, 0.05);
   --itemBgColor: #e2d1a7;
