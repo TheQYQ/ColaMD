@@ -28,6 +28,20 @@ export function asState(doc: unknown): TState[] {
 class JSONState {
     private _operationCache: JSONOpList[] = [];
 
+    // PERF-09 (#GUI-B7): bumped on every state mutation. Consumers that derive
+    // expensive per-document data (the inline renderer's reference-definition
+    // labels) cache against this revision instead of recomputing per patched
+    // block. Monotonic, never reset.
+    private _revision = 0;
+
+    get revision(): number {
+        return this._revision;
+    }
+
+    private _bumpRevision(): void {
+        this._revision++;
+    }
+
     // Handle of the scheduled deferred-op flush. Doubles as the "a flush is
     // already scheduled" guard (non-null ⇒ batching in progress), and lets
     // `setContent` cancel a pending batch that belongs to the outgoing
@@ -47,6 +61,7 @@ class JSONState {
         if (op === null)
             return;
         this._state = asState(json1.type.apply(asDoc(this._state), op));
+        this._bumpRevision();
     }
 
     setContent(content: TState[] | string) {
@@ -68,10 +83,12 @@ class JSONState {
 
     private _setState(state: TState[]) {
         this._state = state;
+        this._bumpRevision();
     }
 
     private _setMarkdown(markdown: string) {
         this._state = this.markdownToState(markdown);
+        this._bumpRevision();
     }
 
     // Parse markdown into a block-state array with the editor's current
@@ -200,7 +217,8 @@ class JSONState {
         // callback ignores the payload — docs/getState-callers.md §1).
         const prevDoc = this._state;
         this._apply(op);
-        debug.log(JSON.stringify(op));
+        if (debug.isEnabled('log'))
+            debug.log(JSON.stringify(op));
         this._muya.eventCenter.emit('json-change', {
             op,
             source,
