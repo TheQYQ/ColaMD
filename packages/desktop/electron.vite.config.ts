@@ -3,6 +3,8 @@ import type { PluginOption } from 'vite'
 import { defineConfig } from 'electron-vite'
 import vue from '@vitejs/plugin-vue'
 import svgLoader from 'vite-svg-loader'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import postcssPresetEnv from 'postcss-preset-env'
 import packageJson from './package.json' with { type: 'json' }
 import { fileURLToPath } from 'url'
@@ -92,7 +94,36 @@ export default defineConfig({
         }
       }
     },
-    plugins: [vue(), svgLoader()] as PluginOption[],
+    plugins: [
+      vue(),
+      svgLoader(),
+      // PERF-01 (#GUI-B5): resolve `el-*` components per use instead of
+      // registering the whole Element Plus plugin. Styles stay global (the
+      // full dist CSS is imported in main.ts), so `importStyle: false` avoids
+      // duplicating them per component. dts off: the templates are not
+      // strict-typed against EP's globals and no generated file is wanted.
+      Components({
+        dts: false,
+        resolvers: [ElementPlusResolver({ importStyle: false })]
+      })
+    ] as PluginOption[],
+    build: {
+      rollupOptions: {
+        output: {
+          // Split the stable vendors so the app chunk stays small and the
+          // caches hold across releases. `@muyajs/core` is only reachable via
+          // the editor route (itself lazy-loaded), so a settings window never
+          // parses it; codemirror lands in its own chunk automatically via the
+          // dynamic import in sourceCode.vue. Element Plus is deliberately NOT
+          // listed: the object form would pin the whole package into one
+          // chunk and defeat the per-component tree-shaking above.
+          manualChunks: {
+            'vue-vendor': ['vue', 'vue-router', 'pinia', 'vue-i18n'],
+            muya: ['@muyajs/core']
+          }
+        }
+      }
+    },
     css: {
       postcss: {
         plugins: [

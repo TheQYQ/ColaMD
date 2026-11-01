@@ -15,11 +15,17 @@ import {
   findActiveHeadingIndex
 } from '@/util/sourceModeToc'
 import { storeToRefs } from 'pinia'
-import codeMirror, { setCursorAtFirstLine, setTextDirection } from '../../codeMirror'
 import { wordCount as getWordCount } from '@muyajs/core'
 import { adjustCursor } from '../../util'
 import bus from '../../bus'
 import { oneDarkThemes, railscastsThemes } from '@/config'
+import { getCodeMirrorModule, loadCodeMirrorModule } from './sourceCodeCmModule'
+
+// PERF-01 (#GUI-B5): CodeMirror (and its addons/themes) is only needed in
+// source-code mode, so the module loads on first mount of this component and
+// the whole dependency lands in its own async chunk. Every call site below is
+// guarded by `editor.value`, which only exists after the import resolved —
+// optional chaining there is behaviorally identical to the static import.
 
 // CodeMirror 5 ships no first-party types; the wrapper in src/renderer/src/
 // codeMirror/index.ts also keeps the surface intentionally loose.
@@ -59,7 +65,7 @@ watch(
   () => props.textDirection,
   (value, oldValue) => {
     if (value !== oldValue && editor.value) {
-      setTextDirection(editor.value, value)
+      getCodeMirrorModule()?.setTextDirection(editor.value, value)
     }
   }
 )
@@ -180,7 +186,7 @@ const handleFileChange = (payload: unknown) => {
     nextTick(restoreScroll)
     requestAnimationFrame(restoreScroll)
   } else {
-    setCursorAtFirstLine(editor.value)
+    getCodeMirrorModule()?.setCursorAtFirstLine(editor.value)
   }
 }
 
@@ -284,7 +290,7 @@ const handleImageAction = (payload: unknown) => {
     if (focus && anchor) {
       editor.value.setSelection(anchor, focus, { scroll: true })
     } else {
-      setCursorAtFirstLine(editor.value)
+      getCodeMirrorModule()?.setCursorAtFirstLine(editor.value)
     }
   }
 }
@@ -497,7 +503,7 @@ const handleSourceReplaceValue = (payload: unknown) => {
   handleSourceSearchValue({ value: sourceSearchValue.value, opt })
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (!currentTab.value) return
   const { id } = currentTab.value
   // reset currentTab scrollTop position because the codeMirror scroll position is completely different from the muya scroll position
@@ -544,8 +550,12 @@ onMounted(() => {
   bus.on('replaceValue', handleSourceReplaceValue)
   bus.on('find-action', handleSourceFindAction)
 
+  // Load (or reuse) the async CodeMirror chunk before constructing anything.
+  const cm = await loadCodeMirrorModule()
+  if (viewDestroyed.value || !currentTab.value) return
+
   // CodeMirror's line tree relies on object identity and must not be proxied by Vue.
-  const codeMirrorInstance = markRaw(codeMirror(container, codeMirrorConfig))
+  const codeMirrorInstance = markRaw(cm.default(container, codeMirrorConfig))
 
   // `markdown-math` wraps the standard Markdown mode and delegates `$...$` and
   // `$$...$$` spans to stex so subscript underscores in math do not flip the
@@ -577,7 +587,7 @@ onMounted(() => {
       sourceCodeContainer.value.scrollTop = codeMirrorInstance.heightAtLine(headLine, 'local')
     }
   } else {
-    setCursorAtFirstLine(codeMirrorInstance)
+    cm.setCursorAtFirstLine(codeMirrorInstance)
   }
 
   editor.value = codeMirrorInstance
