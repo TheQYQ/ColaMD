@@ -405,6 +405,7 @@ pnpm -C packages/muya exec vitest run src/<path>/<name>.spec.ts
 | `AGENTS.md`                                                   | 面向 AI 代理与新贡献者的动手须知：环境、门禁基线、四条必读规矩与流程（取代已删除的 `CLAUDE.md`）                                                                          |
 | `packages/muya/ENGINE_GUIDE.md`                               | 引擎架构、约定、构建细节                                                                                                                                                  |
 | `docs/UI_REDESIGN_GUIDE.md`                                   | V1 设计系统、布局与微交互规范（已落地；同名的 `.html` 导出快照零引用，已于 2026-10-03 删除，历史在 git 可考）                                                             |
+| `docs/GUI_FIX_PLAN.md`                                        | GUI 四维审查（性能/UX/设计一致性/可访问性，2026-11-01，基线 `1c738b2`）的 58 项问题总表、8 簇根因、14 批次修复计划与进度真值；全部闭环后按惯例退役删除                    |
 | ~~`docs/OPTIMIZATION_ROADMAP.md`~~（已退役删除，2026-09-29）  | §8 功能候选经重评估全部关闭（不做处置+重启条件留档），基线面板迁入本文 §14，历史证据在 git（v0.1.4 之前）                                                                 |
 | ~~`BUGLIST.md`~~（已退役删除，`0bedc78`）                     | 2026-09-15 审计的实锤 bug 清单，全部条目修复后随收尾一并删除，历史在 git 可考                                                                                             |
 | `.github/CONTRIBUTING.md`、`.github/COMMENTING-GUIDELINES.md` | 贡献流程与注释规范                                                                                                                                                        |
