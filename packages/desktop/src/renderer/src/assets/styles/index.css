@@ -143,7 +143,9 @@
   background: var(--editorColor50);
 }
 
-:focus {
+/* A11Y-07 (#GUI-B8): only suppress the MOUSEDOWN ring; keyboard focus keeps
+   the browser default unless a component paints the ring below. */
+:focus:not(:focus-visible) {
   outline: none;
 }
 
@@ -486,6 +488,8 @@ button.button-primary:not(.custom):focus,
 /* Keyboard focus ring: visible, accent-tinted, consistent offset. */
 button:focus-visible,
 [role='button']:focus-visible,
+[role='tab']:focus-visible,
+[role='option']:focus-visible,
 input:focus-visible,
 .side-bar-tab:focus-visible {
   outline: none;

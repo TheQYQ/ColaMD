@@ -89,7 +89,10 @@
       "resetZoom": "Redefinir Zoom",
       "fullScreen": "Tela Cheia",
       "bringAllToFront": "Trazer Todas para Frente",
-      "alwaysOnTop": "Sempre no Topo"
+      "alwaysOnTop": "Sempre no Topo",
+      "maximize": "Maximizar",
+      "restore": "Restaurar",
+      "close": "Fechar"
     },
     "help": {
       "help": "Ajuda",
@@ -776,7 +779,8 @@
       "enableSpellChecking": "Habilitar verificação ortográfica",
       "hideMarksForErrors": "Ocultar marcas para erros ortográficos",
       "title": "Corretor Ortográfico"
-    }
+    },
+    "moreInfo": "Mais informações"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -923,7 +927,8 @@
   },
   "common": {
     "cancel": "Cancelar",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "Carregando"
   },
   "dialog": {
     "cancel": "Cancelar",

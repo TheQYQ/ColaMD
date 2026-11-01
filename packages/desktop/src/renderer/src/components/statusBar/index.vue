@@ -5,7 +5,12 @@
         class="status-btn"
         :class="{ active: preferencesStore.sourceCode }"
         :title="t('menu.view.sourceCodeMode')"
+        role="button"
+        tabindex="0"
+        :aria-label="t('menu.view.sourceCodeMode')"
+        :aria-pressed="preferencesStore.sourceCode"
         @click="toggleSourceCode"
+        @keydown="activateOnEnterOrSpace"
       >
         <svg
           width="16"
@@ -28,7 +33,11 @@
         v-if="wordCount"
         class="word-count"
         :title="t('statusBar.counterTooltip')"
+        role="button"
+        tabindex="0"
+        :aria-label="counterLabel(show)"
         @click="handleWordClick"
+        @keydown="activateOnEnterOrSpace"
       >
         <span class="text-center-vertical">{{ counterText }}</span>
       </div>
@@ -43,6 +52,7 @@ import { useI18n } from 'vue-i18n'
 import bus from '@/bus'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
 
 /**
  * Typora-style bottom status bar: the source-code-mode toggle on the left,

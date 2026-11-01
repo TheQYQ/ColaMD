@@ -89,7 +89,10 @@
       "resetZoom": "ズームをリセット",
       "fullScreen": "フルスクリーン",
       "bringAllToFront": "すべてを前面に移動",
-      "alwaysOnTop": "常に手前に表示"
+      "alwaysOnTop": "常に手前に表示",
+      "maximize": "最大化",
+      "restore": "元に戻す",
+      "close": "閉じる"
     },
     "help": {
       "help": "ヘルプ",
@@ -776,7 +779,8 @@
       "enableSpellChecking": "スペルチェックを有効",
       "hideMarksForErrors": "スペルエラーのマークを隠す",
       "title": "スペルチェック"
-    }
+    },
+    "moreInfo": "詳細を見る"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -923,7 +927,8 @@
   },
   "common": {
     "cancel": "キャンセル",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "読み込み中"
   },
   "dialog": {
     "cancel": "キャンセル",

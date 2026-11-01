@@ -2,7 +2,11 @@
   <div class="title-bar">
     <div
       class="frameless-titlebar-button frameless-titlebar-close"
+      role="button"
+      tabindex="0"
+      :aria-label="t('menu.window.close')"
       @click.stop="handleCloseClick"
+      @keydown="activateOnEnterOrSpace"
     >
       <div>
         <svg
@@ -18,6 +22,10 @@
 
 <script setup lang="ts">
 import { closePath as windowIconClose } from '../../assets/window-controls'
+import { useI18n } from 'vue-i18n'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
+
+const { t } = useI18n()
 
 const handleCloseClick = () => {
   window.electron.windowControl.close()

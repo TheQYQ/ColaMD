@@ -89,7 +89,10 @@
       "resetZoom": "Zoom herstellen",
       "fullScreen": "Volledig scherm",
       "bringAllToFront": "Alles naar voren",
-      "alwaysOnTop": "Altijd bovenaan"
+      "alwaysOnTop": "Altijd bovenaan",
+      "maximize": "Maximaliseren",
+      "restore": "Herstellen",
+      "close": "Sluiten"
     },
     "help": {
       "help": "Help",
@@ -776,7 +779,8 @@
       "enableSpellChecking": "Spellingcontrole inschakelen",
       "hideMarksForErrors": "Markering voor spelfouten verbergen",
       "title": "Spellingcontrole"
-    }
+    },
+    "moreInfo": "Meer informatie"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -923,7 +927,8 @@
   },
   "common": {
     "cancel": "Annuleren",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "Laden"
   },
   "dialog": {
     "cancel": "Annuleren",

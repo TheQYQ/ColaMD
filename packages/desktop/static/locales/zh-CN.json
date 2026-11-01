@@ -89,7 +89,10 @@
       "resetZoom": "重置缩放",
       "fullScreen": "全屏",
       "bringAllToFront": "将所有窗口置于前台",
-      "alwaysOnTop": "总是在最前面"
+      "alwaysOnTop": "总是在最前面",
+      "maximize": "最大化",
+      "restore": "还原",
+      "close": "关闭"
     },
     "help": {
       "help": "帮助",
@@ -776,7 +779,8 @@
       "enableSpellChecking": "启用拼写检查",
       "hideMarksForErrors": "隐藏拼写错误标记",
       "title": "拼写检查器"
-    }
+    },
+    "moreInfo": "查看详细说明"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -923,7 +927,8 @@
   },
   "common": {
     "cancel": "取消",
-    "ok": "确定"
+    "ok": "确定",
+    "loading": "加载中"
   },
   "dialog": {
     "cancel": "取消",

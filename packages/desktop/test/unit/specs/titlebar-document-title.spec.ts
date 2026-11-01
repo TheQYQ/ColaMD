@@ -51,6 +51,13 @@ const boot = (options: BootOptions = {}) => {
     onMounted: () => {},
     onBeforeUnmount: () => {},
     storeToRefs: () => ({ titleBarStyle, showTabBar }),
+    // #GUI-B8 gave titleBar/index.vue `useI18n` (aria-labels) and
+    // `activateOnEnterOrSpace`. Both are destructured out of __deps by the
+    // harness, so each needs an entry here — this one is not optional at
+    // setup time: the component calls useI18n() during setup, so a missing
+    // binding fails all five cases with a ReferenceError rather than
+    // silently drifting.
+    useI18n: () => ({ t: (k: string) => k }),
     minimizePath: 'min',
     restorePath: 'restore',
     maximizePath: 'max',

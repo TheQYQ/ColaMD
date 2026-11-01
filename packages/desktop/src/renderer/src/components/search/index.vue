@@ -29,14 +29,22 @@
             @keydown="handleSearchKeydown"
           >
           <div class="controls">
-            <span class="search-result">{{ highlightIndex + 1 }} /
+            <span
+              class="search-result"
+              aria-live="polite"
+            >{{ highlightIndex + 1 }} /
               {{ highlightCount }}
             </span>
             <span
               :title="t('search.caseSensitive')"
               class="is-case-sensitive"
               :class="{ active: isCaseSensitive }"
+              role="button"
+              tabindex="0"
+              :aria-label="t('search.caseSensitive')"
+              :aria-pressed="isCaseSensitive"
               @click.stop="toggleCtrl('isCaseSensitive')"
+              @keydown="activateOnEnterOrSpace"
             >
               <FindCaseIcon aria-hidden="true" />
             </span>
@@ -44,7 +52,12 @@
               :title="t('search.wholeWord')"
               class="is-whole-word"
               :class="{ active: isWholeWord }"
+              role="button"
+              tabindex="0"
+              :aria-label="t('search.wholeWord')"
+              :aria-pressed="isWholeWord"
               @click.stop="toggleCtrl('isWholeWord')"
+              @keydown="activateOnEnterOrSpace"
             >
               <FindWordIcon aria-hidden="true" />
             </span>
@@ -52,7 +65,12 @@
               :title="t('search.useRegex')"
               class="is-regex"
               :class="{ active: isRegexp }"
+              role="button"
+              tabindex="0"
+              :aria-label="t('search.useRegex')"
+              :aria-pressed="isRegexp"
               @click.stop="toggleCtrl('isRegexp')"
+              @keydown="activateOnEnterOrSpace"
             >
               <FindRegexIcon aria-hidden="true" />
             </span>
@@ -157,6 +175,7 @@ import { useI18n } from 'vue-i18n'
 import debounce from 'lodash/debounce'
 import { createSeqGuard, probeSearchRegex } from './searchRegexProbe'
 import { loadSearchOptions, saveSearchOptions } from './persistence'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
 import { ArrowDown, ArrowUp, RefreshRight, Switch, Close } from '@element-plus/icons-vue'
 
 const { t } = useI18n()
