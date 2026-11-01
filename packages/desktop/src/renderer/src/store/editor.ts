@@ -469,8 +469,7 @@ export const useEditorStore = defineStore('editor', {
       const oldCurrentFile = this.currentFile
       let didUpdateCurrentFile = false
       if (oldCurrentFile == null || oldCurrentFile.id !== currentFile.id) {
-        const { id, markdown, cursor, history, pathname, scrollTop, blocks, muyaIndexCursor } =
-          currentFile
+        const { id, markdown, cursor, history, pathname, scrollTop, muyaIndexCursor } = currentFile
         // Must run while `currentFile` still points at the outgoing tab, so its
         // flushed edit is attributed to that tab and not lost on switch (#2938).
         if (oldCurrentFile) {
@@ -492,8 +491,7 @@ export const useEditorStore = defineStore('editor', {
           muyaIndexCursor,
           renderCursor: true,
           history,
-          scrollTop,
-          blocks
+          scrollTop
         })
       }
 
@@ -707,7 +705,7 @@ export const useEditorStore = defineStore('editor', {
     // PERFORMANCE: Supports two update tiers via nullable fields:
     //   - Critical path: markdown/history/cursor/wordCount are non-null — drives
     //     save/dirty tracking and auto-save.
-    //   - Derived UI state: only toc/blocks are non-null — updates sidebar
+    //   - Derived UI state: only toc is non-null — updates sidebar
     //     rendering. When markdown is null, the critical-path bookkeeping is
     //     skipped entirely.
     LISTEN_FOR_CONTENT_CHANGE(payload: ContentChangePayload): void {
@@ -727,7 +725,7 @@ export const useEditorStore = defineStore('editor', {
     // `json-change`, so `tab.cursor` — the position replayed when the tab is
     // re-activated — would otherwise only ever track the last EDIT, losing a
     // click-moved caret across an in-session tab switch. Lightweight by design:
-    // it only stores the serialized caret, skipping markdown/blocks/TOC re-derivation
+    // it only stores the serialized caret, skipping markdown/TOC re-derivation
     // and the save/dirty bookkeeping LISTEN_FOR_CONTENT_CHANGE performs.
     PERSIST_CURSOR(id: string, cursor: unknown): void {
       persistCursor(this, id, cursor)

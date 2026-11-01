@@ -98,7 +98,6 @@ interface FileChangedEvent {
   renderCursor: true
   history: IFileState['history']
   scrollTop: number
-  blocks: unknown
 }
 
 /**
@@ -113,6 +112,5 @@ export const createFileChangedEvent = (file: IFileState): FileChangedEvent => ({
   muyaIndexCursor: file.muyaIndexCursor,
   renderCursor: true,
   history: file.history,
-  scrollTop: file.scrollTop,
-  blocks: file.blocks
+  scrollTop: file.scrollTop
 })
