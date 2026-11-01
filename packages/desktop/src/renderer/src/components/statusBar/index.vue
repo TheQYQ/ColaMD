@@ -5,7 +5,12 @@
         class="status-btn"
         :class="{ active: preferencesStore.sourceCode }"
         :title="t('menu.view.sourceCodeMode')"
+        role="button"
+        tabindex="0"
+        :aria-label="t('menu.view.sourceCodeMode')"
+        :aria-pressed="preferencesStore.sourceCode"
         @click="toggleSourceCode"
+        @keydown="activateOnEnterOrSpace"
       >
         <svg
           width="16"
@@ -28,7 +33,11 @@
         v-if="wordCount"
         class="word-count"
         :title="t('menu.counter.words')"
+        role="button"
+        tabindex="0"
+        :aria-label="t('menu.counter.words')"
         @click="handleWordClick"
+        @keydown="activateOnEnterOrSpace"
       >
         <span class="text-center-vertical">{{ counterText }}</span>
       </div>
@@ -43,6 +52,7 @@ import { useI18n } from 'vue-i18n'
 import bus from '@/bus'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
 
 /**
  * Typora-style bottom status bar: the source-code-mode toggle on the left,
@@ -115,7 +125,9 @@ const toggleSourceCode = (): void => {
   border-radius: 4px;
   cursor: pointer;
   color: var(--text-tertiary);
-  transition: color 120ms ease-out, background-color 120ms ease-out;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
 }
 .status-btn:hover {
   background: var(--bg-hover);
@@ -133,7 +145,9 @@ const toggleSourceCode = (): void => {
   padding: 1px 6px;
   border-radius: 4px;
   color: var(--text-tertiary);
-  transition: color 120ms ease-out, background-color 120ms ease-out;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
 }
 .word-count:hover {
   background: var(--bg-hover);

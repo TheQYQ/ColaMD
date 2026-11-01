@@ -7,6 +7,7 @@
       <ul
         ref="tabDropContainer"
         class="tabs-container"
+        role="tablist"
       >
         <li
           v-for="file of tabs"
@@ -14,15 +15,24 @@
           :title="file.pathname"
           :class="{ active: currentFile?.id === file.id, unsaved: !file.isSaved }"
           :data-id="file.id"
+          role="tab"
+          :aria-selected="currentFile?.id === file.id"
+          :aria-label="file.filename"
+          tabindex="0"
           @click.stop="selectFile(file)"
           @click.middle="closeTab(file.id)"
           @contextmenu.prevent="handleContextMenu($event, file)"
+          @keydown="activateOnEnterOrSpace"
+          @keydown.delete.prevent="removeFileInTab(file)"
         >
           <span>{{ file.filename }}</span>
           <span class="unsaved-dot" />
           <el-icon
             class="close-icon"
             :size="12"
+            role="button"
+            tabindex="-1"
+            :aria-label="t('menu.file.closeTab')"
             @click.stop="removeFileInTab(file)"
           >
             <Close />
@@ -32,7 +42,11 @@
     </div>
     <div
       class="new-file"
+      role="button"
+      tabindex="0"
+      :aria-label="t('menu.file.newTab')"
       @click.stop="newFile()"
+      @keydown="activateOnEnterOrSpace"
     >
       <el-icon :size="16">
         <Plus />
@@ -49,10 +63,13 @@ import autoScroll from 'dom-autoscroller'
 import dragula from 'dragula'
 import { Plus, Close } from '@element-plus/icons-vue'
 import { showContextMenu } from '../../contextMenu/tabs'
+import { useI18n } from 'vue-i18n'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
 import bus from '../../bus'
 import type { IFileState } from '@shared/types/files'
 
 const editorStore = useEditorStore()
+const { t } = useI18n()
 
 const { currentFile, tabs } = storeToRefs(editorStore)
 

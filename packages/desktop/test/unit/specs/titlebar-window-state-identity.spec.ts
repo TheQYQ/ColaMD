@@ -87,6 +87,8 @@ const boot = () => {
     usePreferencesStore: () => ({}),
     useLayoutStore: () => ({}),
     useEditorStore: () => ({}),
+    // A11Y-08: the title bar labels its window controls through i18n.
+    useI18n: () => ({ t: (k: string) => k }),
     ref,
     computed,
     watch,

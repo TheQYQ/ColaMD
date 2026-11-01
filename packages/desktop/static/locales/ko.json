@@ -89,7 +89,10 @@
       "resetZoom": "줌 초기화",
       "fullScreen": "전체 화면",
       "bringAllToFront": "모든 창 앞으로 가져오기",
-      "alwaysOnTop": "항상 위에"
+      "alwaysOnTop": "항상 위에",
+      "maximize": "최대화",
+      "restore": "복원",
+      "close": "닫기"
     },
     "help": {
       "help": "도움말",
@@ -759,7 +762,8 @@
       "enableSpellChecking": "맞춤법 검사 활성화",
       "hideMarksForErrors": "맞춤법 오류 표시 숨기기",
       "title": "맞춤법 검사기"
-    }
+    },
+    "moreInfo": "자세히 보기"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -906,7 +910,8 @@
   },
   "common": {
     "cancel": "취소",
-    "ok": "확인"
+    "ok": "확인",
+    "loading": "불러오는 중"
   },
   "dialog": {
     "cancel": "취소",

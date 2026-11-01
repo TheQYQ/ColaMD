@@ -42,7 +42,11 @@
       >
         <div
           class="frameless-titlebar-button frameless-titlebar-minimize"
+          role="button"
+          tabindex="0"
+          :aria-label="t('menu.window.minimize')"
           @click.stop="handleMinimizeClick"
+          @keydown="activateOnEnterOrSpace"
         >
           <div>
             <svg
@@ -55,7 +59,11 @@
         </div>
         <div
           class="frameless-titlebar-button frameless-titlebar-toggle"
+          role="button"
+          tabindex="0"
+          :aria-label="t(isMaximized ? 'menu.window.restore' : 'menu.window.maximize')"
           @click.stop="handleMaximizeClick"
+          @keydown="activateOnEnterOrSpace"
         >
           <div>
             <svg
@@ -75,7 +83,11 @@
         </div>
         <div
           class="frameless-titlebar-button frameless-titlebar-close"
+          role="button"
+          tabindex="0"
+          :aria-label="t('menu.window.close')"
           @click.stop="handleCloseClick"
+          @keydown="activateOnEnterOrSpace"
         >
           <div>
             <svg
@@ -99,6 +111,8 @@ import { storeToRefs } from 'pinia'
 import { minimizePath, restorePath, maximizePath, closePath } from '../../assets/window-controls.js'
 import { isOsx as isOsxPlatform } from '@/util'
 import { shouldShowInAppTitleBar } from './visibility'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
+import { useI18n } from 'vue-i18n'
 import { useEditorStore } from '@/store/editor'
 import type { FileWordCount } from '@shared/types/files'
 
@@ -118,6 +132,7 @@ const props = defineProps<{
 const preferencesStore = usePreferencesStore()
 const layoutStore = useLayoutStore()
 const editorStore = useEditorStore()
+const { t } = useI18n()
 
 const isOsx = isOsxPlatform
 const windowIconMinimize = minimizePath

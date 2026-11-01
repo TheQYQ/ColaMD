@@ -89,7 +89,10 @@
       "resetZoom": "Zoom zurücksetzen",
       "fullScreen": "Vollbild",
       "bringAllToFront": "Alle nach vorne bringen",
-      "alwaysOnTop": "Immer im Vordergrund"
+      "alwaysOnTop": "Immer im Vordergrund",
+      "maximize": "Maximieren",
+      "restore": "Wiederherstellen",
+      "close": "Schließen"
     },
     "help": {
       "help": "Hilfe",
@@ -759,7 +762,8 @@
       "enableSpellChecking": "Rechtschreibprüfung aktivieren",
       "hideMarksForErrors": "Markierungen für Rechtschreibfehler ausblenden",
       "title": "Rechtschreibprüfung"
-    }
+    },
+    "moreInfo": "Weitere Informationen"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -906,7 +910,8 @@
   },
   "common": {
     "cancel": "Abbrechen",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "Wird geladen"
   },
   "dialog": {
     "cancel": "Abbrechen",

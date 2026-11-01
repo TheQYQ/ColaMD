@@ -90,6 +90,8 @@ export const setLanguage = async (locale: string): Promise<void> => {
     }
   }
   globalI18n.locale.value = locale
+  // A11Y-10 (#GUI-B8): screen readers must follow the UI language.
+  document.documentElement.lang = locale
 }
 
 // Export the current language getter function

@@ -16,6 +16,15 @@
               v-model="query"
               type="text"
               class="search"
+              role="combobox"
+              :aria-expanded="showCommandPalette"
+              aria-controls="command-palette-listbox"
+              aria-autocomplete="list"
+              :aria-activedescendant="
+                selectedCommandIndex >= 0
+                  ? `command-palette-option-${selectedCommandIndex}`
+                  : undefined
+              "
               :placeholder="placeholderText"
               @keydown="handleBeforeInput"
               @keyup="handleInput"
@@ -28,16 +37,21 @@
           >
             <ul
               v-if="availableCommands.length"
+              id="command-palette-listbox"
               class="commands"
+              role="listbox"
             >
               <li
                 v-for="(item, index) of availableCommands"
+                :id="`command-palette-option-${index}`"
                 :key="index"
                 :ref="
                   (el) => {
                     if (el) commandItems[index] = el as HTMLElement
                   }
                 "
+                role="option"
+                :aria-selected="index === selectedCommandIndex"
                 :class="{ active: index === selectedCommandIndex }"
                 @click="search(item.id)"
               >
