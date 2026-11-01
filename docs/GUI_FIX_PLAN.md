@@ -1,6 +1,6 @@
 # ColaMD GUI 修复计划
 
-> **批次进度**：常规批次 9/11 · 专项 0/3（2026-11-01 建档；进度行随每批合入更新）。
+> **批次进度**：常规批次 10/11 · 专项 0/3（2026-11-01 建档；进度行随每批合入更新）。
 > 本文档是 GUI 修复工作的**唯一进度真值**；性能与门禁的数字基线仍以 `PROJECT_GUIDE.md` §14 为准。
 
 ## 0. 文档信息与生命周期
@@ -43,20 +43,20 @@
 | UX-01 | 高     | 活动标签页永不显示未保存圆点（active 规则把它设为透明）；`document.title` 也无脏标记               | `tabs.vue:366-374`、`titleBar/index.vue:161-176`                                                              | B1                   | 已修复 (PR #110) |
 | UX-02 | 高     | 点击编辑器任意位置即关闭搜索栏并清空查询词（高频流程被打断、丢输入）                               | `search/index.vue:280-295`                                                                                    | B2                   | 已修复 (PR #111) |
 | UX-03 | 高     | 未保存对话框不说几个/哪些文件、无 Enter、无初始焦点与焦点陷阱（主进程传的 files.length 被丢弃）    | `unsavedDialog/index.vue:73-95`、`src/main/menu/actions/file.ts:378`                                          | B1                   | 已修复 (PR #110) |
-| UX-04 | 高     | 快捷键改完不点保存关窗即静默丢失（isDirty 无消费者）；冲突检测不排除自身、提示不指明占用命令       | `prefComponents/keybindings/KeybindingConfigurator.ts:91-143, 178-185`                                        | B10                  | 进行中 (PR #119) |
+| UX-04 | 高     | 快捷键改完不点保存关窗即静默丢失（isDirty 无消费者）；冲突检测不排除自身、提示不指明占用命令       | `prefComponents/keybindings/KeybindingConfigurator.ts:91-143, 178-185`                                        | B10                  | 已修复 (PR #119) |
 | UX-05 | 中     | Ctrl+P 快速打开在空库（无文件夹无标签）时抛错静默失败，面板不出现                                  | `commands/quickOpen.ts:122-127`、`commandPalette/index.vue:151-157`                                           | B1                   | 已修复 (PR #110) |
 | UX-06 | 中     | 搜索三开关（大小写/整词/正则）不持久，重启即回默认                                                 | `search/index.vue:156-158`                                                                                    | B2                   | 已修复 (PR #111) |
-| UX-07 | 中     | 侧栏删除文件/文件夹零确认、零成功反馈（与关脏标签的三重确认形成反差）                              | `store/sidebarContextMenu.ts:38-43`、`sideBar/tree.vue:258-261`                                               | B10                  | 进行中 (PR #119) |
-| UX-08 | 中     | 无标签页空状态只有"新建文件"，无打开文件/文件夹入口、无最近列表（组件名叫 recent 却不显示 recent） | `components/recent/index.vue:2-14`、`pages/app.vue:27`                                                        | B10                  | 进行中 (PR #119) |
+| UX-07 | 中     | 侧栏删除文件/文件夹零确认、零成功反馈（与关脏标签的三重确认形成反差）                              | `store/sidebarContextMenu.ts:38-43`、`sideBar/tree.vue:258-261`                                               | B10                  | 已修复 (PR #119) |
+| UX-08 | 中     | 无标签页空状态只有"新建文件"，无打开文件/文件夹入口、无最近列表（组件名叫 recent 却不显示 recent） | `components/recent/index.vue:2-14`、`pages/app.vue:27`                                                        | B10                  | 已修复 (PR #119) |
 | UX-09 | 中     | 自绘菜单栏下拉项键盘不可达（无上下箭头/Enter/hover 同步）                                          | `menuBar/MenuList.vue:11-24`、`menuBar/index.vue:137-149`                                                     | SC                   | 待修             |
-| UX-10 | 中     | 重命名双标准：弹窗版全名可改扩展名、光标在末尾；侧栏版预选词干、锁定扩展名                         | `rename/index.vue:48-56` 与 `sideBar/treeFile.vue:81-99`                                                      | B10                  | 进行中 (PR #119) |
-| UX-11 | 中     | 导出无进度反馈、成功零反馈，大文档导出期间用户会重复点击                                           | `editorWithTabs/editor.vue:918-1080`、`exportSettings/index.vue:296-303`                                      | B10                  | 进行中 (PR #119) |
+| UX-10 | 中     | 重命名双标准：弹窗版全名可改扩展名、光标在末尾；侧栏版预选词干、锁定扩展名                         | `rename/index.vue:48-56` 与 `sideBar/treeFile.vue:81-99`                                                      | B10                  | 已修复 (PR #119) |
+| UX-11 | 中     | 导出无进度反馈、成功零反馈，大文档导出期间用户会重复点击                                           | `editorWithTabs/editor.vue:918-1080`、`exportSettings/index.vue:296-303`                                      | B10                  | 已修复 (PR #119) |
 | UX-12 | 中     | 搜索框 Enter 只能向下（无 Shift+Enter 向上）、替换框 Enter 无语义、监听挂在 keyup 手感飘           | `search/index.vue:309-313, 90-95, 29`                                                                         | B2                   | 已修复 (PR #111) |
 | UX-13 | 中     | 硬编码英文约 15 处用户可见串（placeholder、toast、通知标题、命令后缀等）                           | `sideBar/tree.vue:45`、`statusBar/index.vue:74`、`store/autoUpdates.ts:10-33`、`commands/index.ts:629-636` 等 | B4                   | 已修复 (PR #113) |
 | UX-14 | 中     | 状态栏统计口径点击循环无提示，tooltip 恒为"字数"                                                   | `statusBar/index.vue:30, 60-82`                                                                               | B4                   | 已修复 (PR #113) |
-| UX-15 | 低     | 窗口缩放无屏上百分比反馈，何时回到 100% 全靠猜                                                     | `src/main/windows/utils.ts:6-27`                                                                              | B10                  | 进行中 (PR #119) |
-| UX-16 | 低     | 缺"全部保存"菜单入口（命令面板已有 ASK_FOR_SAVE_ALL，只差菜单项）                                  | `store/editor.ts:406`、`menu/menus.ts`                                                                        | B10                  | 进行中 (PR #119) |
-| UX-17 | 低     | 全部替换后无"N 处"结果反馈                                                                         | `search/index.vue:370-380`                                                                                    | B10                  | 进行中 (PR #119) |
+| UX-15 | 低     | 窗口缩放无屏上百分比反馈，何时回到 100% 全靠猜                                                     | `src/main/windows/utils.ts:6-27`                                                                              | B10                  | 已修复 (PR #119) |
+| UX-16 | 低     | 缺"全部保存"菜单入口（命令面板已有 ASK_FOR_SAVE_ALL，只差菜单项）                                  | `store/editor.ts:406`、`menu/menus.ts`                                                                        | B10                  | 已修复 (PR #119) |
+| UX-17 | 低     | 全部替换后无"N 处"结果反馈                                                                         | `search/index.vue:370-380`                                                                                    | B10                  | 已修复 (PR #119) |
 | UX-18 | 低     | TOC 面板无标题时完全空白（同侧栏 history 面板有完整三态空提示，标准不一）                          | `sideBar/toc.vue:6-21`                                                                                        | B4                   | 已修复 (PR #113) |
 | UX-19 | 低     | 命令面板无空态、过滤只匹配当前语言、鼠标 hover 不同步高亮                                          | `commandPalette/index.vue:29-58, 296-303, 41-46`                                                              | B4                   | 已修复 (PR #113) |
 | UX-20 | 低     | document 级 Esc 监听不判断搜索栏开关状态，任何 Esc 都走一次清空路径                                | `search/index.vue:274-278`                                                                                    | B2                   | 已修复 (PR #111) |
@@ -69,10 +69,10 @@
 | DS-01 | 高     | 32 份主题文件 97% 结构重复，每份携带 `!important` 组件补丁（已实际覆盖组件层 token 化成果）；4 个主题缺 side-bar 补丁造成跨主题不一致 | `assets/themes/*.theme.css`（如 `dark.theme.css:149-214`）与 `sideBar/index.vue:146`                                                   | SA                      | 待修             |
 | DS-02 | 高     | 6 个未定义 CSS 变量被引用：`--editorColor20` 三条边框静默失效（连 fallback 都没有）；`--success/--warning` 四个永远走硬编码 fallback  | `prefComponents/image/components/uploader/index.vue:852-860, 998-1049, 1083, 1137, 1160`                                               | B1                      | 已修复 (PR #110) |
 | DS-03 | 高     | 遮罩四种黑无一用 `--maskColor`（0 引用）；亮色边框 6 套灰并存；暗主题边框用黑透明极性写反                                             | `editor.vue:1750`、`key-input-dialog.vue:248`、`unsavedDialog/index.vue:104`、`sideBar/index.vue:131`、`assets/styles/index.css:31-96` | B9                      | 已修复 (PR #118) |
-| DS-04 | 中-高  | 新语义 token 层采用率仅约 16%（53 次 vs 旧 camelCase 282 次）；`--font-ui` 定义了却没挂到 body，基础 UI 字体栈缺失                    | `assets/styles/index.css:441-473, 139-155`                                                                                             | B10                     | 进行中 (PR #119) |
+| DS-04 | 中-高  | 新语义 token 层采用率仅约 16%（53 次 vs 旧 camelCase 282 次）；`--font-ui` 定义了却没挂到 body，基础 UI 字体栈缺失                    | `assets/styles/index.css:441-473, 139-155`                                                                                             | B10                     | 已修复 (PR #119) |
 | DS-05 | 中     | 真 bug：`color: var(sideBarTitleColor)` 缺 `--` 前缀，声明非法，标题悬停变色从未生效                                                  | `titleBar/index.vue:332`                                                                                                               | B1                      | 已修复 (PR #110) |
-| DS-06 | 中     | 圆角 3px/5px 体系外 15 处与 token 混搭；裸 px 字号 89 处（13/14 混用）；等宽字体四套栈；行高 11 种取值                                | `tabs.vue:299`、`unsavedDialog:111`、`rename:76`、`search:498` 等                                                                      | B10                     | 进行中 (PR #119) |
-| DS-07 | 中     | z-index 无文档化阶梯（10000 弹层带内靠 DOM 顺序）；image-viewer 存在同类同名死规则；unsavedDialog 独占 12000 无注释                   | `assets/styles/index.css:432-434`、`editor.vue:1743-1753`、`unsavedDialog:103`                                                         | B10                     | 进行中 (PR #119) |
+| DS-06 | 中     | 圆角 3px/5px 体系外 15 处与 token 混搭；裸 px 字号 89 处（13/14 混用）；等宽字体四套栈；行高 11 种取值                                | `tabs.vue:299`、`unsavedDialog:111`、`rename:76`、`search:498` 等                                                                      | B10                     | 已修复 (PR #119) |
+| DS-07 | 中     | z-index 无文档化阶梯（10000 弹层带内靠 DOM 顺序）；image-viewer 存在同类同名死规则；unsavedDialog 独占 12000 无注释                   | `assets/styles/index.css:432-434`、`editor.vue:1743-1753`、`unsavedDialog:103`                                                         | B10                     | 已修复 (PR #119) |
 | DS-08 | 中     | 图标四套来源混用：iconfont 填充风（1024 网格）与描边风（24 网格）并排，尺寸六种写法                                                   | `assets/symbolIcon/`、`components/icons/LinkIcon.vue`、模板内联 svg                                                                    | SA 顺带定标准           | 待修             |
 | DS-09 | 低     | 主题预览色板与主题文件双份维护（90 处 hex 手工同步，新主题易漏配）                                                                    | `prefComponents/theme/index.vue:325-402`                                                                                               | SA 顺带                 | 待修             |
 | DS-10 | 低     | 布局 token（--editorAreaWidth 等）约 35 处重复定义；muya 默认主题色仍是指南点名清除的绿色；实现与设计指南骨架参数漂移未记档           | `assets/styles/index.css:3-7`、各 theme 文件 90 行附近、`muya/src/assets/styles/index.css:3`                                           | SA（变量）/ B10（记档） | 待修             |
@@ -158,7 +158,7 @@ _消解_：逐项清理；DS-05 一类真 bug 靠"改样式必须人工过一遍
 - [x] **B7** 性能中量 · muya 侧（4-5h，触引擎）— 已合入 develop（PR #116）
 - [x] **B8** 可访问性 · 键盘可达 + 焦点（6-8h）— 已合入 develop（PR #117）
 - [x] **B9** 对比度 + 门禁脚本（4-6h）— 已合入 develop（PR #118）
-- [ ] **B10** UX 收尾 + token 归并（5-6h）
+- [x] **B10** UX 收尾 + token 归并（5-6h）— 已合入 develop（PR #119）
 - [ ] **SA** 专项：主题文件瘦身（2-3 天）
 - [ ] **SC** 专项：ARIA 全套语义（3-4 天）
 - [ ] **SB** 专项：muya 大文档虚拟化（1 周以上）
