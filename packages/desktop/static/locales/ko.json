@@ -218,6 +218,7 @@
     }
   },
   "search": {
+    "close": "닫기",
     "searchPlaceholder": "검색",
     "caseSensitive": "대소문자 구분",
     "wholeWord": "전체 단어 선택",

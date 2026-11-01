@@ -218,6 +218,7 @@
     }
   },
   "search": {
+    "close": "Cerrar",
     "searchPlaceholder": "Buscar",
     "caseSensitive": "Distinguir Mayúsculas",
     "wholeWord": "Seleccionar palabra completa",

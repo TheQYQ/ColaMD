@@ -218,6 +218,7 @@
     }
   },
   "search": {
+    "close": "關閉",
     "searchPlaceholder": "搜尋",
     "caseSensitive": "區分大小寫",
     "wholeWord": "選擇整個單字",

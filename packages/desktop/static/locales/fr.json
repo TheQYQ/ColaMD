@@ -218,6 +218,7 @@
     }
   },
   "search": {
+    "close": "Fermer",
     "searchPlaceholder": "Rechercher",
     "caseSensitive": "Sensible à la casse",
     "wholeWord": "Mot entier",
