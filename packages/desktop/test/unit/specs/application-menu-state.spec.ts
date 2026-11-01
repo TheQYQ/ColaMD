@@ -152,3 +152,75 @@ describe('createApplicationMenuState — Paragraph checked-state in containers',
     expect(state.affiliation.p).toBe(true)
   })
 })
+
+// PERF-03 (#GUI-B3): the selection side of the store caches the last state it
+// sent per window and skips the IPC when a new event derives an identical one
+// — a caret moving inside one block fires `selection-change` on every tick
+// while the menu state almost never changes.
+describe('SELECTION_CHANGE: unchanged state is not re-sent', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.restoreAllMocks()
+  })
+
+  // The `xyz-perf-gate` affiliation key makes the derived state unique within
+  // this file, so the module-level cache cannot collide with an earlier case.
+  const changesWith = (...affiliation: Array<{ type: string; blockName: string }>) => ({
+    start: { key: 'a', offset: 0, type: 'span', block: { functionType: 'paragraphContent' } },
+    end: { key: 'a', offset: 0, type: 'span', block: { functionType: 'paragraphContent' } },
+    affiliation
+  })
+
+  it('sends the selection IPC once for an identical consecutive state', () => {
+    const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
+    const store = useEditorStore()
+    const changes = changesWith(
+      { type: 'p', blockName: 'paragraph' },
+      { type: 'xyz-perf-gate', blockName: 'paragraph' }
+    )
+
+    store.SELECTION_CHANGE(changes as never)
+    store.SELECTION_CHANGE(changes as never)
+
+    const sends = sendSpy.mock.calls.filter((c) => c[0] === 'mt::editor-selection-changed')
+    expect(sends).toHaveLength(1)
+  })
+
+  it('sends again once the derived state actually changes', () => {
+    const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
+    const store = useEditorStore()
+
+    store.SELECTION_CHANGE(
+      changesWith(
+        { type: 'p', blockName: 'paragraph' },
+        {
+          type: 'xyz-perf-gate-2',
+          blockName: 'paragraph'
+        }
+      ) as never
+    )
+    store.SELECTION_CHANGE(
+      changesWith(
+        { type: 'ul', blockName: 'bullet-list', listType: 'bullet' },
+        { type: 'xyz-perf-gate-2', blockName: 'paragraph' }
+      ) as never
+    )
+
+    const sends = sendSpy.mock.calls.filter((c) => c[0] === 'mt::editor-selection-changed')
+    expect(sends).toHaveLength(2)
+  })
+
+  it('skips the format-menu IPC for an identical consecutive state too', () => {
+    // The format side uses the same per-window cache: an identical
+    // consecutive format state must not re-send either.
+    const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
+    const store = useEditorStore()
+    const formats = [{ type: 'strong' }, { type: 'em' }] as never[]
+
+    store.SELECTION_FORMATS(formats as never)
+    store.SELECTION_FORMATS(formats as never)
+
+    const sends = sendSpy.mock.calls.filter((c) => c[0] === 'mt::update-format-menu')
+    expect(sends).toHaveLength(1)
+  })
+})

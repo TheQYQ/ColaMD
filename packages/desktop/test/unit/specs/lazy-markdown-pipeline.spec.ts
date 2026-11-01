@@ -218,7 +218,7 @@ describe('lazyMarkdownPipeline — pause tier collapses the burst', () => {
     vi.useRealTimers()
   })
 
-  it('one serialization 120ms after the last keystroke carries TOC/wordCount/blocks', () => {
+  it('one serialization 120ms after the last keystroke carries TOC/wordCount', () => {
     const engine = mockEngine()
     const { deps } = makeDeps(engine)
     const dispatched: Captured[] = []
@@ -243,7 +243,6 @@ describe('lazyMarkdownPipeline — pause tier collapses the burst', () => {
       markdown: 'md#1',
       wordCount: { words: 4 },
       toc: [{ lvl: 1, slug: 'h' }],
-      blocks: { blocks: true },
       history: { savedContent: 'md#1' }
     })
   })

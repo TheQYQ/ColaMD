@@ -14,7 +14,7 @@
 //   saved snapshot, and clean-vs-dirty MUST be resolved now (Phase G — G6), so
 //   serialize + hash + full commit immediately.
 // - debounced pause tier (~120ms after the last keystroke): one serialization
-//   feeding markdown + hash + TOC + wordCount + blocks in a single full commit.
+//   feeding markdown + hash + TOC + wordCount in a single full commit.
 //   This also re-freshens `tab.markdown` so later reads are usually free.
 //
 // `flushActive()` is the flush-on-read primitive: every consumer that reads
@@ -49,7 +49,6 @@ interface PipelineDispatchPayload {
   cursor?: unknown | null
   history?: unknown | null
   toc?: unknown | null
-  blocks?: unknown | null
 }
 
 export interface LazyMarkdownPipelineDeps {
@@ -87,8 +86,7 @@ export function createLazyMarkdownPipeline(deps: LazyMarkdownPipelineDeps) {
       wordCount: null,
       cursor: deps.serializeCursor(engine.getSelection()),
       history: deps.makeSyntheticHistory(id, markdown),
-      toc: null,
-      blocks: null
+      toc: null
     })
   }
 
@@ -114,8 +112,7 @@ export function createLazyMarkdownPipeline(deps: LazyMarkdownPipelineDeps) {
       wordCount: deps.wordCount(markdown),
       cursor: null,
       history: deps.makeSyntheticHistory(id, markdown),
-      toc: engine.getTOC(),
-      blocks: engine.getState()
+      toc: engine.getTOC()
     })
   }
 
@@ -173,8 +170,7 @@ export function createLazyMarkdownPipeline(deps: LazyMarkdownPipelineDeps) {
         wordCount: null,
         cursor: deps.serializeCursor(engine.getSelection()),
         history: null,
-        toc: null,
-        blocks: null
+        toc: null
       })
 
       pendingDerived = { id }

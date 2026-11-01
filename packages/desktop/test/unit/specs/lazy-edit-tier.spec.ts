@@ -75,8 +75,7 @@ describe('useEditorStore LISTEN_FOR_CONTENT_CHANGE — lazy-serialization tiers'
       wordCount: null,
       cursor: { anchor: { key: 'k', offset: 3 } },
       history: null,
-      toc: null,
-      blocks: null
+      toc: null
     })
 
     expect(tab.isSaved).toBe(false)
@@ -107,8 +106,7 @@ describe('useEditorStore LISTEN_FOR_CONTENT_CHANGE — lazy-serialization tiers'
       wordCount: null,
       cursor: null,
       history: null,
-      toc: null,
-      blocks: null
+      toc: null
     })
     vi.advanceTimersByTime(1000)
 
@@ -119,9 +117,9 @@ describe('useEditorStore LISTEN_FOR_CONTENT_CHANGE — lazy-serialization tiers'
     expect(call?.[4]).toBe('stale snapshot')
   })
 
-  it('derived tier still updates blocks/wordCount without dirty bookkeeping', () => {
+  it('derived tier still updates wordCount without dirty bookkeeping', () => {
     const store = useEditorStore()
-    const tab = makeTab() as Record<string, unknown>
+    const tab = makeTab()
     seed(store, tab)
 
     store.LISTEN_FOR_CONTENT_CHANGE({
@@ -130,11 +128,9 @@ describe('useEditorStore LISTEN_FOR_CONTENT_CHANGE — lazy-serialization tiers'
       wordCount: { paragraph: 1, word: 10, character: 50, all: 52 },
       cursor: null,
       history: null,
-      toc: null,
-      blocks: { id: 'root' }
+      toc: null
     })
 
-    expect(tab.blocks).toEqual({ id: 'root' })
     expect(tab.wordCount).toEqual({ paragraph: 1, word: 10, character: 50, all: 52 })
     expect(tab.isSaved).toBe(true) // derived updates never touch cleanliness
   })
@@ -174,8 +170,7 @@ describe('useEditorStore LISTEN_FOR_CONTENT_CHANGE — lazy-serialization tiers'
       wordCount: null,
       cursor: null,
       history: { stack: [{ id: 9 }], index: 0, lastEditIndex: 0, lastInitIndex: -1 },
-      toc: null,
-      blocks: null
+      toc: null
     })
 
     expect(tab.isSaved).toBe(false)
