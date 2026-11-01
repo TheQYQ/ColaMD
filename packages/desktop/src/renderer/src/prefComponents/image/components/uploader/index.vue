@@ -884,7 +884,7 @@ const testPicgo = async (): Promise<void> => {
   padding: 6px 8px;
   border-radius: 4px;
   color: var(--editorColor70);
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -942,7 +942,7 @@ const testPicgo = async (): Promise<void> => {
   padding: 4px;
   border-radius: 3px;
   color: var(--editorColor70);
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -970,7 +970,7 @@ const testPicgo = async (): Promise<void> => {
   padding: 4px;
   border-radius: 3px;
   color: var(--editorColor70);
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -988,7 +988,7 @@ const testPicgo = async (): Promise<void> => {
   cursor: pointer;
   padding: 4px;
   border-radius: 3px;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
