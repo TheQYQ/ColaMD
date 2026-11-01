@@ -218,6 +218,7 @@
     }
   },
   "search": {
+    "close": "Schließen",
     "searchPlaceholder": "Suchen",
     "caseSensitive": "Groß-/Kleinschreibung beachten",
     "wholeWord": "Ganzes Wort",

@@ -218,6 +218,7 @@
     }
   },
   "search": {
+    "close": "Kapat",
     "searchPlaceholder": "Ara",
     "caseSensitive": "Büyük/Küçük Harf Duyarlı",
     "wholeWord": "Tam sözcük seç",

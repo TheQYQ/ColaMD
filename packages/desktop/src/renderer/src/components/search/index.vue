@@ -26,7 +26,7 @@
             v-model="searchValue"
             type="text"
             :placeholder="t('search.searchPlaceholder')"
-            @keyup="handleEnterKey"
+            @keydown="handleSearchKeydown"
           >
           <div class="controls">
             <span class="search-result">{{ highlightIndex + 1 }} /
@@ -81,6 +81,15 @@
               <ArrowDown />
             </el-icon>
           </button>
+          <button
+            class="button"
+            :title="t('search.close')"
+            @click="closeSearch()"
+          >
+            <el-icon :size="14">
+              <Close />
+            </el-icon>
+          </button>
         </div>
       </section>
       <section
@@ -92,6 +101,7 @@
             v-model="replaceValue"
             type="text"
             :placeholder="t('search.replacementPlaceholder')"
+            @keydown="handleReplaceKeydown"
           >
         </div>
         <div class="button-group">
@@ -146,24 +156,41 @@ import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import debounce from 'lodash/debounce'
 import { createSeqGuard, probeSearchRegex } from './searchRegexProbe'
-import { ArrowDown, ArrowUp, RefreshRight, Switch } from '@element-plus/icons-vue'
+import { loadSearchOptions, saveSearchOptions } from './persistence'
+import { ArrowDown, ArrowUp, RefreshRight, Switch, Close } from '@element-plus/icons-vue'
 
 const { t } = useI18n()
 
 const editorStore = useEditorStore()
 
 const showSearch = ref(false)
-const isCaseSensitive = ref(false)
-const isWholeWord = ref(false)
-const isRegexp = ref(false)
+const persistedOptions = loadSearchOptions()
+const isCaseSensitive = ref(persistedOptions.isCaseSensitive)
+const isWholeWord = ref(persistedOptions.isWholeWord)
+const isRegexp = ref(persistedOptions.isRegexp)
 const type = ref('search')
 const searchValue = ref('')
 const replaceValue = ref('')
 const searchErrorMsg = ref('')
 const search = ref<HTMLInputElement | null>(null)
 
+// The last query the bar actually searched for. Closing the bar keeps the
+// input (see closeSearch), but the closed-state `searchMatches` watch below
+// mirrors every editor selection into `searchValue` — so a click after close
+// wipes it. `lastQuery` survives that and restores the term on reopen
+// (#GUI-B2 UX-02).
+const lastQuery = ref('')
+
 const { currentFile } = storeToRefs(editorStore)
 const searchMatches = computed(() => currentFile.value?.searchMatches)
+
+watch([isCaseSensitive, isWholeWord, isRegexp], ([caseSensitive, wholeWord, regexp]) => {
+  saveSearchOptions({
+    isCaseSensitive: caseSensitive,
+    isWholeWord: wholeWord,
+    isRegexp: regexp
+  })
+})
 
 watch(searchValue, () => {
   if (!showSearch.value) return // make sure search box is actually open
@@ -214,7 +241,6 @@ onMounted(() => {
   bus.on('replace', listenReplace)
   bus.on('findNext', listenFindNext)
   bus.on('findPrev', listenFindPrev)
-  document.addEventListener('click', docClick)
   document.addEventListener('keyup', docKeyup)
 })
 
@@ -223,7 +249,6 @@ onBeforeUnmount(() => {
   bus.off('replace', listenReplace)
   bus.off('findNext', listenFindNext)
   bus.off('findPrev', listenFindPrev)
-  document.removeEventListener('click', docClick)
   document.removeEventListener('keyup', docKeyup)
 })
 
@@ -244,6 +269,11 @@ const toggleCtrl = (ctrl: 'isCaseSensitive' | 'isWholeWord' | 'isRegexp') => {
 
 const listenFind = () => {
   prefillFromSelection()
+  if (!searchValue.value && lastQuery.value) {
+    // No fresh selection to prefill — restore the term from before the bar
+    // was closed (#GUI-B2 UX-02).
+    searchValue.value = lastQuery.value
+  }
   showSearch.value = true
   type.value = 'search'
   nextTick(() => {
@@ -259,8 +289,16 @@ const listenFind = () => {
 
 const listenReplace = () => {
   prefillFromSelection()
+  if (!searchValue.value && lastQuery.value) {
+    searchValue.value = lastQuery.value
+  }
   showSearch.value = true
   type.value = 'replace'
+  if (searchValue.value) {
+    // Closing the bar cleared the engine's matches; re-run so the highlights
+    // match the restored query.
+    searchFn()
+  }
 }
 
 const listenFindNext = () => {
@@ -272,26 +310,33 @@ const listenFindPrev = () => {
 }
 
 const docKeyup = (event: KeyboardEvent) => {
+  // #GUI-B2 UX-20: without this guard every Escape anywhere in the app took
+  // the close path (and re-emitted an empty query to the engine), even with
+  // the bar closed.
+  if (!showSearch.value) return
   if (event.key === 'Escape') {
-    emptySearch(true)
+    closeSearch(true)
   }
 }
 
-const docClick = () => {
-  if (!showSearch.value) return
-  emptySearch(true)
-}
-
-const emptySearch = (selectHighlight = false) => {
+const closeSearch = (selectHighlight = false) => {
   // Taking a newer sequence number is what actually discards the search: the
-  // `searchValue` watch below early-returns once the bar is hidden, so without
+  // `searchValue` watch above early-returns once the bar is hidden, so without
   // this a `searchFn` parked on the ReDoS probe stays the latest call and,
   // seconds later, hands the engine back a query the user already threw away.
   seqGuard.take()
+  // Capture the term at close time — the only point where the input is
+  // guaranteed to hold what the user searched for (a prefilled selection never
+  // "changed" while the bar was open, so a change-watching capture would miss
+  // the most common flow).
+  if (searchValue.value) {
+    lastQuery.value = searchValue.value
+  }
   showSearch.value = false
-  searchValue.value = ''
-  replaceValue.value = ''
-  bus.emit('searchValue', { value: searchValue.value, opt: { selectHighlight } })
+  // Closing is Esc or the close button — not a verdict on the term. Keep the
+  // query (and lastQuery) so Ctrl+F restores it; the empty emit only clears
+  // the engine's highlights (#GUI-B2 UX-02).
+  bus.emit('searchValue', { value: '', opt: { selectHighlight } })
 }
 
 const toggleSearchType = () => {
@@ -306,10 +351,18 @@ const find = (action: 'prev' | 'next') => {
   bus.emit('find-action', action)
 }
 
-const handleEnterKey = (event: KeyboardEvent) => {
-  if (event.key === 'Enter') {
-    find('next')
-  }
+const handleSearchKeydown = (event: KeyboardEvent) => {
+  // #GUI-B2 UX-12: Enter walks forward, Shift+Enter backwards; moved from
+  // keyup to keydown. isComposing skips the IME confirm keystroke.
+  if (event.key !== 'Enter' || event.isComposing) return
+  event.preventDefault()
+  find(event.shiftKey ? 'prev' : 'next')
+}
+
+const handleReplaceKeydown = (event: KeyboardEvent) => {
+  if (event.key !== 'Enter' || event.isComposing) return
+  event.preventDefault()
+  replace(true)
 }
 
 // Newest-call-wins: an awaited probe can resolve after a newer query has taken

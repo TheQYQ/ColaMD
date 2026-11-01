@@ -218,6 +218,7 @@
     }
   },
   "search": {
+    "close": "Sluiten",
     "searchPlaceholder": "Zoeken",
     "caseSensitive": "Hoofdlettergevoelig",
     "wholeWord": "Heel woord selecteren",
