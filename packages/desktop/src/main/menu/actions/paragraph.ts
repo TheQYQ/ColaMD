@@ -157,20 +157,16 @@ export const loadParagraphCommands = (commandManager: CommandManager): void => {
 // NOTE: Don't use static `getMenuItemById` here, instead request the menu by
 //       window id from `AppMenu` manager.
 
-const setParagraphMenuItemStatus = (applicationMenu: Menu, bool: boolean): void => {
-  const paragraphMenuItem = applicationMenu.getMenuItemById('paragraphMenuEntry')!
-  paragraphMenuItem.submenu!.items.forEach((item: MenuItem) => (item.enabled = bool))
+// PERF-03 (#GUI-B3): `selection-change` arrives per caret tick. Each raw
+// `item.enabled = x` / `item.checked = x` assignment pushes a native-menu sync
+// on Windows even when the value did not change, so the menu rewrites below go
+// through these guards and only touch items that actually move.
+const setItemEnabled = (item: MenuItem, enabled: boolean): void => {
+  if (item.enabled !== enabled) item.enabled = enabled
 }
 
-const setMultipleStatus = (
-  applicationMenu: Menu,
-  list: readonly string[],
-  status: boolean
-): void => {
-  const paragraphMenuItem = applicationMenu.getMenuItemById('paragraphMenuEntry')!
-  paragraphMenuItem
-    .submenu!.items.filter((item: MenuItem) => item.id && list.includes(item.id))
-    .forEach((item: MenuItem) => (item.enabled = status))
+export const setItemChecked = (item: MenuItem, checked: boolean): void => {
+  if (item.checked !== checked) item.checked = checked
 }
 
 const setCheckedMenuItem = (
@@ -178,32 +174,45 @@ const setCheckedMenuItem = (
   { affiliation, isTable, isLooseListItem }: SelectionState
 ): void => {
   const paragraphMenuItem = applicationMenu.getMenuItemById('paragraphMenuEntry')!
-  paragraphMenuItem.submenu!.items.forEach((item: MenuItem) => (item.checked = false))
+  // Each item is set straight to its desired value (instead of reset-all then
+  // re-check) so a repeated state performs zero native-menu writes (PERF-03).
   paragraphMenuItem.submenu!.items.forEach((item: MenuItem) => {
     if (!item.id) {
-      return false
-    } else if (item.id === 'looseListItemMenuItem') {
-      item.checked = !!isLooseListItem
-    } else if (
-      Object.keys(affiliation).some((b) => {
-        if (isTable && item.id === 'tableMenuItem') {
-          return true
-        } else if (item.id === 'codeFencesMenuItem' && /code$/.test(b)) {
-          return true
-        }
-        // Each list kind is its own affiliation key (ol / ul / task), so a
-        // nested chain checks every level via the id map.
-        return b === MENU_ID_MAP[item.id]
-      })
-    ) {
-      item.checked = true
+      return
     }
-    return undefined
+    if (item.id === 'looseListItemMenuItem') {
+      setItemChecked(item, !!isLooseListItem)
+      return
+    }
+    setItemChecked(item, isCheckedForState(item, affiliation, isTable))
   })
 }
 
+// Does this paragraph item's affiliation key match the current selection?
+// Each list kind is its own affiliation key (ol / ul / task), so a nested
+// chain checks every level via the id map.
+const isCheckedForState = (
+  item: MenuItem,
+  affiliation: SelectionState['affiliation'],
+  isTable: boolean | undefined
+): boolean =>
+  Object.keys(affiliation).some((b) => {
+    if (isTable && item.id === 'tableMenuItem') {
+      return true
+    }
+    if (item.id === 'codeFencesMenuItem' && /code$/.test(b)) {
+      return true
+    }
+    return b === MENU_ID_MAP[item.id]
+  })
+
 /**
  * Update paragraph menu entires from given state.
+ *
+ * PERF-03 (#GUI-B3): every item's final enabled/checked value is derived
+ * FIRST and written once through the guarded setters — the old shape
+ * (blanket enable, then selective disables) flipped the same item twice and
+ * pushed redundant native-menu syncs on every caret tick.
  *
  * @param applicationMenu The application menu instance.
  * @param state The selection information.
@@ -219,55 +228,45 @@ export const updateSelectionMenus = (applicationMenu: Menu, state: SelectionStat
     isCodeContent
   } = state
 
-  // Reset format menu.
-  const formatMenuItem: MenuItem = applicationMenu.getMenuItemById('formatMenuItem')!
-  formatMenuItem.submenu!.items.forEach((item: MenuItem) => (item.enabled = true))
+  const inList = !!(affiliation.ul || affiliation.ol || affiliation.task)
+  const hasCodeLine: boolean =
+    !!isCodeContent && Object.keys(affiliation).some((b) => /code$/.test(b))
 
-  // Handle menu checked.
+  // Final desired enabled value per Paragraph item. Branch order mirrors the
+  // original cascade: disabled → code-fences (with the code-line re-enable) →
+  // multi-block (only cross-block actions) → normal (loose list item and
+  // front matter carry their own conditions).
+  const paragraphEnabled = (id: string): boolean => {
+    if (isDisabled) return false
+    if (isCodeFences) return id === 'codeFencesMenuItem' && hasCodeLine
+    if (isMultiline) return CROSS_BLOCK_ENABLED_PARAGRAPH.includes(id)
+    if (id === 'looseListItemMenuItem') return inList
+    // Front matter may exist at most once per document; disable the menu item
+    // whenever the document already has one.
+    if (id === 'frontMatterMenuItem') return !state.hasFrontMatter
+    return true
+  }
+
+  // Final desired enabled value per Format item. When the selection is
+  // disabled (e.g. a table) formatting stays available — that is why the
+  // original early-return left the format menu enabled. Non-formattable
+  // code-like content (code/math/html/frontmatter/diagram) disables every
+  // format item; link/image are meaningless across a multi-block selection.
+  const formatEnabled = (id: string): boolean => {
+    if (isDisabled) return true
+    if (isCodeFences) return false
+    if (isMultiline) return id !== 'hyperlinkMenuItem' && id !== 'imageMenuItem'
+    return true
+  }
+
+  const paragraphMenuItem = applicationMenu.getMenuItemById('paragraphMenuEntry')!
+  paragraphMenuItem.submenu!.items.forEach((item: MenuItem) => {
+    setItemEnabled(item, paragraphEnabled(item.id ?? ''))
+  })
   setCheckedMenuItem(applicationMenu, state)
 
-  // Reset paragraph menu.
-  setParagraphMenuItemStatus(applicationMenu, !isDisabled)
-  if (isDisabled) {
-    return
-  }
-
-  if (isCodeFences) {
-    setParagraphMenuItemStatus(applicationMenu, false)
-
-    // Non-formattable code-like content (code/math/html/frontmatter/diagram):
-    // disable every format item. Tables never reach here (they return early via
-    // isDisabled) so table cells keep formatting.
-    formatMenuItem.submenu!.items.forEach((item: MenuItem) => (item.enabled = false))
-
-    // A code line is selected — re-enable the code-fence toggle.
-    if (isCodeContent && Object.keys(affiliation).some((b) => /code$/.test(b))) {
-      setMultipleStatus(applicationMenu, ['codeFencesMenuItem'], true)
-    }
-  } else if (isMultiline) {
-    // Format: link/image are meaningless across a multi-block selection.
-    formatMenuItem
-      .submenu!.items.filter(
-      (item: MenuItem) => item.id === 'hyperlinkMenuItem' || item.id === 'imageMenuItem'
-    )
-      .forEach((item: MenuItem) => (item.enabled = false))
-    // Paragraph: enable only the items that have a defined cross-block action.
-    const paragraphMenu = applicationMenu.getMenuItemById('paragraphMenuEntry')!
-    paragraphMenu.submenu!.items.forEach((item: MenuItem) => {
-      if (item.id) {
-        item.enabled = CROSS_BLOCK_ENABLED_PARAGRAPH.includes(item.id)
-      }
-    })
-  }
-
-  // Disable loose list item when not inside any list (bullet / ordered / task).
-  if (!affiliation.ul && !affiliation.ol && !affiliation.task) {
-    setMultipleStatus(applicationMenu, ['looseListItemMenuItem'], false)
-  }
-
-  // Front matter may exist at most once per document; disable the menu item
-  // whenever the document already has one.
-  if (state.hasFrontMatter) {
-    setMultipleStatus(applicationMenu, ['frontMatterMenuItem'], false)
-  }
+  const formatMenuItem: MenuItem = applicationMenu.getMenuItemById('formatMenuItem')!
+  formatMenuItem.submenu!.items.forEach((item: MenuItem) => {
+    setItemEnabled(item, formatEnabled(item.id ?? ''))
+  })
 }
