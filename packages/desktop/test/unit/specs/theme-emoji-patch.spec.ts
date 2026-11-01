@@ -69,7 +69,7 @@ describe('theme.ts emoji-picker Linux font patch', () => {
 
   it('routes the patch through addStyles (theme + common) on Linux', async () => {
     const { addStyles } = await loadTheme(true)
-    addStyles({ theme: 'light', ...commonOptions })
+    await addStyles({ theme: 'light', ...commonOptions })
 
     expect(commonStyleHtml()).toContain(EMOJI_SELECTOR)
     // The theme sheet itself carries the theme CSS, not the emoji patch.

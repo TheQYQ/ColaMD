@@ -7,42 +7,7 @@ import {
 } from '../config'
 import { getCustomTheme, isCustomTheme } from './themeRegistry'
 import { buildThemeCss } from './themeMarket'
-import {
-  dark,
-  graphite,
-  materialDark,
-  oneDark,
-  ulysses,
-  // New gogh themes - Dark
-  dracula,
-  nord,
-  catppuccinMocha,
-  gruvboxDark,
-  tokyoNight,
-  tokyoNightStorm,
-  solarizedDark,
-  ayuDark,
-  ayuMirage,
-  everforestDark,
-  rosePine,
-  rosePineMoon,
-  monokaiPro,
-  synthwave84,
-  horizonDark,
-  palenight,
-  oxocarbonDark,
-  kanagawa,
-  nightfox,
-  cyberdream,
-  // New gogh themes - Light
-  catppuccinLatte,
-  gruvboxLight,
-  tokyoNightLight,
-  solarizedLight,
-  ayuLight,
-  everforestLight,
-  rosePineDawn
-} from './themeColor'
+import { getBuiltInThemeCss, light } from './themeColor'
 import { isLinux } from './index'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -58,49 +23,51 @@ const getEmojiPickerPatch = (): string => {
     : ''
 }
 
-// One entry per built-in theme: the theme's CSS generator. This table used to
+// One entry per built-in theme: the theme's CSS loader. This table used to
 // be a 33-case switch inside `addThemeStyle` (complexity 43 — the highest in
 // the package); the cases differed only in which generator they called, so the
-// whole thing is one lookup now. Adding a theme means adding a line here, and
+// whole thing is one lookup now. Since PERF-05 (#GUI-B6) the generators are
+// async — each fetches its two `?inline` chunks on first use instead of the
+// entry bundle carrying all 56 theme files. Adding a theme means adding a line
+// here (and a pairing in themeColor.ts), and
 // `test/unit/specs/theme-style-injection.spec.ts` pins that every key really
 // produces CSS.
-export const BUILT_IN_THEME_CSS: Readonly<Record<string, () => string>> = {
-  light: () =>
-    ':root {\n  --link-color: var(--linkColor);\n  --blockquote-border-color: var(--blockquoteBorderColor);\n}',
-  dark,
-  'material-dark': materialDark,
-  ulysses,
-  graphite,
-  'one-dark': oneDark,
+export const BUILT_IN_THEME_CSS: Readonly<Record<string, () => Promise<string>>> = {
+  light: () => light(),
+  dark: () => getBuiltInThemeCss('dark'),
+  'material-dark': () => getBuiltInThemeCss('material-dark'),
+  ulysses: () => getBuiltInThemeCss('ulysses'),
+  graphite: () => getBuiltInThemeCss('graphite'),
+  'one-dark': () => getBuiltInThemeCss('one-dark'),
   // New gogh themes - Dark
-  dracula,
-  nord,
-  'catppuccin-mocha': catppuccinMocha,
-  'gruvbox-dark': gruvboxDark,
-  'tokyo-night': tokyoNight,
-  'tokyo-night-storm': tokyoNightStorm,
-  'solarized-dark': solarizedDark,
-  'ayu-dark': ayuDark,
-  'ayu-mirage': ayuMirage,
-  'everforest-dark': everforestDark,
-  'rose-pine': rosePine,
-  'rose-pine-moon': rosePineMoon,
-  'monokai-pro': monokaiPro,
-  'synthwave-84': synthwave84,
-  'horizon-dark': horizonDark,
-  palenight,
-  'oxocarbon-dark': oxocarbonDark,
-  kanagawa,
-  nightfox,
-  cyberdream,
+  dracula: () => getBuiltInThemeCss('dracula'),
+  nord: () => getBuiltInThemeCss('nord'),
+  'catppuccin-mocha': () => getBuiltInThemeCss('catppuccin-mocha'),
+  'gruvbox-dark': () => getBuiltInThemeCss('gruvbox-dark'),
+  'tokyo-night': () => getBuiltInThemeCss('tokyo-night'),
+  'tokyo-night-storm': () => getBuiltInThemeCss('tokyo-night-storm'),
+  'solarized-dark': () => getBuiltInThemeCss('solarized-dark'),
+  'ayu-dark': () => getBuiltInThemeCss('ayu-dark'),
+  'ayu-mirage': () => getBuiltInThemeCss('ayu-mirage'),
+  'everforest-dark': () => getBuiltInThemeCss('everforest-dark'),
+  'rose-pine': () => getBuiltInThemeCss('rose-pine'),
+  'rose-pine-moon': () => getBuiltInThemeCss('rose-pine-moon'),
+  'monokai-pro': () => getBuiltInThemeCss('monokai-pro'),
+  'synthwave-84': () => getBuiltInThemeCss('synthwave-84'),
+  'horizon-dark': () => getBuiltInThemeCss('horizon-dark'),
+  palenight: () => getBuiltInThemeCss('palenight'),
+  'oxocarbon-dark': () => getBuiltInThemeCss('oxocarbon-dark'),
+  kanagawa: () => getBuiltInThemeCss('kanagawa'),
+  nightfox: () => getBuiltInThemeCss('nightfox'),
+  cyberdream: () => getBuiltInThemeCss('cyberdream'),
   // New gogh themes - Light
-  'catppuccin-latte': catppuccinLatte,
-  'gruvbox-light': gruvboxLight,
-  'tokyo-night-light': tokyoNightLight,
-  'solarized-light': solarizedLight,
-  'ayu-light': ayuLight,
-  'everforest-light': everforestLight,
-  'rose-pine-dawn': rosePineDawn
+  'catppuccin-latte': () => getBuiltInThemeCss('catppuccin-latte'),
+  'gruvbox-light': () => getBuiltInThemeCss('gruvbox-light'),
+  'tokyo-night-light': () => getBuiltInThemeCss('tokyo-night-light'),
+  'solarized-light': () => getBuiltInThemeCss('solarized-light'),
+  'ayu-light': () => getBuiltInThemeCss('ayu-light'),
+  'everforest-light': () => getBuiltInThemeCss('everforest-light'),
+  'rose-pine-dawn': () => getBuiltInThemeCss('rose-pine-dawn')
 }
 
 // Installed `.colamd-theme` packages fall through the table above; they resolve
@@ -136,7 +103,12 @@ const applyDarkChrome = (isDarkTheme: boolean, isCmOneDark: boolean, isCmRailsca
   }
 }
 
-export const addThemeStyle = (theme: string): void => {
+// PERF-05: the CSS now arrives asynchronously, so two quick switches could
+// otherwise land out of order (last-STARTED winning instead of last-requested).
+let themeApplySeq = 0
+
+export const addThemeStyle = async (theme: string): Promise<void> => {
+  const seq = ++themeApplySeq
   const isCmRailscasts = railscastsThemes.includes(theme)
   const isCmOneDark = oneDarkThemes.includes(theme)
   let isDarkTheme = isCmOneDark || isCmRailscasts
@@ -149,11 +121,14 @@ export const addThemeStyle = (theme: string): void => {
 
   const buildCss = BUILT_IN_THEME_CSS[theme]
   if (buildCss) {
-    themeStyleEle.innerHTML = patchTheme(buildCss())
+    const css = await buildCss()
+    if (seq !== themeApplySeq) return
+    themeStyleEle.innerHTML = patchTheme(css)
   }
   if (applyCustomTheme(theme, themeStyleEle)) {
     isDarkTheme = true
   }
+  if (seq !== themeApplySeq) return
 
   applyDarkChrome(isDarkTheme, isCmOneDark, isCmRailscasts)
 }
@@ -232,8 +207,8 @@ export interface AddStylesOptions extends CommonStyleOptions {
 }
 
 // Append common sheet and theme at the end of head - order is important.
-export const addStyles = (options: AddStylesOptions): void => {
+export const addStyles = async (options: AddStylesOptions): Promise<void> => {
   const { theme } = options
-  addThemeStyle(theme)
+  await addThemeStyle(theme)
   addCommonStyle(options)
 }

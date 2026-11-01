@@ -282,9 +282,9 @@ img {
   line-height: var(--titleBarHeight);
   font-size: 14px;
   text-align: center;
-  transition: all 0.25s ease-in-out;
+  transition: color 0.25s ease-in-out;
   & .filename {
-    transition: all 0.25s ease-in-out;
+    transition: color 0.25s ease-in-out;
   }
   &::after {
     content: '';
