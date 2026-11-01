@@ -871,7 +871,14 @@ const handReplace = (payload: unknown) => {
   const { value, opt } = payload as { value: string; opt: unknown }
   // UX-17 (#GUI-B10): report how many occurrences a replace-all rewrote.
   const isReplaceAll = (opt as { isSingle?: boolean } | undefined)?.isSingle === false
-  const replacedCount = isReplaceAll ? editor.value.searchModule.matches.length : 0
+  // The count comes from the store, not the engine: `searchModule` lives on
+  // Muya's inner Editor, so `editor.value.searchModule` was undefined and the
+  // property read threw BEFORE the replace ran — replace-all did nothing at
+  // all. The store holds the matches of the search the bar just performed,
+  // which is the "替换前匹配数" the plan sanctions for this toast.
+  const replacedCount = isReplaceAll
+    ? (editorStore.currentFile?.searchMatches?.matches.length ?? 0)
+    : 0
   const result = editor.value.replace(value, opt)
   editorStore.SEARCH(toSearchMatches(result))
   if (isReplaceAll && replacedCount > 0) {
