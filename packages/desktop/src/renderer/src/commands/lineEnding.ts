@@ -50,12 +50,12 @@ class LineEndingCommand {
     const { lineEnding } = currentFile
     if (lineEnding === 'crlf') {
       this.subcommandSelectedIndex = 0
-      this.subcommands[0].description = `${crlfDescription} - current`
+      this.subcommands[0].description = t('commandPalette.currentSuffix', { name: crlfDescription })
       this.subcommands[1].description = lfDescription
     } else {
       this.subcommandSelectedIndex = 1
       this.subcommands[0].description = crlfDescription
-      this.subcommands[1].description = `${lfDescription} - current`
+      this.subcommands[1].description = t('commandPalette.currentSuffix', { name: lfDescription })
     }
   }
 
