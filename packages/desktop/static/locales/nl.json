@@ -270,6 +270,8 @@
   },
   "commandPalette": {
     "placeholder": "Typ een opdracht om uit te voeren",
+    "noResult": "Geen resultaten",
+    "quickOpenEmpty": "Open een map om bestanden op naam te doorzoeken",
     "placeholders": {
       "selectOption": "Selecteer een optie",
       "searchFileToOpen": "Zoek bestand om te openen",
@@ -919,6 +921,7 @@
     "importWarning": "Importwaarschuwing",
     "installPandoc": "Pandoc installeren",
     "keepOpen": "Open houden",
+    "moreFiles": "en {count} meer",
     "replace": "Vervangen",
     "save": "Opslaan",
     "saveChanges": "Wijzigingen opslaan",

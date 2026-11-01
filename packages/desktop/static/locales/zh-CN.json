@@ -270,6 +270,8 @@
   },
   "commandPalette": {
     "placeholder": "输入要执行的命令",
+    "noResult": "无匹配结果",
+    "quickOpenEmpty": "打开文件夹后可按文件名搜索文件",
     "placeholders": {
       "selectOption": "选择一个选项",
       "searchFileToOpen": "搜索要打开的文件",
@@ -919,6 +921,7 @@
     "importWarning": "导入警告",
     "installPandoc": "安装 Pandoc",
     "keepOpen": "保持打开",
+    "moreFiles": "等 {count} 个文件",
     "replace": "替换",
     "save": "保存",
     "saveChanges": "是否保存更改？",

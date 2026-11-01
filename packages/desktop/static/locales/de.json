@@ -270,6 +270,8 @@
   },
   "commandPalette": {
     "placeholder": "Befehl zum Ausführen eingeben",
+    "noResult": "Keine Treffer",
+    "quickOpenEmpty": "Öffne einen Ordner, um Dateien nach Name zu durchsuchen",
     "placeholders": {
       "selectOption": "Option auswählen",
       "searchFileToOpen": "Datei zum Öffnen suchen",
@@ -919,6 +921,7 @@
     "importWarning": "Import-Warnung",
     "installPandoc": "Pandoc installieren",
     "keepOpen": "Offen halten",
+    "moreFiles": "und {count} weitere",
     "replace": "Ersetzen",
     "save": "Speichern",
     "saveChanges": "Änderungen speichern",

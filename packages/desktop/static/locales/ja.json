@@ -270,6 +270,8 @@
   },
   "commandPalette": {
     "placeholder": "実行するコマンドの入力",
+    "noResult": "一致する結果はありません",
+    "quickOpenEmpty": "フォルダを開くとファイル名で検索できます",
     "placeholders": {
       "selectOption": "オプションの選択",
       "searchFileToOpen": "開くファイルの検索",
@@ -919,6 +921,7 @@
     "importWarning": "インポート警告",
     "installPandoc": "Pandoc をインストール",
     "keepOpen": "開いたままにする",
+    "moreFiles": "ほか {count} 件",
     "replace": "置換",
     "save": "保存",
     "saveChanges": "変更を保存",

@@ -56,6 +56,14 @@
                 </span>
               </li>
             </ul>
+            <ul
+              v-else
+              class="commands"
+            >
+              <li class="no-result">
+                {{ currentCommand?.emptyHint ?? t('commandPalette.noResult') }}
+              </li>
+            </ul>
           </transition>
         </div>
       </template>
@@ -87,6 +95,9 @@ interface CommandItem {
   subcommandSelectedIndex?: number
   executeSubcommand?: (commandId: string, value?: unknown) => void
   placeholder?: string
+  /** Shown instead of the generic no-result line when this command's list is
+   *  empty (quick open on a fresh install points at opening a folder). */
+  emptyHint?: string
   value?: unknown
   [key: string]: unknown
 }
@@ -460,6 +471,14 @@ ul.commands li.active {
   background: var(--bg-hover);
   color: var(--text-primary);
   font-weight: 500;
+}
+ul.commands li.no-result {
+  justify-content: center;
+  color: var(--text-tertiary);
+  cursor: default;
+}
+ul.commands li.no-result:hover {
+  background: transparent;
 }
 ul.commands li span {
   text-overflow: ellipsis;
