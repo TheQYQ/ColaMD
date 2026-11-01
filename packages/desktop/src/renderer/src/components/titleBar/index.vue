@@ -172,7 +172,9 @@ watch(
 
     // UX-01: mirror the tab's unsaved dot in the window title so the dirty
     // state is visible from the taskbar / window switcher, not just in-app.
-    document.title = isSaved === false && title ? `● ${title}` : title
+    // The immediate watch computes an empty title for the empty-launch state,
+    // which would wipe the brand default from index.html — fall back to it.
+    document.title = isSaved === false && title ? `● ${title}` : title || 'ColaMD'
   },
   { immediate: true }
 )

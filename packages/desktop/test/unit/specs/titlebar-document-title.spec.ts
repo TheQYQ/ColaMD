@@ -96,9 +96,18 @@ describe('title bar: document.title mirrors the unsaved state', () => {
     expect(document.title).toBe('● a.md - notes')
   })
 
-  it('never shows a bare marker without a title', () => {
-    // Dirty untitled state: `● ` alone in the taskbar would be noise.
+  it('falls back to the brand default for the empty-launch state', () => {
+    // The watch is immediate, so it runs before any file exists — wiping the
+    // index.html default would blank the taskbar title (and broke the launch
+    // e2e expectation). A dirty untitled state must not show a bare `● `.
     boot({ filename: undefined, currentFile: { isSaved: false } })
-    expect(document.title).toBe('')
+    expect(document.title).toBe('ColaMD')
+  })
+
+  it('shows the folder name when a folder is open but no file', () => {
+    // VS Code-style: the taskbar names the open folder until a file takes
+    // over. The launch e2e pins the same behavior against the real app.
+    boot({ filename: undefined, project: { name: 'desktop' } })
+    expect(document.title).toBe('desktop')
   })
 })
