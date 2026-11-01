@@ -174,20 +174,24 @@ const showTitleBar = computed(() => {
 })
 
 watch(
-  () => props.filename,
-  (value) => {
+  () => [props.filename, props.project?.name, editorStore.currentFile?.isSaved] as const,
+  ([value, projectName, isSaved]) => {
     // Set filename when hover on dock
-    const hasOpenFolder = !!(props.project && props.project.name)
-    const projectName = props.project?.name ?? ''
+    const hasOpenFolder = !!projectName
     let title = ''
     if (value) {
       title = hasOpenFolder ? `${value} - ${projectName}` : `${value}`
     } else {
-      title = hasOpenFolder ? projectName : ''
+      title = hasOpenFolder ? (projectName ?? '') : ''
     }
 
-    document.title = title
-  }
+    // UX-01: mirror the tab's unsaved dot in the window title so the dirty
+    // state is visible from the taskbar / window switcher, not just in-app.
+    // The immediate watch computes an empty title for the empty-launch state,
+    // which would wipe the brand default from index.html — fall back to it.
+    document.title = isSaved === false && title ? `● ${title}` : title || 'ColaMD'
+  },
+  { immediate: true }
 )
 
 const handleCloseClick = () => {
@@ -344,7 +348,7 @@ div.title > span {
 }
 
 .title:hover {
-  color: var(sideBarTitleColor);
+  color: var(--sideBarTitleColor);
 }
 
 .right-toolbar {

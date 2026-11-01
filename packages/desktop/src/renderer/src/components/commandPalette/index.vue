@@ -53,6 +53,7 @@
                 role="option"
                 :aria-selected="index === selectedCommandIndex"
                 :class="{ active: index === selectedCommandIndex }"
+                @mouseenter="selectedCommandIndex = index"
                 @click="search(item.id)"
               >
                 <span
@@ -70,6 +71,14 @@
                 </span>
               </li>
             </ul>
+            <ul
+              v-else
+              class="commands"
+            >
+              <li class="no-result">
+                {{ currentCommand?.emptyHint ?? t('commandPalette.noResult') }}
+              </li>
+            </ul>
           </transition>
         </div>
       </template>
@@ -84,6 +93,7 @@ import log from 'electron-log'
 import bus from '../../bus'
 import loading from '../loading/index.vue'
 import { useI18n } from 'vue-i18n'
+import { getCommandBaseDescriptionById } from '../../commands/descriptions'
 
 // Loose typing for command descriptors — they originate from heterogeneous
 // sources (static, runtime, quickOpen search results) and have legacy duck-
@@ -101,6 +111,9 @@ interface CommandItem {
   subcommandSelectedIndex?: number
   executeSubcommand?: (commandId: string, value?: unknown) => void
   placeholder?: string
+  /** Shown instead of the generic no-result line when this command's list is
+   *  empty (quick open on a fresh install points at opening a folder). */
+  emptyHint?: string
   value?: unknown
   [key: string]: unknown
 }
@@ -311,8 +324,16 @@ const updateCommands = () => {
   if (!queryString) {
     availableCommands.value = cmd.subcommands ?? []
   } else {
-    availableCommands.value = (cmd.subcommands ?? []).filter((c) =>
-      (c.description ?? '').toLowerCase().includes(queryString.toLowerCase())
+    // UX-19: match the localized description AND the English base one — the
+    // base names are bundled, so typing English recalls commands whose
+    // description renders in the active language; id/title cover path-like
+    // entries (quick open results).
+    const q = queryString.toLowerCase()
+    availableCommands.value = (cmd.subcommands ?? []).filter(
+      (c) =>
+        (c.description ?? '').toLowerCase().includes(q) ||
+        (c.title ?? '').toLowerCase().includes(q) ||
+        getCommandBaseDescriptionById(c.id).toLowerCase().includes(q)
     )
   }
   selectedCommandIndex.value = availableCommands.value.length ? 0 : -1
@@ -474,6 +495,14 @@ ul.commands li.active {
   background: var(--bg-hover);
   color: var(--text-primary);
   font-weight: 500;
+}
+ul.commands li.no-result {
+  justify-content: center;
+  color: var(--text-tertiary);
+  cursor: default;
+}
+ul.commands li.no-result:hover {
+  background: transparent;
 }
 ul.commands li span {
   text-overflow: ellipsis;

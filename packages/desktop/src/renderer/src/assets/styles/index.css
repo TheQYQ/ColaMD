@@ -24,14 +24,25 @@
   --selectionColor: rgba(91, 103, 199, 0.18);
   --editorColor: #1F2328;
   --editorColor80: #42464E;
+  /* 70 and 20 have no literal in any theme; deriving them keeps them correct
+     in dark palettes where the whole ladder is white-alpha. */
+  --editorColor70: color-mix(in srgb, var(--editorColor) 70%, transparent);
   --editorColor60: #59636E;
   --editorColor50: #6E7681;
   --editorColor40: #8B949E;
   --editorColor30: #A5ADB5;
+  --editorColor20: color-mix(in srgb, var(--editorColor) 20%, transparent);
   --editorColor10: #E4E7EB;
   --editorColor04: #F4F5F7;
   --editorBgColor: #FCFCFC;
   --deleteColor: #C4402F;
+  /* Status colors. These used to be referenced with per-site fallbacks —
+     including two different ambers for --warningColor — so they are defined
+     once here and themes can override them like every other token. */
+  --successColor: #059669;
+  --successBgColor: #f0f9ff;
+  --warningColor: #d97706;
+  --warningBgColor: #fffbeb;
   --iconColor: #59636E;
   --codeBgColor: rgba(15, 18, 25, 0.06);
   --codeBlockBgColor: rgba(15, 18, 25, 0.04);

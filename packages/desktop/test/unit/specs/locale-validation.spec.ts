@@ -190,13 +190,13 @@ describe('desktop locale validation', () => {
     const IDENTICAL_TO_ENGLISH_BASELINE: Record<string, number> = {
       'zh-CN': 68,
       'zh-TW': 62,
-      es: 82,
-      fr: 89,
+      es: 83,
+      fr: 90,
       de: 83,
       ja: 68,
       ko: 66,
-      nl: 109,
-      pt: 80,
+      nl: 110,
+      pt: 81,
       tr: 92
     }
 

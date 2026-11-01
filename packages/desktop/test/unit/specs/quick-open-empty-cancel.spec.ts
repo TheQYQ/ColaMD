@@ -124,3 +124,31 @@ describe('quick open: clearing the query', () => {
     expect(canceled).toBe(true)
   })
 })
+
+// #GUI-B1 UX-05. An empty library (no folder, no tabs) used to
+// `throw new Error(null)` from `run()`, which the palette swallowed — Ctrl+P on
+// a fresh install just did nothing. Now it opens the panel with an empty list
+// plus a guidance hint.
+describe('quick open: empty library', () => {
+  it('resolves with an empty list and a guidance hint instead of throwing', async () => {
+    const cmd = new QuickOpenCommand({
+      editor: { tabs: [] },
+      project: { projectTree: null }
+    } as unknown as ConstructorParameters<typeof QuickOpenCommand>[0])
+
+    await expect(cmd.run()).resolves.toBeUndefined()
+    expect(cmd.subcommands).toEqual([])
+    expect(cmd.emptyHint).toBeTruthy()
+  })
+
+  it('lists tabs and clears the hint once a tab is open', async () => {
+    const cmd = new QuickOpenCommand({
+      editor: { tabs: [{ pathname: '/root/a.md' }] },
+      project: { projectTree: null }
+    } as unknown as ConstructorParameters<typeof QuickOpenCommand>[0])
+
+    await cmd.run()
+    expect(cmd.subcommands).toHaveLength(1)
+    expect(cmd.emptyHint).toBeUndefined()
+  })
+})

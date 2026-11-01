@@ -221,6 +221,7 @@
     }
   },
   "search": {
+    "close": "關閉",
     "searchPlaceholder": "搜尋",
     "caseSensitive": "區分大小寫",
     "wholeWord": "選擇整個單字",
@@ -236,7 +237,8 @@
     "tree": {
       "emptyProject": "空專案",
       "createFile": "建立檔案",
-      "openFile": "開啟檔案..."
+      "openFile": "開啟檔案...",
+      "newFileNamePlaceholder": "輸入 .md 檔案名稱"
     },
     "icons": {
       "files": "檔案",
@@ -269,15 +271,30 @@
       "minutesAgo": "{count} 分鐘前",
       "hoursAgo": "{count} 小時前",
       "daysAgo": "{count} 天前"
+    },
+    "errors": {
+      "sideBarTitle": "側欄錯誤",
+      "deleting": "刪除時出錯",
+      "alreadyExists": "此資料夾中已存在名為「{name}」的{type}。",
+      "file": "檔案",
+      "folder": "資料夾"
+    },
+    "toc": {
+      "empty": "此文件沒有標題"
     }
   },
   "commandPalette": {
     "placeholder": "輸入要執行的命令",
+    "noResult": "無符合結果",
+    "quickOpenEmpty": "開啟資料夾後可依檔名搜尋檔案",
     "placeholders": {
       "selectOption": "選擇選項",
       "searchFileToOpen": "搜尋要開啟的檔案",
       "selectLanguage": "選擇語言"
-    }
+    },
+    "currentSuffix": "{name} - 目前",
+    "textDirectionLtr": "從左到右",
+    "textDirectionRtl": "從右到左"
   },
   "exportSettings": {
     "autoNumberingHeadings": "自動編號標題",
@@ -924,6 +941,7 @@
     "importWarning": "匯入警告",
     "installPandoc": "安裝 Pandoc",
     "keepOpen": "保持開啟",
+    "moreFiles": "等 {count} 個檔案",
     "replace": "取代",
     "save": "儲存",
     "saveChanges": "儲存變更",
@@ -988,7 +1006,8 @@
       "columns": "欄"
     },
     "notifications": {
-      "notificationNotFound": "找不到通知"
+      "notificationNotFound": "找不到通知",
+      "uploadImage": "上傳圖片"
     },
     "print": {
       "error": "列印 \"{title}\" 時發生錯誤",
@@ -1021,5 +1040,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "點擊切換統計口徑",
+    "readingTime": "{count} 分鐘"
+  },
+  "autoUpdates": {
+    "update": "更新",
+    "updateNotAvailable": "暫無可用更新",
+    "updateDownloaded": "更新已下載",
+    "updateAvailable": "有可用更新"
   }
 }

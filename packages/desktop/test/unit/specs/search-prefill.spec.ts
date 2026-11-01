@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -7,6 +7,7 @@ import ts from 'typescript'
 import { ref, computed, watch, nextTick } from 'vue'
 import { createSeqGuard } from '@/components/search/searchRegexProbe'
 import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
+import { loadSearchOptions, saveSearchOptions } from '@/components/search/persistence'
 import { stripTopLevelImports } from '../sfcScriptHarness'
 
 // Regression guard for the find-bar prefill race (issue: the input showed a
@@ -29,9 +30,12 @@ interface Bindings {
   searchValue: { value: string }
   showSearch: { value: boolean }
   isRegexp: { value: boolean }
+  isCaseSensitive: { value: boolean }
+  isWholeWord: { value: boolean }
   searchErrorMsg: { value: string }
   listenFind: () => void
-  emptySearch: (selectHighlight?: boolean) => void
+  closeSearch: (selectHighlight?: boolean) => void
+  handleSearchKeydown: (event: KeyboardEvent) => void
 }
 
 const loadComponent = (deps: Record<string, unknown>) => {
@@ -52,7 +56,8 @@ const loadComponent = (deps: Record<string, unknown>) => {
       nextTick, bus, FindCaseIcon, FindWordIcon, FindRegexIcon, useEditorStore,
       storeToRefs, useI18n, debounce, createSeqGuard, probeSearchRegex,
       activateOnEnterOrSpace,
-      ArrowDown, ArrowUp, RefreshRight, Switch } = __deps
+      loadSearchOptions, saveSearchOptions,
+      ArrowDown, ArrowUp, RefreshRight, Switch, Close } = __deps
     ${js}
     return module.exports`
   ) as (
@@ -91,6 +96,7 @@ const makeBindings = (overrides: Record<string, unknown> = {}) => {
     ArrowUp: {},
     RefreshRight: {},
     Switch: {},
+    Close: {},
     useEditorStore: () => new Proxy({}, { get: () => () => {} }),
     storeToRefs: () => ({ currentFile }),
     useI18n: () => ({ t: (k: string) => k }),
@@ -107,6 +113,8 @@ const makeBindings = (overrides: Record<string, unknown> = {}) => {
     // only fires on the path these cases do not walk.
     activateOnEnterOrSpace,
     probeSearchRegex: vi.fn(async () => ({ status: 'ok', matchCount: 0 })),
+    loadSearchOptions,
+    saveSearchOptions,
     ...overrides
   }
   const comp = loadComponent(deps)
@@ -146,11 +154,11 @@ describe('find-bar prefill from selection', () => {
   })
 })
 
-// #28 item 3. `emptySearch` (Escape, or any click inside the document) hides the
-// bar and clears the input, but the `searchValue` watch early-returns while the
-// bar is hidden -- so nothing took a newer sequence number, and a `searchFn`
-// parked on the ReDoS probe stayed "latest" and seconds later handed the engine
-// back a query the user had already thrown away.
+// #28 item 3. `closeSearch` (Escape or the close button) hides the bar, but the
+// `searchValue` watch early-returns while the bar is hidden -- so nothing took a
+// newer sequence number, and a `searchFn` parked on the ReDoS probe stayed
+// "latest" and seconds later handed the engine back a query the user had
+// already thrown away.
 const withDeferredProbe = (resolution: unknown = { status: 'ok', matchCount: 2 }) => {
   let settle: ((value: unknown) => void) | undefined
   const deps = {
@@ -179,7 +187,7 @@ describe('discarding the find bar while the ReDoS probe is in flight', () => {
     const { ret, emit, settle } = withDeferredProbe()
     await startRegexSearch(ret)
 
-    ret.emptySearch()
+    ret.closeSearch()
     settle()
     await nextTick()
     await nextTick()
@@ -208,11 +216,122 @@ describe('discarding the find bar while the ReDoS probe is in flight', () => {
     const { ret, settle } = withDeferredProbe({ status: 'timeout', matchCount: 0 })
     await startRegexSearch(ret)
 
-    ret.emptySearch()
+    ret.closeSearch()
     settle()
     await nextTick()
     await nextTick()
 
     expect(ret.searchErrorMsg.value).toBe('')
+  })
+})
+
+// #GUI-B2 UX-02. Closing the bar keeps the query; reopening without a fresh
+// selection restores it — even though the closed-state selection watch mirrors
+// the (empty) click selection over `searchValue` in the meantime.
+describe('closing the find bar keeps the query', () => {
+  it('restores the previous query on reopen after a click cleared it', async () => {
+    const { ret, setSelection, emit } = makeBindings()
+
+    // The user selects "fox" and opens Find — the bar prefills from the selection.
+    setSelection('fox')
+    await nextTick()
+    ret.listenFind()
+    await nextTick()
+    expect(ret.searchValue.value).toBe('fox')
+
+    ret.closeSearch()
+    expect(ret.searchValue.value).toBe('fox')
+
+    // Clicking in the editor selects nothing → the closed-state watch mirrors
+    // '' into the input (the selection actually changed fox → empty).
+    setSelection('')
+    await nextTick()
+    expect(ret.searchValue.value).toBe('')
+
+    ret.listenFind()
+    await nextTick()
+    expect(ret.searchValue.value).toBe('fox')
+    expect(emit).toHaveBeenCalledWith('searchValue', expect.objectContaining({ value: 'fox' }))
+  })
+
+  it('still prefers a fresh selection over the restored query', async () => {
+    const { ret, setSelection } = makeBindings()
+
+    ret.showSearch.value = true
+    ret.searchValue.value = 'fox'
+    await nextTick()
+    ret.closeSearch()
+    await nextTick()
+
+    // The user selected new text while the bar was closed.
+    setSelection('bear')
+    await nextTick()
+    ret.listenFind()
+    await nextTick()
+    expect(ret.searchValue.value).toBe('bear')
+  })
+
+  it('keeps the input when Escape closes the bar', () => {
+    const { ret } = makeBindings()
+    ret.showSearch.value = true
+    ret.searchValue.value = 'fox'
+
+    ret.closeSearch(true)
+    expect(ret.showSearch.value).toBe(false)
+    expect(ret.searchValue.value).toBe('fox')
+  })
+})
+
+// #GUI-B2 UX-12. Enter walks forward, Shift+Enter walks backwards.
+describe('find bar keyboard handling', () => {
+  const pressEnter = (ret: Bindings, shiftKey = false): void => {
+    ret.handleSearchKeydown(new KeyboardEvent('keydown', { key: 'Enter', shiftKey }))
+  }
+
+  it('finds the next match on Enter', () => {
+    const { ret, emit } = makeBindings()
+    pressEnter(ret)
+    expect(emit).toHaveBeenCalledWith('find-action', 'next')
+  })
+
+  it('finds the previous match on Shift+Enter', () => {
+    const { ret, emit } = makeBindings()
+    pressEnter(ret, true)
+    expect(emit).toHaveBeenCalledWith('find-action', 'prev')
+  })
+})
+
+// #GUI-B2 UX-06. The three match options persist across sessions.
+describe('search options persistence', () => {
+  const STORAGE_KEY = 'search-options'
+
+  beforeEach(() => {
+    localStorage.removeItem(STORAGE_KEY)
+  })
+
+  afterEach(() => {
+    localStorage.removeItem(STORAGE_KEY)
+  })
+
+  it('saves toggles to localStorage when they change', async () => {
+    const { ret } = makeBindings()
+    ret.isRegexp.value = true
+    await nextTick()
+
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
+    expect(saved.isRegexp).toBe(true)
+    expect(saved.isCaseSensitive).toBe(false)
+  })
+
+  it('restores the saved toggles in a fresh component', async () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ isCaseSensitive: true, isWholeWord: true, isRegexp: true })
+    )
+    const { ret } = makeBindings()
+    await nextTick()
+    expect(ret.isCaseSensitive.value).toBe(true)
+    expect(ret.isWholeWord.value).toBe(true)
+    expect(ret.isRegexp.value).toBe(true)
   })
 })

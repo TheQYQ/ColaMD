@@ -32,10 +32,10 @@
       <div
         v-if="wordCount"
         class="word-count"
-        :title="t('menu.counter.words')"
+        :title="t('statusBar.counterTooltip')"
         role="button"
         tabindex="0"
-        :aria-label="t('menu.counter.words')"
+        :aria-label="counterLabel(show)"
         @click="handleWordClick"
         @keydown="activateOnEnterOrSpace"
       >
@@ -81,7 +81,9 @@ const counterLabel = (mode: CounterMode): string => {
 const counterText = computed(() => {
   if (!wordCount.value) return ''
   // ~200 words per minute, matching Typora's reading-time estimate.
-  if (show.value === 'reading') return `${Math.ceil((wordCount.value.word || 0) / 200)} min`
+  if (show.value === 'reading') {
+    return t('statusBar.readingTime', { count: Math.ceil((wordCount.value.word || 0) / 200) })
+  }
   const count = wordCount.value[show.value]
   return `${count} ${counterLabel(show.value)}`
 })
