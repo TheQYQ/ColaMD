@@ -1,6 +1,7 @@
 import { storeToRefs } from 'pinia'
 import bus from '../../bus'
 import notice from '@/services/notification'
+import { t } from '../../i18n'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
 import { useProjectStore } from '@/store/project'
@@ -99,7 +100,7 @@ export const useEditorImages = () => {
           destImagePath = (await uploadImage(currentPathname, image)) as string
         } catch (err) {
           notice.notify({
-            title: 'Upload Image',
+            title: t('editor.notifications.uploadImage'),
             type: 'warning',
             message: err as string
           })

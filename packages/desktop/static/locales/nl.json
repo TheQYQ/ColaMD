@@ -233,7 +233,8 @@
     "tree": {
       "emptyProject": "Leeg project",
       "createFile": "Bestand aanmaken",
-      "openFile": "Bestand openen..."
+      "openFile": "Bestand openen...",
+      "newFileNamePlaceholder": "Voer .md-bestandsnaam in"
     },
     "icons": {
       "files": "Bestanden",
@@ -266,6 +267,16 @@
       "minutesAgo": "{count} min geleden",
       "hoursAgo": "{count} u geleden",
       "daysAgo": "{count} d geleden"
+    },
+    "errors": {
+      "sideBarTitle": "Fout in zijbalk",
+      "deleting": "Fout bij verwijderen",
+      "alreadyExists": "Er bestaat al een {type} genaamd \"{name}\" in deze map.",
+      "file": "bestand",
+      "folder": "map"
+    },
+    "toc": {
+      "empty": "Dit document heeft geen koppen"
     }
   },
   "commandPalette": {
@@ -274,7 +285,10 @@
       "selectOption": "Selecteer een optie",
       "searchFileToOpen": "Zoek bestand om te openen",
       "selectLanguage": "Selecteer een taal om naar te wisselen"
-    }
+    },
+    "currentSuffix": "{name} - huidig",
+    "textDirectionLtr": "Links naar rechts",
+    "textDirectionRtl": "Rechts naar links"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Automatisch nummeren van koppen",
@@ -983,7 +997,8 @@
       "columns": "Kolommen"
     },
     "notifications": {
-      "notificationNotFound": "Melding niet gevonden"
+      "notificationNotFound": "Melding niet gevonden",
+      "uploadImage": "Afbeelding uploaden"
     },
     "print": {
       "error": "Afdrukfout voor \"{title}\"",
@@ -1016,5 +1031,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "Klik om de tellermodus te wisselen",
+    "readingTime": "{count} min"
+  },
+  "autoUpdates": {
+    "update": "Bijwerken",
+    "updateNotAvailable": "Geen update beschikbaar",
+    "updateDownloaded": "Update gedownload",
+    "updateAvailable": "Update beschikbaar"
   }
 }

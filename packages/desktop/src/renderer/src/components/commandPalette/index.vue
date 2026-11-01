@@ -39,6 +39,7 @@
                   }
                 "
                 :class="{ active: index === selectedCommandIndex }"
+                @mouseenter="selectedCommandIndex = index"
                 @click="search(item.id)"
               >
                 <span
@@ -70,6 +71,7 @@ import log from 'electron-log'
 import bus from '../../bus'
 import loading from '../loading/index.vue'
 import { useI18n } from 'vue-i18n'
+import { getCommandBaseDescriptionById } from '../../commands/descriptions'
 
 // Loose typing for command descriptors — they originate from heterogeneous
 // sources (static, runtime, quickOpen search results) and have legacy duck-
@@ -297,8 +299,16 @@ const updateCommands = () => {
   if (!queryString) {
     availableCommands.value = cmd.subcommands ?? []
   } else {
-    availableCommands.value = (cmd.subcommands ?? []).filter((c) =>
-      (c.description ?? '').toLowerCase().includes(queryString.toLowerCase())
+    // UX-19: match the localized description AND the English base one — the
+    // base names are bundled, so typing English recalls commands whose
+    // description renders in the active language; id/title cover path-like
+    // entries (quick open results).
+    const q = queryString.toLowerCase()
+    availableCommands.value = (cmd.subcommands ?? []).filter(
+      (c) =>
+        (c.description ?? '').toLowerCase().includes(q) ||
+        (c.title ?? '').toLowerCase().includes(q) ||
+        getCommandBaseDescriptionById(c.id).toLowerCase().includes(q)
     )
   }
   selectedCommandIndex.value = availableCommands.value.length ? 0 : -1

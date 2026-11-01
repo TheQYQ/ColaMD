@@ -631,12 +631,12 @@ const commands: CommandDescriptor[] = [
     subcommands: [
       {
         id: 'view.text-direction-ltr',
-        description: 'Left to Right',
+        description: t('commandPalette.textDirectionLtr'),
         value: 'ltr'
       },
       {
         id: 'view.text-direction-rtl',
-        description: 'Right to Left',
+        description: t('commandPalette.textDirectionRtl'),
         value: 'rtl'
       }
     ],

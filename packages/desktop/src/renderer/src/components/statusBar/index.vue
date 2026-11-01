@@ -27,7 +27,7 @@
       <div
         v-if="wordCount"
         class="word-count"
-        :title="t('menu.counter.words')"
+        :title="t('statusBar.counterTooltip')"
         @click="handleWordClick"
       >
         <span class="text-center-vertical">{{ counterText }}</span>
@@ -71,7 +71,9 @@ const counterLabel = (mode: CounterMode): string => {
 const counterText = computed(() => {
   if (!wordCount.value) return ''
   // ~200 words per minute, matching Typora's reading-time estimate.
-  if (show.value === 'reading') return `${Math.ceil((wordCount.value.word || 0) / 200)} min`
+  if (show.value === 'reading') {
+    return t('statusBar.readingTime', { count: Math.ceil((wordCount.value.word || 0) / 200) })
+  }
   const count = wordCount.value[show.value]
   return `${count} ${counterLabel(show.value)}`
 })
@@ -115,7 +117,9 @@ const toggleSourceCode = (): void => {
   border-radius: 4px;
   cursor: pointer;
   color: var(--text-tertiary);
-  transition: color 120ms ease-out, background-color 120ms ease-out;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
 }
 .status-btn:hover {
   background: var(--bg-hover);
@@ -133,7 +137,9 @@ const toggleSourceCode = (): void => {
   padding: 1px 6px;
   border-radius: 4px;
   color: var(--text-tertiary);
-  transition: color 120ms ease-out, background-color 120ms ease-out;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
 }
 .word-count:hover {
   background: var(--bg-hover);

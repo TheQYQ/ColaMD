@@ -233,7 +233,8 @@
     "tree": {
       "emptyProject": "빈 프로젝트",
       "createFile": "파일 만들기",
-      "openFile": "파일 열기..."
+      "openFile": "파일 열기...",
+      "newFileNamePlaceholder": ".md 파일 이름 입력"
     },
     "icons": {
       "files": "파일",
@@ -266,6 +267,16 @@
       "minutesAgo": "{count}분 전",
       "hoursAgo": "{count}시간 전",
       "daysAgo": "{count}일 전"
+    },
+    "errors": {
+      "sideBarTitle": "사이드바 오류",
+      "deleting": "삭제 중 오류",
+      "alreadyExists": "이 폴더에 같은 이름의 {type} \"{name}\"이(가) 이미 있습니다.",
+      "file": "파일",
+      "folder": "폴더"
+    },
+    "toc": {
+      "empty": "이 문서에는 제목이 없습니다"
     }
   },
   "commandPalette": {
@@ -274,7 +285,10 @@
       "selectOption": "옵션 선택",
       "searchFileToOpen": "열 파일 검색",
       "selectLanguage": "언어 선택"
-    }
+    },
+    "currentSuffix": "{name} - 현재",
+    "textDirectionLtr": "왼쪽에서 오른쪽으로",
+    "textDirectionRtl": "오른쪽에서 왼쪽으로"
   },
   "exportSettings": {
     "autoNumberingHeadings": "제목 자동 번호 매기기",
@@ -983,7 +997,8 @@
       "columns": "열"
     },
     "notifications": {
-      "notificationNotFound": "알림을 찾을 수 없음"
+      "notificationNotFound": "알림을 찾을 수 없음",
+      "uploadImage": "이미지 업로드"
     },
     "print": {
       "error": "\"{title}\" 인쇄 오류",
@@ -1016,5 +1031,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "클릭하면 카운터 모드가 순환합니다",
+    "readingTime": "{count}분"
+  },
+  "autoUpdates": {
+    "update": "업데이트",
+    "updateNotAvailable": "사용 가능한 업데이트가 없습니다",
+    "updateDownloaded": "업데이트가 다운로드되었습니다",
+    "updateAvailable": "업데이트 사용 가능"
   }
 }

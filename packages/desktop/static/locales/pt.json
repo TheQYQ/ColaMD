@@ -233,7 +233,8 @@
     "tree": {
       "emptyProject": "Projeto vazio",
       "createFile": "Criar Arquivo",
-      "openFile": "Abrir Arquivo..."
+      "openFile": "Abrir Arquivo...",
+      "newFileNamePlaceholder": "Digite o nome do arquivo .md"
     },
     "icons": {
       "files": "Arquivos",
@@ -266,6 +267,16 @@
       "minutesAgo": "há {count} min",
       "hoursAgo": "há {count} h",
       "daysAgo": "há {count} d"
+    },
+    "errors": {
+      "sideBarTitle": "Erro na barra lateral",
+      "deleting": "Erro ao excluir",
+      "alreadyExists": "Já existe um/a {type} com o nome \"{name}\" nesta pasta.",
+      "file": "ficheiro",
+      "folder": "pasta"
+    },
+    "toc": {
+      "empty": "Este documento não tem títulos"
     }
   },
   "commandPalette": {
@@ -274,7 +285,10 @@
       "selectOption": "Selecionar opção",
       "searchFileToOpen": "Pesquisar arquivo para abrir",
       "selectLanguage": "Selecionar idioma"
-    }
+    },
+    "currentSuffix": "{name} - atual",
+    "textDirectionLtr": "Da esquerda para a direita",
+    "textDirectionRtl": "Da direita para a esquerda"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Numeração automática de cabeçalhos",
@@ -983,7 +997,8 @@
       "columns": "Colunas"
     },
     "notifications": {
-      "notificationNotFound": "Notificação não encontrada"
+      "notificationNotFound": "Notificação não encontrada",
+      "uploadImage": "Enviar imagem"
     },
     "print": {
       "error": "Erro de impressão para \"{title}\"",
@@ -1016,5 +1031,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "Clique para alternar o modo do contador",
+    "readingTime": "{count} min"
+  },
+  "autoUpdates": {
+    "update": "Atualizar",
+    "updateNotAvailable": "Nenhuma atualização disponível",
+    "updateDownloaded": "Atualização baixada",
+    "updateAvailable": "Atualização disponível"
   }
 }

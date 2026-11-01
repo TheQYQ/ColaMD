@@ -233,7 +233,8 @@
     "tree": {
       "emptyProject": "Boş proje",
       "createFile": "Dosya Oluştur",
-      "openFile": "Dosya Aç..."
+      "openFile": "Dosya Aç...",
+      "newFileNamePlaceholder": ".md dosya adını girin"
     },
     "icons": {
       "files": "Dosyalar",
@@ -266,6 +267,16 @@
       "minutesAgo": "{count} dk önce",
       "hoursAgo": "{count} sa önce",
       "daysAgo": "{count} g önce"
+    },
+    "errors": {
+      "sideBarTitle": "Kenar çubuğu hatası",
+      "deleting": "Silme sırasında hata",
+      "alreadyExists": "Bu klasörde \"{name}\" adında bir {type} zaten var.",
+      "file": "dosya",
+      "folder": "klasör"
+    },
+    "toc": {
+      "empty": "Bu belgede başlık yok"
     }
   },
   "commandPalette": {
@@ -274,7 +285,10 @@
       "selectOption": "Bir seçenek seçin",
       "searchFileToOpen": "Açılacak dosyayı arayın",
       "selectLanguage": "Geçilecek dili seçin"
-    }
+    },
+    "currentSuffix": "{name} - geçerli",
+    "textDirectionLtr": "Soldan sağa",
+    "textDirectionRtl": "Sağdan sola"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Başlıkları otomatik numaralandır",
@@ -983,7 +997,8 @@
       "columns": "Sütunlar"
     },
     "notifications": {
-      "notificationNotFound": "Bildirim bulunamadı"
+      "notificationNotFound": "Bildirim bulunamadı",
+      "uploadImage": "Resim yükle"
     },
     "print": {
       "error": "\"{title}\" için yazdırma hatası",
@@ -1016,5 +1031,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "Sayaç modunu değiştirmek için tıklayın",
+    "readingTime": "{count} dk"
+  },
+  "autoUpdates": {
+    "update": "Güncelle",
+    "updateNotAvailable": "Güncelleme yok",
+    "updateDownloaded": "Güncelleme indirildi",
+    "updateAvailable": "Güncelleme var"
   }
 }

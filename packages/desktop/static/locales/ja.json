@@ -233,7 +233,8 @@
     "tree": {
       "emptyProject": "空のプロジェクト",
       "createFile": "ファイルの作成",
-      "openFile": "ファイルを開く..."
+      "openFile": "ファイルを開く...",
+      "newFileNamePlaceholder": ".mdファイル名を入力"
     },
     "icons": {
       "files": "ファイル",
@@ -266,6 +267,16 @@
       "minutesAgo": "{count} 分前",
       "hoursAgo": "{count} 時間前",
       "daysAgo": "{count} 日前"
+    },
+    "errors": {
+      "sideBarTitle": "サイドバーのエラー",
+      "deleting": "削除中にエラー",
+      "alreadyExists": "このフォルダには同名の{type}「{name}」が既に存在します。",
+      "file": "ファイル",
+      "folder": "フォルダー"
+    },
+    "toc": {
+      "empty": "このドキュメントに見出しはありません"
     }
   },
   "commandPalette": {
@@ -274,7 +285,10 @@
       "selectOption": "オプションの選択",
       "searchFileToOpen": "開くファイルの検索",
       "selectLanguage": "言語の選択"
-    }
+    },
+    "currentSuffix": "{name} - 現在",
+    "textDirectionLtr": "左から右へ",
+    "textDirectionRtl": "右から左へ"
   },
   "exportSettings": {
     "autoNumberingHeadings": "見出しの自動番号付け",
@@ -983,7 +997,8 @@
       "columns": "列"
     },
     "notifications": {
-      "notificationNotFound": "通知が見つかりません"
+      "notificationNotFound": "通知が見つかりません",
+      "uploadImage": "画像をアップロード"
     },
     "print": {
       "error": "\"{title}\" の印刷エラー",
@@ -1016,5 +1031,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "クリックでカウント表示を切り替え",
+    "readingTime": "{count} 分"
+  },
+  "autoUpdates": {
+    "update": "アップデート",
+    "updateNotAvailable": "利用可能なアップデートはありません",
+    "updateDownloaded": "アップデートをダウンロードしました",
+    "updateAvailable": "アップデートがあります"
   }
 }

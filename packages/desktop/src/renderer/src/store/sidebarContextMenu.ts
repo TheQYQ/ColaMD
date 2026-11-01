@@ -1,4 +1,5 @@
 import bus from '../bus'
+import { t } from '../i18n'
 import { registerSidebarPasteHandler, type SidebarClipboardEntry } from './sidebarPaste'
 import { sidebarFail } from './sidebarFeedback'
 
@@ -38,7 +39,7 @@ export function registerSidebarContextMenuHandlers(ctx: SidebarContextMenuContex
   bus.on('SIDEBAR::remove', () => {
     const { pathname } = ctx.activeItem.value
     window.electron.ipcRenderer.invoke('mt::fs-trash-item', pathname).catch((err: unknown) => {
-      sidebarFail('Error while deleting', err)
+      sidebarFail(t('sideBar.errors.deleting'), err)
     })
   })
   bus.on('SIDEBAR::copy-cut', (type: unknown) => {
