@@ -89,7 +89,10 @@
       "resetZoom": "Zoom herstellen",
       "fullScreen": "Volledig scherm",
       "bringAllToFront": "Alles naar voren",
-      "alwaysOnTop": "Altijd bovenaan"
+      "alwaysOnTop": "Altijd bovenaan",
+      "maximize": "Maximaliseren",
+      "restore": "Herstellen",
+      "close": "Sluiten"
     },
     "help": {
       "help": "Help",
@@ -218,6 +221,7 @@
     }
   },
   "search": {
+    "close": "Sluiten",
     "searchPlaceholder": "Zoeken",
     "caseSensitive": "Hoofdlettergevoelig",
     "wholeWord": "Heel woord selecteren",
@@ -233,7 +237,8 @@
     "tree": {
       "emptyProject": "Leeg project",
       "createFile": "Bestand aanmaken",
-      "openFile": "Bestand openen..."
+      "openFile": "Bestand openen...",
+      "newFileNamePlaceholder": "Voer .md-bestandsnaam in"
     },
     "icons": {
       "files": "Bestanden",
@@ -266,15 +271,30 @@
       "minutesAgo": "{count} min geleden",
       "hoursAgo": "{count} u geleden",
       "daysAgo": "{count} d geleden"
+    },
+    "errors": {
+      "sideBarTitle": "Fout in zijbalk",
+      "deleting": "Fout bij verwijderen",
+      "alreadyExists": "Er bestaat al een {type} genaamd \"{name}\" in deze map.",
+      "file": "bestand",
+      "folder": "map"
+    },
+    "toc": {
+      "empty": "Dit document heeft geen koppen"
     }
   },
   "commandPalette": {
     "placeholder": "Typ een opdracht om uit te voeren",
+    "noResult": "Geen resultaten",
+    "quickOpenEmpty": "Open een map om bestanden op naam te doorzoeken",
     "placeholders": {
       "selectOption": "Selecteer een optie",
       "searchFileToOpen": "Zoek bestand om te openen",
       "selectLanguage": "Selecteer een taal om naar te wisselen"
-    }
+    },
+    "currentSuffix": "{name} - huidig",
+    "textDirectionLtr": "Links naar rechts",
+    "textDirectionRtl": "Rechts naar links"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Automatisch nummeren van koppen",
@@ -759,7 +779,8 @@
       "enableSpellChecking": "Spellingcontrole inschakelen",
       "hideMarksForErrors": "Markering voor spelfouten verbergen",
       "title": "Spellingcontrole"
-    }
+    },
+    "moreInfo": "Meer informatie"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -906,7 +927,8 @@
   },
   "common": {
     "cancel": "Annuleren",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "Laden"
   },
   "dialog": {
     "cancel": "Annuleren",
@@ -919,6 +941,7 @@
     "importWarning": "Importwaarschuwing",
     "installPandoc": "Pandoc installeren",
     "keepOpen": "Open houden",
+    "moreFiles": "en {count} meer",
     "replace": "Vervangen",
     "save": "Opslaan",
     "saveChanges": "Wijzigingen opslaan",
@@ -983,7 +1006,8 @@
       "columns": "Kolommen"
     },
     "notifications": {
-      "notificationNotFound": "Melding niet gevonden"
+      "notificationNotFound": "Melding niet gevonden",
+      "uploadImage": "Afbeelding uploaden"
     },
     "print": {
       "error": "Afdrukfout voor \"{title}\"",
@@ -1016,5 +1040,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "Klik om de tellermodus te wisselen",
+    "readingTime": "{count} min"
+  },
+  "autoUpdates": {
+    "update": "Bijwerken",
+    "updateNotAvailable": "Geen update beschikbaar",
+    "updateDownloaded": "Update gedownload",
+    "updateAvailable": "Update beschikbaar"
   }
 }

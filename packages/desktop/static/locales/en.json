@@ -89,7 +89,10 @@
       "resetZoom": "Reset Zoom",
       "fullScreen": "Full Screen",
       "bringAllToFront": "Bring All to Front",
-      "alwaysOnTop": "Always on Top"
+      "alwaysOnTop": "Always on Top",
+      "maximize": "Maximize",
+      "restore": "Restore",
+      "close": "Close"
     },
     "help": {
       "help": "Help",
@@ -218,6 +221,7 @@
     }
   },
   "search": {
+    "close": "Close",
     "searchPlaceholder": "Search",
     "caseSensitive": "Case Sensitive",
     "wholeWord": "Select whole word",
@@ -233,7 +237,8 @@
     "tree": {
       "emptyProject": "Empty project",
       "createFile": "Create File",
-      "openFile": "Open File..."
+      "openFile": "Open File...",
+      "newFileNamePlaceholder": "Enter .md file name"
     },
     "icons": {
       "files": "Files",
@@ -266,15 +271,30 @@
       "minutesAgo": "{count} min ago",
       "hoursAgo": "{count}h ago",
       "daysAgo": "{count}d ago"
+    },
+    "errors": {
+      "sideBarTitle": "Error in Side Bar",
+      "deleting": "Error while deleting",
+      "alreadyExists": "A {type} named \"{name}\" already exists in this folder.",
+      "file": "file",
+      "folder": "folder"
+    },
+    "toc": {
+      "empty": "This document has no headings"
     }
   },
   "commandPalette": {
     "placeholder": "Type a command to execute",
+    "noResult": "No matching results",
+    "quickOpenEmpty": "Open a folder to search files by name",
     "placeholders": {
       "selectOption": "Select an option",
       "searchFileToOpen": "Search file to open",
       "selectLanguage": "Select a language to switch to"
-    }
+    },
+    "currentSuffix": "{name} - current",
+    "textDirectionLtr": "Left to Right",
+    "textDirectionRtl": "Right to Left"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Auto numbering headings",
@@ -759,7 +779,8 @@
       "enableSpellChecking": "Enable spell checking",
       "hideMarksForErrors": "Hide marks for spelling errors",
       "title": "Spell Checker"
-    }
+    },
+    "moreInfo": "More information"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -906,7 +927,8 @@
   },
   "common": {
     "cancel": "Cancel",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "Loading"
   },
   "dialog": {
     "cancel": "Cancel",
@@ -919,6 +941,7 @@
     "importWarning": "Import warning",
     "installPandoc": "Install Pandoc",
     "keepOpen": "Keep open",
+    "moreFiles": "and {count} more",
     "replace": "Replace",
     "save": "Save",
     "saveChanges": "Save changes?",
@@ -983,7 +1006,8 @@
       "columns": "Columns"
     },
     "notifications": {
-      "notificationNotFound": "Notification not found"
+      "notificationNotFound": "Notification not found",
+      "uploadImage": "Upload Image"
     },
     "print": {
       "error": "Print error for \"{title}\"",
@@ -1016,5 +1040,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "Click to cycle the counter mode",
+    "readingTime": "{count} min"
+  },
+  "autoUpdates": {
+    "update": "Update",
+    "updateNotAvailable": "Update not Available",
+    "updateDownloaded": "Update Downloaded",
+    "updateAvailable": "Update Available"
   }
 }

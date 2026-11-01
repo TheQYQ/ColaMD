@@ -89,7 +89,10 @@
       "resetZoom": "重置缩放",
       "fullScreen": "全屏",
       "bringAllToFront": "将所有窗口置于前台",
-      "alwaysOnTop": "总是在最前面"
+      "alwaysOnTop": "总是在最前面",
+      "maximize": "最大化",
+      "restore": "还原",
+      "close": "关闭"
     },
     "help": {
       "help": "帮助",
@@ -218,6 +221,7 @@
     }
   },
   "search": {
+    "close": "关闭",
     "searchPlaceholder": "搜索",
     "caseSensitive": "区分大小写",
     "wholeWord": "选择整个单词",
@@ -233,7 +237,8 @@
     "tree": {
       "emptyProject": "空项目",
       "createFile": "创建文件",
-      "openFile": "打开文件..."
+      "openFile": "打开文件...",
+      "newFileNamePlaceholder": "输入 .md 文件名"
     },
     "icons": {
       "files": "文件",
@@ -266,15 +271,30 @@
       "minutesAgo": "{count} 分钟前",
       "hoursAgo": "{count} 小时前",
       "daysAgo": "{count} 天前"
+    },
+    "errors": {
+      "sideBarTitle": "侧栏错误",
+      "deleting": "删除时出错",
+      "alreadyExists": "此文件夹中已存在名为“{name}”的{type}。",
+      "file": "文件",
+      "folder": "文件夹"
+    },
+    "toc": {
+      "empty": "此文档没有标题"
     }
   },
   "commandPalette": {
     "placeholder": "输入要执行的命令",
+    "noResult": "无匹配结果",
+    "quickOpenEmpty": "打开文件夹后可按文件名搜索文件",
     "placeholders": {
       "selectOption": "选择一个选项",
       "searchFileToOpen": "搜索要打开的文件",
       "selectLanguage": "选择要切换的语言"
-    }
+    },
+    "currentSuffix": "{name} - 当前",
+    "textDirectionLtr": "从左到右",
+    "textDirectionRtl": "从右到左"
   },
   "exportSettings": {
     "title": "导出选项",
@@ -759,7 +779,8 @@
       "enableSpellChecking": "启用拼写检查",
       "hideMarksForErrors": "隐藏拼写错误标记",
       "title": "拼写检查器"
-    }
+    },
+    "moreInfo": "查看详细说明"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -906,7 +927,8 @@
   },
   "common": {
     "cancel": "取消",
-    "ok": "确定"
+    "ok": "确定",
+    "loading": "加载中"
   },
   "dialog": {
     "cancel": "取消",
@@ -919,6 +941,7 @@
     "importWarning": "导入警告",
     "installPandoc": "安装 Pandoc",
     "keepOpen": "保持打开",
+    "moreFiles": "等 {count} 个文件",
     "replace": "替换",
     "save": "保存",
     "saveChanges": "是否保存更改？",
@@ -978,7 +1001,8 @@
       "columns": "列"
     },
     "notifications": {
-      "notificationNotFound": "未找到通知"
+      "notificationNotFound": "未找到通知",
+      "uploadImage": "上传图片"
     },
     "sourceCode": {
       "cursorNullComment": "光标位置无注释",
@@ -1016,5 +1040,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "点击切换统计口径",
+    "readingTime": "{count} 分钟"
+  },
+  "autoUpdates": {
+    "update": "更新",
+    "updateNotAvailable": "暂无可用更新",
+    "updateDownloaded": "更新已下载",
+    "updateAvailable": "有可用更新"
   }
 }

@@ -226,16 +226,11 @@ class Format extends Content {
         return 'format';
     }
 
-    private _checkCursorInTokenType(
-        text: string,
+    private _findTokenInTokens(
+        tokens: Token[],
         offset: number,
         type: Token['type'],
     ): Nullable<Token> {
-        const tokens = tokenizer(text, {
-            hasBeginRules: false,
-            options: this.muya.options,
-        });
-
         let result = null;
 
         const travel = (tokens: Token[]) => {
@@ -262,15 +257,20 @@ class Format extends Content {
         return result;
     }
 
-    private _checkNotSameToken(oldText: string, text: string) {
-        const { options } = this.muya;
-        const oldTokens = tokenizer(oldText, {
-            options,
-        });
+    private _checkCursorInTokenType(
+        text: string,
+        offset: number,
+        type: Token['type'],
+    ): Nullable<Token> {
         const tokens = tokenizer(text, {
-            options,
+            hasBeginRules: false,
+            options: this.muya.options,
         });
 
+        return this._findTokenInTokens(tokens, offset, type);
+    }
+
+    private _tokenTypesChanged(oldTokens: Token[], tokens: Token[]) {
         const oldCache: Record<string, number> = {};
         const cache: Record<string, number> = {};
 
@@ -300,7 +300,7 @@ class Format extends Content {
     }
 
     // TODO: @JOCS remove use this.selection directly
-    checkNeedRender(cursor: IRenderCursor = { anchor: this.selection.anchor ?? undefined, focus: this.selection.focus ?? undefined }) {
+    checkNeedRender(cursor: IRenderCursor = { anchor: this.selection.anchor ?? undefined, focus: this.selection.focus ?? undefined }, tokens?: Token[]) {
         const { labels } = this.inlineRenderer;
         const { text } = this;
         const { start: cStart, end: cEnd, anchor, focus } = cursor;
@@ -310,7 +310,7 @@ class Format extends Content {
             return false;
         const NO_NEED_TOKEN_REG = /text|hard_line_break|soft_line_break/;
 
-        for (const token of tokenizer(text, {
+        for (const token of tokens ?? tokenizer(text, {
             labels,
             options: this.muya.options,
         })) {
@@ -628,13 +628,29 @@ class Format extends Content {
             CLASS_NAMES.MU_MATH_RENDER,
             CLASS_NAMES.MU_RUBY_RENDER,
         ]);
-        const isInInlineMath = !!this._checkCursorInTokenType(
-            textContent,
+        // PERF-08 (#GUI-B7): this handler used to tokenize the same texts up to
+        // six times per keystroke (two cursor-in-type probes on the pre-edit
+        // text, old+new in the type-count compare, the render check and the
+        // emoji probe on the post-edit text). Each distinct stream is now built
+        // once and passed down — four streams, not three.
+        // Three of them keep the option shape of the call site they serve, so
+        // those streams are unchanged. The emoji probe does NOT: it used to run
+        // its own `hasBeginRules: false` stream without labels and now rides
+        // `tokensNew` (labels + begin rules on). For a paragraph whose first
+        // line is a link reference definition the two streams are not
+        // guaranteed to agree, which no unit test covers — the probe needs a
+        // DOM-level check before this can be called equivalent.
+        const tokensPre = tokenizer(textContent, {
+            hasBeginRules: false,
+            options: this.muya.options,
+        });
+        const isInInlineMath = !!this._findTokenInTokens(
+            tokensPre,
             start.offset,
             'inline_math',
         );
-        const isInInlineCode = !!this._checkCursorInTokenType(
-            textContent,
+        const isInInlineCode = !!this._findTokenInTokens(
+            tokensPre,
             start.offset,
             'inline_code',
         );
@@ -649,7 +665,11 @@ class Format extends Content {
             'format',
         );
 
-        if (this._checkNotSameToken(this.text, text))
+        const oldTokens = tokenizer(this.text, {
+            options: this.muya.options,
+        });
+
+        if (this._tokenTypesChanged(oldTokens, tokenizer(text, { options: this.muya.options })))
             needRender = true;
 
         const inputData = 'data' in event && typeof event.data === 'string' ? event.data : null;
@@ -667,7 +687,11 @@ class Format extends Content {
             },
         };
 
-        const checkMarkedUpdate = this.checkNeedRender(cursor);
+        const tokensNew = tokenizer(text, {
+            labels: this.inlineRenderer.labels,
+            options: this.muya.options,
+        });
+        const checkMarkedUpdate = this.checkNeedRender(cursor, tokensNew);
 
         if (checkMarkedUpdate || needRender)
             this.update(cursor);
@@ -678,8 +702,8 @@ class Format extends Content {
             inputType !== 'insertFromPaste'
             && inputType !== 'deleteByCut'
         ) {
-            const emojiToken = this._checkCursorInTokenType(
-                this.text,
+            const emojiToken = this._findTokenInTokens(
+                tokensNew,
                 start.offset,
                 'emoji',
             );

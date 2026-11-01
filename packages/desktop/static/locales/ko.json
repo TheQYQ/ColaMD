@@ -89,7 +89,10 @@
       "resetZoom": "줌 초기화",
       "fullScreen": "전체 화면",
       "bringAllToFront": "모든 창 앞으로 가져오기",
-      "alwaysOnTop": "항상 위에"
+      "alwaysOnTop": "항상 위에",
+      "maximize": "최대화",
+      "restore": "복원",
+      "close": "닫기"
     },
     "help": {
       "help": "도움말",
@@ -218,6 +221,7 @@
     }
   },
   "search": {
+    "close": "닫기",
     "searchPlaceholder": "검색",
     "caseSensitive": "대소문자 구분",
     "wholeWord": "전체 단어 선택",
@@ -233,7 +237,8 @@
     "tree": {
       "emptyProject": "빈 프로젝트",
       "createFile": "파일 만들기",
-      "openFile": "파일 열기..."
+      "openFile": "파일 열기...",
+      "newFileNamePlaceholder": ".md 파일 이름 입력"
     },
     "icons": {
       "files": "파일",
@@ -266,15 +271,30 @@
       "minutesAgo": "{count}분 전",
       "hoursAgo": "{count}시간 전",
       "daysAgo": "{count}일 전"
+    },
+    "errors": {
+      "sideBarTitle": "사이드바 오류",
+      "deleting": "삭제 중 오류",
+      "alreadyExists": "이 폴더에 같은 이름의 {type} \"{name}\"이(가) 이미 있습니다.",
+      "file": "파일",
+      "folder": "폴더"
+    },
+    "toc": {
+      "empty": "이 문서에는 제목이 없습니다"
     }
   },
   "commandPalette": {
     "placeholder": "실행할 명령을 입력하세요",
+    "noResult": "일치하는 결과가 없습니다",
+    "quickOpenEmpty": "폴더를 열면 파일 이름으로 검색할 수 있습니다",
     "placeholders": {
       "selectOption": "옵션 선택",
       "searchFileToOpen": "열 파일 검색",
       "selectLanguage": "언어 선택"
-    }
+    },
+    "currentSuffix": "{name} - 현재",
+    "textDirectionLtr": "왼쪽에서 오른쪽으로",
+    "textDirectionRtl": "오른쪽에서 왼쪽으로"
   },
   "exportSettings": {
     "autoNumberingHeadings": "제목 자동 번호 매기기",
@@ -759,7 +779,8 @@
       "enableSpellChecking": "맞춤법 검사 활성화",
       "hideMarksForErrors": "맞춤법 오류 표시 숨기기",
       "title": "맞춤법 검사기"
-    }
+    },
+    "moreInfo": "자세히 보기"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -906,7 +927,8 @@
   },
   "common": {
     "cancel": "취소",
-    "ok": "확인"
+    "ok": "확인",
+    "loading": "불러오는 중"
   },
   "dialog": {
     "cancel": "취소",
@@ -919,6 +941,7 @@
     "importWarning": "가져오기 경고",
     "installPandoc": "Pandoc 설치",
     "keepOpen": "열어두기",
+    "moreFiles": "외 {count}개",
     "replace": "바꾸기",
     "save": "저장",
     "saveChanges": "변경 사항 저장",
@@ -983,7 +1006,8 @@
       "columns": "열"
     },
     "notifications": {
-      "notificationNotFound": "알림을 찾을 수 없음"
+      "notificationNotFound": "알림을 찾을 수 없음",
+      "uploadImage": "이미지 업로드"
     },
     "print": {
       "error": "\"{title}\" 인쇄 오류",
@@ -1016,5 +1040,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "클릭하면 카운터 모드가 순환합니다",
+    "readingTime": "{count}분"
+  },
+  "autoUpdates": {
+    "update": "업데이트",
+    "updateNotAvailable": "사용 가능한 업데이트가 없습니다",
+    "updateDownloaded": "업데이트가 다운로드되었습니다",
+    "updateAvailable": "업데이트 사용 가능"
   }
 }

@@ -49,6 +49,28 @@ export class TableColumnToolbar extends BaseFloat {
             if (!isMouseEvent(event))
                 return;
 
+            // PERF-12 (#GUI-B7): the hit-test below walks the whole paint stack
+            // (two or three elementsFromPoint calls). Skip it while the pointer
+            // is outside the editor's vicinity — chrome, sidebar, menus — where
+            // the outcome is always hide() anyway. The grace margin covers the
+            // floating widgets (front button, table bars) parked at the edges.
+            const domNode = this.muya.domNode as HTMLElement | null;
+            if (!domNode) {
+                this.hide();
+                return;
+            }
+            const rect = domNode.getBoundingClientRect();
+            const GRACE = 160;
+            if (
+                event.x < rect.left - GRACE
+                || event.x > rect.right + GRACE
+                || event.y < rect.top - GRACE
+                || event.y > rect.bottom + GRACE
+            ) {
+                this.hide();
+                return;
+            }
+
             const { x, y } = event;
             const eles = [...document.elementsFromPoint(x, y)];
             const bellowEles = [...document.elementsFromPoint(x, y + OFFSET)];

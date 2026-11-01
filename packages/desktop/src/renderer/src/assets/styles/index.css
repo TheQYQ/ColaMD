@@ -24,16 +24,27 @@
   --selectionColor: rgba(91, 103, 199, 0.18);
   --editorColor: #1F2328;
   --editorColor80: #42464E;
+  /* 70 and 20 have no literal in any theme; deriving them keeps them correct
+     in dark palettes where the whole ladder is white-alpha. */
+  --editorColor70: color-mix(in srgb, var(--editorColor) 70%, transparent);
   --editorColor60: #59636E;
   --editorColor50: #6E7681;
   /* A11Y-02 (#GUI-B9): tertiary text (3.00:1 on #FCFCFC) darkened to clear
      4.5:1 for placeholders, disabled text and the status bar. */
   --editorColor40: #66707B;
   --editorColor30: #A5ADB5;
+  --editorColor20: color-mix(in srgb, var(--editorColor) 20%, transparent);
   --editorColor10: #E4E7EB;
   --editorColor04: #F4F5F7;
   --editorBgColor: #FCFCFC;
   --deleteColor: #C4402F;
+  /* Status colors. These used to be referenced with per-site fallbacks —
+     including two different ambers for --warningColor — so they are defined
+     once here and themes can override them like every other token. */
+  --successColor: #059669;
+  --successBgColor: #f0f9ff;
+  --warningColor: #d97706;
+  --warningBgColor: #fffbeb;
   --iconColor: #59636E;
   --codeBgColor: rgba(15, 18, 25, 0.06);
   --codeBlockBgColor: rgba(15, 18, 25, 0.04);
@@ -140,7 +151,9 @@
   background: var(--editorColor50);
 }
 
-:focus {
+/* A11Y-07 (#GUI-B8): only suppress the MOUSEDOWN ring; keyboard focus keeps
+   the browser default unless a component paints the ring below. */
+:focus:not(:focus-visible) {
   outline: none;
 }
 
@@ -483,6 +496,8 @@ button.button-primary:not(.custom):focus,
 /* Keyboard focus ring: visible, accent-tinted, consistent offset. */
 button:focus-visible,
 [role='button']:focus-visible,
+[role='tab']:focus-visible,
+[role='option']:focus-visible,
 input:focus-visible,
 .side-bar-tab:focus-visible {
   outline: none;

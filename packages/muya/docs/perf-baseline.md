@@ -213,6 +213,20 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 - 真实应用 setContent 还包含 block 树重建与渲染（bench 不覆盖），parse 不再是瓶颈后再评估是否需要渲染分片。
 - 遗留：`getClipboardHtml`/`getHighlightHtml` 仍经 marked 内部 walkTokens（二次方），但它们只处理选区/剪贴板级内容，不在文档级热路径，暂不动。
 
+## GUI-B7 实测（内联渲染/搜索/UI 热路径 · 2026-11-02）
+
+实现：`fix/gui-b7-muya-perf`（PR 待合）。本轮改动**不在本 bench 的直接测量面**：inputHandler 的 tokenize 共享（PERF-08）、引用定义 labels 按修订号缓存（PERF-09）、find 跳转双块交换（PERF-10）作用于「击键 → inline patch」路径，而 bench 的 edit+flush 只含一次 flush（单块 patch），K 块重复遍历的收益在 bench 形态里不出现。数字仍照例记录，注意本轮后台负载明显偏高（派生档 getState/getMarkdown 1MB p50 相对 M1.3 轮漂移 ~3×，为噪声底；改动不触这些路径）。环境：Windows 11 (26300, x64) · Node v22.21.1 · vitest 4.1.9。
+
+| 操作        | 100KB p50 | 500KB p50 | 1MB p50 | 对照（M1.3 轮 p50）            |
+| ----------- | --------: | --------: | ------: | ------------------------------ |
+| setContent  |       7.0 |      13.1 |    86.2 | 5.6 / 13.6 / 28.2（1MB 漂移=噪声） |
+| getState    |       2.0 |       9.6 |    47.7 | 1.8 / 7.7 / 16.8（同上）       |
+| getMarkdown |       3.0 |      15.3 |    85.5 | 3.0 / 12.2 / 25.3（同上）      |
+| getTOC      |       2.2 |      30.1 |    28.3 | 2.1 / 10.7 / 21.9（同上）      |
+| edit+flush  |       0.4 |       1.5 |     2.0 | 0.3 / 0.6 / 1.3                |
+
+判读：edit+flush p50 与 M1.3 轮同数量级（0.4/1.5/2.0 vs 0.3/0.6/1.3），在噪声底之上无可归因于本轮改动的回归；PERF-09 的收益（K 块 patch 省 K−1 次全树遍历）与 PERF-08 的收益（每键 tokenize 从 6 份流收敛到 4 份，口径见 `format.ts` inputHandler 的注释：改前 2 份 pre-edit 探针 + 类型比较的 old/new + render 检查 + emoji 探针，改后 4 份各自复用）需在多块更新与真实键入路径上另行量化，本 bench 不覆盖。
+
 ## 变更记录
 
 | 日期       | 提交                              | 变化                               | 备注                       |
@@ -222,3 +236,4 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | 2026-09-11 | 8a471b1 (perf/m1-2-keystroke-deser) | M1.2 实测：edit+flush 1MB p50 50.8→2.7ms、p95 4.7ms | 验收线达成（<16ms）        |
 | 2026-09-12 | perf/m1-2b-lazy-serialization (PR #25) | M1.2b：桌面每击键去全文序列化+hash（移至 pause/undo/flush-on-read）；引擎热路径无回归（1MB p95 4.0ms） | 桌面击键层 O(1) |
 | 2026-09-12 | perf/m1-3-setcontent (PR #27) | M1.3：setContent 超线性修复——lexBlock 线性遍历（marked walkTokens 的 concat 累积）+ markdownToState 栈式流处理；1MB 5004→28.2ms | 解析管线线性化 |
+| 2026-11-02 | fix/gui-b7-muya-perf (PR 待合) | GUI-B7：inputHandler 每键 tokenize 流 6→4 份（口径见上节判读行）、labels 按修订号缓存（K 块 patch 省 K−1 次全树遍历）、find 跳转改双块交换；bench 数字见上节（不在其测量面，无回归） | 桌面侧 B7 批次 |

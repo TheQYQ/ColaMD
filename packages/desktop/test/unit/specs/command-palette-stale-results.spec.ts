@@ -57,6 +57,10 @@ const loadPalette = (): Palette => {
     log: { error: vi.fn() },
     useCommandCenterStore: () => ({ rootCommand: {} }),
     useI18n: () => ({ t: (k: string) => k }),
+    // index.vue:311 reads this in the subcommand filter path. The harness
+    // injects every binding by hand (AGENTS.md), so a missing entry here is a
+    // silent ReferenceError on a path these cases do not walk.
+    getCommandBaseDescriptionById: (id: string) => id,
     loading: {}
   })
   return setup()

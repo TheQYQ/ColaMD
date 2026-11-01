@@ -28,6 +28,7 @@ vi.mock('@/util/themeMarket', () => ({
 }))
 
 import { addThemeStyle, BUILT_IN_THEME_CSS } from '@/util/theme'
+// PERF-05: the theme CSS now loads through async chunk getters.
 import { THEME_STYLE_ID, railscastsThemes, oneDarkThemes } from '@/config'
 
 const styleHtml = (): string =>
@@ -36,7 +37,7 @@ const styleHtml = (): string =>
 const styleCount = (): number => document.querySelectorAll(`#${THEME_STYLE_ID}`).length
 
 describe('built-in theme CSS table', () => {
-  it('keys are exactly the theme ids the app offers', () => {
+  it('keys are exactly the theme ids the app offers', async () => {
     // The realistic bug for a table keyed by id is a typo or a rename, which
     // would silently drop a theme's CSS — so the id set is pinned explicitly
     // rather than just counted.
@@ -79,7 +80,7 @@ describe('built-in theme CSS table', () => {
     )
   })
 
-  it('maps every id to a generator, and the inline override survives', () => {
+  it('maps every id to a generator, and the inline override survives', async () => {
     // The generators return the *empty string* here: their CSS arrives through
     // `.css` imports, which vitest does not process by default. Asserting the
     // shape (and the one theme whose CSS is written inline) is what is real in
@@ -87,12 +88,12 @@ describe('built-in theme CSS table', () => {
     // specs, which run in the built renderer.
     for (const [theme, build] of Object.entries(BUILT_IN_THEME_CSS)) {
       expect(typeof build, theme).toBe('function')
-      expect(typeof build(), theme).toBe('string')
+      expect(typeof (await build()), theme).toBe('string')
     }
-    expect(BUILT_IN_THEME_CSS.light()).toContain('--link-color')
+    expect(await BUILT_IN_THEME_CSS.light()).toContain('--link-color')
   })
 
-  it('keys are the theme ids the preferences store uses', () => {
+  it('keys are the theme ids the preferences store uses', async () => {
     // The dark/light CodeMirror groups must stay subsets of the table, or a
     // theme would get a CodeMirror skin with no CSS behind it.
     for (const theme of [...oneDarkThemes, ...railscastsThemes]) {
@@ -107,61 +108,61 @@ describe('addThemeStyle', () => {
     document.body.className = ''
   })
 
-  it('wraps the theme CSS in a print guard and adds dark chrome', () => {
-    addThemeStyle('dark')
+  it('wraps the theme CSS in a print guard and adds dark chrome', async () => {
+    await addThemeStyle('dark')
 
     expect(styleHtml()).toContain('@media not print')
     expect(document.body.classList.contains('dark')).toBe(true)
   })
 
-  it('reuses the one style element across theme changes', () => {
-    addThemeStyle('dark')
+  it('reuses the one style element across theme changes', async () => {
+    await addThemeStyle('dark')
     const darkCss = styleHtml()
-    addThemeStyle('light')
+    await addThemeStyle('light')
 
     expect(styleCount()).toBe(1)
     expect(styleHtml()).not.toBe(darkCss)
     expect(document.body.classList.contains('dark')).toBe(false)
   })
 
-  it('leaves an unknown theme id without any CSS', () => {
-    addThemeStyle('no-such-theme')
+  it('leaves an unknown theme id without any CSS', async () => {
+    await addThemeStyle('no-such-theme')
 
     expect(styleCount()).toBe(1)
     expect(styleHtml()).toBe('')
   })
 
-  it('points CodeMirror at the skin matching the theme', () => {
+  it('points CodeMirror at the skin matching the theme', async () => {
     const cm = document.createElement('div')
     cm.className = 'CodeMirror cm-s-default'
     document.body.appendChild(cm)
 
-    addThemeStyle('one-dark')
+    await addThemeStyle('one-dark')
     expect(cm.classList.contains('cm-s-one-dark')).toBe(true)
     expect(cm.classList.contains('cm-s-default')).toBe(false)
 
-    addThemeStyle(railscastsThemes[0])
+    await addThemeStyle(railscastsThemes[0])
     expect(cm.classList.contains('cm-s-railscasts')).toBe(true)
     expect(cm.classList.contains('cm-s-one-dark')).toBe(false)
 
-    addThemeStyle('light')
+    await addThemeStyle('light')
     expect(cm.classList.contains('cm-s-default')).toBe(true)
     expect(cm.classList.contains('cm-s-railscasts')).toBe(false)
   })
 
-  it('applies an installed custom theme and treats it as dark', () => {
-    addThemeStyle('custom:midnight')
+  it('applies an installed custom theme and treats it as dark', async () => {
+    await addThemeStyle('custom:midnight')
 
     expect(styleHtml()).toContain('@media not print')
     expect(styleHtml()).toContain('.custom-root')
     expect(document.body.classList.contains('dark')).toBe(true)
   })
 
-  it('does not clear the style element when a custom id has no manifest', () => {
-    addThemeStyle('light')
+  it('does not clear the style element when a custom id has no manifest', async () => {
+    await addThemeStyle('light')
     const before = styleHtml()
 
-    addThemeStyle('custom:missing')
+    await addThemeStyle('custom:missing')
     expect(styleHtml()).toBe(before)
     expect(document.body.classList.contains('dark')).toBe(false)
   })

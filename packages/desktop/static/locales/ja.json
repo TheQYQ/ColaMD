@@ -89,7 +89,10 @@
       "resetZoom": "ズームをリセット",
       "fullScreen": "フルスクリーン",
       "bringAllToFront": "すべてを前面に移動",
-      "alwaysOnTop": "常に手前に表示"
+      "alwaysOnTop": "常に手前に表示",
+      "maximize": "最大化",
+      "restore": "元に戻す",
+      "close": "閉じる"
     },
     "help": {
       "help": "ヘルプ",
@@ -218,6 +221,7 @@
     }
   },
   "search": {
+    "close": "閉じる",
     "searchPlaceholder": "検索",
     "caseSensitive": "大文字と小文字を区別",
     "wholeWord": "単語全体",
@@ -233,7 +237,8 @@
     "tree": {
       "emptyProject": "空のプロジェクト",
       "createFile": "ファイルの作成",
-      "openFile": "ファイルを開く..."
+      "openFile": "ファイルを開く...",
+      "newFileNamePlaceholder": ".mdファイル名を入力"
     },
     "icons": {
       "files": "ファイル",
@@ -266,15 +271,30 @@
       "minutesAgo": "{count} 分前",
       "hoursAgo": "{count} 時間前",
       "daysAgo": "{count} 日前"
+    },
+    "errors": {
+      "sideBarTitle": "サイドバーのエラー",
+      "deleting": "削除中にエラー",
+      "alreadyExists": "このフォルダには同名の{type}「{name}」が既に存在します。",
+      "file": "ファイル",
+      "folder": "フォルダー"
+    },
+    "toc": {
+      "empty": "このドキュメントに見出しはありません"
     }
   },
   "commandPalette": {
     "placeholder": "実行するコマンドの入力",
+    "noResult": "一致する結果はありません",
+    "quickOpenEmpty": "フォルダを開くとファイル名で検索できます",
     "placeholders": {
       "selectOption": "オプションの選択",
       "searchFileToOpen": "開くファイルの検索",
       "selectLanguage": "言語の選択"
-    }
+    },
+    "currentSuffix": "{name} - 現在",
+    "textDirectionLtr": "左から右へ",
+    "textDirectionRtl": "右から左へ"
   },
   "exportSettings": {
     "autoNumberingHeadings": "見出しの自動番号付け",
@@ -759,7 +779,8 @@
       "enableSpellChecking": "スペルチェックを有効",
       "hideMarksForErrors": "スペルエラーのマークを隠す",
       "title": "スペルチェック"
-    }
+    },
+    "moreInfo": "詳細を見る"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -906,7 +927,8 @@
   },
   "common": {
     "cancel": "キャンセル",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "読み込み中"
   },
   "dialog": {
     "cancel": "キャンセル",
@@ -919,6 +941,7 @@
     "importWarning": "インポート警告",
     "installPandoc": "Pandoc をインストール",
     "keepOpen": "開いたままにする",
+    "moreFiles": "ほか {count} 件",
     "replace": "置換",
     "save": "保存",
     "saveChanges": "変更を保存",
@@ -983,7 +1006,8 @@
       "columns": "列"
     },
     "notifications": {
-      "notificationNotFound": "通知が見つかりません"
+      "notificationNotFound": "通知が見つかりません",
+      "uploadImage": "画像をアップロード"
     },
     "print": {
       "error": "\"{title}\" の印刷エラー",
@@ -1016,5 +1040,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "クリックでカウント表示を切り替え",
+    "readingTime": "{count} 分"
+  },
+  "autoUpdates": {
+    "update": "アップデート",
+    "updateNotAvailable": "利用可能なアップデートはありません",
+    "updateDownloaded": "アップデートをダウンロードしました",
+    "updateAvailable": "アップデートがあります"
   }
 }

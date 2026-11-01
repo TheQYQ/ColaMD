@@ -89,7 +89,10 @@
       "resetZoom": "Restablecer zoom",
       "fullScreen": "Pantalla Completa",
       "bringAllToFront": "Traer al Frente",
-      "alwaysOnTop": "Siempre Encima"
+      "alwaysOnTop": "Siempre Encima",
+      "maximize": "Maximizar",
+      "restore": "Restaurar",
+      "close": "Cerrar"
     },
     "help": {
       "help": "Ayuda",
@@ -218,6 +221,7 @@
     }
   },
   "search": {
+    "close": "Cerrar",
     "searchPlaceholder": "Buscar",
     "caseSensitive": "Distinguir Mayúsculas",
     "wholeWord": "Seleccionar palabra completa",
@@ -233,7 +237,8 @@
     "tree": {
       "emptyProject": "Proyecto vacío",
       "createFile": "Crear Archivo",
-      "openFile": "Abrir archivo..."
+      "openFile": "Abrir archivo...",
+      "newFileNamePlaceholder": "Escribe el nombre del archivo .md"
     },
     "icons": {
       "files": "Archivos",
@@ -266,15 +271,30 @@
       "minutesAgo": "hace {count} min",
       "hoursAgo": "hace {count} h",
       "daysAgo": "hace {count} d"
+    },
+    "errors": {
+      "sideBarTitle": "Error en la barra lateral",
+      "deleting": "Error al eliminar",
+      "alreadyExists": "Ya existe un/a {type} llamado/a \"{name}\" en esta carpeta.",
+      "file": "archivo",
+      "folder": "carpeta"
+    },
+    "toc": {
+      "empty": "Este documento no tiene encabezados"
     }
   },
   "commandPalette": {
     "placeholder": "Escriba un comando para ejecutar",
+    "noResult": "Sin resultados",
+    "quickOpenEmpty": "Abre una carpeta para buscar archivos por nombre",
     "placeholders": {
       "selectOption": "Seleccionar opción",
       "searchFileToOpen": "Buscar archivo para abrir",
       "selectLanguage": "Seleccionar idioma"
-    }
+    },
+    "currentSuffix": "{name} - actual",
+    "textDirectionLtr": "De izquierda a derecha",
+    "textDirectionRtl": "De derecha a izquierda"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Numeración automática de encabezados",
@@ -759,7 +779,8 @@
       "enableSpellChecking": "Habilitar corrección ortográfica",
       "hideMarksForErrors": "Ocultar marcas para errores ortográficos",
       "title": "Corrector Ortográfico"
-    }
+    },
+    "moreInfo": "Más información"
   },
   "about": {
     "copyright": "Derechos de autor © Luo Ran 2017-{year}",
@@ -906,7 +927,8 @@
   },
   "common": {
     "cancel": "Cancelar",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "Cargando"
   },
   "dialog": {
     "cancel": "Cancelar",
@@ -919,6 +941,7 @@
     "importWarning": "Advertencia de importación",
     "installPandoc": "Instalar Pandoc",
     "keepOpen": "Mantener abierto",
+    "moreFiles": "y {count} más",
     "replace": "Reemplazar",
     "save": "Guardar",
     "saveChanges": "Guardar cambios",
@@ -983,7 +1006,8 @@
       "columns": "Columnas"
     },
     "notifications": {
-      "notificationNotFound": "Notificación no encontrada"
+      "notificationNotFound": "Notificación no encontrada",
+      "uploadImage": "Subir imagen"
     },
     "print": {
       "error": "Error de impresión para \"{title}\"",
@@ -1016,5 +1040,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "Haz clic para cambiar el modo del contador",
+    "readingTime": "{count} min"
+  },
+  "autoUpdates": {
+    "update": "Actualizar",
+    "updateNotAvailable": "No hay actualizaciones disponibles",
+    "updateDownloaded": "Actualización descargada",
+    "updateAvailable": "Actualización disponible"
   }
 }

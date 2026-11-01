@@ -9,7 +9,7 @@ import ImageFailIcon from '../../assets/icons/image_fail/2.png';
 import { CLASS_NAMES } from '../../config';
 import { getImageSrc } from '../../utils/image';
 
-function renderIcon(h: H, className: string, icon: string) {
+function renderIcon(h: H, className: string, icon: string, ariaHidden = false) {
     // A `<span>`, not an `<a>`: these hover controls carry no href, and an `<a>`
     // here nests illegally when the image sits inside a real anchor (e.g. a
     // reference-linked image `[![alt](img)][ref]`). The HTML parser closes the
@@ -30,7 +30,9 @@ function renderIcon(h: H, className: string, icon: string) {
         ),
     );
 
-    return h(selector, iconVnode);
+    return ariaHidden
+        ? h(selector, { attrs: { 'aria-hidden': 'true' } }, [iconVnode])
+        : h(selector, iconVnode);
 }
 
 function shouldSyncSelectedImageId(
@@ -93,6 +95,13 @@ export default function image(
             raw: token.raw,
         },
     };
+    // A11Y-09 (#GUI-B7): the success branch carries an <img alt>, but the
+    // failure and empty branches render no <img> at all — announce the wrapper
+    // as an image with the same guidance text instead.
+    const withImageRole = (label: string) => ({
+        ...data,
+        attrs: { ...data.attrs, 'role': 'img', 'aria-label': label },
+    });
     let id: string = '';
     let isSuccess: boolean | undefined;
     let naturalWidth: number | undefined;
@@ -123,10 +132,14 @@ export default function image(
         }`
         : `span.${CLASS_NAMES.MU_INLINE_IMAGE}`;
 
+    // A11Y-09 (#GUI-B7): the hover controls are pointer-only (no keyboard
+    // path), so announcing them would promise an affordance SR users cannot
+    // reach. They stay visually identical and hidden from the accessibility
+    // tree until keyboard support lands.
     const imageIcons = [
-        renderIcon(h, 'mu-image-icon-success', ImageIcon),
-        renderIcon(h, 'mu-image-icon-fail', ImageFailIcon),
-        renderIcon(h, 'mu-image-icon-close', DeleteIcon),
+        renderIcon(h, 'mu-image-icon-success', ImageIcon, true),
+        renderIcon(h, 'mu-image-icon-fail', ImageFailIcon, true),
+        renderIcon(h, 'mu-image-icon-close', DeleteIcon, true),
     ];
 
     /**
@@ -226,11 +239,23 @@ export default function image(
                         ),
                     ]),
                 ]
-            : [h(wrapperSelector, data, [...imageIcons, renderImageContainer()])];
+            : [
+                    h(
+                        wrapperSelector,
+                        withImageRole(String(data.attrs['fail-text'])),
+                        [...imageIcons, renderImageContainer()],
+                    ),
+                ];
     }
     else {
         wrapperSelector += `.${CLASS_NAMES.MU_EMPTY_IMAGE}`;
 
-        return [h(wrapperSelector, data, [...imageIcons, renderImageContainer()])];
+        return [
+            h(
+                wrapperSelector,
+                withImageRole(String(data.attrs['empty-text'])),
+                [...imageIcons, renderImageContainer()],
+            ),
+        ];
     }
 }

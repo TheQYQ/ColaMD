@@ -17,6 +17,7 @@
           v-if="more"
           :size="14"
           class="link-icon"
+          :label="t('preferences.moreInfo')"
           style="margin-left: 4px"
           @click="handleMoreClick"
         />
@@ -36,7 +37,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import LinkIcon from '@/components/icons/LinkIcon.vue'
+import { useI18n } from 'vue-i18n'
 import type { PrefControlBaseProps } from '../types'
+
+const { t } = useI18n()
 
 interface RangeProps extends PrefControlBaseProps {
   value: number
