@@ -93,15 +93,57 @@ export class ScrollPage extends Parent {
         eventCenter.attachDOMEvent(domNode!, 'click', this._clickHandler.bind(this));
     }
 
-    updateState(state: TState[]) {
+    updateState(state: TState[], options: { force?: boolean } = {}) {
         const { muya } = this;
-        // Empty scrollPage dom
-        this.empty();
-        this.append(
-            ...state.map((block) => {
-                return ScrollPage.loadBlock(block.name).create(muya, block);
-            }),
-        );
+
+        if (options.force) {
+            // Full teardown + re-create, for callers whose change is NOT
+            // reflected in the state JSON: locale refresh re-renders hint
+            // attributes, option-driven re-renders (diagram vega theme)
+            // re-invoke renderers. The keyed path below would keep every
+            // byte-identical block and miss exactly those changes.
+            this.empty();
+            this.append(
+                ...state.map((block) => {
+                    return ScrollPage.loadBlock(block.name).create(muya, block);
+                }),
+            );
+            return;
+        }
+
+        // SB (PERF-04) keyed reconcile. This method is the full-rebuild base
+        // of setContent / _forceRender / undo-redo boundary rebuilds
+        // (rebuildContents) / the updateContents error fallback, and used to
+        // pay O(document) DOM work on every invocation (14.2s + 129k DOM
+        // nodes at a 1MB doc — docs/perf-baseline.md). A live top-level
+        // block's own getState() serializes byte-identical to the matching
+        // jsonState item while their content is in sync (verified across a
+        // 1,470-block doc), so an index-wise compare keeps every untouched
+        // block and re-creates only the changed ones. All tree/DOM
+        // mutations run with 'api' source — this path must never dispatch
+        // history operations.
+        const oldChildren: Parent[] = [];
+        this.children.forEach(child => oldChildren.push(child as Parent));
+
+        const keepCount = Math.min(oldChildren.length, state.length);
+
+        // Truncate the surplus tail first: removals from the end keep the
+        // linked-list positions of the survivors valid for the loop below.
+        for (let i = oldChildren.length - 1; i >= keepCount; i--)
+            this.removeChild(oldChildren[i], 'api');
+
+        for (let i = 0; i < keepCount; i++) {
+            const old = oldChildren[i];
+            const item = state[i];
+            if (old.blockName === item.name && JSON.stringify(old.getState()) === JSON.stringify(item))
+                continue;
+
+            old.replaceWith(ScrollPage.loadBlock(item.name).create(muya, item), 'api');
+        }
+
+        for (let i = keepCount; i < state.length; i++) {
+            this.insertBefore(ScrollPage.loadBlock(state[i].name).create(muya, state[i]), null, 'api');
+        }
     }
 
     /**

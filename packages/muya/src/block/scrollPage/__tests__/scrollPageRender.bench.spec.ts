@@ -45,6 +45,31 @@ function timeIt(fn: () => void): number {
     return performance.now() - t0;
 }
 
+// Deep-mutate the first `text` field of the state tree so exactly one
+// top-level block differs from the live rendering. Returns whether a text
+// field was found (fixture docs always have one).
+function mutateFirstText(state: unknown): boolean {
+    if (Array.isArray(state)) {
+        for (const item of state) {
+            if (mutateFirstText(item))
+                return true;
+        }
+        return false;
+    }
+    if (state && typeof state === 'object') {
+        const record = state as Record<string, unknown>;
+        if (typeof record.text === 'string') {
+            record.text = `${record.text}x`;
+            return true;
+        }
+        for (const value of Object.values(record)) {
+            if (mutateFirstText(value))
+                return true;
+        }
+    }
+    return false;
+}
+
 function report(label: string, samples: number[]): number {
     const sorted = [...samples].sort((a, b) => a - b);
     const p50 = sorted[Math.floor((sorted.length - 1) / 2)];
@@ -96,10 +121,27 @@ describe('scrollPage render microbench @perf', () => {
             // The rebuild must not lose blocks.
             expect(scrollPage.children.length).toBe(blockCount);
 
+            // Keyed-diff acceptance: rebuild after exactly one top-level
+            // block's content changed. Pre-SB this equaled the full-rebuild
+            // cost; with the index-wise compare it should be O(compare) +
+            // one block creation.
+            const singleChangeSamples: number[] = [];
+            for (let i = 0; i < REBUILD_ITERS; i++) {
+                const state = muya.editor.jsonState.getState();
+                const mutated = mutateFirstText(state);
+                expect(mutated).toBe(true);
+                singleChangeSamples.push(timeIt(() => {
+                    scrollPage.updateState(state);
+                }));
+            }
+            const singleChangeP50 = report(`updateStateSingleChange(${label})`, singleChangeSamples);
+            expect(scrollPage.children.length).toBe(blockCount);
+
             // eslint-disable-next-line no-console
             console.log(`[scrollpage-bench] scale(${label}): blocks=${blockCount} domNodes=${domNodes}`);
 
             expect(rebuildP50).toBeLessThan(BUDGETS_MS.domUpdate[label]);
+            expect(singleChangeP50).toBeLessThan(BUDGETS_MS.domUpdate[label]);
         }, 600_000);
     }
 });
