@@ -292,7 +292,7 @@ _消解_：逐项清理；DS-05 一类真 bug 靠"改样式必须人工过一遍
 ### 3.12 专项 SA 主题文件瘦身
 
 - **边界**：只动 `assets/themes/*.theme.css` 与补丁上收 `index.css`；不改任何色值视觉（B9 已定色）。32 份文件瘦身为纯 `:root` 色值表；titlebar/side-bar/editor-tabs/code-block/kebab 别名五类补丁上收为一份，用 `body.dark` + `var()` 表达；`!important` 清零；补齐 4 个缺 side-bar 补丁的主题；顺带 **DS-09**（themeColor.ts 导出主题 meta 供预览色板消费）与 **DS-10** 的变量部分、**DS-08** 的图标标准定档。
-- **前置**：B9 合入且 e2e themes 稳定一周；33 主题截图基线（B9 留档）。
+- **前置**：B9 合入且 e2e themes 稳定一周；33 主题截图基线——**已落库（2026-11-02，SA 前置批）**：`theme-visual-baseline.spec.ts` 生成 66 份 PNG（33 主题 × 首屏/底部）存于 `packages/desktop/test/e2e/theme-baseline/`，Windows 本机生成与比对（spec 对非 win32 整体跳过，豁免登记在 skipLedger），用法与覆盖面见该目录 README。
 - **验收**：截图基线逐主题对照零视觉差异；桌面四门全绿。
 - **工时**：2-3 天。
 
