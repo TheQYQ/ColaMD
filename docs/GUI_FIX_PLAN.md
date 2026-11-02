@@ -298,10 +298,20 @@ _消解_：逐项清理；DS-05 一类真 bug 靠"改样式必须人工过一遍
 
 ### 3.13 专项 SC ARIA 全套语义
 
-- **边界**：menuBar（menubar/menuitem/menuitemcheckbox + aria-expanded/checked + UX-09 的键盘导航）；文件树（tree/treeitem/aria-expanded/aria-current/aria-level）；A11Y-11（setAccessibilitySupportEnabled 开关 + NVDA 实测协议与记录）；A11Y-12（拖拽条 separator 键盘步进、color-scheme、跟随系统深浅色入口）。
-- **前置**：B8 合入（键盘可达基线已在）。
-- **验收**：NVDA 手测编辑器/侧栏/菜单/对话框可读可操作，记录进 PROJECT_GUIDE §14 或 §11。
-- **工时**：3-4 天。
+**2026-11-02 分解**：原文把 SC 当成一个专项，实际是四件可独立交付的东西，按本仓"一批一分支一 PR"就是四个 PR；且验收里的人工屏幕阅读器部分无法由自动化替代。故拆为 SC-1…SC-4 各走一批，顺序按下表的依赖与价值排。另有一项从 SC 里摘出：A11Y-12 的"跟随系统深浅色"不是 ARIA，而是带偏好项、IPC 与主题切换的产品功能，混进来会破坏 SC-4 的"零视觉变化"验收，另立一批。
+
+| 子批     | 内容                                                                                  | 状态                                            |
+| -------- | ------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **SC-1** | menuBar 语义 + 键盘导航（A11Y-04 / UX-09）                                            | **已完成**，分支 `fix/gui-sc1-menubar-keyboard` |
+| **SC-2** | 文件树 tree/treeitem/aria-expanded/aria-level/aria-current（A11Y-06）                 | 待做，0.5 天                                    |
+| **SC-4** | 侧栏拖拽条 `role="separator"` + 键盘步进、`color-scheme` 声明（A11Y-12 的 ARIA 部分） | 待做，0.5 天                                    |
+| **SC-3** | 显式启用 Chromium 无障碍树（A11Y-11）                                                 | 待做，0.5 天代码 + **人工验收**                 |
+
+- **边界**：见上表；SC-1 只动 `components/menuBar/*` 与新增的 `menuFocus.ts`，不碰主进程菜单（macOS 用原生菜单，本就不渲染这条栏）。
+- **前置**：B8 合入（键盘可达基线已在）——已满足。
+- **验收**：NVDA 手测编辑器/侧栏/菜单/对话框可读可操作，记录进 PROJECT_GUIDE §14 或 §11。**这条需要人的手**：自动化能断言的是 AX 树里的 role/name/state 结构，不是播报质量。约定的分工是——代码与结构断言由 agent 做完并入库，同时交一份逐步的 NVDA 实测清单（每个场景"应该听到什么"写清），由维护者跑一轮后把结果回写 §14。因此 SC-3 排最后，不挡前三批。
+- **SC-1 的实现记录（2026-11-02）**：审查时发现计划对 A11Y-04 的描述偏轻——写的是"下拉项键盘不可达"，实情是**整个窗口内菜单栏只能靠鼠标打开**（顶层项是无 tabindex 的 div，B8 未触碰 menuBar）。交付内容：`role="menubar"` + roving tabindex（整条栏在 Tab 序列占一格）、顶层 Enter/Space/↓ 打开并把焦点送进下拉、↓/↑ 行走（越过 separator、回绕、全 separator 时返回 -1 而非死循环）、Home/End、Enter 触发行、Esc 关闭并把焦点还给顶层项、栏未打开时 ←/→ 移动停靠位、→ 进入子菜单 / ← 收起一级、带子项的行声明 `aria-haspopup`/`aria-expanded`、禁用行 `aria-disabled`（此前对 AT 完全不存在）、勾选态由 `aria-checked` 播报而 `✓` 字符转 `aria-hidden`。两处与批准设计的偏离已记在提交信息里：禁用行改为**可聚焦不可触发**（WAI-ARIA 口径，原设计要跳过），以及 document 捕获阶段的"←/→ 切顶层"加了"焦点不在下拉内"的守卫（否则 ArrowRight 会切菜单而不是展开子菜单）。该组件此前**没有任何 e2e 覆盖**，本批补 8 条。
+- **工时**：原估 3-4 天；分解后 SC-1 已占约 1 天，余三批合计 1.5-2 天 + 一次人工屏幕阅读器实测。
 
 ### 3.14 专项 SB muya 大文档虚拟化
 
