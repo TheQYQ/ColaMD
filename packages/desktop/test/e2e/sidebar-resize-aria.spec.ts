@@ -36,8 +36,10 @@ test.describe('Sidebar resize strip ARIA + keyboard (A11Y-12)', () => {
     await expect(separator).toHaveCount(1)
     await expect(separator).toHaveAttribute('aria-orientation', 'vertical')
     await expect(separator).toHaveAttribute('tabindex', '0')
-    // Non-empty, but which language it is depends on the OS locale.
-    await expect(separator).toHaveAttribute('aria-label', /^\S+$/)
+    // Non-empty, but which language it is depends on the OS locale — never
+    // assert the translated text, only that a translation resolved at all.
+    await expect(separator).toHaveAttribute('aria-label', /\S/)
+    await expect(separator).not.toHaveAttribute('aria-label', 'sideBar.resizeHandle')
     await expect(separator).toHaveAttribute('aria-valuemin', '220')
 
     const width = await sideBarWidth(page)
