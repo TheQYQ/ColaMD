@@ -19,6 +19,11 @@ interface IBlurFocus {
 export class ScrollPage extends Parent {
     private _blurFocus: IBlurFocus = { blur: null, focus: null };
 
+    // Sorted-JSON snapshot of the reference labels the live blocks were last
+    // rendered against; updateState's keyed path diffs it to re-inline-render
+    // kept paragraphs when a definition changed outside the block tree.
+    private _labelsSnapshot = '[]';
+
     static override blockName = 'scrollpage';
 
     // Registry of block constructors keyed by their static blockName.
@@ -93,15 +98,80 @@ export class ScrollPage extends Parent {
         eventCenter.attachDOMEvent(domNode!, 'click', this._clickHandler.bind(this));
     }
 
-    updateState(state: TState[]) {
+    updateState(state: TState[], options: { force?: boolean } = {}) {
         const { muya } = this;
-        // Empty scrollPage dom
-        this.empty();
-        this.append(
-            ...state.map((block) => {
-                return ScrollPage.loadBlock(block.name).create(muya, block);
-            }),
-        );
+
+        if (options.force) {
+            // Full teardown + re-create, for callers whose change is NOT
+            // reflected in the state JSON: locale refresh re-renders hint
+            // attributes, option-driven re-renders (diagram vega theme)
+            // re-invoke renderers. The keyed path below would keep every
+            // byte-identical block and miss exactly those changes.
+            this.empty();
+            this.append(
+                ...state.map((block) => {
+                    return ScrollPage.loadBlock(block.name).create(muya, block);
+                }),
+            );
+            const labels = this.muya.editor.inlineRenderer.refreshReferenceLabels();
+            this._labelsSnapshot = JSON.stringify(
+                [...labels.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+            );
+            return;
+        }
+
+        // SB (PERF-04) keyed reconcile. This method is the full-rebuild base
+        // of setContent / _forceRender / undo-redo boundary rebuilds
+        // (rebuildContents) / the updateContents error fallback, and used to
+        // pay O(document) DOM work on every invocation (14.2s + 129k DOM
+        // nodes at a 1MB doc — docs/perf-baseline.md). A live top-level
+        // block's own getState() serializes byte-identical to the matching
+        // jsonState item while their content is in sync (verified across a
+        // 1,470-block doc), so an index-wise compare keeps every untouched
+        // block and re-creates only the changed ones. All tree/DOM
+        // mutations run with 'api' source — this path must never dispatch
+        // history operations.
+        const oldChildren: Parent[] = [];
+        this.children.forEach(child => oldChildren.push(child as Parent));
+
+        const keepCount = Math.min(oldChildren.length, state.length);
+
+        // Truncate the surplus tail first: removals from the end keep the
+        // linked-list positions of the survivors valid for the loop below.
+        for (let i = oldChildren.length - 1; i >= keepCount; i--)
+            this.removeChild(oldChildren[i], 'api');
+
+        for (let i = 0; i < keepCount; i++) {
+            const old = oldChildren[i];
+            const item = state[i];
+            if (old.blockName === item.name && JSON.stringify(old.getState()) === JSON.stringify(item))
+                continue;
+
+            old.replaceWith(ScrollPage.loadBlock(item.name).create(muya, item), 'api');
+        }
+
+        for (let i = keepCount; i < state.length; i++) {
+            this.insertBefore(ScrollPage.loadBlock(state[i].name).create(muya, state[i]), null, 'api');
+        }
+
+        // Reference definitions are render inputs OUTSIDE the block tree: a
+        // paragraph's text can be unchanged while its `[label]` anchor stops
+        // (or starts) resolving because a definition elsewhere was added,
+        // edited or dropped. Re-collect the labels and re-inline-render the
+        // kept blocks that mention any affected label — the same mechanism
+        // the incremental path uses (updateRefLinkAndImage).
+        const labels = this.muya.editor.inlineRenderer.refreshReferenceLabels();
+        const labelsSnapshot = JSON.stringify([...labels.entries()].sort(([a], [b]) =>
+            a < b ? -1 : a > b ? 1 : 0,
+        ));
+        if (labelsSnapshot !== this._labelsSnapshot) {
+            const previous = new Map(
+                JSON.parse(this._labelsSnapshot) as [string, { href: string }][],
+            );
+            const affected = new Set([...previous.keys(), ...labels.keys()]);
+            for (const label of affected) this.updateRefLinkAndImage(label);
+            this._labelsSnapshot = labelsSnapshot;
+        }
     }
 
     /**

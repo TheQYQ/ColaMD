@@ -280,3 +280,17 @@ Fixture 与击键基准同源（`makeDoc`：标题/段落/列表/代码块混排
 | updateState | 10000 | 30000 | 60000 |
 
 当前实测全部低于预算上限。`test:perf` 不在 CI（1MB 档 heap 需求超 ubuntu runner），预算断言在本机复跑时生效。
+
+## SB step 2 实测（keyed 差量落地后）
+
+> 2026-11-03 · 同环境 · PR 待填（keyed reconcile 合入批次）。`updateState` 增加了 `{ force?: boolean }` 选项：locale 刷新与 option 驱动的重渲染（vega 主题）依赖"全量重建顺带刷新非 state 的 DOM 状态"，显式走 force 全量路径；其余调用方（setContent / rebuildContents / 增量失败兜底）走索引化对比——活块 `getState()` 与 fresh state 逐字节一致时保留原块（1470 块文档实证 100% 一致），只重建失配块。
+
+| 档位  | 同内容 updateState p50 | 单块变更后 updateState p50 | SB 前全量重建 p50 | 提升 |
+| ----- | ---------------------: | -------------------------: | ----------------: | ---: |
+| 100KB |                  2.5ms |                      2.4ms |           321.8ms | 129× |
+| 500KB |                 11.7ms |                     14.1ms |         5,131.8ms | 439× |
+| 1MB   |                 28.4ms |                     25.5ms |        14,166.8ms | 499× |
+
+- 剩余成本 = 每块 `getState()` + `JSON.stringify` 的比较（O(文档) CPU，零 DOM 重建），1MB 档 ~28ms，已低于一帧预算的 2 倍、且只在全量重建型调用点发生。
+- DOM 节点数本批不变（仍 O(文档)）——视口占位虚拟化是独立后续批（step 2b），其验收即 `scale` 指标从 129,752 降到 O(视口)。
+- 复跑同前：`pnpm -C packages/muya test:perf`（1MB 档需 raised heap）。

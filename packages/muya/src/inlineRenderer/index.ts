@@ -96,6 +96,21 @@ class InlineRenderer {
     private _labelsCache: Map<string, { href: string; title: string }> | null = null;
     private _labelsRevision = -1;
 
+    /**
+     * Re-collect the reference-definition labels from the json state (cached
+     * against the state revision) and return the live map.
+     *
+     * SB: ScrollPage's keyed reconcile keeps paragraphs whose TEXT is
+     * unchanged, but reference definitions are render inputs that live
+     * outside the block tree - after a definition is added, edited or
+     * dropped, kept paragraphs must re-inline-render even though their state
+     * compare matched.
+     */
+    public refreshReferenceLabels(): Labels {
+        this._collectReferenceDefinitions();
+        return this.labels;
+    }
+
     private _collectReferenceDefinitions() {
         const revision = this.muya.editor.jsonState.revision;
         if (this._labelsCache && this._labelsRevision === revision) {
