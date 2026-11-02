@@ -237,6 +237,7 @@
     "close": "Schließen"
   },
   "sideBar": {
+    "resizeHandle": "Breite der Seitenleiste",
     "tree": {
       "emptyProject": "Leeres Projekt",
       "createFile": "Datei erstellen",

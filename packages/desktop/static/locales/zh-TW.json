@@ -237,6 +237,7 @@
     "close": "關閉"
   },
   "sideBar": {
+    "resizeHandle": "側欄寬度",
     "tree": {
       "emptyProject": "空專案",
       "createFile": "建立檔案",

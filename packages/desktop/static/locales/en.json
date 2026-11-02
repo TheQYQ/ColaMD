@@ -237,6 +237,7 @@
     "close": "Close"
   },
   "sideBar": {
+    "resizeHandle": "Sidebar width",
     "tree": {
       "emptyProject": "Empty project",
       "createFile": "Create File",
