@@ -283,7 +283,7 @@ Fixture 与击键基准同源（`makeDoc`：标题/段落/列表/代码块混排
 
 ## SB step 2 实测（keyed 差量落地后）
 
-> 2026-11-03 · 同环境 · PR 待填（keyed reconcile 合入批次）。`updateState` 增加了 `{ force?: boolean }` 选项：locale 刷新与 option 驱动的重渲染（vega 主题）依赖"全量重建顺带刷新非 state 的 DOM 状态"，显式走 force 全量路径；其余调用方（setContent / rebuildContents / 增量失败兜底）走索引化对比——活块 `getState()` 与 fresh state 逐字节一致时保留原块（1470 块文档实证 100% 一致），只重建失配块。
+> 2026-11-03 · 同环境 · PR #142（merge `859304e`）。`updateState` 增加了 `{ force?: boolean }` 选项：locale 刷新与 option 驱动的重渲染（vega 主题）依赖"全量重建顺带刷新非 state 的 DOM 状态"，显式走 force 全量路径；其余调用方（setContent / rebuildContents / 增量失败兜底）走索引化对比——活块 `getState()` 与 fresh state 逐字节一致时保留原块（1470 块文档实证 100% 一致），只重建失配块。
 
 | 档位  | 同内容 updateState p50 | 单块变更后 updateState p50 | SB 前全量重建 p50 | 提升 |
 | ----- | ---------------------: | -------------------------: | ----------------: | ---: |
