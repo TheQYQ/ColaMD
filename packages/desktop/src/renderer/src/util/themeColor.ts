@@ -83,3 +83,40 @@ export const getBuiltInThemeCss = async (key: string): Promise<string> => {
 // Original themes
 export const light = async (): Promise<string> =>
   `${SHARED_THEME_PATCHES}\n:root {\n  --link-color: var(--linkColor);\n  --blockquote-border-color: var(--blockquoteBorderColor);\n}`
+
+export interface ThemePreviewMeta {
+  text: string
+  background: string
+  accent: string
+}
+
+const previewMetaCache = new Map<string, ThemePreviewMeta | null>()
+
+// DS-09 (GUI-SA-2): the theme picker's preview cards read their {text,
+// background, accent} triple from the theme table itself, replacing ~90
+// hand-maintained hexes that had drifted from the real palettes. Returns null
+// for ids without a derivable table (custom themes) so the consumer falls
+// back to the current-window vars — the pre-existing rendering.
+export const getThemePreviewMeta = async (id: string): Promise<ThemePreviewMeta | null> => {
+  if (previewMetaCache.has(id)) return previewMetaCache.get(id) ?? null
+  let meta: ThemePreviewMeta | null = null
+  if (id === 'light') {
+    // light has no file; keep in sync with the :root defaults in index.css.
+    meta = { text: '#1F2328', background: '#FCFCFC', accent: '#5B67C7' }
+  } else {
+    try {
+      const css = await loadThemeFile(id)
+      const root = /:root \{([\s\S]*?)\n\}/.exec(css)?.[1] ?? ''
+      const pick = (name: string): string | null =>
+        new RegExp(`--${name}:\\s*([^;]+);`).exec(root)?.[1]?.trim() ?? null
+      const text = pick('editorColor')
+      const background = pick('editorBgColor')
+      const accent = pick('themeColor')
+      if (text && background && accent) meta = { text, background, accent }
+    } catch {
+      meta = null
+    }
+  }
+  previewMetaCache.set(id, meta)
+  return meta
+}

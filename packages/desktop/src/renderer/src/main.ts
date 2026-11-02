@@ -2,7 +2,6 @@ import { createApp, type App } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import bootstrapRenderer from './bootstrap'
 import pinia from './store'
-import './assets/symbolIcon'
 
 // Element Plus instead of Element UI for Vue 3. The JS side is resolved per
 // component by unplugin-vue-components (electron.vite.config.ts); the full
