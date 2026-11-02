@@ -249,6 +249,13 @@ class App {
   }
 
   ready = async (): Promise<void> => {
+    // A11Y-11: Chromium builds its accessibility tree lazily and only when its
+    // screen-reader heuristic fires; that heuristic depends on the platform and
+    // the launching shell, so the tree can silently not exist. Enable it
+    // explicitly before any window is created so assistive technology always
+    // gets a tree (and so the e2e AX assertions test the real one).
+    app.setAccessibilitySupportEnabled(true)
+
     // Detect/store the language before any window exists so the renderer
     // starts with the right locale on its startup language query.
     await this._initializeLanguage()
