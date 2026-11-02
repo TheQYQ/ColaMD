@@ -9,6 +9,7 @@
         v-if="more"
         :size="14"
         class="link-icon"
+        :label="t('preferences.moreInfo')"
         style="margin-left: 4px"
         @click="handleMoreClick"
       />
@@ -132,7 +133,7 @@ onMounted(async () => {
 
 .pref-font-input-item {
   margin: 12px 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--editorColor);
   & .font-autocomplete {
     width: 100%;

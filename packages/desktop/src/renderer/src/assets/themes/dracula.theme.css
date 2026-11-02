@@ -43,7 +43,7 @@
   --buttonBorderActive: var(--buttonBorder);
 
   --buttonPrimaryFontColor: #ffffff;
-  --buttonPrimaryBgColor: var(--themeColor);
+  --buttonPrimaryBgColor: #4809A3;
   --buttonPrimaryBorder: none;
   --buttonPrimaryShadow: none;
   --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
@@ -76,7 +76,7 @@
   --sideBarColor: rgba(248, 248, 242, 0.6);
   --sideBarIconColor: var(--iconColor);
   --sideBarTitleColor: rgba(248, 248, 242, 0.8);
-  --sideBarTextColor: rgba(248, 248, 242, 0.4);
+  --sideBarTextColor: #8E8F92;
   --sideBarBgColor: #242631;
   --sideBarItemHoverBgColor: rgba(248, 248, 242, 0.03);
   --itemBgColor: #44475a;
@@ -84,7 +84,7 @@
   --floatFontColor: rgba(248, 248, 242, 0.7);
   --floatBgColor: #44475a;
   --floatHoverColor: rgba(248, 248, 242, 0.04);
-  --floatBorderColor: rgba(0, 0, 0, 0.05);
+  --floatBorderColor: rgba(255, 255, 255, 0.08);
   --floatShadow: rgba(0, 0, 0, 0.2);
   --maskColor: rgba(0, 0, 0, 0.7);
   --editorAreaWidth: 800px;

@@ -238,7 +238,7 @@ const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
 
 <style scoped>
 .pref-editor .image-ctrl {
-  font-size: 14px;
+  font-size: 13px;
   user-select: none;
   margin: 20px 0;
   color: var(--editorColor);

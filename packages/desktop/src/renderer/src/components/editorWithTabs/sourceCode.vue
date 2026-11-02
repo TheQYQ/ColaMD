@@ -70,11 +70,16 @@ watch(
   }
 )
 
-const getMarkdownAndCursor = (cm: CMInstance) => {
+// PERF-02: snapshot of the document as of the last full commit. The TOC
+// highlight walk (`findActiveHeadingIndex` splits the whole text) reads this
+// instead of a fresh `cm.getValue()` on every caret tick — heading structure
+// only changes on edit, and the debounced commit refreshes it right after.
+let committedMarkdown = ''
+
+const getMuyaCursor = (cm: CMInstance) => {
   let focus = cm.getCursor('head')
   let anchor = cm.getCursor('anchor')
 
-  const markdown: string = cm.getValue()
   const convertToMuyaCursor = (cursor: CMCursor) => {
     const line = cm.getLine(cursor.line)
     const preLine = cm.getLine(cursor.line - 1)
@@ -101,6 +106,12 @@ const getMarkdownAndCursor = (cm: CMInstance) => {
     focus = anchor
     anchor = tmpCursor
   }
+  return { focus, anchor }
+}
+
+const getMarkdownAndCursor = (cm: CMInstance) => {
+  const markdown: string = cm.getValue()
+  const { focus, anchor } = getMuyaCursor(cm)
   return { cursor: { focus, anchor }, markdown }
 }
 
@@ -297,6 +308,7 @@ const handleImageAction = (payload: unknown) => {
 
 const saveContent = (cm: CMInstance) => {
   const { cursor, markdown: newMarkdown } = getMarkdownAndCursor(cm)
+  committedMarkdown = newMarkdown
   // Attention: the cursor may be `{focus: null, anchor: null}` when press `backspace`
   const wordCount = getWordCount(newMarkdown)
   // See "beforeDestroy" note
@@ -315,12 +327,47 @@ const saveContent = (cm: CMInstance) => {
   }
 }
 
+// PERF-02: `cursorActivity` used to run the FULL commit on every keystroke and
+// every caret tick — two O(N) `getValue()` joins plus a full-text word count
+// per key. Now edits land here first: the O(1) keystroke tier (dirty flag +
+// auto-save re-arm) runs immediately and the O(N) serialization follows once
+// typing pauses, mirroring the WYSIWYG pipeline's tiering.
+const COMMIT_DEBOUNCE_MS = 120
+
+const runPendingCommit = () => {
+  if (commitTimer.value) {
+    clearTimeout(commitTimer.value)
+    commitTimer.value = null
+  }
+  if (viewDestroyed.value || !tabId.value || !editor.value) return
+  saveContent(editor.value)
+}
+
+const handleCmChange = () => {
+  if (viewDestroyed.value || !tabId.value) return
+  editorStore.LISTEN_FOR_CONTENT_CHANGE({ id: tabId.value, markdown: null, edit: true })
+  if (commitTimer.value) clearTimeout(commitTimer.value)
+  commitTimer.value = setTimeout(runPendingCommit, COMMIT_DEBOUNCE_MS)
+}
+
+// Flush-on-read parity with the WYSIWYG pipeline: a save (or anything else
+// that asks the active editor to flush) must see the content as of NOW, not
+// as of the last debounce tick.
+const handleFlushActiveEditor = () => {
+  if (commitTimer.value) runPendingCommit()
+}
+
 const listenChange = () => {
+  editor.value.on('change', handleCmChange)
   editor.value.on('cursorActivity', (cm: CMInstance) => {
-    saveContent(cm)
+    // O(1) caret persistence — the same shape the full commit would store,
+    // without re-serializing the document on a pure caret move.
+    if (!viewDestroyed.value && tabId.value) {
+      editorStore.PERSIST_CURSOR(tabId.value, getMuyaCursor(cm))
+    }
     // Outline follow (Typora parity): highlight the TOC entry of the section
     // the caret sits in. Heading index maps 1:1 onto the store's listToc.
-    const index = findActiveHeadingIndex(cm.getValue(), cm.getCursor('head').line)
+    const index = findActiveHeadingIndex(committedMarkdown, cm.getCursor('head').line)
     const slug = index >= 0 ? (editorStore.listToc[index]?.slug ?? '') : ''
     if (slug !== lastSourceTocSlug) {
       lastSourceTocSlug = slug
@@ -507,13 +554,12 @@ onMounted(async () => {
   if (!currentTab.value) return
   const { id } = currentTab.value
   // reset currentTab scrollTop position because the codeMirror scroll position is completely different from the muya scroll position
-  // reset blocks as well because the blocks are only valid in muya
   // reset cursor because this is a direct "key-cursor", not a muyaIndexCursor, which is {focus: number, anchor: number}
   currentTab.value.scrollTop = 0
-  currentTab.value.blocks = undefined
   currentTab.value.cursor = undefined
 
   const { markdown, muyaIndexCursor, textDirection } = props
+  committedMarkdown = markdown ?? ''
   const container = sourceCodeContainer.value
   const codeMirrorConfig: Record<string, unknown> = {
     value: markdown,
@@ -541,6 +587,7 @@ onMounted(async () => {
   bus.on('file-loaded', handleFileChange)
   bus.on('invalidate-image-cache', handleInvalidateImageCache)
   bus.on('file-changed', handleFileChange)
+  bus.on('flush-active-editor', handleFlushActiveEditor)
   bus.on('selectAll', handleSelectAll)
   bus.on('undo', handleUndo)
   bus.on('redo', handleRedo)
@@ -597,12 +644,18 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  // PERF-02: the exit handoff must carry the CURRENT word count. It used to
+  // ride every cursorActivity commit; with the debounced commit it can still
+  // be pending here — flush it (before viewDestroyed trips the guard) or the
+  // tab keeps the previous document's count until the next edit.
+  runPendingCommit()
   viewDestroyed.value = true
   if (commitTimer.value) clearTimeout(commitTimer.value)
 
   bus.off('file-loaded', handleFileChange)
   bus.off('invalidate-image-cache', handleInvalidateImageCache)
   bus.off('file-changed', handleFileChange)
+  bus.off('flush-active-editor', handleFlushActiveEditor)
   bus.off('selectAll', handleSelectAll)
   bus.off('undo', handleUndo)
   bus.off('redo', handleRedo)

@@ -76,7 +76,7 @@
   --sideBarColor: rgba(76, 79, 105, 0.7);
   --sideBarIconColor: var(--iconColor);
   --sideBarTitleColor: rgba(76, 79, 105, 0.9);
-  --sideBarTextColor: rgba(76, 79, 105, 0.5);
+  --sideBarTextColor: #66697D;
   --sideBarBgColor: #eaedf2;
   --sideBarItemHoverBgColor: rgba(76, 79, 105, 0.05);
   --itemBgColor: #dce0e8;

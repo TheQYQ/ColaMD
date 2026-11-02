@@ -42,17 +42,17 @@ const showCustomTitleBar = computed<boolean>(() => {
 })
 
 // Watchers
-watch(theme, (newValue, oldValue) => {
+watch(theme, async (newValue, oldValue) => {
   if (newValue !== oldValue) {
-    addThemeStyle(newValue)
+    await addThemeStyle(newValue)
   }
 })
 
 // Lifecycle
 onMounted(() => {
-  nextTick(() => {
+  nextTick(async () => {
     const state = window.colamd?.initialState ?? DEFAULT_STYLE
-    addThemeStyle(state.theme ?? DEFAULT_STYLE.theme)
+    await addThemeStyle(state.theme ?? DEFAULT_STYLE.theme)
 
     // Rehydrate custom theme registry from persisted preferences before
     // ASK_FOR_USER_PREFERENCE fires (it overwrites the store snapshot).

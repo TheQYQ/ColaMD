@@ -42,7 +42,7 @@
   --buttonFocusBorder: 1px solid var(--themeColor);
 
   --buttonPrimaryFontColor: #ffffff;
-  --buttonPrimaryBgColor: var(--themeColor);
+  --buttonPrimaryBgColor: #161D26;
   --buttonPrimaryBorder: none;
   --buttonPrimaryShadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
   --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
@@ -74,7 +74,7 @@
   --sideBarColor: rgba(43, 48, 50, 0.8);
   --sideBarIconColor: rgba(43, 48, 50, 0.6);
   --sideBarTitleColor: rgba(43, 48, 50, 1);
-  --sideBarTextColor: rgba(43, 48, 50, 0.6);
+  --sideBarTextColor: #646667;
   --sideBarBgColor: #ececec;
   --sideBarItemHoverBgColor: rgba(255, 255, 255, 0.03);
   --itemBgColor: #e5e5e5;
@@ -196,7 +196,9 @@ li.mu-task-list-item > input[type='checkbox'] {
   margin: 0;
   left: -24px;
   transform-origin: center;
-  transition: all 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 li.mu-task-list-item > input.mu-checkbox-checked {
   transform: rotate(0);
@@ -214,7 +216,9 @@ li.mu-task-list-item > input[type='checkbox']::before {
   position: absolute;
   top: 0;
   left: 0;
-  transition: all 0.2s ease;
+  transition:
+    border 0.2s ease,
+    background-color 0.2s ease;
 }
 li.mu-task-list-item > input.mu-checkbox-checked::before {
   border: transparent;
@@ -232,7 +236,7 @@ li.mu-task-list-item > input::after {
   display: inline-block;
   top: 1px;
   left: 5px;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease;
 }
 li.mu-task-list-item > input.mu-checkbox-checked::after {
   transform: rotate(-45deg) scale(1);

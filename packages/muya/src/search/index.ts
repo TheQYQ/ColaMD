@@ -119,8 +119,26 @@ export class Search {
         return this;
     }
 
+    /** Highlight set for one block under the CURRENT index. */
+    private _highlightsForBlock(block: Content): IHighlight[] {
+        const highlights: IHighlight[] = [];
+        for (let i = 0; i < this.matches.length; i++) {
+            const match = this.matches[i];
+            if (match.block !== block)
+                continue;
+            highlights.push({ start: match.start, end: match.end, active: i === this.index });
+        }
+        return highlights;
+    }
+
     /**
      * Find preview or next value, and highlight it.
+     *
+     * PERF-10 (#GUI-B7): moving the active match only changes the highlight
+     * arrays of the two involved blocks (the old active loses its flag, the
+     * new one gains it). The previous implementation re-rendered every matched
+     * block twice per jump — a clear pass plus a re-add pass, hundreds of
+     * innerHTML rewrites for a common word on find-next.
      * @param {string} action : previous or next.
      */
     find(action: 'previous' | 'next'): this {
@@ -139,10 +157,29 @@ export class Search {
         if (index >= len)
             index = 0;
 
+        const previousIndex = this.index;
         this.index = index;
 
-        this._updateMatches(true);
-        this._updateMatches();
+        const previous = previousIndex >= 0 ? matches[previousIndex] : undefined;
+        const current = matches[index];
+
+        // Defensive: no previous active match to move from — apply the full set.
+        if (!previous) {
+            this._updateMatches();
+            return this;
+        }
+
+        // Single match: the active flag stays where it is; nothing to render.
+        if (previous === current)
+            return this;
+
+        const previousHighlights = this._highlightsForBlock(previous.block);
+        previous.block.update(undefined, previousHighlights);
+        if (previous.block.parent?.active)
+            previous.block.blurHandler();
+
+        current.block.update(undefined, this._highlightsForBlock(current.block));
+        current.block.focusHandler();
 
         return this;
     }

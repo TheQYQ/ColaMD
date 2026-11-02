@@ -24,3 +24,4 @@ coverage/
 .agent/
 .zcode/
 .workbuddy/
+__pycache__

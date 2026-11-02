@@ -17,6 +17,10 @@
               class="search"
               @keyup.enter="confirm"
             >
+            <span
+              v-if="extension"
+              class="locked-extension"
+            >{{ extension }}</span>
             <el-icon
               :size="16"
               class="confirm-icon"
@@ -45,18 +49,33 @@ const editorStore = useEditorStore()
 
 const filename = computed(() => editorStore.currentFile?.filename ?? '')
 
+// UX-10 (#GUI-B10): mirror the sidebar inline rename — edit the stem, show
+// the extension locked beside it, so renaming cannot accidentally change the
+// file type. `dot > 0` keeps dotfiles (.md) as a whole stem.
+const stem = computed(() => {
+  const name = filename.value
+  const dot = name.lastIndexOf('.')
+  return dot > 0 ? name.slice(0, dot) : name
+})
+const extension = computed(() => {
+  const name = filename.value
+  const dot = name.lastIndexOf('.')
+  return dot > 0 ? name.slice(dot) : ''
+})
+
 const handleRename = () => {
   showRename.value = true
-  tempName.value = filename.value
+  tempName.value = stem.value
   nextTick(() => {
     if (search.value) {
       search.value.focus()
+      search.value.select()
     }
   })
 }
 
 const confirm = () => {
-  editorStore.RENAME(tempName.value)
+  editorStore.RENAME(tempName.value + extension.value)
   showRename.value = false
 }
 
@@ -92,7 +111,7 @@ onBeforeUnmount(() => {
   align-items: center;
   box-shadow: none;
   border: none;
-  border-radius: 3px;
+  border-radius: 4px;
   margin: 0;
   padding: 0 8px;
 
@@ -104,12 +123,20 @@ onBeforeUnmount(() => {
     }
   }
 }
+.locked-extension {
+  display: inline-flex;
+  align-items: center;
+  padding-right: 8px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  user-select: none;
+}
 .search {
   width: 100%;
   height: 30px;
   outline: none;
   border: none;
-  font-size: 14px;
+  font-size: 13px;
   padding: 0 8px;
   margin: 0 10px;
   color: var(--sideBarColor);
@@ -120,7 +147,7 @@ onBeforeUnmount(() => {
   width: 30px;
   height: 30px;
   color: var(--iconColor);
-  transition: all 0.3s ease-in-out;
+  transition: color 0.3s ease-in-out;
 }
 .search-wrapper svg:hover {
   color: var(--themeColor);

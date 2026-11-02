@@ -7,6 +7,7 @@
       <ul
         ref="tabDropContainer"
         class="tabs-container"
+        role="tablist"
       >
         <li
           v-for="file of tabs"
@@ -14,15 +15,24 @@
           :title="file.pathname"
           :class="{ active: currentFile?.id === file.id, unsaved: !file.isSaved }"
           :data-id="file.id"
+          role="tab"
+          :aria-selected="currentFile?.id === file.id"
+          :aria-label="file.filename"
+          tabindex="0"
           @click.stop="selectFile(file)"
           @click.middle="closeTab(file.id)"
           @contextmenu.prevent="handleContextMenu($event, file)"
+          @keydown="activateOnEnterOrSpace"
+          @keydown.delete.prevent="removeFileInTab(file)"
         >
           <span>{{ file.filename }}</span>
           <span class="unsaved-dot" />
           <el-icon
             class="close-icon"
             :size="12"
+            role="button"
+            tabindex="-1"
+            :aria-label="t('menu.file.closeTab')"
             @click.stop="removeFileInTab(file)"
           >
             <Close />
@@ -31,8 +41,16 @@
       </ul>
     </div>
     <div
+      v-if="tabsOverflow"
+      class="tabs-fade"
+    />
+    <div
       class="new-file"
+      role="button"
+      tabindex="0"
+      :aria-label="t('menu.file.newTab')"
       @click.stop="newFile()"
+      @keydown="activateOnEnterOrSpace"
     >
       <el-icon :size="16">
         <Plus />
@@ -49,10 +67,13 @@ import autoScroll from 'dom-autoscroller'
 import dragula from 'dragula'
 import { Plus, Close } from '@element-plus/icons-vue'
 import { showContextMenu } from '../../contextMenu/tabs'
+import { useI18n } from 'vue-i18n'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
 import bus from '../../bus'
 import type { IFileState } from '@shared/types/files'
 
 const editorStore = useEditorStore()
+const { t } = useI18n()
 
 const { currentFile, tabs } = storeToRefs(editorStore)
 
@@ -65,6 +86,14 @@ const tabContainer = ref<HTMLElement | null>(null)
 const tabDropContainer = ref<HTMLElement | null>(null)
 let autoScroller: AutoScroller | null = null
 let drake: dragula.Drake | null = null
+
+// UX-21: a right-edge fade shows there are more tabs off-screen (the strip
+// hides its scrollbar and only scrolls by wheel/drag).
+const tabsOverflow = ref(false)
+const measureTabsOverflow = (): void => {
+  const el = tabContainer.value
+  tabsOverflow.value = !!el && el.scrollWidth > el.clientWidth + 1
+}
 
 // Computed properties
 
@@ -177,7 +206,16 @@ watch(
   }
 )
 
+watch(
+  () => tabs.value.length,
+  () => {
+    nextTick(measureTabsOverflow)
+  }
+)
+
 onMounted(() => {
+  measureTabsOverflow()
+  window.addEventListener('resize', measureTabsOverflow)
   bus.on('TABS::close-this', closeTab)
   bus.on('TABS::close-others', closeOthers)
   bus.on('TABS::close-saved', closeSaved)
@@ -228,6 +266,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', measureTabsOverflow)
   const tabsEl = tabContainer.value
   if (tabsEl) {
     tabsEl.removeEventListener('wheel', handleTabScroll)
@@ -270,7 +309,7 @@ onBeforeUnmount(() => {
   user-select: none;
   overflow: hidden;
   &:hover > .new-file {
-    opacity: 1 !important;
+    opacity: 1;
   }
 }
 .scrollable-tabs {
@@ -367,11 +406,34 @@ onBeforeUnmount(() => {
     & > .close-icon {
       opacity: 1;
     }
-    & > .unsaved-dot {
-      opacity: 0;
+    /* UX-01: the active tab is the one being edited, so its unsaved dot must
+       stay visible there too — hiding it meant the marker only appeared after
+       switching away. The base :hover rules already swap dot for close-icon,
+       so only the resting state needs an override. */
+    &.unsaved {
+      & > .close-icon {
+        opacity: 0;
+      }
+      & > .unsaved-dot {
+        opacity: 1;
+      }
+      &:hover > .close-icon {
+        opacity: 1;
+      }
     }
   }
 }
+.tabs-fade {
+  position: absolute;
+  top: 0;
+  right: 36px;
+  width: 28px;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--sideBarBgColor));
+  z-index: 4;
+}
+
 .editor-tabs > .new-file {
   flex: 0 0 36px;
   width: 36px;
@@ -383,10 +445,9 @@ onBeforeUnmount(() => {
   justify-content: space-around;
   cursor: pointer;
   color: var(--text-tertiary);
-  opacity: 0;
-  &.always-visible {
-    opacity: 1;
-  }
+  /* UX-21: faintly visible at rest so new users can find the entry; full
+     opacity on hover of the tab strip (rule below). */
+  opacity: 0.6;
 }
 
 .editor-tabs > .new-file:hover {

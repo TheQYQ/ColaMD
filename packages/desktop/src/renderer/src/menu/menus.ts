@@ -286,6 +286,11 @@ const buildFileMenu = (recentFiles: string[], hasFile: boolean): MenuItemDef[] =
       enabled: hasFile,
       hint: hintFor(useCommandCenterStore(), 'file.save-as')
     }),
+    // UX-16 (#GUI-B10): save every dirty tab at once.
+    item(t('menu.file.saveAll'), executeCommand('file.save-all'), {
+      enabled: hasFile,
+      hint: hintFor(useCommandCenterStore(), 'file.save-all')
+    }),
     checkbox(t('menu.file.autoSave'), !!preferencesStore.autoSave, () => {
       window.electron.ipcRenderer.send('mt::set-user-preference', {
         autoSave: !preferencesStore.autoSave

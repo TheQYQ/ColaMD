@@ -6,9 +6,12 @@
         {{ t('preferences.keybindings.description') }}
         <a
           class="link"
+          role="button"
+          tabindex="0"
           :title="t('preferences.keybindings.online')"
           :aria-label="t('preferences.keybindings.online')"
           @click="openKeybindingDocs"
+          @keydown="activateOnEnterOrSpace"
         ><LinkIcon
           :size="14"
           class="link-icon"
@@ -119,6 +122,8 @@ import notice from '@/services/notification'
 import { Edit, RefreshRight, Delete } from '@element-plus/icons-vue'
 import LinkIcon from '@/components/icons/LinkIcon.vue'
 import { useI18n } from 'vue-i18n'
+import getCommandDescriptionById from '@/commands/descriptions'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
 
 const { t, locale } = useI18n()
 
@@ -234,11 +239,18 @@ const onKeybinding = (value: string | null): void => {
   selectedShortcutId.value = null
 }
 
-const handleDuplicateShortcut = (_id: string, accelerator: string): void => {
+const handleDuplicateShortcut = (id: string, accelerator: string): void => {
+  // UX-04 (#GUI-B10): name the command that holds the accelerator, not just
+  // the accelerator itself.
+  const conflict = keybindingConfigurator.value?.findConflict(accelerator, id)
+  const description = conflict ? getCommandDescriptionById(conflict.id) : ''
   notice.notify({
     title: t('preferences.keybindings.shortcutInUse'),
     type: 'warning',
-    message: t('preferences.keybindings.shortcutInUseMessage', { accelerator })
+    message: t('preferences.keybindings.shortcutInUseMessage', {
+      accelerator,
+      command: description
+    })
   })
 }
 
@@ -251,7 +263,7 @@ const dumpKeyboardInformation = (): void => {
 .pref-keybindings {
   & .keyboard-debug,
   & .keybindings {
-    font-size: 14px;
+    font-size: 13px;
     margin: 20px 0;
     color: var(--editorColor);
     & .link {

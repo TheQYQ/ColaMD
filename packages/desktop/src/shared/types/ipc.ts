@@ -395,7 +395,7 @@ export interface IpcMainEventChannels {
   'mt::export-success': [payload: { type: string; filePath: string }]
   'mt::force-close-tabs-by-id': [tabIds: string[]]
   'mt::discard-unsaved-tabs-and-close': [tabIds: string[]]
-  'mt::show-unsaved-dialog': [count: number]
+  'mt::show-unsaved-dialog': [fileNames: string[]]
   'mt::invalidate-image-cache': []
   // The response is a plain object map (main does Object.fromEntries over the
   // keybindings Map); it used to ride as `bindings: unknown`.

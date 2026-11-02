@@ -274,7 +274,7 @@ const selectDefaultDirectoryToOpen = (): void => {
   align-items: center;
 }
 .pref-general .startup-action-ctrl {
-  font-size: 14px;
+  font-size: 13px;
   user-select: none;
   color: var(--editorColor);
   display: flex;

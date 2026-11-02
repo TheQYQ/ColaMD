@@ -104,6 +104,7 @@ import { addCommonStyle, setEditorWidth } from '@/util/theme'
 import { usePreferencesStore } from '@/store/preferences'
 import { useEditorStore } from '@/store/editor'
 import { useProjectStore } from '@/store/project'
+import { invalidateSelectionMenuCache } from '@/store/selectionState'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { SyntheticHistory, type IFileHistoryLike } from './syntheticHistory'
@@ -522,6 +523,11 @@ watch(sourceCode, (isSource) => {
   const windowId = window.colamd?.env?.windowId ?? -1
   if (isSource) {
     window.electron.ipcRenderer.send('mt::set-editor-format-menus-enabled', windowId, false)
+    // The main process just mutated both menus OUTSIDE the selection channel,
+    // so the "last state sent" cache no longer mirrors them — without this,
+    // re-applying the same selection state on exit would be skipped as
+    // "unchanged" and the menus would stay greyed out (#3531, PERF-03 gate).
+    invalidateSelectionMenuCache(windowId)
     return
   }
   nextTick(() => {
@@ -530,6 +536,7 @@ watch(sourceCode, (isSource) => {
     } else {
       window.electron.ipcRenderer.send('mt::set-editor-format-menus-enabled', windowId, true)
     }
+    invalidateSelectionMenuCache(windowId)
   })
 })
 
@@ -869,7 +876,25 @@ const handleSearch = (payload: unknown) => {
 const handReplace = (payload: unknown) => {
   if (sourceCode.value) return
   const { value, opt } = payload as { value: string; opt: unknown }
-  editorStore.SEARCH(toSearchMatches(editor.value.replace(value, opt)))
+  // UX-17 (#GUI-B10): report how many occurrences a replace-all rewrote.
+  const isReplaceAll = (opt as { isSingle?: boolean } | undefined)?.isSingle === false
+  // The count comes from the store, not the engine: `searchModule` lives on
+  // Muya's inner Editor, so `editor.value.searchModule` was undefined and the
+  // property read threw BEFORE the replace ran — replace-all did nothing at
+  // all. The store holds the matches of the search the bar just performed,
+  // which is the "替换前匹配数" the plan sanctions for this toast.
+  const replacedCount = isReplaceAll
+    ? (editorStore.currentFile?.searchMatches?.matches.length ?? 0)
+    : 0
+  const result = editor.value.replace(value, opt)
+  editorStore.SEARCH(toSearchMatches(result))
+  if (isReplaceAll && replacedCount > 0) {
+    notice.notify({
+      title: t('search.replacedCount', { count: replacedCount }),
+      type: 'primary',
+      time: 4000
+    })
+  }
 }
 
 const {
@@ -933,6 +958,13 @@ const handleExport = async (options: unknown) => {
   // document B whenever the user switched tabs while A was rendering.
   const source = editorStore.CAPTURE_EXPORT_SOURCE()
   if (!source) return
+  // UX-11 (#GUI-B10): the native save dialog + write can take seconds with no
+  // on-screen change; the success/failure toasts already exist downstream.
+  notice.notify({
+    title: t('editor.exporting'),
+    type: 'primary',
+    time: 5000
+  })
 
   const extraCss = await getCssForOptions(opts as unknown as PdfCssOptions)
   const htmlToc = getHtmlToc(editor.value.getTOC(), opts as unknown as HtmlTocOptions)
@@ -1214,7 +1246,6 @@ interface FileChangePayload {
   history?: unknown
   scrollTop?: number
   muyaIndexCursor?: unknown
-  blocks?: unknown
   isReload?: boolean
 }
 
@@ -1537,7 +1568,7 @@ onMounted(() => {
   //     land back on the saved content and clean-vs-dirty must resolve
   //     immediately (Phase G — G6).
   //   - debounced pause tier (~120ms): one serialization feeding markdown +
-  //     hash + TOC + wordCount + blocks; re-freshens `tab.markdown` too.
+  //     hash + TOC + wordCount; re-freshens `tab.markdown` too.
   // Markdown reads (save / close / switch / export / crash buffer) go through
   // `flushActiveEditor` → `pipeline.flushActive()`, the flush-on-read
   // primitive. See lazyMarkdownPipeline.ts for the full contract.
@@ -1747,7 +1778,7 @@ onBeforeUnmount(() => {
   right: 0;
   left: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: var(--maskColorStrong);
   z-index: 11;
   & .icon-close {
     z-index: 1000;

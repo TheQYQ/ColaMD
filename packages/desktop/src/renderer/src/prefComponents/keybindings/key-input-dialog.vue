@@ -202,13 +202,13 @@ const isRawKeyCode = (event: KeyboardEvent, keyCode: string): boolean => {
   width: 100%;
   border: 1px solid var(--inputBgColor);
   background: var(--inputBgColor);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 input.input-textbox {
   width: 100%;
   height: 30px;
   margin: 0 10px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--editorColor);
   background: transparent;
   outline: none;
@@ -245,7 +245,7 @@ input.input-textbox {
   align-items: center;
   font-size: 13px;
   color: var(--editorColor);
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--maskColor);
 }
 </style>
 <style>

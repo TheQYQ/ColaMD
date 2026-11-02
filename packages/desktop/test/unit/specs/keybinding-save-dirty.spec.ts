@@ -82,52 +82,56 @@ const installIpc = (): { next: () => Deferred<boolean>; saved: Map<string, strin
 const makeConfigurator = (): KeybindingConfigurator =>
   new KeybindingConfigurator(new Map(DEFAULTS), new Map())
 
-describe('keybinding save keeps edits made while the write is in flight (#round-6)', () => {
-  it('does not clear the dirty flag for an edit made during the save', async () => {
+describe('keybinding save: auto-save keeps late edits (#round-6 lineage, GUI-B10 model)', () => {
+  it('auto-save persists an edit made while a write is in flight and ends clean', async () => {
     const ipc = installIpc()
     const kb = makeConfigurator()
 
+    // Arm BEFORE each change: the auto-save inside change() awaits the armed
+    // deferred, and `next()` re-arms so the two writes settle independently.
+    const first = ipc.next()
     expect(kb.change('file.save', 'CmdOrCtrl+Shift+S')).toBe(true)
     expect(kb.isDirty).toBe(true)
-
-    const first = ipc.next()
-    const saving = kb.save()
     await Promise.resolve()
 
-    // The user keeps editing while the write is on the wire.
+    const second = ipc.next()
     expect(kb.change('file.open-file', 'CmdOrCtrl+Shift+O')).toBe(true)
     expect(kb.isDirty).toBe(true)
 
-    first.resolve(true)
-    expect(await saving).toBe(true)
+    first.resolve(true) // the first write lands, without the late edit
+    await Promise.resolve()
 
-    // That edit is not in what was persisted...
+    second.resolve(true) // the follow-up write lands, with the late edit
+    await Promise.resolve()
+
+    // The late edit IS in what was persisted (by the follow-up save)...
     expect(ipc.saved[0].get('file.open-file')).toBeUndefined()
-    // ...so the form must still read as dirty, otherwise the edit is unreachable.
-    expect(kb.isDirty).toBe(true)
+    expect(ipc.saved[1].get('file.open-file')).toBe('CmdOrCtrl+Shift+O')
+    // ...so the form ends clean instead of warning on close.
+    expect(kb.isDirty).toBe(false)
   })
 
-  it('persists the late edit on the next save (the fix keeps it recoverable)', async () => {
+  it('does not let a stale write clear the flag (revision guard intact)', async () => {
     const ipc = installIpc()
     const kb = makeConfigurator()
 
-    kb.change('file.save', 'CmdOrCtrl+Shift+S')
     const first = ipc.next()
-    const saving = kb.save()
+    expect(kb.change('file.save', 'CmdOrCtrl+Shift+S')).toBe(true)
     await Promise.resolve()
-    kb.change('file.open-file', 'CmdOrCtrl+Shift+O')
-    first.resolve(true)
-    await saving
-    expect(kb.isDirty).toBe(true)
 
     const second = ipc.next()
-    const savingAgain = kb.save()
-    second.resolve(true)
-    expect(await savingAgain).toBe(true)
+    expect(kb.change('file.open-file', 'CmdOrCtrl+Shift+O')).toBe(true)
+    await Promise.resolve()
 
-    // Now both edits are on the wire, and the form is clean.
+    first.resolve(true) // the stale write lands (without the late edit)
+    await Promise.resolve()
+    // The revision guard keeps the form dirty until the follow-up save lands.
+    expect(ipc.saved[0].get('file.open-file')).toBeUndefined()
+    expect(kb.isDirty).toBe(true)
+
+    second.resolve(true)
+    await Promise.resolve()
     expect(ipc.saved[1].get('file.open-file')).toBe('CmdOrCtrl+Shift+O')
-    expect(ipc.saved[1].get('file.save')).toBe('CmdOrCtrl+Shift+S')
     expect(kb.isDirty).toBe(false)
   })
 

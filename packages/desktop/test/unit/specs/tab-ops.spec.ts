@@ -149,18 +149,9 @@ describe('initialTabsToOpen', () => {
 
 describe('createFileChangedEvent', () => {
   it('carries exactly the fields the editor reload needs', () => {
-    const file = tab('a', { blocks: [{ type: 'p' }] })
+    const file = tab('a')
     expect(Object.keys(createFileChangedEvent(file)).sort()).toEqual(
-      [
-        'blocks',
-        'cursor',
-        'history',
-        'id',
-        'markdown',
-        'muyaIndexCursor',
-        'renderCursor',
-        'scrollTop'
-      ].sort()
+      ['cursor', 'history', 'id', 'markdown', 'muyaIndexCursor', 'renderCursor', 'scrollTop'].sort()
     )
   })
 

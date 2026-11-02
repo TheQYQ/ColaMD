@@ -42,7 +42,7 @@
           v-show="createCacheDirname === projectTree.pathname"
           ref="input"
           v-model="createName"
-          placeholder="Enter .md file name"
+          :placeholder="t('sideBar.tree.newFileNamePlaceholder')"
           type="text"
           class="new-input"
           :style="{ 'padding-left': `${depth * 6 + 10}px` }"

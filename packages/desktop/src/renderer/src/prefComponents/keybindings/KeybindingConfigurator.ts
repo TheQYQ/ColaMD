@@ -129,7 +129,9 @@ export default class KeybindingConfigurator {
       return false
     }
 
-    if (accelerator && this._isDuplicate(accelerator)) {
+    // UX-04 (#GUI-B10): the entry's own id is excluded, so re-confirming its
+    // current accelerator is not reported as a self-conflict.
+    if (accelerator && this._isDuplicate(accelerator, id)) {
       return false
     }
 
@@ -139,7 +141,22 @@ export default class KeybindingConfigurator {
       : SHORTCUT_TYPE_USER
     this._revision += 1
     this.isDirty = true
+    // UX-04: save immediately — every other preference applies live, and the
+    // in-flight-write revision guard in save() keeps concurrent edits safe.
+    void this.save()
     return true
+  }
+
+  /** The entry currently holding `accelerator`, if any (UX-04 conflict toast). */
+  findConflict(
+    accelerator: string,
+    excludeId?: string
+  ): { id: string; accelerator: string } | null {
+    if (!accelerator) return null
+    const entry = this.keybindingList.find(
+      (entry) => entry.id !== excludeId && isEqualAccelerator(entry.accelerator, accelerator)
+    )
+    return entry ? { id: entry.id, accelerator: entry.accelerator } : null
   }
 
   unbind(id: string): boolean {
@@ -175,13 +192,8 @@ export default class KeybindingConfigurator {
     return this.defaultKeybindings.get(id)
   }
 
-  _isDuplicate(accelerator: string): boolean {
-    return (
-      accelerator !== '' &&
-      this.keybindingList.findIndex((entry) =>
-        isEqualAccelerator(entry.accelerator, accelerator)
-      ) !== -1
-    )
+  _isDuplicate(accelerator: string, excludeId?: string): boolean {
+    return this.findConflict(accelerator, excludeId) !== null
   }
 
   _isDefaultBinding(id: string, accelerator: string): boolean {
