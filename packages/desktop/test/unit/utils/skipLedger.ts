@@ -106,6 +106,12 @@ export const conditionalExemptions: ConditionalExemption[] = [
     condition: "process.platform === 'win32'",
     reason:
       'POSIX permission-mode semantics (chmod 0600 round-trip) do not exist on win32; the assertion is platform-specific by nature'
+  },
+  {
+    files: ['packages/desktop/test/e2e/theme-visual-baseline.spec.ts'],
+    condition: "process.platform !== 'win32'",
+    reason:
+      'the theme screenshot baseline (GUI-SA prerequisite, GUI_FIX_PLAN §3.12) pins Windows font rendering into committed PNGs; it is generated and compared on the same Windows machine by design, and the CI e2e legs (linux + macos) skip it rather than diffing against foreign-font snapshots — platform fact, not debt'
   }
 ]
 
