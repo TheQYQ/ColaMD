@@ -12,6 +12,8 @@ import { showEditorContextMenu } from '../contextMenu/editor'
 import { loadMarkdownFile } from '../filesystem/markdown'
 import { switchLanguage } from '../spellchecker'
 import { addAllowedRoot } from '../security/pathScope'
+import { createSendGate } from './sendGate'
+import type { BootstrapEditorConfig } from '@shared/types/files'
 import fs from 'fs'
 import { typedSend } from '../ipc/typedSend'
 
@@ -26,6 +28,9 @@ const WINDOW_EVENT = {
   'enter-full-screen': 'mt::window-enter-full-screen',
   'leave-full-screen': 'mt::window-leave-full-screen'
 } as const
+
+// Releases a held send when the page never announces readiness.
+const RENDERER_READY_FALLBACK_MS = 5000
 
 // The deferred file/markdown to open before the window finishes loading.
 interface PendingFile {
@@ -70,6 +75,8 @@ class EditorWindow extends BaseWindow {
   // used to find the best window to open new files in.
   private _openedRootDirectory: string
   private _openedFiles: string[]
+  // Holds `mt::*` sends until the page says its listeners exist (#GUI-B5).
+  private readonly _sendGate = createSendGate()
 
   /**
    * @param accessor The application accessor for application instances.
@@ -194,7 +201,9 @@ class EditorWindow extends BaseWindow {
       const lineEnding = preferences.getPreferredEol()
       appMenu.updateLineEndingMenu(win.id, lineEnding)
 
-      typedSend(win.webContents, 'mt::bootstrap-editor', {
+      // Held until the page reports `mt::renderer-ready` — see sendGate.ts. The
+      // timer is the safety valve for a renderer that never answers at all.
+      const bootstrap: BootstrapEditorConfig = {
         addBlankTab,
         welcomeMarkdown,
         markdownList: storeInfo.filePath ? [] : this._markdownToOpen,
@@ -202,14 +211,9 @@ class EditorWindow extends BaseWindow {
         sideBarVisibility: resolvedSideBarVisibility,
         tabBarVisibility: !!tabBarVisibility,
         sourceCodeModeEnabled: !!sourceCodeModeEnabled
-      })
-
-      if (storeInfo.filePath) {
-        this._restoreAllState(storeInfo.filePath)
-      } else {
-        this._doOpenFilesToOpen()
-        this._markdownToOpen.length = 0
       }
+      setTimeout(() => this._sendGate.release(), RENDERER_READY_FALLBACK_MS)
+      this._sendGate.whenReady(() => this._sendBootstrap(win, storeInfo, bootstrap))
 
       // Listen on default system mouse zoom event (e.g. Ctrl+MouseWheel on Linux/Windows).
       win.webContents.on('zoom-changed', (_event, zoomDirection) => {
@@ -500,6 +504,15 @@ class EditorWindow extends BaseWindow {
     return buf
   }
 
+  /**
+   * Called when this window's page reports that its `mt::*` listeners exist.
+   * Only the window manager may invoke it, and only for the window that sent
+   * the signal — see the sender match in `_listenForIpcMain`.
+   */
+  markRendererReady(): void {
+    this._sendGate.release()
+  }
+
   override reload(): void {
     const { id, browserWindow } = this
 
@@ -513,18 +526,24 @@ class EditorWindow extends BaseWindow {
     this._openedRootDirectory = ''
     this._openedFiles = []
 
+    // The page is about to be torn down and re-mounted, so its listeners stop
+    // existing: hold sends again until the new mount announces itself.
+    this._sendGate.rearm()
     browserWindow?.webContents.once('did-finish-load', () => {
       this.lifecycle = WindowLifecycle.READY
       const { preferences } = this._accessor
       const { tabBarVisibility, sideBarVisibility, sourceCodeModeEnabled } = preferences.getAll()
       const lineEnding = preferences.getPreferredEol()
-      typedSend(browserWindow?.webContents, 'mt::bootstrap-editor', {
-        addBlankTab: true,
-        markdownList: [],
-        lineEnding,
-        sideBarVisibility: !!sideBarVisibility,
-        tabBarVisibility: !!tabBarVisibility,
-        sourceCodeModeEnabled: !!sourceCodeModeEnabled
+      setTimeout(() => this._sendGate.release(), RENDERER_READY_FALLBACK_MS)
+      this._sendGate.whenReady(() => {
+        typedSend(browserWindow?.webContents, 'mt::bootstrap-editor', {
+          addBlankTab: true,
+          markdownList: [],
+          lineEnding,
+          sideBarVisibility: !!sideBarVisibility,
+          tabBarVisibility: !!tabBarVisibility,
+          sourceCodeModeEnabled: !!sourceCodeModeEnabled
+        })
       })
     })
 
@@ -569,6 +588,26 @@ class EditorWindow extends BaseWindow {
     appMenu.addRecentlyUsedDocument(pathname)
     _openedFiles.push(pathname)
     typedSend(browserWindow?.webContents, 'mt::open-new-tab', rawDocument, options, selected)
+  }
+
+  /**
+   * The first `mt::*` traffic a freshly loaded window must receive, deferred
+   * until the page reports its listeners. Split out of `createWindow` because
+   * that method sits against the `max-lines-per-function` threshold.
+   */
+  private _sendBootstrap(
+    win: BrowserWindow,
+    storeInfo: BufferStoreInfo,
+    config: BootstrapEditorConfig
+  ): void {
+    typedSend(win.webContents, 'mt::bootstrap-editor', config)
+
+    if (storeInfo.filePath) {
+      this._restoreAllState(storeInfo.filePath)
+    } else {
+      this._doOpenFilesToOpen()
+      this._markdownToOpen.length = 0
+    }
   }
 
   private _doOpenFilesToOpen(): void {

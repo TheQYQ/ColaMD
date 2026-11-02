@@ -1,16 +1,17 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// PERF-01 (#GUI-B5) regression guard. The editor route became a lazy chunk, so
-// the main process's `mt::bootstrap-editor` — sent right around
-// did-finish-load — can arrive BEFORE app.vue mounted and registered the store
-// listener, and Electron does not replay IPC: `init` then never flips and the
-// window stays blank. The entry-chunk `bootstrapBuffer` module registers its
-// listener at module evaluation (guaranteed to precede did-finish-load) and
-// holds the config until `LISTEN_FOR_BOOTSTRAP_WINDOW` drains it.
+// PERF-01 (#GUI-B5). The editor route is a lazy chunk now, so `app.vue`'s
+// `onMounted` — where every `mt::*` handler is registered — runs at an
+// unpredictable point after `did-finish-load`. Electron does not replay IPC, so
+// a config sent into that gap is dropped for good and the window keeps its
+// empty state.
 //
-// The "config arrives first" order below is the race this must never lose;
-// the drain must fold it into the stores exactly like the live listener did.
+// The fix is not a renderer-side buffer: the main process holds these sends
+// until the page reports `mt::renderer-ready` (windows/sendGate.ts, covered by
+// window-send-gate.spec.ts and window-manager-renderer-ready.spec.ts). What is
+// left to prove from here is that the page does apply a config that arrives on
+// the live channel, which is what every window now sees.
 
 interface IpcLike {
   handlers: Record<string, Array<(...args: unknown[]) => void>>
@@ -54,15 +55,7 @@ const bootstrapConfig = {
   welcomeMarkdown: ''
 }
 
-const importStores = async () => {
-  const [{ useEditorStore }, { useMainStore }] = await Promise.all([
-    import('@/store/editor'),
-    import('@/store')
-  ])
-  return { useEditorStore, useMainStore }
-}
-
-describe('bootstrap editor: the early-arrival race', () => {
+describe('bootstrap editor: the live channel', () => {
   beforeEach(() => {
     vi.resetModules()
     for (const channel of Object.keys(ipcHandlers)) delete ipcHandlers[channel]
@@ -75,29 +68,32 @@ describe('bootstrap editor: the early-arrival race', () => {
     setActivePinia(createPinia())
   })
 
-  it('applies a bootstrap that arrived before the listener registered', async () => {
-    // Entry chunk evaluates: the buffer module registers its listener.
-    await import('@/bootstrapBuffer')
-    // Main sends the bootstrap while the lazy route chunk is still loading.
-    ipc.emit('mt::bootstrap-editor', bootstrapConfig)
-
-    const { useEditorStore, useMainStore } = await importStores()
+  it('applies a bootstrap that arrives after mounting', async () => {
+    const [{ useEditorStore }, { useMainStore }] = await Promise.all([
+      import('@/store/editor'),
+      import('@/store')
+    ])
     const store = useEditorStore()
     store.LISTEN_FOR_BOOTSTRAP_WINDOW()
+
+    ipc.emit('mt::bootstrap-editor', bootstrapConfig)
 
     expect(useMainStore().init).toBe(true)
     expect(store.tabs.length).toBe(1)
   })
 
-  it('still applies a bootstrap that arrives after mounting (live listener intact)', async () => {
-    await import('@/bootstrapBuffer')
-    const { useEditorStore, useMainStore } = await importStores()
+  it('ignores a bootstrap that arrives before the listener is registered', async () => {
+    const [{ useEditorStore }, { useMainStore }] = await Promise.all([
+      import('@/store/editor'),
+      import('@/store')
+    ])
     const store = useEditorStore()
-    store.LISTEN_FOR_BOOTSTRAP_WINDOW()
 
     ipc.emit('mt::bootstrap-editor', bootstrapConfig)
 
-    expect(useMainStore().init).toBe(true)
-    expect(store.tabs.length).toBe(1)
+    // Recorded so the shape is visible from the suite: this is the ordering the
+    // main-side send gate exists to make impossible.
+    expect(useMainStore().init).toBe(false)
+    expect(store.tabs.length).toBe(0)
   })
 })

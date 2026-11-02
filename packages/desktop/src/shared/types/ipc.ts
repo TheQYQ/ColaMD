@@ -284,6 +284,10 @@ export interface IpcSendChannels {
     payload: { id: string; pathname: string; newPathname: string; currentFile?: unknown }
   ]
   'mt::request-keybindings': []
+  // Emitted by the editor page once every `mt::*` listener it owns exists.
+  // The main process holds its own sends until then — see SendGate in
+  // windows/sendGate.ts for why this handshake replaced the per-channel buffer.
+  'mt::renderer-ready': []
   'mt::set-editor-format-menus-enabled': [windowId: number, enabled: boolean]
   'mt::response-export': [
     payload: {

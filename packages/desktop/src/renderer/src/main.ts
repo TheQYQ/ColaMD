@@ -18,10 +18,6 @@ import Main from './Main.vue'
 
 import './assets/styles/index.css'
 import './assets/styles/printService.css'
-// PERF-01 (#GUI-B5): must register during entry-chunk evaluation — see the
-// module itself for why the bootstrap IPC cannot be allowed to race the lazy
-// route chunk.
-import './bootstrapBuffer'
 
 // -----------------------------------------------
 

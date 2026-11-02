@@ -22,7 +22,7 @@ import {
 } from '../services/applicationMenuState'
 import { applyFileChange, listenForClose, setSaveStatusWhenRemove } from './fileChange'
 import { applyBootstrapEditor, restoreBufferedEditorState } from './windowSession'
-import { takePendingBootstrapEditors } from '../bootstrapBuffer'
+
 import {
   cycleTabs,
   exchangeTabsById,
@@ -521,12 +521,6 @@ export const useEditorStore = defineStore('editor', {
     LISTEN_FOR_BOOTSTRAP_WINDOW(): void {
       const projectStore = useProjectStore()
       const preferencesStore = usePreferencesStore()
-
-      // PERF-01 (#GUI-B5): the bootstrap IPC may have arrived before this lazy
-      // route component mounted; drain what the entry-chunk buffer caught.
-      for (const config of takePendingBootstrapEditors()) {
-        this.APPLY_BOOTSTRAP_EDITOR(config)
-      }
 
       // Delay load runtime commands and initialize commands.
       setTimeout(() => {

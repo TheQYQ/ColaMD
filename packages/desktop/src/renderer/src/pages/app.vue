@@ -230,6 +230,10 @@ onMounted(async () => {
 
   setupDragDropHandler()
 
+  // Last on purpose: the main process holds its `mt::*` sends until this
+  // arrives, so it must not be emitted before the listeners above exist.
+  window.electron.ipcRenderer.send('mt::renderer-ready')
+
   nextTick(async () => {
     // `initialState` from bootstrap carries nullable URL params (string|null);
     // `addStyles` requires non-null `theme` / `codeFontFamily` strings.
