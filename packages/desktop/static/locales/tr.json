@@ -237,6 +237,7 @@
     "close": "Kapat"
   },
   "sideBar": {
+    "resizeHandle": "Kenar çubuğu genişliği",
     "tree": {
       "emptyProject": "Boş proje",
       "createFile": "Dosya Oluştur",

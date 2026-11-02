@@ -237,6 +237,7 @@
     "close": "閉じる"
   },
   "sideBar": {
+    "resizeHandle": "サイドバーの幅",
     "tree": {
       "emptyProject": "空のプロジェクト",
       "createFile": "ファイルの作成",

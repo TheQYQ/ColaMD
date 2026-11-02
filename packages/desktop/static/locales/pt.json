@@ -237,6 +237,7 @@
     "close": "Fechar"
   },
   "sideBar": {
+    "resizeHandle": "Largura da barra lateral",
     "tree": {
       "emptyProject": "Projeto vazio",
       "createFile": "Criar Arquivo",

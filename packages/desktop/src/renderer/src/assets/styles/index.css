@@ -509,10 +509,23 @@ button:focus-visible,
 [role='button']:focus-visible,
 [role='tab']:focus-visible,
 [role='option']:focus-visible,
+[role='separator']:focus-visible,
 input:focus-visible,
 .side-bar-tab:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+/* A11Y-12 (#GUI-SC4): declare the native colour scheme so Chromium paints
+   scrollbars, form controls and default canvases to match the app theme
+   instead of guessing from the OS. `body.dark` is the same marker that drives
+   the dark chrome (util/theme.ts). */
+:root {
+  color-scheme: light;
+}
+
+body.dark {
+  color-scheme: dark;
 }
 
 /* Motion discipline: everything respects reduced-motion (guide §4). */

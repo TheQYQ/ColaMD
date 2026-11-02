@@ -237,6 +237,7 @@
     "close": "닫기"
   },
   "sideBar": {
+    "resizeHandle": "사이드바 너비",
     "tree": {
       "emptyProject": "빈 프로젝트",
       "createFile": "파일 만들기",

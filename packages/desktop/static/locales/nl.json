@@ -237,6 +237,7 @@
     "close": "Sluiten"
   },
   "sideBar": {
+    "resizeHandle": "Breedte van de zijbalk",
     "tree": {
       "emptyProject": "Leeg project",
       "createFile": "Bestand aanmaken",
