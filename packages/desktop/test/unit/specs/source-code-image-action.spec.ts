@@ -6,6 +6,10 @@ import { parse, compileScript } from 'vue/compiler-sfc'
 import ts from 'typescript'
 import { ref } from 'vue'
 import { stripTopLevelImports } from '../sfcScriptHarness'
+import {
+  setCodeMirrorModule,
+  getCodeMirrorModule
+} from '@/components/editorWithTabs/sourceCodeCmModule'
 
 // `handleImageAction` lives as a <script setup> closure in sourceCode.vue
 // (registered on the `image-action` bus during onMounted). The desktop unit
@@ -55,7 +59,7 @@ const loadComponent = (deps: Record<string, unknown>) => {
     `const { _defineComponent, ref, watch, onMounted, onBeforeUnmount, nextTick,
       useEditorStore, usePreferencesStore, storeToRefs, codeMirror,
       setCursorAtFirstLine, setTextDirection, getWordCount, adjustCursor, bus,
-      oneDarkThemes, railscastsThemes } = __deps
+      oneDarkThemes, railscastsThemes, getCodeMirrorModule } = __deps
     ${js}
     return module.exports`
   ) as (deps: Record<string, unknown>, exports: object, module: object) => SetupModule
@@ -75,6 +79,7 @@ const makeDeps = (over: Record<string, unknown> = {}) => ({
   usePreferencesStore: () => ({}),
   storeToRefs: () => ({ theme: ref(''), sourceCode: ref(true), currentFile: ref(null) }),
   codeMirror: () => ({}),
+  getCodeMirrorModule,
   setCursorAtFirstLine: vi.fn(),
   setTextDirection: () => {},
   getWordCount: () => 0,
@@ -106,6 +111,15 @@ const makeCM = (value: string, focus: CMCursor | null, anchor: CMCursor | null):
 
 const bootHandler = (cm: StubCM, deps: Record<string, unknown> = makeDeps()) => {
   const comp = loadComponent(deps)
+  // PERF-01: the component pulls CodeMirror through the injectable holder
+  // (sourceCodeCmModule); the real module never loads in the harness, so stub
+  // it with fakes delegating to the deps — every existing cursor-fallback
+  // assertion keeps working unchanged.
+  setCodeMirrorModule({
+    default: () => ({}),
+    setCursorAtFirstLine: deps.setCursorAtFirstLine as (editor: unknown) => void,
+    setTextDirection: deps.setTextDirection as (editor: unknown, dir: string) => void
+  })
   const ret = comp.setup(
     { markdown: '', muyaIndexCursor: null, textDirection: 'ltr' },
     { expose: () => {} }

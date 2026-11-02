@@ -22,6 +22,7 @@ import {
 } from '../services/applicationMenuState'
 import { applyFileChange, listenForClose, setSaveStatusWhenRemove } from './fileChange'
 import { applyBootstrapEditor, restoreBufferedEditorState } from './windowSession'
+
 import {
   cycleTabs,
   exchangeTabsById,

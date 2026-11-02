@@ -4,10 +4,11 @@ import bootstrapRenderer from './bootstrap'
 import pinia from './store'
 import './assets/symbolIcon'
 
-// Element Plus instead of Element UI for Vue 3
-import ElementPlus from 'element-plus'
+// Element Plus instead of Element UI for Vue 3. The JS side is resolved per
+// component by unplugin-vue-components (electron.vite.config.ts); the full
+// stylesheet stays global so component styles cannot regress (#GUI-B5). The
+// plugin's default locale is already `en`, which is what `app.use` forced.
 import 'element-plus/dist/index.css'
-import en from 'element-plus/es/locale/lang/en'
 
 // I18n translation system
 import i18nPlugin from './i18n'
@@ -28,11 +29,6 @@ bootstrapRenderer()
 
 // Create Vue app
 const app: App<Element> = createApp(Main)
-
-// Configure Element Plus with locale
-app.use(ElementPlus, {
-  locale: en
-})
 
 const envType = window.colamd?.env?.type as string | undefined
 
