@@ -13,6 +13,16 @@
   --statusBarHeight: 26px;
   --editorAreaWidth: 800px;
 
+  /* GUI-SA: alias values consumed by the shared theme patch layer
+     (util/sharedThemePatches.ts). These reproduce the unpatched component
+     defaults — window-control icon fill, titlebar hover wash, chrome border —
+     so themes that never carried the patches (light, custom manifests)
+     render exactly as before. Built-in theme files override them with the
+     values their old per-file patches hardcoded. */
+  --titleBarIconColor: #000000;
+  --titleBarHoverBgColor: rgba(0, 0, 0, 0.1);
+  --sideBarBorderColor: var(--border-subtle);
+
   /*editor*/
   /*Theme color cluster.
     DS-04 (#GUI-B10) deprecation note: the camelCase tokens below are the

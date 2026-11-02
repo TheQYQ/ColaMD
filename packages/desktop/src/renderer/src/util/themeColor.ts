@@ -6,6 +6,8 @@
 //
 // `light` is not a file: it is a two-variable reset evaluated inline.
 
+import { SHARED_KEBAB_ALIASES, SHARED_THEME_PATCHES } from './sharedThemePatches'
+
 const themeLoaders = import.meta.glob<string>('../assets/themes/*.theme.css', {
   query: '?inline',
   import: 'default'
@@ -71,9 +73,13 @@ export const getBuiltInThemeCss = async (key: string): Promise<string> => {
   const prism = PRISM_PAIR[key]
   if (!prism) throw new Error(`Unknown built-in theme: ${key}`)
   const [theme, highlight] = await Promise.all([loadThemeFile(key), loadPrismFile(prism)])
-  return `${theme}\n${highlight}`
+  // Sheet order is load-bearing (see sharedThemePatches.ts): prism first so
+  // the shared patch layer beats its code-block background by position, the
+  // shared layer next, and the theme's own :root + appendix last so a theme
+  // can still override the shared rules.
+  return `${highlight}\n${SHARED_KEBAB_ALIASES}\n${SHARED_THEME_PATCHES}\n${theme}`
 }
 
 // Original themes
 export const light = async (): Promise<string> =>
-  ':root {\n  --link-color: var(--linkColor);\n  --blockquote-border-color: var(--blockquoteBorderColor);\n}'
+  `${SHARED_THEME_PATCHES}\n:root {\n  --link-color: var(--linkColor);\n  --blockquote-border-color: var(--blockquoteBorderColor);\n}`
