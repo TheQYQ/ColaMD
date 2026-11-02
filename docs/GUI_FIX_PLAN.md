@@ -1,6 +1,6 @@
 # ColaMD GUI 修复计划
 
-> **批次进度**：常规批次 10/11 · 专项 0/3（SC 已分解为 SC-1…SC-4，其中 **SC-1 已合入 develop，PR #131**；2026-11-01 建档；进度行随每批合入更新）。
+> **批次进度**：常规批次 11/11 · 专项 1/4（SC 已分解为 SC-1…SC-4，其中 **SC-1 已合入 develop，PR #131**；2026-11-01 建档；进度行随每批合入更新）。
 > 本文档是 GUI 修复工作的**唯一进度真值**；性能与门禁的数字基线仍以 `PROJECT_GUIDE.md` §14 为准。
 
 ## 0. 文档信息与生命周期
@@ -20,7 +20,7 @@
 
 | ID      | 严重性 | 问题                                                                                                    | 关键位置                                                                                                                 | 批次 | 状态             |
 | ------- | ------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---- | ---------------- |
-| PERF-01 | 高     | 渲染端 6.8MB 单体主包：全量 Element Plus + 全静态路由 + 无 manualChunks；设置窗口也解析执行编辑器全家桶 | `renderer/src/main.ts:8-9`、`router/index.ts:5-13`、`electron.vite.config.ts:62-113`、`src/main/windows/base.ts:121-124` | B5   | 进行中 (PR #114) |
+| PERF-01 | 高     | 渲染端 6.8MB 单体主包：全量 Element Plus + 全静态路由 + 无 manualChunks；设置窗口也解析执行编辑器全家桶 | `renderer/src/main.ts:8-9`、`router/index.ts:5-13`、`electron.vite.config.ts:62-113`、`src/main/windows/base.ts:121-124` | B5   | 已修复 (PR #114) |
 | PERF-02 | 高     | 源码模式每次 cursorActivity 做两次全文 `getValue()` + 一遍全文 wordCount，每键 O(N)                     | `editorWithTabs/sourceCode.vue:312-331, 67-99, 292-317`                                                                  | B3   | 已修复 (PR #112) |
 | PERF-03 | 高     | 每次光标移动发 2 条 IPC，主进程全量重写两份原生菜单的全部 item                                          | `store/selectionState.ts:47-81`、`src/main/menu/index.ts:448-477`、`menu/actions/paragraph.ts:220-277`                   | B3   | 已修复 (PR #112) |
 | PERF-04 | 高     | 大文档无虚拟化：`updateState` 全量重建 DOM；源码模式 `viewportMargin: Infinity` 关掉 CM5 虚拟化         | `muya/src/block/scrollPage/index.ts:51-105`、`sourceCode.vue:519`                                                        | SB   | 待修             |
@@ -153,7 +153,7 @@ _消解_：逐项清理；DS-05 一类真 bug 靠"改样式必须人工过一遍
 - [x] **B2** 搜索高频打断（3-4h）— 已合入 develop（PR #111）
 - [x] **B3** 性能快赢 · 桌面侧（4-5h）— 已合入 develop（PR #112）
 - [x] **B4** i18n + 状态栏 + 空态（3-4h）— 已合入 develop（PR #113）
-- [ ] **B5** 构建优化（6-8h）
+- [x] **B5** 构建优化（6-8h）— 已合入 develop（PR #114）
 - [x] **B6** 性能中量 · 桌面侧（3-4h）— 已合入 develop（PR #115）
 - [x] **B7** 性能中量 · muya 侧（4-5h，触引擎）— 已合入 develop（PR #116）
 - [x] **B8** 可访问性 · 键盘可达 + 焦点（6-8h）— 已合入 develop（PR #117）
