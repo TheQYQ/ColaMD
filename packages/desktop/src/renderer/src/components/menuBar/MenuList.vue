@@ -1,5 +1,10 @@
 <template>
-  <div class="menu-list">
+  <div
+    ref="listEl"
+    class="menu-list"
+    role="menu"
+    @keydown="onListKeydown"
+  >
     <template
       v-for="(item, i) in items"
       :key="`${depth}-${i}`"
@@ -7,6 +12,8 @@
       <div
         v-if="item.type === 'separator'"
         class="menu-sep"
+        role="separator"
+        aria-orientation="horizontal"
       />
       <div
         v-else
@@ -15,10 +22,28 @@
           disabled: item.enabled === false,
           checked: item.checked && (item.type === 'checkbox' || item.type === 'radio')
         }"
+        :role="
+          item.type === 'checkbox'
+            ? 'menuitemcheckbox'
+            : item.type === 'radio'
+              ? 'menuitemradio'
+              : 'menuitem'
+        "
+        :aria-checked="
+          item.type === 'checkbox' || item.type === 'radio' ? isChecked(item) : undefined
+        "
+        :aria-disabled="item.enabled === false ? 'true' : undefined"
+        :aria-haspopup="item.children?.length ? 'menu' : undefined"
+        :aria-expanded="item.children?.length ? openSubIndex === i : undefined"
+        :data-menu-index="i"
+        tabindex="-1"
         @click.stop="onRowClick(item)"
         @mouseenter="onRowHover(item, i, $event)"
       >
-        <span class="menu-check">{{ isChecked(item) ? '✓' : '' }}</span>
+        <span
+          class="menu-check"
+          aria-hidden="true"
+        >{{ isChecked(item) ? '✓' : '' }}</span>
         <span class="menu-label">{{ item.label }}</span>
         <span class="menu-hint">{{ item.children?.length ? '›' : item.hint || '' }}</span>
       </div>
@@ -41,10 +66,11 @@
 <script setup lang="ts">
 import { ref, nextTick, type CSSProperties } from 'vue'
 import type { MenuItemDef } from '@/menu/types'
+import { firstFocusableIndex, lastFocusableIndex, nextFocusableIndex } from './menuFocus'
 
 defineOptions({ name: 'MenuList' })
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     items: MenuItemDef[]
     depth?: number
@@ -57,6 +83,7 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
+const listEl = ref<HTMLElement | null>(null)
 const openSubIndex = ref<number | null>(null)
 const submenuStyle = ref<CSSProperties>({})
 
@@ -94,6 +121,94 @@ const onRowClick = (item: MenuItemDef): void => {
 
 const emitAction = (): void => emit('action')
 const emitClose = (): void => emit('close')
+
+/** Index of the row holding focus in THIS list, or -1 when focus is elsewhere. */
+const focusedIndex = (): number => {
+  const active = document.activeElement as HTMLElement | null
+  if (!active || !listEl.value?.contains(active)) return -1
+  const raw = active.dataset.menuIndex
+  return raw === undefined ? -1 : Number(raw)
+}
+
+const focusRow = (index: number): void => {
+  if (index < 0) return
+  listEl.value?.querySelector<HTMLElement>(`[data-menu-index="${index}"]`)?.focus()
+}
+
+const onListKeydown = async (event: KeyboardEvent): Promise<void> => {
+  const items = props.items
+  const from = focusedIndex()
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault()
+    // A nested list handles its own arrows first; without this the parent would
+    // also run and yank focus back to its own first row.
+    event.stopPropagation()
+    const delta = event.key === 'ArrowDown' ? 1 : -1
+    // Entering the menu from no known row lands on the end of the direction,
+    // not on whatever `nextFocusableIndex` would compute from a bogus index.
+    focusRow(
+      from < 0
+        ? delta === 1
+          ? firstFocusableIndex(items)
+          : lastFocusableIndex(items)
+        : nextFocusableIndex(items, from, delta)
+    )
+    return
+  }
+
+  if (event.key === 'Home' || event.key === 'End') {
+    event.preventDefault()
+    event.stopPropagation()
+    focusRow(
+      event.key === 'Home' ? firstFocusableIndex(props.items) : lastFocusableIndex(props.items)
+    )
+    return
+  }
+
+  if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowRight') {
+    if (from < 0) return
+    const item = items[from]
+    if (!item) return
+    if (item.children?.length) {
+      event.preventDefault()
+      event.stopPropagation()
+      openSubIndex.value = from
+      const rowEl = listEl.value?.querySelector<HTMLElement>(`[data-menu-index="${from}"]`)
+      if (rowEl) await positionSubmenu(rowEl)
+      if (event.key === 'ArrowRight' || event.key === 'Enter' || event.key === ' ') {
+        // Opening the flyout without moving focus into it leaves it reachable
+        // only by pointing: the caret stays on the parent row, whose arrows
+        // then walk the parent list. `:scope >` so a grandchild submenu cannot
+        // be grabbed from this level.
+        const first = firstFocusableIndex(item.children)
+        if (first >= 0) {
+          listEl.value
+            ?.querySelector<HTMLElement>(`:scope > .submenu [data-menu-index="${first}"]`)
+            ?.focus()
+        }
+      }
+      return
+    }
+    if (event.key === 'ArrowRight') return
+    event.preventDefault()
+    event.stopPropagation()
+    onRowClick(item)
+  }
+
+  if (event.key === 'ArrowLeft') {
+    if (openSubIndex.value !== null) {
+      // This list owns an open flyout: collapse it and put the caret back on
+      // the row that spawned it.
+      event.preventDefault()
+      event.stopPropagation()
+      const parent = openSubIndex.value
+      openSubIndex.value = null
+      focusRow(parent)
+    }
+    // Nothing to collapse here — let it bubble to the list that owns us, which
+    // collapses itself and refocuses its own row.
+  }
+}
 </script>
 
 <style scoped>

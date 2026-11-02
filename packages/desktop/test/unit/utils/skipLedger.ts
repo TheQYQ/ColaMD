@@ -96,6 +96,12 @@ export const conditionalExemptions: ConditionalExemption[] = [
       'pandoc is not installed on every runner; the long-image/pandoc export suite is availability-gated by design, not debt'
   },
   {
+    files: ['packages/desktop/test/e2e/menu-bar-keyboard.spec.ts'],
+    condition: "process.platform === 'darwin'",
+    reason:
+      "the custom in-window menu bar is not rendered on macOS (`titleBarStyle === 'custom' && !isOsx` in menuBar/index.vue) — the native menu takes over, so there is no menubar for these assertions to act on. Platform fact, not debt"
+  },
+  {
     files: ['packages/desktop/test/unit/specs/write-file-atomic.spec.ts'],
     condition: "process.platform === 'win32'",
     reason:
