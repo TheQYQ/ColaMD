@@ -19,6 +19,11 @@ interface IBlurFocus {
 export class ScrollPage extends Parent {
     private _blurFocus: IBlurFocus = { blur: null, focus: null };
 
+    // Sorted-JSON snapshot of the reference labels the live blocks were last
+    // rendered against; updateState's keyed path diffs it to re-inline-render
+    // kept paragraphs when a definition changed outside the block tree.
+    private _labelsSnapshot = '[]';
+
     static override blockName = 'scrollpage';
 
     // Registry of block constructors keyed by their static blockName.
@@ -108,6 +113,10 @@ export class ScrollPage extends Parent {
                     return ScrollPage.loadBlock(block.name).create(muya, block);
                 }),
             );
+            const labels = this.muya.editor.inlineRenderer.refreshReferenceLabels();
+            this._labelsSnapshot = JSON.stringify(
+                [...labels.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+            );
             return;
         }
 
@@ -143,6 +152,25 @@ export class ScrollPage extends Parent {
 
         for (let i = keepCount; i < state.length; i++) {
             this.insertBefore(ScrollPage.loadBlock(state[i].name).create(muya, state[i]), null, 'api');
+        }
+
+        // Reference definitions are render inputs OUTSIDE the block tree: a
+        // paragraph's text can be unchanged while its `[label]` anchor stops
+        // (or starts) resolving because a definition elsewhere was added,
+        // edited or dropped. Re-collect the labels and re-inline-render the
+        // kept blocks that mention any affected label — the same mechanism
+        // the incremental path uses (updateRefLinkAndImage).
+        const labels = this.muya.editor.inlineRenderer.refreshReferenceLabels();
+        const labelsSnapshot = JSON.stringify([...labels.entries()].sort(([a], [b]) =>
+            a < b ? -1 : a > b ? 1 : 0,
+        ));
+        if (labelsSnapshot !== this._labelsSnapshot) {
+            const previous = new Map(
+                JSON.parse(this._labelsSnapshot) as [string, { href: string }][],
+            );
+            const affected = new Set([...previous.keys(), ...labels.keys()]);
+            for (const label of affected) this.updateRefLinkAndImage(label);
+            this._labelsSnapshot = labelsSnapshot;
         }
     }
 
