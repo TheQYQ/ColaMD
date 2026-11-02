@@ -56,4 +56,32 @@ test.describe('In-window menu bar keyboard access (GUI-SC1)', () => {
     const focusedInside = await dropdown.evaluate((el) => el.contains(document.activeElement))
     expect(focusedInside).toBe(true)
   })
+
+  test('ArrowDown and ArrowUp walk the rows of the open menu', async () => {
+    const bar = page.getByRole('menubar')
+    const edit = bar.getByRole('menuitem').nth(1)
+    await edit.focus()
+    await edit.press('Enter')
+
+    const dropdown = page.getByRole('menu').first()
+    await expect(dropdown).toBeVisible()
+
+    const labels = await dropdown.evaluate((el) =>
+      Array.from(el.querySelectorAll<HTMLElement>('[role^="menuitem"]')).map(
+        (row) => row.textContent ?? ''
+      )
+    )
+    expect(labels.length).toBeGreaterThan(2)
+
+    const active = (): Promise<string> =>
+      dropdown.evaluate(() => document.activeElement?.textContent ?? '')
+
+    expect(await active()).toBe(labels[0])
+    await page.keyboard.press('ArrowDown')
+    expect(await active()).toBe(labels[1])
+    await page.keyboard.press('ArrowDown')
+    expect(await active()).toBe(labels[2])
+    await page.keyboard.press('ArrowUp')
+    expect(await active()).toBe(labels[1])
+  })
 })

@@ -1,7 +1,9 @@
 <template>
   <div
+    ref="listEl"
     class="menu-list"
     role="menu"
+    @keydown="onListKeydown"
   >
     <template
       v-for="(item, i) in items"
@@ -31,6 +33,7 @@
           item.type === 'checkbox' || item.type === 'radio' ? isChecked(item) : undefined
         "
         :aria-disabled="item.enabled === false ? 'true' : undefined"
+        :data-menu-index="i"
         tabindex="-1"
         @click.stop="onRowClick(item)"
         @mouseenter="onRowHover(item, i, $event)"
@@ -61,10 +64,11 @@
 <script setup lang="ts">
 import { ref, nextTick, type CSSProperties } from 'vue'
 import type { MenuItemDef } from '@/menu/types'
+import { firstFocusableIndex, lastFocusableIndex, nextFocusableIndex } from './menuFocus'
 
 defineOptions({ name: 'MenuList' })
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     items: MenuItemDef[]
     depth?: number
@@ -77,6 +81,7 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
+const listEl = ref<HTMLElement | null>(null)
 const openSubIndex = ref<number | null>(null)
 const submenuStyle = ref<CSSProperties>({})
 
@@ -114,6 +119,40 @@ const onRowClick = (item: MenuItemDef): void => {
 
 const emitAction = (): void => emit('action')
 const emitClose = (): void => emit('close')
+
+/** Index of the row holding focus in THIS list, or -1 when focus is elsewhere. */
+const focusedIndex = (): number => {
+  const active = document.activeElement as HTMLElement | null
+  if (!active || !listEl.value?.contains(active)) return -1
+  const raw = active.dataset.menuIndex
+  return raw === undefined ? -1 : Number(raw)
+}
+
+const focusRow = (index: number): void => {
+  if (index < 0) return
+  listEl.value?.querySelector<HTMLElement>(`[data-menu-index="${index}"]`)?.focus()
+}
+
+const onListKeydown = (event: KeyboardEvent): void => {
+  const items = props.items
+  const from = focusedIndex()
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault()
+    // A nested list handles its own arrows first; without this the parent would
+    // also run and yank focus back to its own first row.
+    event.stopPropagation()
+    const delta = event.key === 'ArrowDown' ? 1 : -1
+    // Entering the menu from no known row lands on the end of the direction,
+    // not on whatever `nextFocusableIndex` would compute from a bogus index.
+    focusRow(
+      from < 0
+        ? delta === 1
+          ? firstFocusableIndex(items)
+          : lastFocusableIndex(items)
+        : nextFocusableIndex(items, from, delta)
+    )
+  }
+}
 </script>
 
 <style scoped>
