@@ -243,6 +243,13 @@ test.describe('Theme visual baseline (GUI-SA prerequisite)', () => {
   for (const id of EXPECTED_THEMES) {
     test(`baseline screenshot: ${id}`, async () => {
       previousCss = await applyThemeAndSettle(app, page, id, previousCss)
+      // The title bar tints by window focus (mt::window-active-status drives
+      // the `.active` class, 0.4s color transition). A second editor window
+      // (the app dir) exists next to the fixture one, so focus can drift
+      // during the menu-driven theme switches — pin the fixture window to
+      // the front and let the transition finish before shooting.
+      await page.bringToFront()
+      await page.waitForTimeout(500)
       await scrollEditorTo(page, 'top')
       await expect(page).toHaveScreenshot(`${id}.png`, { animations: 'disabled' })
       await scrollEditorTo(page, 'bottom')
