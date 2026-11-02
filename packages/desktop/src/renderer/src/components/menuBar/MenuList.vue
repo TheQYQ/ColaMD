@@ -154,6 +154,15 @@ const onListKeydown = async (event: KeyboardEvent): Promise<void> => {
     return
   }
 
+  if (event.key === 'Home' || event.key === 'End') {
+    event.preventDefault()
+    event.stopPropagation()
+    focusRow(
+      event.key === 'Home' ? firstFocusableIndex(props.items) : lastFocusableIndex(props.items)
+    )
+    return
+  }
+
   if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowRight') {
     if (from < 0) return
     const item = items[from]

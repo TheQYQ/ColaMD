@@ -133,4 +133,39 @@ test.describe('In-window menu bar keyboard access (GUI-SC1)', () => {
     // has to tab through the whole window to reach the bar again.
     expect(await view.evaluate((el) => el === document.activeElement)).toBe(true)
   })
+
+  test('Home and End jump to the ends of the open menu', async () => {
+    const view = page.getByRole('menubar').getByRole('menuitem').nth(VIEW)
+    await view.focus()
+    await view.press('Enter')
+    const dropdown = page.getByRole('menu').first()
+    await expect(dropdown).toBeVisible()
+
+    const labels = await dropdown.evaluate((el) =>
+      Array.from(el.querySelectorAll<HTMLElement>('[role^="menuitem"]')).map(
+        (row) => row.textContent ?? ''
+      )
+    )
+    const active = (): Promise<string> =>
+      dropdown.evaluate(() => document.activeElement?.textContent ?? '')
+
+    await page.keyboard.press('End')
+    expect(await active()).toBe(labels[labels.length - 1])
+    await page.keyboard.press('Home')
+    expect(await active()).toBe(labels[0])
+    await page.keyboard.press('Escape')
+  })
+
+  test('Arrow keys move the bar itself while no menu is open', async () => {
+    // The existing left/right handling only ran with a menu open, so the bar
+    // could not be traversed until you had already opened something by mouse.
+    const items = page.getByRole('menubar').getByRole('menuitem')
+    await items.first().focus()
+    await page.keyboard.press('ArrowRight')
+
+    const focusedText = await page.evaluate(() => document.activeElement?.textContent?.trim() ?? '')
+    expect(focusedText).not.toBe('')
+    expect(await items.first().evaluate((el) => el === document.activeElement)).toBe(false)
+    expect(await page.getByRole('menu').count()).toBe(0)
+  })
 })

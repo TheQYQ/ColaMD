@@ -142,6 +142,20 @@ const onItemKeydown = async (event: KeyboardEvent, index: number): Promise<void>
     // not recognise a bare `void x` inside a .vue script block, and awaiting
     // sends a rejected open to Vue's error handler instead of the void.
     await openMenuFromKey(index, event.currentTarget as HTMLElement | undefined)
+    return
+  }
+
+  // With a menu open the document-level handler already moves between menus,
+  // and focus is normally inside the dropdown by then; this is the closed-bar
+  // case, where without it the arrows did nothing at all.
+  if (openIndex.value === null && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+    event.preventDefault()
+    const count = menus.value.length
+    const delta = event.key === 'ArrowRight' ? 1 : -1
+    rovingIndex.value = (((index + delta) % count) + count) % count
+    await nextTick()
+    const barItems = document.querySelectorAll<HTMLElement>('.menu-bar > [role="menuitem"]')
+    barItems[rovingIndex.value]?.focus()
   }
 }
 
