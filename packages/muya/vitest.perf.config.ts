@@ -1,11 +1,11 @@
 import { defineConfig } from 'vitest/config'
 
-// Dedicated config for the M1.0 keystroke-pipeline microbench.
+// Dedicated config for the perf microbench files.
 //
-// The default `vite.config.ts` test block excludes the bench file — it is
-// measurement, not a regression gate, and its 1MB tier needs ~8-10 minutes
-// and ~2GB+ heap per worker (it OOMs the ubuntu CI runner). This config
-// re-includes it so `pnpm test:perf` can drive the bench on demand with a
+// The default `vite.config.ts` test block excludes the bench files — they are
+// measurement, not a regression gate, and their 1MB tiers need ~8-10 minutes
+// and ~2GB+ heap per worker (they OOM the ubuntu CI runner). This config
+// re-includes them so `pnpm test:perf` can drive the benches on demand with a
 // ceiling that fits the slowest tier.
 //
 // Usage: pnpm -C packages/muya test:perf
@@ -13,7 +13,10 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     css: true,
-    include: ['src/state/__tests__/keystrokePipeline.bench.spec.ts'],
+    include: [
+      'src/state/__tests__/keystrokePipeline.bench.spec.ts',
+      'src/block/scrollPage/__tests__/scrollPageRender.bench.spec.ts'
+    ],
     testTimeout: 600_000,
     hookTimeout: 60_000
   }
