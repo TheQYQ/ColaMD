@@ -1,6 +1,6 @@
 # ColaMD GUI 修复计划
 
-> **批次进度**：常规批次 10/11 · 专项 0/3（2026-11-01 建档；进度行随每批合入更新）。
+> **批次进度**：常规批次 10/11 · 专项 0/3（SC 已分解为 SC-1…SC-4，其中 **SC-1 已合入 develop，PR #131**；2026-11-01 建档；进度行随每批合入更新）。
 > 本文档是 GUI 修复工作的**唯一进度真值**；性能与门禁的数字基线仍以 `PROJECT_GUIDE.md` §14 为准。
 
 ## 0. 文档信息与生命周期
@@ -48,7 +48,7 @@
 | UX-06 | 中     | 搜索三开关（大小写/整词/正则）不持久，重启即回默认                                                 | `search/index.vue:156-158`                                                                                    | B2                   | 已修复 (PR #111) |
 | UX-07 | 中     | 侧栏删除文件/文件夹零确认、零成功反馈（与关脏标签的三重确认形成反差）                              | `store/sidebarContextMenu.ts:38-43`、`sideBar/tree.vue:258-261`                                               | B10                  | 已修复 (PR #119) |
 | UX-08 | 中     | 无标签页空状态只有"新建文件"，无打开文件/文件夹入口、无最近列表（组件名叫 recent 却不显示 recent） | `components/recent/index.vue:2-14`、`pages/app.vue:27`                                                        | B10                  | 已修复 (PR #119) |
-| UX-09 | 中     | 自绘菜单栏下拉项键盘不可达（无上下箭头/Enter/hover 同步）                                          | `menuBar/MenuList.vue:11-24`、`menuBar/index.vue:137-149`                                                     | SC                   | 待修             |
+| UX-09 | 中     | 自绘菜单栏下拉项键盘不可达（无上下箭头/Enter/hover 同步）                                          | `menuBar/MenuList.vue:11-24`、`menuBar/index.vue:137-149`                                                     | SC                   | 已修复 (PR #131) |
 | UX-10 | 中     | 重命名双标准：弹窗版全名可改扩展名、光标在末尾；侧栏版预选词干、锁定扩展名                         | `rename/index.vue:48-56` 与 `sideBar/treeFile.vue:81-99`                                                      | B10                  | 已修复 (PR #119) |
 | UX-11 | 中     | 导出无进度反馈、成功零反馈，大文档导出期间用户会重复点击                                           | `editorWithTabs/editor.vue:918-1080`、`exportSettings/index.vue:296-303`                                      | B10                  | 已修复 (PR #119) |
 | UX-12 | 中     | 搜索框 Enter 只能向下（无 Shift+Enter 向上）、替换框 Enter 无语义、监听挂在 keyup 手感飘           | `search/index.vue:309-313, 90-95, 29`                                                                         | B2                   | 已修复 (PR #111) |
@@ -86,7 +86,7 @@
 | A11Y-01 | 高     | 约 55 处可点击 div/span/li/el-icon 对键盘用户完全不可达（标题栏窗口控制三键、标签页、状态栏两控件、搜索三开关、通知按钮等） | `titleBar/index.vue:43-88`、`tabs.vue:11-40`、`statusBar/index.vue:4-35`、`notifications.vue:13-31` 等 | B8                        | 已修复 (PR #117) |
 | A11Y-02 | 高     | 对比度系统性不达标（实测）：34 主题中 31 个主按钮白字 FAIL（最差 1.38:1）；状态栏文字 2.84:1；通知白字 2.39:1               | `assets/styles/index.css:105-109`、`dark.theme.css:45-46`、34 个 theme 文件                            | B9                        | 已修复 (PR #118) |
 | A11Y-03 | 高     | 未保存对话框无焦点陷阱、无初始焦点、关闭不归还焦点——数据丢失决策对话框 Tab 可游走出遮罩                                     | `unsavedDialog/index.vue:62-95`                                                                        | B1（与 UX-03 同文件同批） | 已修复 (PR #110) |
-| A11Y-04 | 高     | 自绘菜单栏零 menu 语义：无 menubar/menuitem role、勾选态只是字符加 class、禁用态无 aria-disabled                            | `menuBar/index.vue:6-15`、`MenuList.vue:11-24`                                                         | SC                        | 待修             |
+| A11Y-04 | 高     | 自绘菜单栏零 menu 语义：无 menubar/menuitem role、勾选态只是字符加 class、禁用态无 aria-disabled                            | `menuBar/index.vue:6-15`、`MenuList.vue:11-24`                                                         | SC                        | 已修复 (PR #131) |
 | A11Y-05 | 中     | 全应用零 aria-live/role=status：搜索结果计数、文件级通知条、加载态对屏幕阅读器静默                                          | `search/index.vue:32-34`、`notifications.vue`、`loading/index.vue`                                     | B8                        | 已修复 (PR #117) |
 | A11Y-06 | 中     | 文件树无 tree/treeitem 语义，展开/选中态只在 data-\* 与 class 里（键盘导航已实现但 AT 感知不到）                            | `tree.vue:27-75`、`treeFolder.vue:11-14`、`treeFile.vue:142-154`                                       | SC                        | 待修             |
 | A11Y-07 | 中     | 全局 `:focus { outline: none }` 补偿面太窄；图标按钮只靠 title 命名；LinkIcon 可点击却硬编码 aria-hidden                    | `assets/styles/index.css:135-137, 476-482`、`LinkIcon.vue:12`                                          | B8                        | 已修复 (PR #117) |
@@ -300,12 +300,12 @@ _消解_：逐项清理；DS-05 一类真 bug 靠"改样式必须人工过一遍
 
 **2026-11-02 分解**：原文把 SC 当成一个专项，实际是四件可独立交付的东西，按本仓"一批一分支一 PR"就是四个 PR；且验收里的人工屏幕阅读器部分无法由自动化替代。故拆为 SC-1…SC-4 各走一批，顺序按下表的依赖与价值排。另有一项从 SC 里摘出：A11Y-12 的"跟随系统深浅色"不是 ARIA，而是带偏好项、IPC 与主题切换的产品功能，混进来会破坏 SC-4 的"零视觉变化"验收，另立一批。
 
-| 子批     | 内容                                                                                  | 状态                                            |
-| -------- | ------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| **SC-1** | menuBar 语义 + 键盘导航（A11Y-04 / UX-09）                                            | **已完成**，分支 `fix/gui-sc1-menubar-keyboard` |
-| **SC-2** | 文件树 tree/treeitem/aria-expanded/aria-level/aria-current（A11Y-06）                 | 待做，0.5 天                                    |
-| **SC-4** | 侧栏拖拽条 `role="separator"` + 键盘步进、`color-scheme` 声明（A11Y-12 的 ARIA 部分） | 待做，0.5 天                                    |
-| **SC-3** | 显式启用 Chromium 无障碍树（A11Y-11）                                                 | 待做，0.5 天代码 + **人工验收**                 |
+| 子批     | 内容                                                                                  | 状态                            |
+| -------- | ------------------------------------------------------------------------------------- | ------------------------------- |
+| **SC-1** | menuBar 语义 + 键盘导航（A11Y-04 / UX-09）                                            | **已修复 (PR #131)**            |
+| **SC-2** | 文件树 tree/treeitem/aria-expanded/aria-level/aria-current（A11Y-06）                 | 待做，0.5 天                    |
+| **SC-4** | 侧栏拖拽条 `role="separator"` + 键盘步进、`color-scheme` 声明（A11Y-12 的 ARIA 部分） | 待做，0.5 天                    |
+| **SC-3** | 显式启用 Chromium 无障碍树（A11Y-11）                                                 | 待做，0.5 天代码 + **人工验收** |
 
 - **边界**：见上表；SC-1 只动 `components/menuBar/*` 与新增的 `menuFocus.ts`，不碰主进程菜单（macOS 用原生菜单，本就不渲染这条栏）。
 - **前置**：B8 合入（键盘可达基线已在）——已满足。
