@@ -149,8 +149,19 @@ const closeAll = (): void => {
   // Invalidate any open still waiting on the recent-documents fetch, so its late
   // answer cannot reopen the menu the user just dismissed.
   openRequest += 1
+  const opened = openIndex.value
+  // Only a menu the keyboard is holding gets its focus handed back. Closing by
+  // clicking elsewhere must not steal focus from wherever the user just put it.
+  const focusWasInside =
+    opened !== null &&
+    document.querySelector('.root-dropdown')?.contains(document.activeElement) === true
   openIndex.value = null
   openItems.value = []
+  if (focusWasInside && opened !== null) {
+    nextTick().then(() => {
+      document.querySelectorAll<HTMLElement>('.menu-bar > [role="menuitem"]')[opened]?.focus()
+    })
+  }
 }
 
 const fetchRecentFiles = async (): Promise<void> => {

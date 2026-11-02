@@ -133,7 +133,7 @@ const focusRow = (index: number): void => {
   listEl.value?.querySelector<HTMLElement>(`[data-menu-index="${index}"]`)?.focus()
 }
 
-const onListKeydown = (event: KeyboardEvent): void => {
+const onListKeydown = async (event: KeyboardEvent): Promise<void> => {
   const items = props.items
   const from = focusedIndex()
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -151,6 +151,25 @@ const onListKeydown = (event: KeyboardEvent): void => {
           : lastFocusableIndex(items)
         : nextFocusableIndex(items, from, delta)
     )
+    return
+  }
+
+  if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowRight') {
+    if (from < 0) return
+    const item = items[from]
+    if (!item) return
+    if (item.children?.length) {
+      event.preventDefault()
+      event.stopPropagation()
+      openSubIndex.value = from
+      const rowEl = listEl.value?.querySelector<HTMLElement>(`[data-menu-index="${from}"]`)
+      if (rowEl) await positionSubmenu(rowEl)
+      return
+    }
+    if (event.key === 'ArrowRight') return
+    event.preventDefault()
+    event.stopPropagation()
+    onRowClick(item)
   }
 }
 </script>

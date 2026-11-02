@@ -8,6 +8,10 @@ import { closeApp, launchWithMarkdown } from './helpers'
 // at all. macOS renders the native menu instead (`titleBarStyle === 'custom'
 // && !isOsx`), so this whole file is Windows/Linux only.
 
+// `buildMenus` fixes the top-level order (file, edit, paragraph, format, view,
+// theme, help), so a position is the locale-independent way to name a menu.
+const VIEW = 4
+
 test.describe('In-window menu bar keyboard access (GUI-SC1)', () => {
   test.skip(process.platform === 'darwin', 'the custom menu bar is not rendered on macOS')
 
@@ -83,5 +87,50 @@ test.describe('In-window menu bar keyboard access (GUI-SC1)', () => {
     expect(await active()).toBe(labels[2])
     await page.keyboard.press('ArrowUp')
     expect(await active()).toBe(labels[1])
+  })
+
+  test('Enter on a focused row runs its command and closes the menu', async () => {
+    // The dispatch path of the in-window bar had no coverage at all: the specs
+    // that use `clickMenuById` drive Electron's NATIVE menu through the main
+    // process, which is a different object from these renderer-side items.
+    //
+    // Located positionally and by `aria-checked`, never by label: the app
+    // resolves its locale from the OS, so this suite runs in Chinese on this
+    // machine and English on CI — a name-based assertion would pass in one and
+    // silently fail in the other.
+    const view = page.getByRole('menubar').getByRole('menuitem').nth(VIEW)
+    await view.focus()
+    await view.press('Enter')
+
+    const checkRow = page.getByRole('menu').first().getByRole('menuitemcheckbox').first()
+    await expect(checkRow).toBeVisible()
+    const before = await checkRow.getAttribute('aria-checked')
+
+    await checkRow.focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('menu')).toHaveCount(0)
+
+    // Reopen and read the same position: the state the command was supposed to
+    // flip really flipped, so "the menu closed" is not the whole story.
+    await view.focus()
+    await view.press('Enter')
+    const again = page.getByRole('menu').first().getByRole('menuitemcheckbox').first()
+    await expect(again).toHaveAttribute('aria-checked', before === 'true' ? 'false' : 'true')
+    await page.keyboard.press('Escape')
+  })
+
+  test('Escape closes the menu and hands focus back to the top-level item', async () => {
+    const view = page.getByRole('menubar').getByRole('menuitem').nth(VIEW)
+    await view.focus()
+    await view.press('Enter')
+    await expect(page.getByRole('menu').first()).toBeVisible()
+
+    await page.keyboard.press('Escape')
+
+    await expect(page.getByRole('menu')).toHaveCount(0)
+    await expect(view).toHaveAttribute('aria-expanded', 'false')
+    // Without the hand-back the user is dropped at the top of the document and
+    // has to tab through the whole window to reach the bar again.
+    expect(await view.evaluate((el) => el === document.activeElement)).toBe(true)
   })
 })
