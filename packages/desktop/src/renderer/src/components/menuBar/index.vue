@@ -201,6 +201,12 @@ const onKeyDown = (event: KeyboardEvent): void => {
   }
   if (openIndex.value === null) return
   if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    // Only while the BAR holds the caret. This listener runs in the capture
+    // phase, so without the guard it beat the open dropdown's own handler and
+    // ArrowRight switched top-level menus instead of opening the submenu under
+    // the highlighted row. Before GUI-SC1 focus could never be inside a
+    // dropdown, so this narrows no behaviour that was reachable.
+    if (document.querySelector('.root-dropdown')?.contains(document.activeElement)) return
     const delta = event.key === 'ArrowLeft' ? -1 : 1
     const next = (openIndex.value + delta + menus.value.length) % menus.value.length
     openMenu(next)

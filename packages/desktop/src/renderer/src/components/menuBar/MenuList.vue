@@ -33,6 +33,8 @@
           item.type === 'checkbox' || item.type === 'radio' ? isChecked(item) : undefined
         "
         :aria-disabled="item.enabled === false ? 'true' : undefined"
+        :aria-haspopup="item.children?.length ? 'menu' : undefined"
+        :aria-expanded="item.children?.length ? openSubIndex === i : undefined"
         :data-menu-index="i"
         tabindex="-1"
         @click.stop="onRowClick(item)"
@@ -173,12 +175,38 @@ const onListKeydown = async (event: KeyboardEvent): Promise<void> => {
       openSubIndex.value = from
       const rowEl = listEl.value?.querySelector<HTMLElement>(`[data-menu-index="${from}"]`)
       if (rowEl) await positionSubmenu(rowEl)
+      if (event.key === 'ArrowRight' || event.key === 'Enter' || event.key === ' ') {
+        // Opening the flyout without moving focus into it leaves it reachable
+        // only by pointing: the caret stays on the parent row, whose arrows
+        // then walk the parent list. `:scope >` so a grandchild submenu cannot
+        // be grabbed from this level.
+        const first = firstFocusableIndex(item.children)
+        if (first >= 0) {
+          listEl.value
+            ?.querySelector<HTMLElement>(`:scope > .submenu [data-menu-index="${first}"]`)
+            ?.focus()
+        }
+      }
       return
     }
     if (event.key === 'ArrowRight') return
     event.preventDefault()
     event.stopPropagation()
     onRowClick(item)
+  }
+
+  if (event.key === 'ArrowLeft') {
+    if (openSubIndex.value !== null) {
+      // This list owns an open flyout: collapse it and put the caret back on
+      // the row that spawned it.
+      event.preventDefault()
+      event.stopPropagation()
+      const parent = openSubIndex.value
+      openSubIndex.value = null
+      focusRow(parent)
+    }
+    // Nothing to collapse here — let it bubble to the list that owns us, which
+    // collapses itself and refocuses its own row.
   }
 }
 </script>

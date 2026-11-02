@@ -11,6 +11,7 @@ import { closeApp, launchWithMarkdown } from './helpers'
 // `buildMenus` fixes the top-level order (file, edit, paragraph, format, view,
 // theme, help), so a position is the locale-independent way to name a menu.
 const VIEW = 4
+const EDIT = 1
 
 test.describe('In-window menu bar keyboard access (GUI-SC1)', () => {
   test.skip(process.platform === 'darwin', 'the custom menu bar is not rendered on macOS')
@@ -167,5 +168,33 @@ test.describe('In-window menu bar keyboard access (GUI-SC1)', () => {
     expect(focusedText).not.toBe('')
     expect(await items.first().evaluate((el) => el === document.activeElement)).toBe(false)
     expect(await page.getByRole('menu').count()).toBe(0)
+  })
+
+  test('ArrowRight enters a submenu and ArrowLeft comes back out', async () => {
+    // Line Ending sits under Edit as a flyout, which is the shape every
+    // submenu in this bar has. Located by its ARIA, not by a label.
+    const edit = page.getByRole('menubar').getByRole('menuitem').nth(EDIT)
+    await edit.focus()
+    await edit.press('Enter')
+
+    const parent = page.getByRole('menu').first()
+    const row = parent.locator('[aria-haspopup="menu"]').first()
+    await expect(row).toBeVisible()
+    await expect(row).toHaveAttribute('aria-expanded', 'false')
+
+    await row.focus()
+    await page.keyboard.press('ArrowRight')
+
+    await expect(row).toHaveAttribute('aria-expanded', 'true')
+    const submenu = parent.locator('> .submenu [role="menu"]')
+    await expect(submenu).toBeVisible()
+    // The point of the test: opening the flyout is worthless if the caret stays
+    // on the row that spawned it.
+    expect(await submenu.evaluate((el) => el.contains(document.activeElement))).toBe(true)
+
+    await page.keyboard.press('ArrowLeft')
+    expect(await row.evaluate((el) => el === document.activeElement)).toBe(true)
+    await expect(row).toHaveAttribute('aria-expanded', 'false')
+    await page.keyboard.press('Escape')
   })
 })
