@@ -28,7 +28,10 @@
         v-show="showDirectories"
         ref="treeWrapper"
         class="tree-wrapper"
+        role="tree"
         tabindex="0"
+        :aria-label="projectTree.name"
+        :aria-activedescendant="activeDescendantId"
         @keydown="handleTreeKeydown"
         @click="handleWrapperClick"
       >
@@ -61,6 +64,7 @@
               createCacheDirname !== projectTree.pathname
           "
           class="empty-project"
+          role="none"
         >
           <span>{{ t('sideBar.tree.emptyProject') }}</span>
           <div class="centered-group">
@@ -103,6 +107,7 @@ import { showContextMenu } from '../../contextMenu/sideBar'
 import { useI18n } from 'vue-i18n'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { nextTreeNavState, type TreeNavKey, type TreeRowModel } from './treeKeyboard'
+import { treeRowId } from './treeAria'
 import type { TreeNode } from './types'
 
 const { t } = useI18n()
@@ -184,6 +189,12 @@ const treeWrapper = ref<HTMLDivElement | null>(null)
 const kbFocusedPathname = ref<string | null>(null)
 provide('sideBarTreeKbFocus', kbFocusedPathname)
 
+// The tree is one tab stop (the wrapper); the focused row is announced through
+// aria-activedescendant instead of moving DOM focus off the wrapper.
+const activeDescendantId = computed<string | undefined>(() =>
+  kbFocusedPathname.value ? treeRowId(kbFocusedPathname.value) : undefined
+)
+
 const NAV_KEYS: TreeNavKey[] = [
   'ArrowDown',
   'ArrowUp',
@@ -199,7 +210,7 @@ const NAV_KEYS: TreeNavKey[] = [
 const gatherRows = (): { rows: TreeRowModel[]; els: HTMLElement[] } => {
   const els = Array.from(treeWrapper.value?.querySelectorAll<HTMLElement>('[data-tree-row]') ?? [])
   const rows: TreeRowModel[] = els.map((el) => ({
-    pathname: el.dataset.pathname ?? '',
+    pathname: el.dataset.treeRow ?? '',
     kind: el.dataset.kind === 'folder' ? 'folder' : 'file',
     depth: Number(el.dataset.depth ?? 0),
     expanded: el.dataset.expanded === 'true'
@@ -211,7 +222,7 @@ const gatherRows = (): { rows: TreeRowModel[]; els: HTMLElement[] } => {
 // active item (sidebarContextMenu.ts), so a minimal node reconstructed from
 // the row dataset is enough for F2 / Delete — no store lookup needed.
 const nodeFromRow = (el: HTMLElement): unknown => {
-  const pathname = el.dataset.pathname ?? ''
+  const pathname = el.dataset.treeRow ?? ''
   const isDirectory = el.dataset.kind === 'folder'
   return {
     pathname,
@@ -223,7 +234,7 @@ const nodeFromRow = (el: HTMLElement): unknown => {
 }
 
 const setKbFocus = (el: HTMLElement): void => {
-  kbFocusedPathname.value = el.dataset.pathname ?? null
+  kbFocusedPathname.value = el.dataset.treeRow ?? null
   el.scrollIntoView({ block: 'nearest' })
 }
 
@@ -235,7 +246,7 @@ const handleTreeKeydown = (event: KeyboardEvent): void => {
 
   const { rows, els } = gatherRows()
   if (rows.length === 0) return
-  const currentIndex = els.findIndex((el) => el.dataset.pathname === kbFocusedPathname.value)
+  const currentIndex = els.findIndex((el) => el.dataset.treeRow === kbFocusedPathname.value)
   const action = nextTreeNavState(rows, currentIndex, event.key as TreeNavKey)
 
   switch (action.type) {
@@ -269,7 +280,7 @@ const handleWrapperClick = (event: MouseEvent): void => {
   const row = (event.target as HTMLElement | null)?.closest?.(
     '[data-tree-row]'
   ) as HTMLElement | null
-  if (row?.dataset.pathname) kbFocusedPathname.value = row.dataset.pathname
+  if (row?.dataset.treeRow) kbFocusedPathname.value = row.dataset.treeRow
 }
 
 // Hide rename / create inputs on outside clicks. Buttons that open these

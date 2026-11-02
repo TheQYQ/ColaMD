@@ -1,5 +1,13 @@
 <template>
-  <div class="side-bar-folder">
+  <div
+    :id="treeRowId(folder.pathname)"
+    class="side-bar-folder"
+    role="treeitem"
+    :aria-label="folder.name"
+    :aria-level="depth + 1"
+    :aria-expanded="!isCollapsed"
+    :aria-selected="kbFocusedPathname === folder.pathname"
+  >
     <div
       ref="folderEl"
       class="folder-name"
@@ -38,6 +46,7 @@
     <div
       v-if="!isCollapsed"
       class="folder-contents"
+      role="group"
     >
       <tree-folder
         v-for="childFolder of folder.folders"
@@ -72,6 +81,7 @@ import { showContextMenu } from '../../contextMenu/sideBar'
 import bus from '../../bus'
 import File from './treeFile.vue'
 import { ArrowRight } from '@element-plus/icons-vue'
+import { treeRowId } from './treeAria'
 import type { TreeFolderNode } from './types'
 
 const props = defineProps<{

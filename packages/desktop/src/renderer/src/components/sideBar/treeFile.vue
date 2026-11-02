@@ -1,8 +1,14 @@
 <template>
   <div
+    :id="treeRowId(file.pathname)"
     ref="fileEl"
     :title="file.pathname"
     class="side-bar-file"
+    role="treeitem"
+    :aria-label="file.name"
+    :aria-level="depth + 1"
+    :aria-selected="kbFocusedPathname === file.pathname"
+    :aria-current="isCurrent ? 'true' : undefined"
     :style="{ 'padding-left': `${depth * 6 + 10}px`, opacity: file.isMarkdown ? 1 : 0.75 }"
     :class="[
       {
@@ -32,13 +38,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject, type Ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, inject, type Ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
 import FileIcon from './icon.vue'
 import { showContextMenu } from '../../contextMenu/sideBar'
 import bus from '../../bus'
+import { treeRowId } from './treeAria'
 import type { TreeFileNode } from './types'
 
 const props = defineProps<{
@@ -60,6 +67,10 @@ const { renameCache } = storeToRefs(projectStore)
 const { activeItem } = storeToRefs(projectStore)
 const { clipboard } = storeToRefs(projectStore)
 const { currentFile, tabs } = storeToRefs(editorStore)
+
+// `aria-current` marks the file whose document is open in the editor; the
+// visible `.current` class has always meant exactly this.
+const isCurrent = computed<boolean>(() => currentFile.value?.pathname === props.file.pathname)
 
 // from fileMixins
 const handleFileClick = (): void => {
