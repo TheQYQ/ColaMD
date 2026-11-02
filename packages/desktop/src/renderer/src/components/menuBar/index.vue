@@ -2,14 +2,20 @@
   <div
     v-if="visible"
     class="menu-bar"
+    role="menubar"
   >
     <div
       v-for="(menu, i) in menus"
       :key="menu.id"
       class="menu-item title-no-drag"
       :class="{ open: openIndex === i }"
+      role="menuitem"
+      :tabindex="rovingIndex === i ? 0 : -1"
+      aria-haspopup="menu"
+      :aria-expanded="openIndex === i ? 'true' : 'false'"
       @click.stop="toggleMenu(i, $event)"
       @mouseenter="hoverMenu(i, $event)"
+      @keydown="onItemKeydown($event, i)"
     >
       {{ menu.label }}
     </div>
@@ -30,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePreferencesStore } from '@/store/preferences'
 import { isOsx } from '@/util'
@@ -58,6 +64,10 @@ const recentFiles = ref<string[]>([])
 const menus = computed(() => buildMenus(recentFiles.value))
 
 const openIndex = ref<number | null>(null)
+// Which top-level item holds the bar's single Tab stop (WAI-ARIA roving
+// tabindex). Kept separate from `openIndex`: a menu can be open by mouse while
+// the keyboard stop sits elsewhere, and closing must not move focus.
+const rovingIndex = ref(0)
 const openItems = ref<MenuItemDef[]>([])
 const dropdownStyle = ref<Record<string, string>>({})
 
@@ -108,6 +118,31 @@ const toggleMenu = (index: number, event: MouseEvent): void => {
 const hoverMenu = (index: number, event: MouseEvent): void => {
   if (openIndex.value === null || openIndex.value === index) return
   openMenu(index, event.currentTarget as HTMLElement)
+}
+
+/**
+ * Open from the keyboard and carry focus into the dropdown. The list is
+ * teleported to <body>, so flipping `aria-expanded` alone tells a screen reader
+ * that something changed without ever saying what.
+ */
+const openMenuFromKey = async (index: number, anchor?: HTMLElement): Promise<void> => {
+  rovingIndex.value = index
+  await openMenu(index, anchor)
+  // A superseded open (another menu requested in the meantime, or the recent
+  // -documents guard) leaves nothing to focus.
+  if (openIndex.value !== index) return
+  await nextTick()
+  document.querySelector<HTMLElement>('.root-dropdown [role="menuitem"]')?.focus()
+}
+
+const onItemKeydown = async (event: KeyboardEvent, index: number): Promise<void> => {
+  if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowDown') {
+    event.preventDefault()
+    // Awaited rather than `void`-discarded: `no-void`'s allowAsStatement does
+    // not recognise a bare `void x` inside a .vue script block, and awaiting
+    // sends a rejected open to Vue's error handler instead of the void.
+    await openMenuFromKey(index, event.currentTarget as HTMLElement | undefined)
+  }
 }
 
 const closeAll = (): void => {

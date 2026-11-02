@@ -1,5 +1,8 @@
 <template>
-  <div class="menu-list">
+  <div
+    class="menu-list"
+    role="menu"
+  >
     <template
       v-for="(item, i) in items"
       :key="`${depth}-${i}`"
@@ -7,6 +10,8 @@
       <div
         v-if="item.type === 'separator'"
         class="menu-sep"
+        role="separator"
+        aria-orientation="horizontal"
       />
       <div
         v-else
@@ -15,10 +20,25 @@
           disabled: item.enabled === false,
           checked: item.checked && (item.type === 'checkbox' || item.type === 'radio')
         }"
+        :role="
+          item.type === 'checkbox'
+            ? 'menuitemcheckbox'
+            : item.type === 'radio'
+              ? 'menuitemradio'
+              : 'menuitem'
+        "
+        :aria-checked="
+          item.type === 'checkbox' || item.type === 'radio' ? isChecked(item) : undefined
+        "
+        :aria-disabled="item.enabled === false ? 'true' : undefined"
+        tabindex="-1"
         @click.stop="onRowClick(item)"
         @mouseenter="onRowHover(item, i, $event)"
       >
-        <span class="menu-check">{{ isChecked(item) ? '✓' : '' }}</span>
+        <span
+          class="menu-check"
+          aria-hidden="true"
+        >{{ isChecked(item) ? '✓' : '' }}</span>
         <span class="menu-label">{{ item.label }}</span>
         <span class="menu-hint">{{ item.children?.length ? '›' : item.hint || '' }}</span>
       </div>
