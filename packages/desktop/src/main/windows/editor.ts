@@ -536,6 +536,9 @@ class EditorWindow extends BaseWindow {
       const lineEnding = preferences.getPreferredEol()
       setTimeout(() => this._sendGate.release(), RENDERER_READY_FALLBACK_MS)
       this._sendGate.whenReady(() => {
+        // Same guard as `_sendBootstrap`: the fallback can fire after the
+        // window is gone, and `typedSend` throws on destroyed webContents.
+        if (this._windowGone(browserWindow)) return
         typedSend(browserWindow?.webContents, 'mt::bootstrap-editor', {
           addBlankTab: true,
           markdownList: [],
@@ -600,6 +603,8 @@ class EditorWindow extends BaseWindow {
     storeInfo: BufferStoreInfo,
     config: BootstrapEditorConfig
   ): void {
+    if (this._windowGone(win)) return
+
     typedSend(win.webContents, 'mt::bootstrap-editor', config)
 
     if (storeInfo.filePath) {
@@ -608,6 +613,17 @@ class EditorWindow extends BaseWindow {
       this._doOpenFilesToOpen()
       this._markdownToOpen.length = 0
     }
+  }
+
+  /**
+   * A deferred first send may only run against a live window still in READY.
+   * `destroy()` flips the lifecycle to QUITTED and nulls `browserWindow`, and
+   * both `typedSend` and `_doOpenFilesToOpen()` throw in that state. Deferred
+   * sends run from timer callbacks, so such a throw is an uncaught exception
+   * in the main process rather than a rejected renderer call.
+   */
+  private _windowGone(win: BrowserWindow | null | undefined): boolean {
+    return !win || win.isDestroyed() || this.lifecycle !== WindowLifecycle.READY
   }
 
   private _doOpenFilesToOpen(): void {
