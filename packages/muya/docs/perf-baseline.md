@@ -1,6 +1,6 @@
 # Muya Keystroke-Pipeline Performance Baseline
 
-> 説明：本文档记录 `keystrokePipeline.bench.spec.ts` 微基准的首轮实测数字与复跑方法，作为 M1 系列（M1.1 / M1.2 / M1.4）优化的前后对照基线。每轮优化合入后，请用「复跑方法」一节刷新数字并附 PR 链接。
+> 説明：本文档记录微基准的首轮实测数字与复跑方法，作为性能优化的前后对照基线。现有两份：`keystrokePipeline.bench.spec.ts`（M1 系列击键管线）与 `scrollPageRender.bench.spec.ts`（SB/PERF-04 的 ScrollPage 渲染路径）。每轮优化合入后，请用「复跑方法」一节刷新数字并附 PR 链接。
 
 > 首次记录：2026-09-09 · Windows 11 (26200, x64) · Node v22.22.0 · vitest 4.1.9 · happy-dom · 分支 `main` @ 601d5c3（exports 修复后）
 
@@ -237,3 +237,46 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/keystrokePipeline.benc
 | 2026-09-12 | perf/m1-2b-lazy-serialization (PR #25) | M1.2b：桌面每击键去全文序列化+hash（移至 pause/undo/flush-on-read）；引擎热路径无回归（1MB p95 4.0ms） | 桌面击键层 O(1) |
 | 2026-09-12 | perf/m1-3-setcontent (PR #27) | M1.3：setContent 超线性修复——lexBlock 线性遍历（marked walkTokens 的 concat 累积）+ markdownToState 栈式流处理；1MB 5004→28.2ms | 解析管线线性化 |
 | 2026-11-02 | fix/gui-b7-muya-perf (PR 待合) | GUI-B7：inputHandler 每键 tokenize 流 6→4 份（口径见上节判读行）、labels 按修订号缓存（K 块 patch 省 K−1 次全树遍历）、find 跳转改双块交换；bench 数字见上节（不在其测量面，无回归） | 桌面侧 B7 批次 |
+
+---
+
+# ScrollPage 渲染基准（SB / PERF-04）
+
+> 首次记录：2026-11-03 · Windows 11 (26300, x64) · Node v22.21.1 · vitest 4.1.9 · happy-dom · 分支 `develop` @ `68d7ee5`（SA-2 合入后）
+> 文件：`src/block/scrollPage/__tests__/scrollPageRender.bench.spec.ts` · 复跑：`pnpm -C packages/muya test:perf`（1MB 档需 `NODE_OPTIONS=--max-old-space-size=6144`，默认堆 OOM）
+
+## 测试对象
+
+| 路径         | 语义                                                                                                     |
+| ------------ | -------------------------------------------------------------------------------------------------------- |
+| `updateState` | `ScrollPage.updateState(state)` 全量重建：`empty()` 清空容器后按 state 逐块重建 DOM。这是 setContent / `_forceRender` / undo-redo 边界重建（`rebuildContents`）/ `updateContents` 增量失败兜底四条路径的共同底座 |
+| `scale`      | 渲染后容器内的 DOM 节点总数（`querySelectorAll('*')`）与顶层块数——**视口虚拟化的直接目标指标**，SB 后应为 O(视口) 而非 O(文档) |
+
+Fixture 与击键基准同源（`makeDoc`：标题/段落/列表/代码块混排，中英混合）。
+
+## 首轮实测（SB 前基线）
+
+`updateState` 为独立采样（每轮先 `getState()` 取新深拷贝，其成本已单独记录在击键基准，不计入本表）：
+
+| 档位  | updateState p50 | updateState max | 顶层块数 | DOM 节点数 |
+| ----- | --------------: | --------------: | -------: | ---------: |
+| 100KB |         321.8ms |         570.8ms |    1,470 |     13,252 |
+| 500KB |       5,131.8ms |       7,018.1ms |    7,271 |     65,551 |
+| 1MB   |      14,166.8ms |      14,571.4ms |   14,392 |    129,752 |
+
+## 观察（对应 SB）
+
+- **全量重建超线性**：100KB→500KB（5× 体积）耗时 16×；100KB→1MB（10×）耗时 44×。除块数线性增长外，`empty()` 对深层树的销毁与 snabbdom 节点创建的常数成本随树规模放大。
+- **DOM 节点 O(文档)**：1MB 档 12.97 万节点全部常驻，这是滚动/重排劣化的直接来源，也是视口占位虚拟化要砍掉的体量。
+- **SB 验收口径**：keyed 差量落地后，"仅少量块变更"的 updateState 应从 O(文档) 降到 O(变更块)（可另测：对同一 state 微调一块后的重建耗时）；视口虚拟化落地后，`scale` 的 DOM 节点数应从 O(文档) 降到 O(视口)（与视口内块数同量级，而非 12.97 万）。
+- 1MB 档样本量 n=2（单次 ~14s），比较时以 p50 为主。
+
+## 预算门禁（CI 软约束）
+
+`scrollPageRender.bench.spec.ts` 内置宽松预算断言（拦 10× 级回归）：
+
+| 操作         | 100KB | 500KB |   1MB |
+| ------------ | ----: | ----: | ----: |
+| updateState | 10000 | 30000 | 60000 |
+
+当前实测全部低于预算上限。`test:perf` 不在 CI（1MB 档 heap 需求超 ubuntu runner），预算断言在本机复跑时生效。
