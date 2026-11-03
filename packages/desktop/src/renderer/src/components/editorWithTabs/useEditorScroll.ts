@@ -15,7 +15,19 @@ import bus from '../../bus'
 export const STANDAR_Y = 320
 
 interface ScrollDeps {
-  getEditor: () => { readonly domNode?: unknown } | null
+  getEditor: () => {
+    readonly domNode?: unknown
+    // SB (PERF-04): far-target jumps materialize the document before
+    // resolving an element against rendered DOM, and the animated scroll
+    // owns the scroll position while it runs (see resolveRendered /
+    // scrollElementIntoView).
+    readonly editor?: {
+      readonly scrollPage?: {
+        materializeAll(): void
+        suppressVirtualizerSweeps(ms: number): void
+      }
+    }
+  } | null
   getSourceCode: () => boolean
   getListToc: () => ReadonlyArray<{ slug?: string }>
   getResizeObserver: () => ResizeObserver
@@ -149,6 +161,19 @@ export const useEditorScroll = (deps: ScrollDeps) => {
     })
   }
 
+  // SB (PERF-04) viewport virtualization: the target of a far jump may live
+  // in a viewport-detached block, where no rendered element exists yet.
+  // Materialize the whole document once, resolve again, and scroll - the
+  // settling scroll re-virtualizes around the destination.
+  const resolveRendered = (resolve: () => Element | null): Element | null => {
+    const first = resolve()
+    if (first) return first
+    const scrollPage = getEditor()?.editor?.scrollPage
+    if (!scrollPage) return null
+    scrollPage.materializeAll()
+    return resolve()
+  }
+
   // Smoothly scroll the editor so `anchor` sits at the standard top offset.
   // Shared by the TOC, search-highlight, and any other "reveal this element"
   // caller so the getBoundingClientRect + animatedScrollTo math lives once.
@@ -156,6 +181,11 @@ export const useEditorScroll = (deps: ScrollDeps) => {
     const container = getScrollContainer()
     if (!container || !anchor) return
     const { y } = anchor.getBoundingClientRect()
+    // SB (PERF-04): the animation owns the scroll position - virtualization
+    // sweeps mid-flight compete with it (an upward TOC jump stalled when a
+    // sweep remounted blocks the animation had already passed). One sweep
+    // after the animation settles re-windows the container.
+    getEditor()?.editor?.scrollPage?.suppressVirtualizerSweeps(duration + 400)
     animatedScrollTo(container, container.scrollTop + y - STANDAR_Y, duration)
   }
 
@@ -175,6 +205,7 @@ export const useEditorScroll = (deps: ScrollDeps) => {
   }
 
   return {
+    resolveRendered,
     getScrollContainer,
     updateActiveTocEntry,
     getCursorY,

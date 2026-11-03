@@ -59,32 +59,39 @@ const settleScrollTop = async (page: Page): Promise<number> => {
 // top-level heading whose text matches `text`, or -1. The live ATX heading
 // renders its `# ` syntax marker as part of `textContent`, so we strip leading
 // `#`/whitespace before comparing against the clean TOC label text.
+// SB (PERF-04) viewport virtualization: deep headings may not be rendered,
+// so the index comes from the sidebar TOC tree (an el-tree that renders EVERY
+// entry regardless of the editor's virtual window) - its order is the same
+// document order `resolveTocHeadingElement` maps against.
 const headingIndexByText = (page: Page, text: string): Promise<number> =>
   page.evaluate((needle) => {
-    const sel =
-      '.mu-container > h1, .mu-container > h2, .mu-container > h3, .mu-container > h4, .mu-container > h5, .mu-container > h6'
-    const headings = Array.from(document.querySelectorAll(sel))
+    const labels = Array.from(document.querySelectorAll('.side-bar-toc .el-tree-node__label'))
     const normalize = (s: string) => s.replace(/^[#\s]+/, '').trim()
-    return headings.findIndex((h) => normalize(h.textContent || '') === needle)
+    return labels.findIndex((l) => normalize(l.textContent || '') === needle)
   }, text)
 
 // Is the heading at `index` (in the top-level heading list) within the
 // scroll container's visible viewport? Compares the heading rect against the
 // container rect rather than the window, so it stays correct regardless of
 // sidebar/tab-bar chrome height.
-const isHeadingInViewport = (page: Page, index: number): Promise<boolean> =>
-  page.evaluate((idx) => {
+// By TEXT, not positional index: under viewport virtualization the rendered
+// heading list is sparse (only the mounted window), so a tree index would
+// misalign. An unrendered heading is by definition not in the viewport.
+const isHeadingInViewport = (page: Page, text: string): Promise<boolean> =>
+  page.evaluate((needle) => {
     const container = document.querySelector('.editor-component') as HTMLElement | null
     if (!container) return false
     const sel =
       '.mu-container > h1, .mu-container > h2, .mu-container > h3, .mu-container > h4, .mu-container > h5, .mu-container > h6'
-    const headings = Array.from(document.querySelectorAll(sel))
-    const target = headings[idx] as HTMLElement | undefined
+    const normalize = (s: string) => s.replace(/^[#\s]+/, '').trim()
+    const target = Array.from(document.querySelectorAll(sel)).find(
+      (h) => normalize(h.textContent || '') === needle
+    ) as HTMLElement | undefined
     if (!target) return false
     const cRect = container.getBoundingClientRect()
     const hRect = target.getBoundingClientRect()
     return hRect.top >= cRect.top - 1 && hRect.top <= cRect.bottom
-  }, index)
+  }, text)
 
 // Locate a TOC tree node label by its EXACT text. Exact matching avoids the
 // substring trap where "Heading Number 1" also matches "Heading Number 18".
@@ -145,7 +152,7 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
       if (el) el.scrollTop = 0
     })
     await expect.poll(() => getScrollTop(page)).toBe(0)
-    expect(await isHeadingInViewport(page, targetIndex)).toBe(false)
+    expect(await isHeadingInViewport(page, targetText)).toBe(false)
 
     // Click the matching el-tree node label (the real user path: this fires the
     // `scroll-to-header` bus event with the heading's slug).
@@ -155,7 +162,7 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
     // The scroll is animated (~300ms). Poll until it settles above 0.
     await expect.poll(() => getScrollTop(page), { timeout: 8000 }).toBeGreaterThan(0)
     // And the target heading must be in the viewport.
-    await expect.poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 }).toBe(true)
+    await expect.poll(() => isHeadingInViewport(page, targetText), { timeout: 8000 }).toBe(true)
   })
 
   test('clicking an earlier heading scrolls back up toward it', async () => {
@@ -176,7 +183,7 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
 
     // Scrolling up to heading 3 must reduce scrollTop substantially.
     await expect.poll(() => getScrollTop(page), { timeout: 8000 }).toBeLessThan(fromTop)
-    await expect.poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 }).toBe(true)
+    await expect.poll(() => isHeadingInViewport(page, targetText), { timeout: 8000 }).toBe(true)
   })
 
   test('clicking the same heading twice is idempotent (stays at that heading)', async () => {
@@ -186,13 +193,13 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
 
     const label = tocLabel(page, targetText)
     await label.click()
-    await expect.poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 }).toBe(true)
+    await expect.poll(() => isHeadingInViewport(page, targetText), { timeout: 8000 }).toBe(true)
     const firstScroll = await getScrollTop(page)
 
     // Click again — should land on (essentially) the same scroll position.
     await label.click()
     await page.waitForTimeout(500)
-    await expect.poll(() => isHeadingInViewport(page, targetIndex), { timeout: 8000 }).toBe(true)
+    await expect.poll(() => isHeadingInViewport(page, targetText), { timeout: 8000 }).toBe(true)
     const secondScroll = await getScrollTop(page)
     expect(Math.abs(secondScroll - firstScroll)).toBeLessThanOrEqual(5)
   })

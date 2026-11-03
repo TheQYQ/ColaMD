@@ -30,6 +30,14 @@ export interface IMuyaOptions {
     /** Engine version override. Defaults to the build-time version. */
     version?: string;
     /**
+     * SB (PERF-04): viewport virtualization - top-level blocks outside the
+     * visible band are detached behind exact-height placeholders and
+     * re-mounted on demand. The block tree stays complete, so queryBlock /
+     * selection / undo semantics are unchanged. Degrades to a no-op when
+     * there is no real layout (happy-dom tests measure zero heights).
+     */
+    virtualize?: boolean;
+    /**
      * Per-instance plugins. Merged with globally registered plugins (from
      * `Muya.use()`) during `init()`. When a per-instance plugin shares a name
      * with a global one, the per-instance entry wins — letting an embedder

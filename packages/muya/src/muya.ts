@@ -1677,6 +1677,10 @@ export class Muya {
             if (typeof destroy === 'function')
                 (destroy as () => void).call(plugin);
         }
+
+        // SB (PERF-04): drop the virtualizer's window-level scroll/resize
+        // listeners so destroyed instances stop reacting to the page.
+        this.editor.scrollPage?.detachVirtualizer();
     }
 }
 

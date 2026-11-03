@@ -281,6 +281,7 @@ export const BACK_HASH: Record<string, string> = {
 };
 
 export const MUYA_DEFAULT_OPTIONS = {
+    virtualize: true,
     fontSize: 16,
     lineHeight: 1.6,
     focusMode: false,
