@@ -140,13 +140,12 @@ const getAvailableDictionaries = async (): Promise<PrefSelectOption<string>[]> =
   })
 }
 
-const handleSpellcheckerLanguage = async (languageCode: string | number | boolean): Promise<void> => {
+const handleSpellcheckerLanguage = async (
+  languageCode: string | number | boolean
+): Promise<void> => {
   onSelectChange('spellcheckerLanguage', languageCode)
 
-  await window.electron.ipcRenderer.invoke(
-    'mt::spellchecker-switch-language',
-    String(languageCode)
-  )
+  await window.electron.ipcRenderer.invoke('mt::spellchecker-switch-language', String(languageCode))
 }
 
 const handleSpellcheckerEnabled = (isEnabled: boolean): void => {
@@ -193,7 +192,7 @@ const handleDeleteClick = (selectedItem: CustomDictionaryWord): void => {
     margin-top: 10px;
     margin-bottom: 2px;
     color: var(--editorColor);
-    font-size: 14px;
+    font-size: 13px;
   }
 }
 .el-table,

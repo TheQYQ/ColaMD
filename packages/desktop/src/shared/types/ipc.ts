@@ -284,6 +284,10 @@ export interface IpcSendChannels {
     payload: { id: string; pathname: string; newPathname: string; currentFile?: unknown }
   ]
   'mt::request-keybindings': []
+  // Emitted by the editor page once every `mt::*` listener it owns exists.
+  // The main process holds its own sends until then — see SendGate in
+  // windows/sendGate.ts for why this handshake replaced the per-channel buffer.
+  'mt::renderer-ready': []
   'mt::set-editor-format-menus-enabled': [windowId: number, enabled: boolean]
   'mt::response-export': [
     payload: {
@@ -395,7 +399,7 @@ export interface IpcMainEventChannels {
   'mt::export-success': [payload: { type: string; filePath: string }]
   'mt::force-close-tabs-by-id': [tabIds: string[]]
   'mt::discard-unsaved-tabs-and-close': [tabIds: string[]]
-  'mt::show-unsaved-dialog': [count: number]
+  'mt::show-unsaved-dialog': [fileNames: string[]]
   'mt::invalidate-image-cache': []
   // The response is a plain object map (main does Object.fromEntries over the
   // keybindings Map); it used to ride as `bindings: unknown`.

@@ -1,4 +1,7 @@
 import { t } from '../i18n'
+// Bundled at module load (see i18n/index.ts) — the English base description is
+// available regardless of the active locale.
+import enTranslations from '../../../../static/locales/en.json'
 
 const COMMAND_KEY_MAP: Record<string, string> = {
   // ============================================
@@ -43,6 +46,10 @@ const COMMAND_KEY_MAP: Record<string, string> = {
   // File close
   'file.close': 'commands.file.closeTab',
   'file.close-tab': 'commands.file.closeTab',
+  // Reuse the menu label: `commands.file.saveAll` never existed, so the palette
+  // listed the raw key (found by the new key-resolution guard in
+  // locale-validation.spec.ts while cleaning up #124).
+  'file.save-all': 'menu.file.saveAll',
   'file.close-window': 'commands.file.closeWindow',
   'file.quit': 'commands.file.quit',
 
@@ -175,6 +182,18 @@ const COMMAND_KEY_MAP: Record<string, string> = {
   'view.command-palette': 'commands.view.commandPalette',
   'view.actual-size': 'commands.view.actualSize',
   'view.text-direction': 'commands.view.textDirection',
+  // The two children need map entries of their own: the refresh in
+  // commands/index.ts overwrites every id'd command's description with
+  // `getCommandDescriptionById(id)`, which falls back to the RAW ID on a miss —
+  // so without these the palette showed `view.text-direction-ltr` after the
+  // first language refresh, clobbering the inline description (#GUI-B4 UX-13).
+  //
+  // The labels live under the preferences tree (`preferences.editor.misc.
+  // textDirection`), not `commands.misc.*`: the latter was assumed to exist
+  // when these entries were added (#124) but never did, so both the palette
+  // refresh and the inline `t()` in commands/index.ts resolved a raw key.
+  'view.text-direction-ltr': 'preferences.editor.misc.textDirection.ltr',
+  'view.text-direction-rtl': 'preferences.editor.misc.textDirection.rtl',
 
   // Developer tools
   'view.dev-reload': 'commands.view.devReload',
@@ -225,4 +244,23 @@ const COMMAND_KEY_MAP: Record<string, string> = {
 export default (id: string): string => {
   // Re-fetch the command description on each call to support dynamic language switching
   return id in COMMAND_KEY_MAP ? t(COMMAND_KEY_MAP[id]) : id
+}
+
+/**
+ * Gets the ENGLISH base description for a command ID, independent of the
+ * active locale. The command palette matches queries against it so typing
+ * English finds commands whose description is rendered in another language
+ * (#GUI-B4 UX-19). Returns '' when the id has no mapped key.
+ */
+export const getCommandBaseDescriptionById = (id: string): string => {
+  const key = COMMAND_KEY_MAP[id]
+  if (!key) return ''
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, part) =>
+        acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[part] : undefined,
+      enTranslations
+    )
+  return typeof value === 'string' ? value : ''
 }

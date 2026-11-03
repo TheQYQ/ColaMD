@@ -90,7 +90,13 @@ describe('updateSelectionMenus', () => {
 
     // Paragraph: only code/quote/ordered/bullet/task are actionable across blocks.
     expect(enabledIds(menu.paragraphItems).sort()).toEqual(
-      ['bulletListMenuItem', 'codeFencesMenuItem', 'orderListMenuItem', 'quoteBlockMenuItem', 'taskListMenuItem'].sort()
+      [
+        'bulletListMenuItem',
+        'codeFencesMenuItem',
+        'orderListMenuItem',
+        'quoteBlockMenuItem',
+        'taskListMenuItem'
+      ].sort()
     )
 
     // Format: only link/image are disabled.
@@ -150,7 +156,10 @@ describe('updateSelectionMenus — front matter', () => {
   it('disables Front Matter when the document already has front matter', () => {
     const menu = makeMenu()
 
-    updateSelectionMenus(menu as unknown as Menu, { affiliation: { p: true }, hasFrontMatter: true })
+    updateSelectionMenus(menu as unknown as Menu, {
+      affiliation: { p: true },
+      hasFrontMatter: true
+    })
 
     const fm = menu.paragraphItems.find((i) => i.id === 'frontMatterMenuItem')!
     expect(fm.enabled).toBe(false)
@@ -159,7 +168,10 @@ describe('updateSelectionMenus — front matter', () => {
   it('keeps Front Matter enabled when the document has none', () => {
     const menu = makeMenu()
 
-    updateSelectionMenus(menu as unknown as Menu, { affiliation: { p: true }, hasFrontMatter: false })
+    updateSelectionMenus(menu as unknown as Menu, {
+      affiliation: { p: true },
+      hasFrontMatter: false
+    })
 
     const fm = menu.paragraphItems.find((i) => i.id === 'frontMatterMenuItem')!
     expect(fm.enabled).toBe(true)
@@ -170,7 +182,10 @@ describe('updateSelectionMenus — format disabled in non-formattable blocks', (
   it('disables all format items in a code-fence block even without code content (math/html/frontmatter/diagram)', () => {
     const menu = makeMenu()
 
-    updateSelectionMenus(menu as unknown as Menu, { affiliation: { multiplemath: true }, isCodeFences: true })
+    updateSelectionMenus(menu as unknown as Menu, {
+      affiliation: { multiplemath: true },
+      isCodeFences: true
+    })
 
     expect(menu.formatItems.every((i) => i.enabled === false)).toBe(true)
   })
@@ -178,7 +193,11 @@ describe('updateSelectionMenus — format disabled in non-formattable blocks', (
   it('keeps format items enabled inside a table (disabled paragraph, not code)', () => {
     const menu = makeMenu()
 
-    updateSelectionMenus(menu as unknown as Menu, { affiliation: { figure: true }, isTable: true, isDisabled: true })
+    updateSelectionMenus(menu as unknown as Menu, {
+      affiliation: { figure: true },
+      isTable: true,
+      isDisabled: true
+    })
 
     expect(menu.formatItems.every((i) => i.enabled === true)).toBe(true)
   })
@@ -195,8 +214,13 @@ describe('updateSelectionMenus — list kinds', () => {
 
   it('checks ordered + bullet + task for a nested ol/task/ul affiliation', () => {
     const menu = makeMenu()
-    updateSelectionMenus(menu as unknown as Menu, { affiliation: { ol: true, task: true, ul: true } })
-    const ids = menu.paragraphItems.filter((i) => i.checked).map((i) => i.id).sort()
+    updateSelectionMenus(menu as unknown as Menu, {
+      affiliation: { ol: true, task: true, ul: true }
+    })
+    const ids = menu.paragraphItems
+      .filter((i) => i.checked)
+      .map((i) => i.id)
+      .sort()
     expect(ids).toEqual(['bulletListMenuItem', 'orderListMenuItem', 'taskListMenuItem'].sort())
   })
 
@@ -205,5 +229,97 @@ describe('updateSelectionMenus — list kinds', () => {
     updateSelectionMenus(menu as unknown as Menu, { affiliation: { task: true } })
     const loose = menu.paragraphItems.find((i) => i.id === 'looseListItemMenuItem')!
     expect(loose.enabled).toBe(true)
+  })
+})
+
+// PERF-03 (#GUI-B3): every raw `item.enabled = x` / `item.checked = x`
+// assignment pushes a native-menu sync on Windows, so the rewrite passes go
+// through guarded setters. A second selection event that derives the exact
+// same state must not write a single item.
+describe('updateSelectionMenus: guarded assignments', () => {
+  interface CountingItem {
+    id: string
+    enabled: boolean
+    checked: boolean
+  }
+
+  const makeCountingMenu = () => {
+    let writes = 0
+    const makeItems = (ids: readonly string[]): CountingItem[] =>
+      ids.map((id) => {
+        let enabled = true
+        let checked = false
+        const item = {} as CountingItem
+        Object.defineProperties(item, {
+          id: { value: id, enumerable: true },
+          enabled: {
+            get: () => enabled,
+            set: (v: boolean) => {
+              writes++
+              enabled = v
+            },
+            enumerable: true
+          },
+          checked: {
+            get: () => checked,
+            set: (v: boolean) => {
+              writes++
+              checked = v
+            },
+            enumerable: true
+          }
+        })
+        return item
+      })
+
+    const paragraphItems = makeItems(PARAGRAPH_MENU_IDS)
+    const formatItems = makeItems(FORMAT_MENU_IDS)
+    const menu = {
+      get writes() {
+        return writes
+      },
+      paragraphItems,
+      formatItems,
+      getMenuItemById: (id: string) => {
+        if (id === 'paragraphMenuEntry') return { submenu: { items: paragraphItems } }
+        if (id === 'formatMenuItem') return { submenu: { items: formatItems } }
+        return undefined
+      }
+    }
+    return menu
+  }
+
+  it('performs no item writes when the same state arrives twice', () => {
+    const menu = makeCountingMenu()
+    const state = { affiliation: { p: true }, isDisabled: false }
+
+    updateSelectionMenus(menu as unknown as Menu, state as never)
+    const writesAfterFirst = menu.writes
+    expect(writesAfterFirst).toBeGreaterThan(0)
+
+    updateSelectionMenus(menu as unknown as Menu, state as never)
+    expect(menu.writes).toBe(writesAfterFirst)
+  })
+
+  it('writes again only for the items the new state actually moves', () => {
+    const menu = makeCountingMenu()
+    updateSelectionMenus(
+      menu as unknown as Menu,
+      {
+        affiliation: { p: true },
+        isDisabled: false
+      } as never
+    )
+    const writesBefore = menu.writes
+
+    // The caret moved into a bullet list: only the checked flags move.
+    updateSelectionMenus(
+      menu as unknown as Menu,
+      {
+        affiliation: { ul: true },
+        isDisabled: false
+      } as never
+    )
+    expect(menu.writes).toBeGreaterThan(writesBefore)
   })
 })

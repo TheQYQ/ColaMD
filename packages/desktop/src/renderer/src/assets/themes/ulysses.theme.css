@@ -12,7 +12,7 @@
 
   --highlightColor: rgba(12, 139, 186, 0.4);
   --selectionColor: rgba(0, 0, 0, 0.1);
-  --editorColor: rgba(101, 101, 101, 0.7);
+  --editorColor: #6C6C6C;
   --editorColor80: rgba(101, 101, 101, 0.8);
   --editorColor60: rgba(101, 101, 101, 0.6);
   --editorColor50: rgba(101, 101, 101, 0.5);
@@ -42,7 +42,7 @@
   --buttonFocusBorder: 1px solid var(--themeColor);
 
   --buttonPrimaryFontColor: #ffffff;
-  --buttonPrimaryBgColor: var(--themeColor);
+  --buttonPrimaryBgColor: #021821;
   --buttonPrimaryBorder: none;
   --buttonPrimaryShadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
   --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
@@ -74,7 +74,7 @@
   --sideBarColor: rgba(101, 101, 101, 0.6);
   --sideBarIconColor: var(--iconColor);
   --sideBarTitleColor: rgba(101, 101, 101, 1);
-  --sideBarTextColor: rgba(101, 101, 101, 0.4);
+  --sideBarTextColor: #6E6E6E;
   --sideBarBgColor: rgba(245, 245, 245, 0.95);
   --sideBarItemHoverBgColor: rgba(101, 101, 101, 0.03);
   --itemBgColor: rgba(245, 245, 245, 0.6);
@@ -84,67 +84,15 @@
   --floatHoverColor: rgba(101, 101, 101, 0.04);
   --floatBorderColor: rgba(0, 0, 0, 0.03);
   --maskColor: rgba(232, 232, 232, 0.8);
-  --editorAreaWidth: 800px;
-
-  /* @muyajs/core (kebab-case) editor variables
-     Additive prep for the muyajs -> @muyajs/core editor swap. These
-     mirror the camelCase vars above; the legacy editor ignores them.
-     Do NOT remove the camelCase vars — they still drive the current
-     editor until editor.vue switches engines. */
-  --theme-color: var(--themeColor);
-  --highlight-color: var(--highlightColor);
-  --selection-color: var(--selectionColor);
-  --editor-color: var(--editorColor);
-  --editor-color-80: var(--editorColor80);
-  --editor-color-50: var(--editorColor50);
-  --editor-color-30: var(--editorColor30);
-  --editor-color-10: var(--editorColor10);
-  --editor-color-04: var(--editorColor04);
-  --editor-bg-color: var(--editorBgColor);
-  --editor-area-width: var(--editorAreaWidth);
-  --delete-color: var(--deleteColor);
-  --icon-color: var(--iconColor);
-  --code-block-bg-color: var(--codeBlockBgColor);
-  --table-border-color: var(--tableBorderColor);
-  --input-bg-color: var(--inputBgColor);
-  --button-font-color: var(--buttonFontColor);
-  --button-bg-color: var(--buttonBgColor);
-  --button-border: var(--buttonBorder);
-  --button-bg-color-hover: var(--buttonBgColorHover);
-  --button-border-hover: var(--buttonBorderHover);
-  --button-bg-color-active: var(--buttonBgColorActive);
-  --button-border-active: var(--buttonBorderActive);
-  --button-border-focus: var(--button-border);
-  --float-bg-color: var(--floatBgColor);
-  --float-hover-color: var(--floatHoverColor);
-  --float-border-color: var(--floatBorderColor);
-  --float-shadow: rgb(15 15 15 / 3%) 0 0 0 1px, rgb(15 15 15 / 4%) 0 3px 6px, rgb(15 15 15 / 5%) 0 9px 24px;
-  --link-color: var(--linkColor);
-  --h1-color: var(--h1Color);
-  --h2-color: var(--h2Color);
-  --h3-color: var(--h3Color);
-  --h4-color: var(--h4Color);
-  --h5-color: var(--h5Color);
-  --h6-color: var(--h6Color);
-  --blockquote-text-color: var(--blockquoteTextColor);
-  --blockquote-border-color: var(--blockquoteBorderColor);
-  --strong-color: var(--strongColor);
-  --em-color: var(--emColor);
-  --list-marker-color: var(--listMarkerColor);
-  --hr-color: var(--hrColor);
 }
 
-.editor-tabs {
-  box-shadow: none !important;
+/* GUI-SA appendix: ulysses centers headings on the theme accent, draws its
+   own list markers, blockquote canvas, tab separators and square task
+   checkboxes; the shared layer's defaults would flatten those. */
+.editor-tabs .tabs-container > li {
+  border-right: 1px solid #e5e5e5;
+  background: var(--editorBgColor);
 }
-
-.tabs-container > li {
-  border-right: 1px solid #e5e5e5 !important;
-  background: var(--editorBgColor) !important;
-}
-
-/* ------------------------------------ */
-
 .mu-container h1,
 .mu-container h2,
 .mu-container h3,
@@ -154,7 +102,6 @@
   color: var(--theme-color);
   text-align: center;
 }
-
 ul.mu-bullet-list > li.mu-list-item {
   position: relative;
   list-style: none;
@@ -169,19 +116,15 @@ ul.mu-bullet-list > li.mu-list-item::before {
   top: 15px;
   background: var(--editor-color);
 }
-
 .mu-container blockquote {
   background: rgb(233, 233, 233);
 }
 .mu-container blockquote::before {
   content: none;
 }
-
 .mu-container li.mu-list-item {
   color: var(--editor-color);
 }
-
-/*task list*/
 li.mu-task-list-item > input[type='checkbox'],
 li.mu-task-list-item > span.mu-task-list-checkbox {
   position: absolute;
@@ -193,7 +136,9 @@ li.mu-task-list-item > span.mu-task-list-checkbox {
   margin: 0;
   transform: rotate(-90deg);
   transform-origin: center;
-  transition: all 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 li.mu-task-list-item > input.mu-checkbox-checked,
 li.mu-task-list-item > span.mu-checkbox-checked {
@@ -213,7 +158,9 @@ li.mu-task-list-item > span.mu-task-list-checkbox::before {
   position: absolute;
   top: 0;
   left: 0;
-  transition: all 0.2s ease;
+  transition:
+    border 0.2s ease,
+    background-color 0.2s ease;
 }
 li.mu-task-list-item > input.mu-checkbox-checked::before,
 li.mu-task-list-item > span.mu-checkbox-checked::before {
@@ -236,14 +183,12 @@ li.mu-task-list-item > span.mu-task-list-checkbox::after {
   display: inline-block;
   top: 1px;
   left: 5px;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease;
 }
 li.mu-task-list-item > input.mu-checkbox-checked::after,
 li.mu-task-list-item > span.mu-checkbox-checked::after {
   transform: rotate(-45deg) scale(1);
 }
-
-/*horizontal line*/
 .mu-thematic-break:not(.mu-active)::before {
   width: 50%;
   left: 50%;

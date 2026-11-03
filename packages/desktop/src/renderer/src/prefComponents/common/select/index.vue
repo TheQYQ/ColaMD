@@ -13,6 +13,7 @@
         v-if="more"
         :size="14"
         class="link-icon"
+        :label="t('preferences.moreInfo')"
         @click="handleMoreClick"
       />
     </div>
@@ -40,7 +41,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import LinkIcon from '@/components/icons/LinkIcon.vue'
+import { useI18n } from 'vue-i18n'
 import type { PrefControlBaseProps, PrefSelectOption } from '../types'
+
+const { t } = useI18n()
 
 type SelectValue = string | number | boolean
 
@@ -83,7 +87,7 @@ const select = (value: SelectValue) => {
 <style>
 .pref-select-item {
   margin: 12px 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--editorColor);
   & .el-select {
     width: 100%;

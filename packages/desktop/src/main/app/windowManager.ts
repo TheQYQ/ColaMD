@@ -412,6 +412,16 @@ class WindowManager extends TypedEmitter<WindowManagerEvents> {
       editor.openTab(filePath, options, true)
     })
 
+    // #GUI-B5: release the sends this window was holding. Resolved from the
+    // sender rather than a self-reported window id, so a renderer cannot unlock
+    // a different window's queue.
+    typedOn('mt::renderer-ready', (e) => {
+      const win = BrowserWindow.fromWebContents(e.sender)
+      if (!win) return
+      const editor = this.get(win.id) as EditorWindow | undefined
+      editor?.markRendererReady()
+    })
+
     typedOn('mt::window-tab-closed', (e, pathname: string) => {
       const win = BrowserWindow.fromWebContents(e.sender)
       if (!win) return

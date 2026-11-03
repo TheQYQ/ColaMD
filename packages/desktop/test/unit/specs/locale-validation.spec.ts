@@ -190,13 +190,13 @@ describe('desktop locale validation', () => {
     const IDENTICAL_TO_ENGLISH_BASELINE: Record<string, number> = {
       'zh-CN': 68,
       'zh-TW': 62,
-      es: 82,
-      fr: 89,
-      de: 83,
+      es: 84,
+      fr: 91,
+      de: 84,
       ja: 68,
       ko: 66,
-      nl: 109,
-      pt: 80,
+      nl: 112,
+      pt: 82,
       tr: 92
     }
 
@@ -240,5 +240,31 @@ describe('desktop locale validation', () => {
         ).toBe(0)
       })
     }
+  })
+
+  describe('command description keys resolve', () => {
+    // #124: the text-direction subcommands were pointed at `commands.misc.
+    // textDirection.*`, which never existed — `t()` then returns the raw key and
+    // the palette shows `commands.misc.textDirection.ltr`. Key parity cannot
+    // catch this (both sides of the map are code, not locale files), so read the
+    // map's targets out of the source and check them against en.json.
+    it('every COMMAND_KEY_MAP target is a real English key', () => {
+      const source = fs.readFileSync(
+        path.join(__dirname, '../../../src/renderer/src/commands/descriptions.ts'),
+        'utf8'
+      )
+      const block = source.slice(
+        source.indexOf('const COMMAND_KEY_MAP'),
+        source.indexOf('\n}', source.indexOf('const COMMAND_KEY_MAP'))
+      )
+      const targets = [...block.matchAll(/'[^']+':\s*'([^']+)'/g)].map((m) => m[1])
+      expect(targets.length).toBeGreaterThan(50)
+      const missing = targets.filter((key) => typeof getByPath(en, key) !== 'string')
+      expect(
+        missing,
+        '\n  COMMAND_KEY_MAP targets missing from en.json (the palette would show the raw key):\n' +
+          missing.map((k) => `    "${k}"`).join('\n')
+      ).toEqual([])
+    })
   })
 })

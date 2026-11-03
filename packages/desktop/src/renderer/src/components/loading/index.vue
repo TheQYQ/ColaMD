@@ -1,5 +1,9 @@
 <template>
-  <div class="cpt-loading">
+  <div
+    class="cpt-loading"
+    role="status"
+    :aria-label="t('common.loading')"
+  >
     <div class="loader">
       <span
         v-for="i in 3"
@@ -12,6 +16,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   size: {

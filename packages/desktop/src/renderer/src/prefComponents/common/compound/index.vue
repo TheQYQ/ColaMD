@@ -23,7 +23,7 @@ defineProps<{
 
 <style>
 .pref-compound-item {
-  font-size: 14px;
+  font-size: 13px;
   user-select: none;
   margin: 32px 0;
   color: var(--editorColor);

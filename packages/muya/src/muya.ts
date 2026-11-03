@@ -370,7 +370,7 @@ export class Muya {
 
     private _forceRender() {
         const selection = this.editor.selection.getSelection();
-        this.editor.scrollPage?.updateState(this.getState());
+        this.editor.scrollPage?.updateState(this.getState(), { force: true });
 
         if (selection && selection.isSelectionInSameBlock) {
             const begin = Math.min(selection.anchor.offset, selection.focus.offset);
@@ -1677,6 +1677,10 @@ export class Muya {
             if (typeof destroy === 'function')
                 (destroy as () => void).call(plugin);
         }
+
+        // SB (PERF-04): drop the virtualizer's window-level scroll/resize
+        // listeners so destroyed instances stop reacting to the page.
+        this.editor.scrollPage?.detachVirtualizer();
     }
 }
 

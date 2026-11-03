@@ -15,11 +15,17 @@ import {
   findActiveHeadingIndex
 } from '@/util/sourceModeToc'
 import { storeToRefs } from 'pinia'
-import codeMirror, { setCursorAtFirstLine, setTextDirection } from '../../codeMirror'
 import { wordCount as getWordCount } from '@muyajs/core'
 import { adjustCursor } from '../../util'
 import bus from '../../bus'
 import { oneDarkThemes, railscastsThemes } from '@/config'
+import { getCodeMirrorModule, loadCodeMirrorModule } from './sourceCodeCmModule'
+
+// PERF-01 (#GUI-B5): CodeMirror (and its addons/themes) is only needed in
+// source-code mode, so the module loads on first mount of this component and
+// the whole dependency lands in its own async chunk. Every call site below is
+// guarded by `editor.value`, which only exists after the import resolved —
+// optional chaining there is behaviorally identical to the static import.
 
 // CodeMirror 5 ships no first-party types; the wrapper in src/renderer/src/
 // codeMirror/index.ts also keeps the surface intentionally loose.
@@ -59,16 +65,21 @@ watch(
   () => props.textDirection,
   (value, oldValue) => {
     if (value !== oldValue && editor.value) {
-      setTextDirection(editor.value, value)
+      getCodeMirrorModule()?.setTextDirection(editor.value, value)
     }
   }
 )
 
-const getMarkdownAndCursor = (cm: CMInstance) => {
+// PERF-02: snapshot of the document as of the last full commit. The TOC
+// highlight walk (`findActiveHeadingIndex` splits the whole text) reads this
+// instead of a fresh `cm.getValue()` on every caret tick — heading structure
+// only changes on edit, and the debounced commit refreshes it right after.
+let committedMarkdown = ''
+
+const getMuyaCursor = (cm: CMInstance) => {
   let focus = cm.getCursor('head')
   let anchor = cm.getCursor('anchor')
 
-  const markdown: string = cm.getValue()
   const convertToMuyaCursor = (cursor: CMCursor) => {
     const line = cm.getLine(cursor.line)
     const preLine = cm.getLine(cursor.line - 1)
@@ -95,6 +106,12 @@ const getMarkdownAndCursor = (cm: CMInstance) => {
     focus = anchor
     anchor = tmpCursor
   }
+  return { focus, anchor }
+}
+
+const getMarkdownAndCursor = (cm: CMInstance) => {
+  const markdown: string = cm.getValue()
+  const { focus, anchor } = getMuyaCursor(cm)
   return { cursor: { focus, anchor }, markdown }
 }
 
@@ -180,7 +197,7 @@ const handleFileChange = (payload: unknown) => {
     nextTick(restoreScroll)
     requestAnimationFrame(restoreScroll)
   } else {
-    setCursorAtFirstLine(editor.value)
+    getCodeMirrorModule()?.setCursorAtFirstLine(editor.value)
   }
 }
 
@@ -284,13 +301,14 @@ const handleImageAction = (payload: unknown) => {
     if (focus && anchor) {
       editor.value.setSelection(anchor, focus, { scroll: true })
     } else {
-      setCursorAtFirstLine(editor.value)
+      getCodeMirrorModule()?.setCursorAtFirstLine(editor.value)
     }
   }
 }
 
 const saveContent = (cm: CMInstance) => {
   const { cursor, markdown: newMarkdown } = getMarkdownAndCursor(cm)
+  committedMarkdown = newMarkdown
   // Attention: the cursor may be `{focus: null, anchor: null}` when press `backspace`
   const wordCount = getWordCount(newMarkdown)
   // See "beforeDestroy" note
@@ -309,12 +327,47 @@ const saveContent = (cm: CMInstance) => {
   }
 }
 
+// PERF-02: `cursorActivity` used to run the FULL commit on every keystroke and
+// every caret tick — two O(N) `getValue()` joins plus a full-text word count
+// per key. Now edits land here first: the O(1) keystroke tier (dirty flag +
+// auto-save re-arm) runs immediately and the O(N) serialization follows once
+// typing pauses, mirroring the WYSIWYG pipeline's tiering.
+const COMMIT_DEBOUNCE_MS = 120
+
+const runPendingCommit = () => {
+  if (commitTimer.value) {
+    clearTimeout(commitTimer.value)
+    commitTimer.value = null
+  }
+  if (viewDestroyed.value || !tabId.value || !editor.value) return
+  saveContent(editor.value)
+}
+
+const handleCmChange = () => {
+  if (viewDestroyed.value || !tabId.value) return
+  editorStore.LISTEN_FOR_CONTENT_CHANGE({ id: tabId.value, markdown: null, edit: true })
+  if (commitTimer.value) clearTimeout(commitTimer.value)
+  commitTimer.value = setTimeout(runPendingCommit, COMMIT_DEBOUNCE_MS)
+}
+
+// Flush-on-read parity with the WYSIWYG pipeline: a save (or anything else
+// that asks the active editor to flush) must see the content as of NOW, not
+// as of the last debounce tick.
+const handleFlushActiveEditor = () => {
+  if (commitTimer.value) runPendingCommit()
+}
+
 const listenChange = () => {
+  editor.value.on('change', handleCmChange)
   editor.value.on('cursorActivity', (cm: CMInstance) => {
-    saveContent(cm)
+    // O(1) caret persistence — the same shape the full commit would store,
+    // without re-serializing the document on a pure caret move.
+    if (!viewDestroyed.value && tabId.value) {
+      editorStore.PERSIST_CURSOR(tabId.value, getMuyaCursor(cm))
+    }
     // Outline follow (Typora parity): highlight the TOC entry of the section
     // the caret sits in. Heading index maps 1:1 onto the store's listToc.
-    const index = findActiveHeadingIndex(cm.getValue(), cm.getCursor('head').line)
+    const index = findActiveHeadingIndex(committedMarkdown, cm.getCursor('head').line)
     const slug = index >= 0 ? (editorStore.listToc[index]?.slug ?? '') : ''
     if (slug !== lastSourceTocSlug) {
       lastSourceTocSlug = slug
@@ -341,9 +394,7 @@ const handleScrollToHeader = (slug: unknown) => {
   if (index < 0) return
   const line = findMarkdownHeadingLine(editor.value.getValue(), index)
   if (line < 0) return
-  // `.source-code` is the scroll container (CodeMirror renders full-height with
-  // viewportMargin: Infinity, so its own scroller never scrolls).
-  scrollSourceEditorToLine(editor.value, line, sourceCodeContainer.value)
+  scrollSourceEditorToLine(editor.value, line)
 }
 
 // ---------------------------------------------------------------------------
@@ -497,17 +548,16 @@ const handleSourceReplaceValue = (payload: unknown) => {
   handleSourceSearchValue({ value: sourceSearchValue.value, opt })
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (!currentTab.value) return
   const { id } = currentTab.value
   // reset currentTab scrollTop position because the codeMirror scroll position is completely different from the muya scroll position
-  // reset blocks as well because the blocks are only valid in muya
   // reset cursor because this is a direct "key-cursor", not a muyaIndexCursor, which is {focus: number, anchor: number}
   currentTab.value.scrollTop = 0
-  currentTab.value.blocks = undefined
   currentTab.value.cursor = undefined
 
   const { markdown, muyaIndexCursor, textDirection } = props
+  committedMarkdown = markdown ?? ''
   const container = sourceCodeContainer.value
   const codeMirrorConfig: Record<string, unknown> = {
     value: markdown,
@@ -516,7 +566,13 @@ onMounted(() => {
     lineWrapping: true,
     styleActiveLine: true,
     direction: textDirection,
-    viewportMargin: Infinity,
+    // SB (PERF-04) step 3: a finite margin restores CodeMirror's viewport
+    // virtualization for huge documents — Infinity rendered every line and made
+    // the outer container the scroller. The unit is LINES, not pixels (CM5
+    // default is 10): 200 measured 230 rendered lines on a 5,050-line document
+    // (~4.6%) versus 2,032 at 1000. Landing accuracy is handled separately by
+    // the correction pass in `scrollSourceEditorToLine`.
+    viewportMargin: 200,
     lineNumberFormatter (line: number) {
       if (line % 10 === 0 || line === 1) {
         return line
@@ -535,17 +591,26 @@ onMounted(() => {
   bus.on('file-loaded', handleFileChange)
   bus.on('invalidate-image-cache', handleInvalidateImageCache)
   bus.on('file-changed', handleFileChange)
+  bus.on('flush-active-editor', handleFlushActiveEditor)
   bus.on('selectAll', handleSelectAll)
   bus.on('undo', handleUndo)
   bus.on('redo', handleRedo)
   bus.on('image-action', handleImageAction)
-  bus.on('scroll-to-header', handleScrollToHeader)
+  // `scroll-to-header` is subscribed only after `editor.value` exists (below):
+  // the CodeMirror chunk load is async, and a TOC click landing in that window
+  // would hit the handler's `!editor.value` guard and be dropped without a
+  // trace. Subscribing late means such a click simply has no source-mode
+  // handler yet (the WYSIWYG one is guarded while source mode is active).
   bus.on('searchValue', handleSourceSearchValue)
   bus.on('replaceValue', handleSourceReplaceValue)
   bus.on('find-action', handleSourceFindAction)
 
+  // Load (or reuse) the async CodeMirror chunk before constructing anything.
+  const cm = await loadCodeMirrorModule()
+  if (viewDestroyed.value || !currentTab.value) return
+
   // CodeMirror's line tree relies on object identity and must not be proxied by Vue.
-  const codeMirrorInstance = markRaw(codeMirror(container, codeMirrorConfig))
+  const codeMirrorInstance: CMInstance = markRaw(cm.default(container, codeMirrorConfig))
 
   // `markdown-math` wraps the standard Markdown mode and delegates `$...$` and
   // `$$...$$` spans to stex so subscript underscores in math do not flip the
@@ -568,31 +633,35 @@ onMounted(() => {
   if (isValidMuyaIndexCursor(muyaIndexCursor)) {
     const { anchor, focus } = muyaIndexCursor
     codeMirrorInstance.setSelection(anchor, focus, { scroll: true })
-    // Typora 1.13 parity: entering Source Code keeps the reading position.
-    // viewportMargin: Infinity means CodeMirror's own scroller never moves —
-    // scroll the outer container so the caret's line sits at the top of the
-    // viewport (same convention as scrollSourceEditorToLine).
-    if (sourceCodeContainer.value) {
-      const headLine = Math.max(0, Number(focus?.line) || 0)
-      sourceCodeContainer.value.scrollTop = codeMirrorInstance.heightAtLine(headLine, 'local')
-    }
+    // Typora 1.13 parity: entering Source Code keeps the reading position —
+    // scroll CodeMirror's own scroller so the caret's line sits at the top of
+    // the viewport (same convention as scrollSourceEditorToLine).
+    const headLine = Math.max(0, Number(focus?.line) || 0)
+    codeMirrorInstance.scrollTo(0, codeMirrorInstance.heightAtLine(headLine, 'local'))
   } else {
-    setCursorAtFirstLine(codeMirrorInstance)
+    cm.setCursorAtFirstLine(codeMirrorInstance)
   }
 
   editor.value = codeMirrorInstance
   tabId.value = id
+  bus.on('scroll-to-header', handleScrollToHeader)
 
   listenChange()
 })
 
 onBeforeUnmount(() => {
+  // PERF-02: the exit handoff must carry the CURRENT word count. It used to
+  // ride every cursorActivity commit; with the debounced commit it can still
+  // be pending here — flush it (before viewDestroyed trips the guard) or the
+  // tab keeps the previous document's count until the next edit.
+  runPendingCommit()
   viewDestroyed.value = true
   if (commitTimer.value) clearTimeout(commitTimer.value)
 
   bus.off('file-loaded', handleFileChange)
   bus.off('invalidate-image-cache', handleInvalidateImageCache)
   bus.off('file-changed', handleFileChange)
+  bus.off('flush-active-editor', handleFlushActiveEditor)
   bus.off('selectAll', handleSelectAll)
   bus.off('undo', handleUndo)
   bus.off('redo', handleRedo)
@@ -623,10 +692,24 @@ onBeforeUnmount(() => {
   overflow: auto;
 }
 .source-code .CodeMirror {
-  height: auto;
-  margin: 50px auto;
+  /* SB (PERF-04) step 3: a definite height is REQUIRED for CodeMirror's own
+     scroller to work with the finite viewportMargin — `height: auto` renders
+     the wrapper at full document height, which silently disabled CM's
+     viewport virtualization no matter what the option said. */
+  height: 100%;
+  margin: 0 auto;
   max-width: var(--editorAreaWidth);
   background: transparent;
+}
+/* The old 50px margin lived OUTSIDE the scroller; with CM owning the scroll it
+   has to move inside, or source mode would start flush against the tab bar.
+   54px = the 50px inset + the 4px CM already puts on `.CodeMirror-lines`
+   (codemirror.css), so the first line sits exactly where it used to. Inside the
+   scroller also keeps it scrolling away like the margin did, and leaves
+   `scrollTop === heightAtLine(line, 'local')` intact — CM adds the wrapper's
+   padding to that coordinate (position_measurement.js `intoCoordSystem`). */
+.source-code .CodeMirror-lines {
+  padding: 54px 0;
 }
 .source-code .CodeMirror-gutters {
   border-right: none;

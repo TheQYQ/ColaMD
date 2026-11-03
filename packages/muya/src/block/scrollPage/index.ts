@@ -8,6 +8,7 @@ import { BLOCK_DOM_PROPERTY } from '../../config';
 import { isHTMLElement, isMouseEvent } from '../../utils';
 import logger from '../../utils/logger';
 import Parent from '../base/parent';
+import { ScrollPageVirtualizer } from './virtualizer';
 
 const debug = logger('scrollpage:');
 
@@ -18,6 +19,15 @@ interface IBlurFocus {
 
 export class ScrollPage extends Parent {
     private _blurFocus: IBlurFocus = { blur: null, focus: null };
+
+    // Sorted-JSON snapshot of the reference labels the live blocks were last
+    // rendered against; updateState's keyed path diffs it to re-inline-render
+    // kept paragraphs when a definition changed outside the block tree.
+    private _labelsSnapshot = '[]';
+
+    // SB (PERF-04): viewport virtualizer — see virtualizer.ts. Null when the
+    // `virtualize` option is disabled.
+    private _virtualizer: ScrollPageVirtualizer | null = null;
 
     static override blockName = 'scrollpage';
 
@@ -78,6 +88,99 @@ export class ScrollPage extends Parent {
 
         this.createDomNode();
         this._listenDomEvent();
+
+        // SB (PERF-04): window the DOM attachment of top-level blocks. The
+        // block tree stays complete; the virtualizer only swaps real DOM
+        // against exact-height placeholders outside the visible band.
+        // Without a real layout (happy-dom) every measured height is 0 and
+        // the sweep is a no-op, so tests and benches keep the full DOM.
+        if (muya.options.virtualize !== false) {
+            this._virtualizer = new ScrollPageVirtualizer(
+                () => this.domNode ?? null,
+                () => {
+                    const children: Parent[] = [];
+                    this.children.forEach(child => children.push(child as Parent));
+                    return children;
+                },
+                block => (block as TreeNode).domNode ?? null,
+                block => this._remountSubtree(block as Parent),
+            );
+            this._virtualizer.attach();
+        }
+    }
+
+    /**
+     * Re-render the inline content of a freshly (re-)mounted block: render
+     * inputs that live outside the state JSON (search highlights, reference
+     * labels) may have changed while the block was detached.
+     */
+    private _remountSubtree(block: Parent): void {
+        block.breadthFirstTraverse((node) => {
+            if (node.isContent())
+                node.update();
+        });
+    }
+
+    /**
+     * Ensure the top-level block containing `block` has its DOM attached.
+     * Selection restore and caret jumps can target blocks far outside the
+     * virtual window; their slots are placeholders until mounted.
+     */
+    public mountFor(block: TreeNode): void {
+        if (!this._virtualizer || block === this)
+            return;
+
+        let top: TreeNode = block;
+        while (top.parent && top.parent !== this)
+            top = top.parent;
+        if (top.parent !== this)
+            return;
+
+        this._virtualizer.mount(top);
+    }
+
+    /** Drop the virtualizer's window-level listeners (muya.destroy). */
+    public detachVirtualizer(): void {
+        this._virtualizer?.detach();
+    }
+
+    /**
+     * Skip virtualization sweeps while a programmatic scroll animation owns
+     * the scroll position (see virtualizer.suppressSweeps).
+     */
+    public suppressVirtualizerSweeps(ms: number): void {
+        this._virtualizer?.suppressSweeps(ms);
+    }
+
+    /**
+     * Temporarily mount every virtualized block, for far-target jumps whose
+     * element the caller can only resolve against rendered DOM (TOC entries,
+     * search highlights, in-document anchors). The next sweep re-detaches
+     * everything outside the new window.
+     */
+    public materializeAll(): void {
+        this._virtualizer?.restoreAll();
+    }
+
+    override removeChild(node: TreeNode, source = 'user'): TreeNode {
+        // A detached block's real domNode is already out of the container —
+        // dropping only the tree entry would orphan its placeholder slot.
+        this._virtualizer?.release(node);
+        return super.removeChild(node, source);
+    }
+
+    override firstContentInDescendant() {
+        const content = super.firstContentInDescendant();
+        if (content)
+            this.mountFor(content);
+        return content;
+    }
+
+    override lastContentInDescendant() {
+        const content = super.lastContentInDescendant();
+        if (content)
+            this.mountFor(content);
+        return content;
     }
 
     override getState() {
@@ -93,15 +196,93 @@ export class ScrollPage extends Parent {
         eventCenter.attachDOMEvent(domNode!, 'click', this._clickHandler.bind(this));
     }
 
-    updateState(state: TState[]) {
+    updateState(state: TState[], options: { force?: boolean } = {}) {
         const { muya } = this;
-        // Empty scrollPage dom
-        this.empty();
-        this.append(
-            ...state.map((block) => {
-                return ScrollPage.loadBlock(block.name).create(muya, block);
-            }),
-        );
+
+        if (options.force) {
+            // Full teardown + re-create, for callers whose change is NOT
+            // reflected in the state JSON: locale refresh re-renders hint
+            // attributes, option-driven re-renders (diagram vega theme)
+            // re-invoke renderers. The keyed path below would keep every
+            // byte-identical block and miss exactly those changes.
+            this.empty();
+            this.append(
+                ...state.map((block) => {
+                    return ScrollPage.loadBlock(block.name).create(muya, block);
+                }),
+            );
+            const labels = this.muya.editor.inlineRenderer.refreshReferenceLabels();
+            this._labelsSnapshot = JSON.stringify(
+                [...labels.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+            );
+            this._virtualizer?.requestSweep(true);
+            return;
+        }
+
+        // SB (PERF-04) keyed reconcile. This method is the full-rebuild base
+        // of setContent / _forceRender / undo-redo boundary rebuilds
+        // (rebuildContents) / the updateContents error fallback, and used to
+        // pay O(document) DOM work on every invocation (14.2s + 129k DOM
+        // nodes at a 1MB doc — docs/perf-baseline.md). A live top-level
+        // block's own getState() serializes byte-identical to the matching
+        // jsonState item while their content is in sync (verified across a
+        // 1,470-block doc), so an index-wise compare keeps every untouched
+        // block and re-creates only the changed ones. All tree/DOM
+        // mutations run with 'api' source — this path must never dispatch
+        // history operations.
+        const oldChildren: Parent[] = [];
+        this.children.forEach(child => oldChildren.push(child as Parent));
+
+        const keepCount = Math.min(oldChildren.length, state.length);
+
+        // Truncate the surplus tail first: removals from the end keep the
+        // linked-list positions of the survivors valid for the loop below.
+        for (let i = oldChildren.length - 1; i >= keepCount; i--)
+            this.removeChild(oldChildren[i], 'api');
+
+        for (let i = 0; i < keepCount; i++) {
+            const old = oldChildren[i];
+            const item = state[i];
+            const detached = this._virtualizer?.isDetached(old) ?? false;
+            if (
+                !detached
+                && old.blockName === item.name
+                && JSON.stringify(old.getState()) === JSON.stringify(item)
+            ) {
+                continue;
+            }
+
+            // A detached block's real domNode is out of the container —
+            // replaceWith anchors on it and would throw. Re-attach first; the
+            // sweep at the end re-detaches it if it stays outside the window.
+            this._virtualizer?.mount(old);
+            old.replaceWith(ScrollPage.loadBlock(item.name).create(muya, item), 'api');
+        }
+
+        for (let i = keepCount; i < state.length; i++) {
+            this.insertBefore(ScrollPage.loadBlock(state[i].name).create(muya, state[i]), null, 'api');
+        }
+
+        this._virtualizer?.requestSweep(true);
+
+        // Reference definitions are render inputs OUTSIDE the block tree: a
+        // paragraph's text can be unchanged while its `[label]` anchor stops
+        // (or starts) resolving because a definition elsewhere was added,
+        // edited or dropped. Re-collect the labels and re-inline-render the
+        // kept blocks that mention any affected label — the same mechanism
+        // the incremental path uses (updateRefLinkAndImage).
+        const labels = this.muya.editor.inlineRenderer.refreshReferenceLabels();
+        const labelsSnapshot = JSON.stringify([...labels.entries()].sort(([a], [b]) =>
+            a < b ? -1 : a > b ? 1 : 0,
+        ));
+        if (labelsSnapshot !== this._labelsSnapshot) {
+            const previous = new Map(
+                JSON.parse(this._labelsSnapshot) as [string, { href: string }][],
+            );
+            const affected = new Set([...previous.keys(), ...labels.keys()]);
+            for (const label of affected) this.updateRefLinkAndImage(label);
+            this._labelsSnapshot = labelsSnapshot;
+        }
     }
 
     /**
@@ -109,6 +290,13 @@ export class ScrollPage extends Parent {
      * @param {Array} path
      */
     queryBlock(path: TBlockPath) {
+        const block = this._queryBlockImpl(path);
+        if (block)
+            this.mountFor(block as TreeNode);
+        return block;
+    }
+
+    private _queryBlockImpl(path: TBlockPath) {
         if (path.length === 0)
             return this;
 

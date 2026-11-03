@@ -69,6 +69,9 @@ class QuickOpenCommand {
   placeholder: string
   shortcut: string | null
   subcommands: QuickOpenSubcommand[]
+  /** Text the palette shows when `subcommands` ends up empty (e.g. the
+   *  empty-library guidance); absent → generic no-result line. */
+  emptyHint?: string
   subcommandSelectedIndex: number
   private _editorState: EditorState
   private _folderState: FolderState
@@ -122,9 +125,16 @@ class QuickOpenCommand {
   run = async (): Promise<void> => {
     const { _editorState, _folderState } = this
     if (!_folderState.projectTree && _editorState.tabs.length === 0) {
-      throw new Error(null as unknown as string)
+      // This used to `throw new Error(null)`, which the palette swallowed —
+      // Ctrl+P on a fresh install just did nothing, with zero feedback
+      // (#GUI-B1 UX-05). Open the panel with an empty list plus a guidance
+      // hint instead.
+      this.subcommands = []
+      this.emptyHint = t('commandPalette.quickOpenEmpty')
+      return
     }
 
+    this.emptyHint = undefined
     this.subcommands = _editorState.tabs
       .map((tab) => tab.pathname)
       // Filter untitled tabs
@@ -149,6 +159,7 @@ class QuickOpenCommand {
 
   unload = (): void => {
     this.subcommands = []
+    this.emptyHint = undefined
   }
 
   // --- private ------------------------------------------

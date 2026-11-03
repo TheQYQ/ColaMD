@@ -25,6 +25,11 @@ export default defineConfig({
   expect: { timeout: 10000 },
   // HTML report gives a browsable per-test view. Uploaded by e2e.yml.
   reporter: [['list'], ['html', { open: 'never' }]],
+  // Theme visual baseline (theme-visual-baseline.spec.ts): keep the PNGs in a
+  // fixed, committed folder instead of the platform-suffixed default. The
+  // baseline is generated and compared on Windows only (the spec skips
+  // elsewhere), so no platform segment in the name.
+  snapshotPathTemplate: '{testDir}/theme-baseline/{arg}{ext}',
   use: {
     headless: true,
     viewport: { width: 1280, height: 720 },

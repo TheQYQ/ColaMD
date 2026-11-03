@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { loadSfcSetup } from '../sfcScriptHarness'
 
 // Round 6, third batch. `menuBar/index.vue`'s `openMenu` reads the menu object
@@ -124,6 +124,10 @@ const boot = () => {
     computed,
     ref,
     watch,
+    // #GUI-SC1's keyboard entry awaits nextTick before focusing into the
+    // dropdown; the harness injects by name, so an omission here is a
+    // ReferenceError at load time rather than a lint error.
+    nextTick,
     onMounted: () => {},
     onBeforeUnmount: () => {},
     storeToRefs: () => ({ titleBarStyle }),

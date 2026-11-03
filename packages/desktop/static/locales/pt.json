@@ -33,7 +33,8 @@
       "exportEpub": "EPUB",
       "exportLatex": "LaTeX",
       "exportRtf": "RTF",
-      "exportOpml": "OPML"
+      "exportOpml": "OPML",
+      "saveAll": "Salvar tudo"
     },
     "edit": {
       "edit": "Editar",
@@ -89,7 +90,10 @@
       "resetZoom": "Redefinir Zoom",
       "fullScreen": "Tela Cheia",
       "bringAllToFront": "Trazer Todas para Frente",
-      "alwaysOnTop": "Sempre no Topo"
+      "alwaysOnTop": "Sempre no Topo",
+      "maximize": "Maximizar",
+      "restore": "Restaurar",
+      "close": "Fechar"
     },
     "help": {
       "help": "Ajuda",
@@ -126,7 +130,8 @@
       "toggleTableOfContents": "Alternar Índice",
       "reloadImages": "Recarregar Imagens",
       "showDeveloperTools": "Mostrar Ferramentas de Desenvolvedor",
-      "reloadWindow": "Recarregar Janela"
+      "reloadWindow": "Recarregar Janela",
+      "zoom": "Zoom {count}%"
     },
     "format": {
       "format": "Formato",
@@ -227,13 +232,17 @@
     "replaceSingle": "Substituir Um",
     "invalidRegex": "Expressão regular inválida \"{pattern}\"",
     "regexMatchEmpty": "Expressão regular corresponde à string vazia \"{pattern}\"",
-    "regexTimeout": "Tempo limite da expressão regular"
+    "regexTimeout": "Tempo limite da expressão regular",
+    "replacedCount": "{count} ocorrência(s) substituída(s)",
+    "close": "Fechar"
   },
   "sideBar": {
+    "resizeHandle": "Largura da barra lateral",
     "tree": {
       "emptyProject": "Projeto vazio",
       "createFile": "Criar Arquivo",
-      "openFile": "Abrir Arquivo..."
+      "openFile": "Abrir Arquivo...",
+      "newFileNamePlaceholder": "Digite o nome do arquivo .md"
     },
     "icons": {
       "files": "Arquivos",
@@ -266,6 +275,19 @@
       "minutesAgo": "há {count} min",
       "hoursAgo": "há {count} h",
       "daysAgo": "há {count} d"
+    },
+    "confirmDeleteTitle": "Excluir",
+    "confirmDeleteMessage": "Mover \"{name}\" para a lixeira?",
+    "deleted": "Movido para a lixeira",
+    "errors": {
+      "deleting": "Erro ao excluir",
+      "sideBarTitle": "Erro na barra lateral",
+      "alreadyExists": "Já existe um/a {type} com o nome \"{name}\" nesta pasta.",
+      "file": "ficheiro",
+      "folder": "pasta"
+    },
+    "toc": {
+      "empty": "Este documento não tem títulos"
     }
   },
   "commandPalette": {
@@ -274,7 +296,10 @@
       "selectOption": "Selecionar opção",
       "searchFileToOpen": "Pesquisar arquivo para abrir",
       "selectLanguage": "Selecionar idioma"
-    }
+    },
+    "noResult": "Sem resultados",
+    "quickOpenEmpty": "Abra uma pasta para pesquisar ficheiros por nome",
+    "currentSuffix": "{name} - atual"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Numeração automática de cabeçalhos",
@@ -357,7 +382,8 @@
   },
   "recent": {
     "noTabsOpen": "Você não tem abas abertas.",
-    "newFile": "Novo Arquivo"
+    "newFile": "Novo Arquivo",
+    "recentHeading": "Recentes"
   },
   "import": {
     "title": "Importar ou Abrir",
@@ -733,7 +759,7 @@
       "online": "Online",
       "saveError": "Erro ao salvar atalhos de teclado",
       "shortcutInUse": "Atalho em uso",
-      "shortcutInUseMessage": "Este atalho já está atribuído a {accelerator}",
+      "shortcutInUseMessage": "Este atalho já está atribuído a {command} ({accelerator})",
       "table": {
         "description": "Descrição",
         "edit": "Editar",
@@ -759,7 +785,8 @@
       "enableSpellChecking": "Habilitar verificação ortográfica",
       "hideMarksForErrors": "Ocultar marcas para erros ortográficos",
       "title": "Corretor Ortográfico"
-    }
+    },
+    "moreInfo": "Mais informações"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -906,7 +933,8 @@
   },
   "common": {
     "cancel": "Cancelar",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "Carregando"
   },
   "dialog": {
     "cancel": "Cancelar",
@@ -930,7 +958,8 @@
     "renameFailure": "Falha ao renomear",
     "moveFailure": "Falha ao mover",
     "openFailure": "Falha ao abrir",
-    "openRefused": "Não foi possível abrir {name}: o caminho está fora das pastas autorizadas."
+    "openRefused": "Não foi possível abrir {name}: o caminho está fora das pastas autorizadas.",
+    "moreFiles": "e mais {count}"
   },
   "error": {
     "configSchemaViolation": "Violação do esquema de configuração",
@@ -983,7 +1012,8 @@
       "columns": "Colunas"
     },
     "notifications": {
-      "notificationNotFound": "Notificação não encontrada"
+      "notificationNotFound": "Notificação não encontrada",
+      "uploadImage": "Enviar imagem"
     },
     "print": {
       "error": "Erro de impressão para \"{title}\"",
@@ -999,7 +1029,9 @@
       "languageMissing": "Idioma do corretor não encontrado {languageCode}",
       "switchError": "Erro ao alternar corretor para {languageCode}, {error}",
       "title": "Verificação Ortográfica"
-    }
+    },
+    "exporting": "Exportando…",
+    "exportDone": "Exportação concluída"
   },
   "themeMarket": {
     "error": {
@@ -1016,5 +1048,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "Clique para alternar o modo do contador",
+    "readingTime": "{count} min"
+  },
+  "autoUpdates": {
+    "update": "Atualizar",
+    "updateNotAvailable": "Nenhuma atualização disponível",
+    "updateDownloaded": "Atualização baixada",
+    "updateAvailable": "Atualização disponível"
   }
 }

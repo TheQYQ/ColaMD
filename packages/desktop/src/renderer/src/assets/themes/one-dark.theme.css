@@ -44,7 +44,7 @@
   --buttonFocusBorder: 1px solid #568af2;
 
   --buttonPrimaryFontColor: #ffffff;
-  --buttonPrimaryBgColor: linear-gradient(#557ecf, #4d78cc);
+  --buttonPrimaryBgColor: linear-gradient(#456fc4, #3d64b2);
   --buttonPrimaryBorder: 1px solid #181a1f;
   --buttonPrimaryShadow: none;
   --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
@@ -88,57 +88,16 @@
   --floatBorderColor: #181a1f;
   --floatShadow: rgba(0, 0, 0, 0.3);
   --maskColor: rgba(0, 0, 0, 0.7);
-  --editorAreaWidth: 800px;
 
-  /* @muyajs/core (kebab-case) editor variables
-     Additive prep for the muyajs -> @muyajs/core editor swap. These
-     mirror the camelCase vars above; the legacy editor ignores them.
-     Do NOT remove the camelCase vars — they still drive the current
-     editor until editor.vue switches engines. */
-  --theme-color: var(--themeColor);
-  --highlight-color: var(--highlightColor);
-  --selection-color: var(--selectionColor);
-  --editor-color: var(--editorColor);
-  --editor-color-80: var(--editorColor80);
-  --editor-color-50: var(--editorColor50);
-  --editor-color-30: var(--editorColor30);
-  --editor-color-10: var(--editorColor10);
-  --editor-color-04: var(--editorColor04);
-  --editor-bg-color: var(--editorBgColor);
-  --editor-area-width: var(--editorAreaWidth);
-  --delete-color: var(--deleteColor);
-  --icon-color: var(--iconColor);
-  --code-block-bg-color: var(--codeBlockBgColor);
-  --table-border-color: var(--tableBorderColor);
-  --input-bg-color: var(--inputBgColor);
-  --button-font-color: var(--buttonFontColor);
-  --button-bg-color: var(--buttonBgColor);
-  --button-border: var(--buttonBorder);
-  --button-bg-color-hover: var(--buttonBgColorHover);
-  --button-border-hover: var(--buttonBorderHover);
-  --button-bg-color-active: var(--buttonBgColorActive);
-  --button-border-active: var(--buttonBorderActive);
-  --button-border-focus: var(--button-border);
-  --float-bg-color: var(--floatBgColor);
-  --float-hover-color: var(--floatHoverColor);
-  --float-border-color: var(--floatBorderColor);
-  --float-shadow: rgb(15 15 15 / 3%) 0 0 0 1px, rgb(15 15 15 / 4%) 0 3px 6px, rgb(15 15 15 / 5%) 0 9px 24px;
-  --link-color: var(--linkColor);
-  --h1-color: var(--h1Color);
-  --h2-color: var(--h2Color);
-  --h3-color: var(--h3Color);
-  --h4-color: var(--h4Color);
-  --h5-color: var(--h5Color);
-  --h6-color: var(--h6Color);
-  --blockquote-text-color: var(--blockquoteTextColor);
-  --blockquote-border-color: var(--blockquoteBorderColor);
-  --strong-color: var(--strongColor);
-  --em-color: var(--emColor);
-  --list-marker-color: var(--listMarkerColor);
-  --hr-color: var(--hrColor);
+  /* GUI-SA: values the old per-file patches hardcoded (consumed by the shared patch layer). */
+  --titleBarIconColor: #ffffff;
+  --titleBarHoverBgColor: rgba(215, 218, 224, 0.05);
+  --sideBarBorderColor: #181a1f;
 }
 
-::-webkit-scrollbar,
+/* GUI-SA appendix: one-dark extends the scrollbar suite and dialog/button
+   chrome; rules targeting DOM that no longer exists (v-modal, left-column,
+   the contentless li.active:after) were dropped. */
 ::-webkit-scrollbar-corner {
   background: var(--editorBgColor);
 }
@@ -154,13 +113,6 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #4b5362;
 }
-
-/* --- Element UI ------------------------------------------------ */
-
-.v-modal {
-  background: #08090a !important;
-  opacity: 0.65 !important;
-}
 .el-dialog,
 .el-dialog.ag-dialog-table {
   border-radius: 6px !important;
@@ -168,7 +120,6 @@
   border: 1px solid #181a1f !important;
   background: #252830 !important;
 }
-
 .el-button:focus {
   color: var(--buttonFontColor);
 }
@@ -176,111 +127,22 @@
   color: var(--buttonPrimaryFontColor);
   background: var(--buttonPrimaryBgColor);
 }
-
-/* --- Core elements --------------------------------------------- */
-
-.mu-front-menu,
-.mu-float-wrapper {
-  box-shadow: 0 4px 8px 0 var(--floatShadow) !important;
-}
-
-.title-bar .frameless-titlebar-button > div > svg {
-  fill: #ffffff;
-}
-.title-bar .frameless-titlebar-minimize:hover,
-.title-bar .frameless-titlebar-toggle:hover {
-  background-color: rgba(215, 218, 224, 0.05) !important;
-}
-
 .input-wrapper {
   border-radius: 3px !important;
   border: 1px solid #181a1f !important;
   background: #1b1d23 !important;
 }
-
-/* --- UI elements ----------------------------------------------- */
-
-.side-bar {
-  border-right: 1px solid #181a1f !important;
-}
-.left-column ul > li > svg {
-  fill: rgba(215, 218, 224, 0.6) !important;
-}
-.left-column ul > li:hover > svg {
-  fill: #d7dae0 !important;
-}
-.left-column ul > li:hover > svg {
-  fill: #d7dae0 !important;
-}
-.left-column ul > li.active > svg {
-  fill: #4d78cc !important;
-}
-
-.open-project button.button-primary,
-.recent-files-projects button.button-primary {
-  box-shadow: none;
-}
-
-.editor-tabs {
-  box-shadow: none !important;
-}
-.editor-tabs:after {
-  position: absolute;
-  content: '';
-  border-bottom: 1px solid #181a1f;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 1;
-}
-.editor-tabs ul.tabs-container:after {
-  position: absolute;
-  content: '';
-  border-bottom: 1px solid #181a1f;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 2;
-}
-
-.tabs-container > li,
-.tabs-container > li.active {
-  background: var(--editorBgColor) !important;
-}
-.tabs-container > li.active {
+.editor-tabs .tabs-container > li.active {
   border: 1px solid #181a1f;
   border-bottom: none;
 }
-.tabs-container > li.active:after {
-  top: 0 !important;
-  right: auto !important;
-  width: 2px !important;
-  height: auto !important;
-  background: #4d78cc !important;
-}
-.tabs-container svg.close-icon #unsaved-circle-icon {
-  fill: #4d78cc;
-}
-
-/* --- Editor ---------------------------------------------------- */
-
 blockquote::before {
   background: var(--highlightThemeColor);
 }
-
-:not(pre) > code[class*='language-'],
-pre:not(.CodeMirror-line),
-pre[class*='language-'],
-pre.mu-code-block {
-  background: var(--codeBlockBgColor) !important;
-  border: none !important;
-}
-
 .mu-thematic-break:not(.mu-active)::before {
-  border-top: 2px dashed #4b5362 !important;
-  background: none !important;
+  border-top: 2px dashed #4b5362;
+  background: none;
 }
-
 li.mu-task-list-item {
   list-style-type: none;
   position: relative;
@@ -295,7 +157,9 @@ li.mu-task-list-item > input[type='checkbox'] {
   margin: 0;
   left: -24px;
   transform-origin: center;
-  transition: all 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 li.mu-task-list-item > input.mu-checkbox-checked {
   transform: rotate(0);
@@ -313,7 +177,9 @@ li.mu-task-list-item > input[type='checkbox']::before {
   position: absolute;
   top: 0;
   left: 0;
-  transition: all 0.2s ease;
+  transition:
+    border 0.2s ease,
+    background-color 0.2s ease;
 }
 li.mu-task-list-item > input.mu-checkbox-checked::before {
   border: transparent;
@@ -331,20 +197,8 @@ li.mu-task-list-item > input::after {
   display: inline-block;
   top: 1px;
   left: 5px;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease;
 }
 li.mu-task-list-item > input.mu-checkbox-checked::after {
   transform: rotate(-45deg) scale(1);
 }
-figure.mu-active.mu-math-block > div.mu-math-preview,
-figure.mu-active.mu-diagram-block > div.mu-diagram-preview {
-  box-shadow: 0 3px 8px 0 var(--floatShadow) !important;
-}
-
-/* ------------------------------------ */
-
-/*
- * Prism.js theme (override light theme)
- */
-
-/* @import url("prismjs/one-dark.theme.css"); */

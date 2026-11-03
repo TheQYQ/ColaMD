@@ -33,7 +33,8 @@
       "exportEpub": "EPUB",
       "exportLatex": "LaTeX",
       "exportRtf": "RTF",
-      "exportOpml": "OPML"
+      "exportOpml": "OPML",
+      "saveAll": "Tout enregistrer"
     },
     "edit": {
       "edit": "Édition",
@@ -89,7 +90,10 @@
       "resetZoom": "Réinitialiser le zoom",
       "fullScreen": "Plein écran",
       "bringAllToFront": "Tout amener au premier plan",
-      "alwaysOnTop": "Toujours au premier plan"
+      "alwaysOnTop": "Toujours au premier plan",
+      "maximize": "Agrandir",
+      "restore": "Restaurer",
+      "close": "Fermer"
     },
     "help": {
       "help": "Aide",
@@ -126,7 +130,8 @@
       "toggleTableOfContents": "Basculer la table des matières",
       "reloadImages": "Recharger les images",
       "showDeveloperTools": "Afficher les outils de développement",
-      "reloadWindow": "Recharger la fenêtre"
+      "reloadWindow": "Recharger la fenêtre",
+      "zoom": "Zoom {count}%"
     },
     "format": {
       "format": "Format",
@@ -227,13 +232,17 @@
     "replaceSingle": "Remplacer un",
     "invalidRegex": "Expression régulière invalide \"{pattern}\"",
     "regexMatchEmpty": "L'expression régulière correspond à une chaîne vide \"{pattern}\"",
-    "regexTimeout": "Délai dépassé pour l'expression régulière"
+    "regexTimeout": "Délai dépassé pour l'expression régulière",
+    "replacedCount": "{count} remplacement(s) effectué(s)",
+    "close": "Fermer"
   },
   "sideBar": {
+    "resizeHandle": "Largeur de la barre latérale",
     "tree": {
       "emptyProject": "Projet vide",
       "createFile": "Créer un fichier",
-      "openFile": "Ouvrir un fichier..."
+      "openFile": "Ouvrir un fichier...",
+      "newFileNamePlaceholder": "Saisir le nom du fichier .md"
     },
     "icons": {
       "files": "Fichiers",
@@ -266,6 +275,19 @@
       "minutesAgo": "il y a {count} min",
       "hoursAgo": "il y a {count} h",
       "daysAgo": "il y a {count} j"
+    },
+    "confirmDeleteTitle": "Supprimer",
+    "confirmDeleteMessage": "Déplacer « {name} » vers la corbeille ?",
+    "deleted": "Déplacé vers la corbeille",
+    "errors": {
+      "deleting": "Erreur lors de la suppression",
+      "sideBarTitle": "Erreur dans le panneau latéral",
+      "alreadyExists": "Un {type} nommé « {name} » existe déjà dans ce dossier.",
+      "file": "fichier",
+      "folder": "dossier"
+    },
+    "toc": {
+      "empty": "Ce document n'a aucun titre"
     }
   },
   "commandPalette": {
@@ -274,7 +296,10 @@
       "selectOption": "Sélectionner une option",
       "searchFileToOpen": "Rechercher un fichier à ouvrir",
       "selectLanguage": "Sélectionner la langue"
-    }
+    },
+    "noResult": "Aucun résultat",
+    "quickOpenEmpty": "Ouvrez un dossier pour rechercher des fichiers par nom",
+    "currentSuffix": "{name} - actuel"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Numérotation automatique des titres",
@@ -357,7 +382,8 @@
   },
   "recent": {
     "noTabsOpen": "Vous n'avez aucun onglet ouvert.",
-    "newFile": "Nouveau fichier"
+    "newFile": "Nouveau fichier",
+    "recentHeading": "Récents"
   },
   "import": {
     "title": "Importer ou ouvrir",
@@ -733,7 +759,7 @@
       "online": "En ligne",
       "saveError": "Erreur lors de l'enregistrement des raccourcis clavier",
       "shortcutInUse": "Raccourci en cours d'utilisation",
-      "shortcutInUseMessage": "Ce raccourci est déjà assigné à {accelerator}",
+      "shortcutInUseMessage": "Ce raccourci est déjà attribué à {command} ({accelerator})",
       "table": {
         "description": "Description",
         "edit": "Modifier",
@@ -759,7 +785,8 @@
       "enableSpellChecking": "Activer la vérification orthographique",
       "hideMarksForErrors": "Masquer les marques d'erreurs orthographiques",
       "title": "Vérification orthographique"
-    }
+    },
+    "moreInfo": "Plus d'informations"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -906,7 +933,8 @@
   },
   "common": {
     "cancel": "Annuler",
-    "ok": "OK"
+    "ok": "OK",
+    "loading": "Chargement"
   },
   "dialog": {
     "cancel": "Annuler",
@@ -930,7 +958,8 @@
     "renameFailure": "Échec du renommage",
     "moveFailure": "Échec du déplacement",
     "openFailure": "Échec d’ouverture",
-    "openRefused": "Impossible d’ouvrir {name} : le chemin est en dehors des dossiers autorisés."
+    "openRefused": "Impossible d’ouvrir {name} : le chemin est en dehors des dossiers autorisés.",
+    "moreFiles": "et {count} autres"
   },
   "error": {
     "configSchemaViolation": "Violation du schéma de configuration",
@@ -983,7 +1012,8 @@
       "columns": "Colonnes"
     },
     "notifications": {
-      "notificationNotFound": "Notification introuvable"
+      "notificationNotFound": "Notification introuvable",
+      "uploadImage": "Téléverser l’image"
     },
     "print": {
       "error": "Erreur d'impression pour \"{title}\"",
@@ -999,7 +1029,9 @@
       "languageMissing": "Langue du correcteur manquante {languageCode}",
       "switchError": "Erreur de changement du correcteur pour {languageCode}, {error}",
       "title": "Vérification orthographique"
-    }
+    },
+    "exporting": "Export…",
+    "exportDone": "Export terminé"
   },
   "themeMarket": {
     "error": {
@@ -1016,5 +1048,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "Cliquez pour changer de mode de comptage",
+    "readingTime": "{count} min"
+  },
+  "autoUpdates": {
+    "update": "Mettre à jour",
+    "updateNotAvailable": "Pas de mise à jour disponible",
+    "updateDownloaded": "Mise à jour téléchargée",
+    "updateAvailable": "Mise à jour disponible"
   }
 }

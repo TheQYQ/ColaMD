@@ -15,7 +15,19 @@ import bus from '../../bus'
 export const STANDAR_Y = 320
 
 interface ScrollDeps {
-  getEditor: () => { readonly domNode?: unknown } | null
+  getEditor: () => {
+    readonly domNode?: unknown
+    // SB (PERF-04): far-target jumps materialize the document before
+    // resolving an element against rendered DOM, and the animated scroll
+    // owns the scroll position while it runs (see resolveRendered /
+    // scrollElementIntoView).
+    readonly editor?: {
+      readonly scrollPage?: {
+        materializeAll(): void
+        suppressVirtualizerSweeps(ms: number): void
+      }
+    }
+  } | null
   getSourceCode: () => boolean
   getListToc: () => ReadonlyArray<{ slug?: string }>
   getResizeObserver: () => ResizeObserver
@@ -37,6 +49,39 @@ export const useEditorScroll = (deps: ScrollDeps) => {
   // when the viewport sits above the first heading).
   const activeTocSlug = ref('')
   let tocHighlightScheduled = false
+
+  // PERF-11 (#GUI-B6): the per-frame `querySelectorAll` over the whole document
+  // was the dominant half of the highlight cost on long documents. The element
+  // list is cached against the listToc identity (the store only rebuilds it
+  // when the heading set actually changed) and re-validated in O(1) via
+  // `isConnected` — muya rebuilds block nodes on tab switches/content resets,
+  // which always refreshes listToc with them.
+  let cachedHeadings: HTMLElement[] | null = null
+  let cachedForToc: ReadonlyArray<{ slug?: string }> | null = null
+  const getHeadings = (container: HTMLElement): HTMLElement[] => {
+    const toc = getListToc()
+    // Nothing in the outline means no heading can match below, so skip the scan
+    // outright — that is the cheap half of PERF-11 for heading-less documents.
+    if (toc.length === 0) return []
+    // `length > 0` is load-bearing: `[0]?.isConnected` on an empty array is
+    // `undefined`, which is `!== false`, so an empty first-frame result (muya
+    // had not rendered the blocks yet) used to read as a valid cache hit and
+    // lock the highlight off until listToc changed identity.
+    if (
+      cachedHeadings &&
+      cachedHeadings.length > 0 &&
+      cachedForToc === toc &&
+      cachedHeadings[0].isConnected
+    ) {
+      return cachedHeadings
+    }
+    cachedHeadings = Array.from(
+      container.querySelectorAll<HTMLElement>('.mu-atx-heading, .mu-setext-heading')
+    )
+    cachedForToc = toc
+    return cachedHeadings
+  }
+
   const updateActiveTocEntry = () => {
     if (tocHighlightScheduled) return
     tocHighlightScheduled = true
@@ -44,7 +89,7 @@ export const useEditorScroll = (deps: ScrollDeps) => {
       tocHighlightScheduled = false
       const container = getScrollContainer()
       if (!container || getSourceCode()) return
-      const headings = container.querySelectorAll('.mu-atx-heading, .mu-setext-heading')
+      const headings = getHeadings(container)
       let slug = ''
       if (headings.length > 0) {
         const containerTop = container.getBoundingClientRect().top
@@ -116,6 +161,19 @@ export const useEditorScroll = (deps: ScrollDeps) => {
     })
   }
 
+  // SB (PERF-04) viewport virtualization: the target of a far jump may live
+  // in a viewport-detached block, where no rendered element exists yet.
+  // Materialize the whole document once, resolve again, and scroll - the
+  // settling scroll re-virtualizes around the destination.
+  const resolveRendered = (resolve: () => Element | null): Element | null => {
+    const first = resolve()
+    if (first) return first
+    const scrollPage = getEditor()?.editor?.scrollPage
+    if (!scrollPage) return null
+    scrollPage.materializeAll()
+    return resolve()
+  }
+
   // Smoothly scroll the editor so `anchor` sits at the standard top offset.
   // Shared by the TOC, search-highlight, and any other "reveal this element"
   // caller so the getBoundingClientRect + animatedScrollTo math lives once.
@@ -123,6 +181,11 @@ export const useEditorScroll = (deps: ScrollDeps) => {
     const container = getScrollContainer()
     if (!container || !anchor) return
     const { y } = anchor.getBoundingClientRect()
+    // SB (PERF-04): the animation owns the scroll position - virtualization
+    // sweeps mid-flight compete with it (an upward TOC jump stalled when a
+    // sweep remounted blocks the animation had already passed). One sweep
+    // after the animation settles re-windows the container.
+    getEditor()?.editor?.scrollPage?.suppressVirtualizerSweeps(duration + 400)
     animatedScrollTo(container, container.scrollTop + y - STANDAR_Y, duration)
   }
 
@@ -142,6 +205,7 @@ export const useEditorScroll = (deps: ScrollDeps) => {
   }
 
   return {
+    resolveRendered,
     getScrollContainer,
     updateActiveTocEntry,
     getCursorY,

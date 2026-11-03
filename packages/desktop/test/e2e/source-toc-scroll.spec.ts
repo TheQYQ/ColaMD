@@ -10,10 +10,10 @@ import {
 } from './helpers'
 
 // colamd #3580: clicking a TOC entry in SOURCE CODE mode must scroll the
-// editor to that heading and place it near the TOP of the viewport. The editor
-// runs CodeMirror with viewportMargin: Infinity, so the OUTER `.source-code`
-// container is the scrollable element — neither cm.scrollTo nor cm.scrollIntoView
-// moves it.
+// editor to that heading and place it near the TOP of the viewport. Since SB
+// (PERF-04) step 3 the editor runs a finite `viewportMargin`, so CodeMirror's
+// OWN `.CodeMirror-scroll` is the scrollable element again (the outer
+// `.source-code` container no longer overflows).
 const HEADING_COUNT = 20
 const buildLongDoc = (): string => {
   const parts: string[] = []
@@ -28,7 +28,17 @@ const buildLongDoc = (): string => {
 
 const srcScrollTop = (page: Page): Promise<number> =>
   page.evaluate(() => {
-    const el = document.querySelector('.source-code') as HTMLElement | null
+    const el = document.querySelector('.CodeMirror-scroll') as HTMLElement | null
+    return el ? Math.round(el.scrollTop) : -1
+  })
+
+// #149: the hidden WYSIWYG container still has its own scroll position in source
+// mode. Before the guard, a TOC click ran the engine's scroll-to-heading too
+// (materializing detached blocks on large documents); the only observable trace
+// is that this scrollTop moved while the source editor was the visible one.
+const wysiwygScrollTop = (page: Page): Promise<number> =>
+  page.evaluate(() => {
+    const el = document.querySelector('.editor-component') as HTMLElement | null
     return el ? Math.round(el.scrollTop) : -1
   })
 
@@ -51,10 +61,11 @@ const settleScrollTop = async (page: Page): Promise<number> => {
 }
 
 // Distance of the `# Heading Number N` source line from the top of the
-// `.source-code` viewport (CodeMirror renders all lines, so the line is in the DOM).
+// CodeMirror viewport. Only lines inside the rendered slice exist in the DOM,
+// so this is only meaningful once the jump has landed — never before it.
 const headingLineTopInViewport = (page: Page, text: string): Promise<number | null> =>
   page.evaluate((needle) => {
-    const container = document.querySelector('.source-code') as HTMLElement | null
+    const container = document.querySelector('.CodeMirror-scroll') as HTMLElement | null
     const lines = Array.from(document.querySelectorAll('.source-code .CodeMirror-line'))
     const target = lines.find((l) => (l.textContent || '').includes(needle)) as
       | HTMLElement
@@ -92,20 +103,33 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
 
   test('clicking a deep heading scrolls down and lands it near the top', async () => {
     await page.evaluate(() => {
-      const el = document.querySelector('.source-code') as HTMLElement | null
+      const el = document.querySelector('.CodeMirror-scroll') as HTMLElement | null
       if (el) el.scrollTop = 0
     })
     await expect.poll(() => srcScrollTop(page)).toBe(0)
+    const muyaBefore = await wysiwygScrollTop(page)
+    // Guard against a vacuous pass: the hidden engine container has to be
+    // scrollable for "its scrollTop did not move" to mean anything.
+    expect(
+      await page.evaluate(() => {
+        const el = document.querySelector('.editor-component') as HTMLElement | null
+        return !!el && el.scrollHeight > el.clientHeight
+      })
+    ).toBe(true)
 
     await page.locator('.side-bar-toc').getByText('Heading Number 18', { exact: true }).click()
 
     // animated scroll down
     await expect.poll(() => srcScrollTop(page), { timeout: 8000 }).toBeGreaterThan(0)
+    // Assert the RESTING position. Reading straight after the poll caught the
+    // heading mid-flight on CI (-11px, still travelling past the top edge),
+    // which is the exact thing the `> -5` bound is meant to reject.
+    await settleScrollTop(page)
+    const deepTop = (await headingLineTopInViewport(page, 'Heading Number 18')) ?? -999
     // heading sits near the TOP of the viewport (not the bottom)
-    await expect
-      .poll(() => headingLineTopInViewport(page, 'Heading Number 18'), { timeout: 8000 })
-      .toBeLessThan(150)
-    expect(await headingLineTopInViewport(page, 'Heading Number 18')).toBeGreaterThan(-5)
+    expect(deepTop).toBeLessThan(150)
+    expect(deepTop).toBeGreaterThan(-5)
+    expect(await wysiwygScrollTop(page)).toBe(muyaBefore)
   })
 
   test('clicking an earlier heading scrolls back up to it at the top', async () => {
@@ -119,8 +143,7 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
     const fromTop = await settleScrollTop(page)
     await page.locator('.side-bar-toc').getByText('Heading Number 3', { exact: true }).click()
     await expect.poll(() => srcScrollTop(page), { timeout: 8000 }).toBeLessThan(fromTop)
-    await expect
-      .poll(() => headingLineTopInViewport(page, 'Heading Number 3'), { timeout: 8000 })
-      .toBeLessThan(150)
+    await settleScrollTop(page)
+    expect((await headingLineTopInViewport(page, 'Heading Number 3')) ?? -999).toBeLessThan(150)
   })
 })

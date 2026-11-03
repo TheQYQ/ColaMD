@@ -94,7 +94,9 @@ for (const m of MIRRORS) {
 
 /** Registers the mirrors against a fake engine; `mounted: false` models the
  *  window before an engine instance exists. */
-function buildSync(mounted = true): void {
+let lastFlush: (() => void) | null = null
+
+function buildSync(mounted = true, disarm = true): void {
   t.registered.length = 0
   t.calls.length = 0
   t.fnWatchers = 0
@@ -107,12 +109,17 @@ function buildSync(mounted = true): void {
     }
   }
   const editorRef: { value: unknown } = { value: mounted ? engine : null }
-  useEngineOptionSync({
+  const sync = useEngineOptionSync({
     editor: editorRef,
     preferencesStore: { plantumlServer: 'N' },
     resolveEditorFont: (family: string) => `resolved(${family})`,
     prefs
-  } as never)
+  } as never) as { flushBootstrapOptions: () => void }
+  // The per-mirror transcript below runs in live mode: disarm the startup
+  // batch (nothing batched yet) so each cb pushes exactly as before. The
+  // bootstrap-batch describe builds with `disarm: false` instead.
+  if (disarm) sync.flushBootstrapOptions()
+  lastFlush = sync.flushBootstrapOptions
 }
 
 function sample(m: Mirror): unknown {
@@ -181,5 +188,51 @@ describe('engine option mirrors', () => {
       expect(() => r.cb('NEW', 'OLD')).not.toThrow()
       expect(t.calls).toEqual([])
     }
+  })
+})
+
+// PERF-06 (#GUI-B6): the FIRST tick of preference changes is batched into one
+// forced setOptions — the startup broadcast used to trigger one whole-document
+// re-parse per forced mirror.
+describe('engine option mirrors: bootstrap batch', () => {
+  beforeEach(() => {
+    buildSync(true, false)
+  })
+
+  it('collects the first tick and pushes one forced setOptions plus the indent call', async () => {
+    const { nextTick } = await import('vue')
+    for (const [slot, value] of [
+      ['fontSize', 'N'],
+      ['sequenceTheme', 'N'],
+      ['listIndentation', 2]
+    ] as Array<[string, unknown]>) {
+      const r = t.registered.find((x) => x.label === slot)
+      r?.cb(value, 'OLD')
+    }
+    expect(t.calls).toEqual([]) // nothing pushed while the batch is open
+
+    await nextTick()
+    await nextTick()
+    expect(t.calls).toEqual([
+      'setOptions({"fontSize":"N","sequenceTheme":"N"}, true)',
+      'setListIndentation(2)'
+    ])
+
+    // The batch is one-shot: the next change pushes per-mirror again.
+    t.calls.length = 0
+    const r = t.registered.find((x) => x.label === 'fontSize')
+    r?.cb('M', 'N')
+    expect(t.calls).toEqual(['setOptions({"fontSize":"M"})'])
+  })
+
+  it('stays silent when the engine disappears before the flush', async () => {
+    const { nextTick } = await import('vue')
+    buildSync(false)
+    const r = t.registered.find((x) => x.label === 'fontSize')
+    r?.cb('N', 'OLD')
+    await nextTick()
+    await nextTick()
+    expect(t.calls).toEqual([])
+    expect(lastFlush).toBeTypeOf('function')
   })
 })

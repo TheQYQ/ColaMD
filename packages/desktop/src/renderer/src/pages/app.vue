@@ -123,9 +123,9 @@ const hasCurrentFile = computed<boolean>(() => {
 })
 
 // Watchers
-watch(theme, (value, oldValue) => {
+watch(theme, async (value, oldValue) => {
   if (value !== oldValue) {
-    addThemeStyle(value)
+    await addThemeStyle(value)
   }
 })
 
@@ -230,7 +230,11 @@ onMounted(async () => {
 
   setupDragDropHandler()
 
-  nextTick(() => {
+  // Last on purpose: the main process holds its `mt::*` sends until this
+  // arrives, so it must not be emitted before the listeners above exist.
+  window.electron.ipcRenderer.send('mt::renderer-ready')
+
+  nextTick(async () => {
     // `initialState` from bootstrap carries nullable URL params (string|null);
     // `addStyles` requires non-null `theme` / `codeFontFamily` strings.
     // Coalesce against DEFAULT_STYLE for every nullable field.
@@ -241,7 +245,7 @@ onMounted(async () => {
       codeFontSize: init?.codeFontSize ?? DEFAULT_STYLE.codeFontSize,
       hideScrollbar: init?.hideScrollbar ?? DEFAULT_STYLE.hideScrollbar
     }
-    addStyles(style)
+    await addStyles(style)
   })
 })
 </script>

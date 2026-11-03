@@ -33,7 +33,8 @@
       "exportEpub": "EPUB",
       "exportLatex": "LaTeX",
       "exportRtf": "RTF",
-      "exportOpml": "OPML"
+      "exportOpml": "OPML",
+      "saveAll": "모두 저장"
     },
     "edit": {
       "edit": "편집",
@@ -89,7 +90,10 @@
       "resetZoom": "줌 초기화",
       "fullScreen": "전체 화면",
       "bringAllToFront": "모든 창 앞으로 가져오기",
-      "alwaysOnTop": "항상 위에"
+      "alwaysOnTop": "항상 위에",
+      "maximize": "최대화",
+      "restore": "복원",
+      "close": "닫기"
     },
     "help": {
       "help": "도움말",
@@ -126,7 +130,8 @@
       "toggleTableOfContents": "목차 토글",
       "reloadImages": "이미지 새로고침",
       "showDeveloperTools": "개발자 도구 보기",
-      "reloadWindow": "창 새로고침"
+      "reloadWindow": "창 새로고침",
+      "zoom": "확대/축소 {count}%"
     },
     "format": {
       "format": "서식",
@@ -227,13 +232,17 @@
     "replaceSingle": "하나 바꾸기",
     "invalidRegex": "잘못된 정규식 \"{pattern}\"",
     "regexMatchEmpty": "정규식이 빈 문자열 \"{pattern}\"과 일치",
-    "regexTimeout": "정규식 시간 초과"
+    "regexTimeout": "정규식 시간 초과",
+    "replacedCount": "{count}곳을 바꿨습니다",
+    "close": "닫기"
   },
   "sideBar": {
+    "resizeHandle": "사이드바 너비",
     "tree": {
       "emptyProject": "빈 프로젝트",
       "createFile": "파일 만들기",
-      "openFile": "파일 열기..."
+      "openFile": "파일 열기...",
+      "newFileNamePlaceholder": ".md 파일 이름 입력"
     },
     "icons": {
       "files": "파일",
@@ -266,6 +275,19 @@
       "minutesAgo": "{count}분 전",
       "hoursAgo": "{count}시간 전",
       "daysAgo": "{count}일 전"
+    },
+    "confirmDeleteTitle": "삭제",
+    "confirmDeleteMessage": "\"{name}\"을(를) 휴지통으로 이동할까요?",
+    "deleted": "휴지통으로 이동했습니다",
+    "errors": {
+      "deleting": "삭제 중 오류",
+      "sideBarTitle": "사이드바 오류",
+      "alreadyExists": "이 폴더에 같은 이름의 {type} \"{name}\"이(가) 이미 있습니다.",
+      "file": "파일",
+      "folder": "폴더"
+    },
+    "toc": {
+      "empty": "이 문서에는 제목이 없습니다"
     }
   },
   "commandPalette": {
@@ -274,7 +296,10 @@
       "selectOption": "옵션 선택",
       "searchFileToOpen": "열 파일 검색",
       "selectLanguage": "언어 선택"
-    }
+    },
+    "noResult": "일치하는 결과가 없습니다",
+    "quickOpenEmpty": "폴더를 열면 파일 이름으로 검색할 수 있습니다",
+    "currentSuffix": "{name} - 현재"
   },
   "exportSettings": {
     "autoNumberingHeadings": "제목 자동 번호 매기기",
@@ -357,7 +382,8 @@
   },
   "recent": {
     "noTabsOpen": "열린 탭이 없습니다.",
-    "newFile": "새 파일"
+    "newFile": "새 파일",
+    "recentHeading": "최근 문서"
   },
   "import": {
     "title": "가져오기 또는 열기",
@@ -733,7 +759,7 @@
       "online": "온라인",
       "saveError": "키 바인딩 저장 오류",
       "shortcutInUse": "사용 중인 단축키",
-      "shortcutInUseMessage": "이 단축키는 이미 {accelerator}에 할당되어 있습니다",
+      "shortcutInUseMessage": "이 단축키는 {command}({accelerator})에 이미 할당되어 있습니다",
       "table": {
         "description": "설명",
         "edit": "편집",
@@ -759,7 +785,8 @@
       "enableSpellChecking": "맞춤법 검사 활성화",
       "hideMarksForErrors": "맞춤법 오류 표시 숨기기",
       "title": "맞춤법 검사기"
-    }
+    },
+    "moreInfo": "자세히 보기"
   },
   "about": {
     "copyright": "Copyright © Luo Ran 2017-{year}",
@@ -906,7 +933,8 @@
   },
   "common": {
     "cancel": "취소",
-    "ok": "확인"
+    "ok": "확인",
+    "loading": "불러오는 중"
   },
   "dialog": {
     "cancel": "취소",
@@ -930,7 +958,8 @@
     "renameFailure": "이름 변경 실패",
     "moveFailure": "이동 실패",
     "openFailure": "열기 실패",
-    "openRefused": "{name}을(를) 열 수 없습니다. 경로가 허용된 폴더 밖에 있습니다."
+    "openRefused": "{name}을(를) 열 수 없습니다. 경로가 허용된 폴더 밖에 있습니다.",
+    "moreFiles": "외 {count}개"
   },
   "error": {
     "configSchemaViolation": "구성 스키마 위반",
@@ -983,7 +1012,8 @@
       "columns": "열"
     },
     "notifications": {
-      "notificationNotFound": "알림을 찾을 수 없음"
+      "notificationNotFound": "알림을 찾을 수 없음",
+      "uploadImage": "이미지 업로드"
     },
     "print": {
       "error": "\"{title}\" 인쇄 오류",
@@ -999,7 +1029,9 @@
       "languageMissing": "맞춤법 검사 언어 누락 {languageCode}",
       "switchError": "{languageCode} 맞춤법 검사 전환 오류, {error}",
       "title": "맞춤법 검사"
-    }
+    },
+    "exporting": "내보내는 중…",
+    "exportDone": "내보내기 완료"
   },
   "themeMarket": {
     "error": {
@@ -1016,5 +1048,15 @@
       "dangerousCss": "Theme CSS contains disallowed constructs (external URLs or imports).",
       "invalidJson": "Theme file is not valid JSON."
     }
+  },
+  "statusBar": {
+    "counterTooltip": "클릭하면 카운터 모드가 순환합니다",
+    "readingTime": "{count}분"
+  },
+  "autoUpdates": {
+    "update": "업데이트",
+    "updateNotAvailable": "사용 가능한 업데이트가 없습니다",
+    "updateDownloaded": "업데이트가 다운로드되었습니다",
+    "updateAvailable": "업데이트 사용 가능"
   }
 }

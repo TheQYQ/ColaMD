@@ -59,20 +59,29 @@ test.describe('stability / perf smoke @perf', () => {
         // Wide budget — see file header. Tighten once we have a baseline.
         expect(result.ms, `setContent(${result.n} paragraphs) took ${result.ms.toFixed(0)}ms`).toBeLessThan(60_000);
 
-        // Confirm the DOM actually rendered the count we asked for.
-        // `count()` walks the page synchronously — we use it once here
-        // (not in a polling expect) because rendering completes inside
-        // setContent's synchronous call path.
-        const paragraphCount = await page.locator(editor.paragraph).count();
-        expect(paragraphCount).toBe(result.n);
+        // SB (PERF-04) viewport virtualization: the block TREE holds all 10k
+        // blocks, but the DOM only mounts the visible band - assert the tree
+        // count via the public API instead of counting rendered paragraphs.
+        const blockCount = await page.evaluate(() => {
+            let count = 0
+            window.muya!.editor.scrollPage!.children.forEach(() => count++)
+            return count
+        })
+        expect(blockCount).toBe(result.n)
 
-        // Scroll the last paragraph into view and assert it becomes
-        // visible within 5s. The .last() chain selects the bottom of
-        // the 10k-paragraph tree. 5s allows for a slow CI runner — the
-        // task spec asks for 1s on a fast box; in practice paint after
-        // scroll lands in tens of ms.
-        const lastParagraph = page.locator(editor.paragraph).last();
-        await lastParagraph.scrollIntoViewIfNeeded({ timeout: 5_000 });
-        await expect(lastParagraph).toContainText(`paragraph ${result.n - 1}`, { timeout: 5_000 });
+        // The rendered DOM stays at viewport scale: a mounted fraction, the
+        // rest exact-height placeholders.
+        const scale = await page.evaluate(() => ({
+            mounted: document.querySelectorAll('.mu-container > *:not(.mu-virtual-placeholder)').length,
+            placeholders: document.querySelectorAll('.mu-virtual-placeholder').length,
+        }))
+        expect(scale.mounted).toBeLessThan(300)
+        expect(scale.placeholders).toBeGreaterThan(9_000)
+
+        // Scroll the last paragraph into view and assert it becomes visible
+        // within 5s - materialization must keep the document reachable.
+        await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+        await expect(page.locator('.mu-container > *:not(.mu-virtual-placeholder)').last())
+            .toContainText(`paragraph ${result.n - 1}`, { timeout: 5_000 })
     });
 });

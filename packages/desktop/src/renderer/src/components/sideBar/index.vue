@@ -30,6 +30,14 @@
     <div
       ref="dragBar"
       class="drag-bar"
+      role="separator"
+      tabindex="0"
+      aria-orientation="vertical"
+      :aria-label="t('sideBar.resizeHandle')"
+      :aria-valuemin="SIDE_BAR_MIN_WIDTH"
+      :aria-valuemax="ariaValueMax"
+      :aria-valuenow="finalSideBarWidth"
+      @keydown="handleDragBarKeydown"
     />
   </div>
 </template>
@@ -40,6 +48,7 @@ import { useLayoutStore } from '@/store/layout'
 import { useProjectStore } from '@/store/project'
 import { usePreferencesStore } from '@/store/preferences'
 
+import { useI18n } from 'vue-i18n'
 import { getAllSideBarTabs } from './help'
 import Tree from './tree.vue'
 import Toc from './toc.vue'
@@ -52,6 +61,7 @@ import { storeToRefs } from 'pinia'
  * 文件 > 偏好设置 menu). Clicking the active tab closes the sidebar; clicking
  * another tab switches panels.
  */
+const { t } = useI18n()
 const layoutStore = useLayoutStore()
 const projectStore = useProjectStore()
 const { sideBarOverlay } = storeToRefs(usePreferencesStore())
@@ -72,10 +82,38 @@ const sideBarTabList = getAllSideBarTabs()
 // rendering an empty sidebar.
 const activeColumn = computed<string>(() => rightColumn.value || 'files')
 
+const SIDE_BAR_MIN_WIDTH = 220
+const SIDE_BAR_KEYBOARD_STEP = 16
+const SIDE_BAR_KEYBOARD_LARGE_STEP = 64
+
 const finalSideBarWidth = computed<number>(() => {
   if (!showSideBar.value) return 0
-  return sideBarViewWidth.value < 220 ? 220 : sideBarViewWidth.value
+  return sideBarViewWidth.value < SIDE_BAR_MIN_WIDTH ? SIDE_BAR_MIN_WIDTH : sideBarViewWidth.value
 })
+
+// Keyboard resizing (A11Y-12): the drag strip is also a focusable separator
+// (WAI-ARIA window splitter), so it must expose a range. The upper bound keeps
+// at least 320 px for the editor and never falls below the current width — a
+// width set by mouse dragging must stay inside the announced range.
+const keyboardMaxWidth = computed<number>(() =>
+  Math.max(SIDE_BAR_MIN_WIDTH, window.innerWidth - 320)
+)
+const ariaValueMax = computed<number>(() =>
+  Math.max(keyboardMaxWidth.value, finalSideBarWidth.value)
+)
+
+const handleDragBarKeydown = (event: KeyboardEvent): void => {
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+  const step = event.shiftKey ? SIDE_BAR_KEYBOARD_LARGE_STEP : SIDE_BAR_KEYBOARD_STEP
+  const delta = event.key === 'ArrowRight' ? step : -step
+  const nextWidth = Math.min(
+    keyboardMaxWidth.value,
+    Math.max(SIDE_BAR_MIN_WIDTH, finalSideBarWidth.value + delta)
+  )
+  sideBarViewWidth.value = nextWidth
+  layoutStore.CHANGE_SIDE_BAR_WIDTH(nextWidth)
+  event.preventDefault()
+}
 
 onMounted(() => {
   nextTick(() => {
@@ -90,7 +128,9 @@ onMounted(() => {
     const mouseUpHandler = (): void => {
       document.removeEventListener('mousemove', mouseMoveHandler, false)
       document.removeEventListener('mouseup', mouseUpHandler, false)
-      layoutStore.CHANGE_SIDE_BAR_WIDTH(currentSideBarWidth < 220 ? 220 : currentSideBarWidth)
+      layoutStore.CHANGE_SIDE_BAR_WIDTH(
+        currentSideBarWidth < SIDE_BAR_MIN_WIDTH ? SIDE_BAR_MIN_WIDTH : currentSideBarWidth
+      )
     }
 
     const mouseMoveHandler = (event: MouseEvent): void => {

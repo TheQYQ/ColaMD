@@ -244,6 +244,10 @@ export const channelClasses: Record<string, ChannelClass> = {
   'mt::menu::native-clipboard': { class: 'non-path' },
   'mt::menu::popup': { class: 'non-path' },
   'mt::open-setting-window': { class: 'non-path' },
+  'mt::renderer-ready': {
+    class: 'non-path',
+    note: '#GUI-B5 readiness handshake; carries no payload and is resolved from e.sender'
+  },
   'mt::request-keybindings': { class: 'non-path' },
   'mt::response-export': { class: 'non-path', note: 'export target from main-side dialog' },
   'mt::response-print': { class: 'non-path' },

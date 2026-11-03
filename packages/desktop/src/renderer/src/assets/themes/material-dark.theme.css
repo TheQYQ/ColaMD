@@ -13,7 +13,7 @@
 
   --highlightColor: rgba(244, 130, 55, 0.4);
   --selectionColor: rgba(255, 255, 255, 0.2);
-  --editorColor: rgba(171, 178, 191, 0.8);
+  --editorColor: #9EA4AE;
   --editorColor80: rgba(171, 178, 191, 1);
   --editorColor60: rgba(171, 178, 191, 0.9);
   --editorColor50: rgba(171, 178, 191, 0.9);
@@ -42,7 +42,7 @@
   --buttonBorderActive: var(--buttonBorder);
 
   --buttonPrimaryFontColor: #ffffff;
-  --buttonPrimaryBgColor: var(--themeColor);
+  --buttonPrimaryBgColor: #5A2705;
   --buttonPrimaryBorder: none;
   --buttonPrimaryShadow: none;
   --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
@@ -75,7 +75,7 @@
   --sideBarColor: rgba(255, 255, 255, 0.6);
   --sideBarIconColor: var(--iconColor);
   --sideBarTitleColor: rgba(255, 255, 255, 1);
-  --sideBarTextColor: rgba(255, 255, 255, 0.4);
+  --sideBarTextColor: #9DA0A3;
   --sideBarBgColor: rgba(39, 45, 52, 0.95);
   --sideBarItemHoverBgColor: rgba(255, 255, 255, 0.03);
   --itemBgColor: rgba(71, 78, 86, 0.6);
@@ -86,104 +86,18 @@
   --floatBorderColor: rgba(0, 0, 0, 0.03);
   --floatShadow: rgba(0, 0, 0, 0.2);
   --maskColor: rgba(0, 0, 0, 0.7);
-  --editorAreaWidth: 800px;
 
-  /* @muyajs/core (kebab-case) editor variables
-     Additive prep for the muyajs -> @muyajs/core editor swap. These
-     mirror the camelCase vars above; the legacy editor ignores them.
-     Do NOT remove the camelCase vars — they still drive the current
-     editor until editor.vue switches engines. */
-  --theme-color: var(--themeColor);
-  --highlight-color: var(--highlightColor);
-  --selection-color: var(--selectionColor);
-  --editor-color: var(--editorColor);
-  --editor-color-80: var(--editorColor80);
-  --editor-color-50: var(--editorColor50);
-  --editor-color-30: var(--editorColor30);
-  --editor-color-10: var(--editorColor10);
-  --editor-color-04: var(--editorColor04);
-  --editor-bg-color: var(--editorBgColor);
-  --editor-area-width: var(--editorAreaWidth);
-  --delete-color: var(--deleteColor);
-  --icon-color: var(--iconColor);
-  --code-block-bg-color: var(--codeBlockBgColor);
-  --table-border-color: var(--tableBorderColor);
-  --input-bg-color: var(--inputBgColor);
-  --button-font-color: var(--buttonFontColor);
-  --button-bg-color: var(--buttonBgColor);
-  --button-border: var(--buttonBorder);
-  --button-bg-color-hover: var(--buttonBgColorHover);
-  --button-border-hover: var(--buttonBorderHover);
-  --button-bg-color-active: var(--buttonBgColorActive);
-  --button-border-active: var(--buttonBorderActive);
-  --button-border-focus: var(--button-border);
-  --float-bg-color: var(--floatBgColor);
-  --float-hover-color: var(--floatHoverColor);
-  --float-border-color: var(--floatBorderColor);
-  --float-shadow: rgb(15 15 15 / 3%) 0 0 0 1px, rgb(15 15 15 / 4%) 0 3px 6px, rgb(15 15 15 / 5%) 0 9px 24px;
-  --link-color: var(--linkColor);
-  --h1-color: var(--h1Color);
-  --h2-color: var(--h2Color);
-  --h3-color: var(--h3Color);
-  --h4-color: var(--h4Color);
-  --h5-color: var(--h5Color);
-  --h6-color: var(--h6Color);
-  --blockquote-text-color: var(--blockquoteTextColor);
-  --blockquote-border-color: var(--blockquoteBorderColor);
-  --strong-color: var(--strongColor);
-  --em-color: var(--emColor);
-  --list-marker-color: var(--listMarkerColor);
-  --hr-color: var(--hrColor);
+  /* GUI-SA: values the old per-file patches hardcoded (consumed by the shared patch layer). */
+  --titleBarIconColor: #ffffff;
+  --titleBarHoverBgColor: rgb(255, 255, 255, 0.05);
 }
 
-.mu-front-menu,
-.mu-float-wrapper {
-  box-shadow: 0 4px 8px 0 var(--floatShadow) !important;
+/* GUI-SA appendix: material-dark keeps its own tab backgrounds (transparent
+   inactive, float-panel active) where the shared layer fills with
+   editorBgColor. */
+.editor-tabs .tabs-container > li {
+  background: none;
 }
-
-.title-bar .frameless-titlebar-button > div > svg {
-  fill: #ffffff;
+.editor-tabs .tabs-container > li.active {
+  background: var(--floatBgColor);
 }
-.title-bar .frameless-titlebar-minimize:hover,
-.title-bar .frameless-titlebar-toggle:hover {
-  background-color: rgb(255, 255, 255, 0.05);
-}
-
-.recent-files-projects a,
-.open-project a {
-  box-shadow: none !important;
-}
-
-.tabs-container > li {
-  background: none !important;
-}
-.tabs-container > li.active {
-  background: var(--floatBgColor) !important;
-}
-
-.open-project button,
-.recent-files-projects button {
-  box-shadow: none !important;
-}
-
-/* ------------------------------------ */
-
-:not(pre) > code[class*='language-'],
-pre:not(.CodeMirror-line),
-pre[class*='language-'],
-pre.mu-code-block {
-  background: var(--codeBlockBgColor) !important;
-  border: none !important;
-}
-figure.mu-active.mu-math-block > div.mu-math-preview,
-figure.mu-active.mu-diagram-block > div.mu-diagram-preview {
-  box-shadow: 0 3px 8px 0 var(--floatShadow) !important;
-}
-
-/*
- * Prism.js theme (override light theme)
- */
-
-/*
-@import url("prismjs/dark.theme.css");
-*/

@@ -96,10 +96,28 @@ export const conditionalExemptions: ConditionalExemption[] = [
       'pandoc is not installed on every runner; the long-image/pandoc export suite is availability-gated by design, not debt'
   },
   {
+    files: ['packages/desktop/test/e2e/menu-bar-keyboard.spec.ts'],
+    condition: "process.platform === 'darwin'",
+    reason:
+      "the custom in-window menu bar is not rendered on macOS (`titleBarStyle === 'custom' && !isOsx` in menuBar/index.vue) — the native menu takes over, so there is no menubar for these assertions to act on. Platform fact, not debt"
+  },
+  {
     files: ['packages/desktop/test/unit/specs/write-file-atomic.spec.ts'],
     condition: "process.platform === 'win32'",
     reason:
       'POSIX permission-mode semantics (chmod 0600 round-trip) do not exist on win32; the assertion is platform-specific by nature'
+  },
+  {
+    files: ['packages/desktop/test/e2e/theme-visual-baseline.spec.ts'],
+    condition: "process.platform !== 'win32'",
+    reason:
+      'the theme screenshot baseline (GUI-SA prerequisite, GUI_FIX_PLAN §3.12) pins Windows font rendering into committed PNGs; it is generated and compared on the same Windows machine by design, and the CI e2e legs (linux + macos) skip it rather than diffing against foreign-font snapshots — platform fact, not debt'
+  },
+  {
+    files: ['packages/desktop/test/e2e/source-mode-perf.bench.spec.ts'],
+    condition: "COLAMD_PERF_BENCH !== '1'",
+    reason:
+      'opt-in performance benchmark (GUI_FIX_PLAN §8 evidence): it types into 100KB/500KB/1MB documents and builds a ~2MB wrapped fixture, adding about 1.5 min to every e2e run for numbers that only change when the typing pipeline does. Gated by an explicit env var by design — run it with COLAMD_PERF_BENCH=1, see packages/muya/docs/perf-baseline.md'
   }
 ]
 

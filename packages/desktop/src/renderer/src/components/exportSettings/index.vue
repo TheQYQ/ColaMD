@@ -580,7 +580,7 @@ const loadThemesFromDisk = async () => {
 }
 
 .button-controlls .button-primary {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .el-tab-pane section:first-child {

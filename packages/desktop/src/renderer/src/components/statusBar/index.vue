@@ -5,7 +5,12 @@
         class="status-btn"
         :class="{ active: preferencesStore.sourceCode }"
         :title="t('menu.view.sourceCodeMode')"
+        role="button"
+        tabindex="0"
+        :aria-label="t('menu.view.sourceCodeMode')"
+        :aria-pressed="preferencesStore.sourceCode"
         @click="toggleSourceCode"
+        @keydown="activateOnEnterOrSpace"
       >
         <svg
           width="16"
@@ -24,11 +29,21 @@
       </div>
     </div>
     <div class="status-right">
+      <span
+        v-if="zoomFlash"
+        class="zoom-flash"
+      >{{
+        t('menu.view.zoom', { count: zoomFlash })
+      }}</span>
       <div
         v-if="wordCount"
         class="word-count"
-        :title="t('menu.counter.words')"
+        :title="t('statusBar.counterTooltip')"
+        role="button"
+        tabindex="0"
+        :aria-label="counterLabel(show)"
         @click="handleWordClick"
+        @keydown="activateOnEnterOrSpace"
       >
         <span class="text-center-vertical">{{ counterText }}</span>
       </div>
@@ -37,12 +52,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import bus from '@/bus'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
 
 /**
  * Typora-style bottom status bar: the source-code-mode toggle on the left,
@@ -54,6 +70,18 @@ const editorStore = useEditorStore()
 const preferencesStore = usePreferencesStore()
 
 const { currentFile } = storeToRefs(editorStore)
+
+// UX-15 (#GUI-B10): show the zoom factor for two seconds after each change.
+const zoomFlash = ref(0)
+let zoomFlashTimer: ReturnType<typeof setTimeout> | null = null
+const flashZoom = (percent: unknown): void => {
+  // The event already carries a percent (EDIT_ZOOM rounded factor * 100).
+  zoomFlash.value = Math.round(Number(percent))
+  if (zoomFlashTimer) clearTimeout(zoomFlashTimer)
+  zoomFlashTimer = setTimeout(() => {
+    zoomFlash.value = 0
+  }, 2000)
+}
 
 const wordCount = computed(() => currentFile.value?.wordCount ?? null)
 
@@ -71,7 +99,9 @@ const counterLabel = (mode: CounterMode): string => {
 const counterText = computed(() => {
   if (!wordCount.value) return ''
   // ~200 words per minute, matching Typora's reading-time estimate.
-  if (show.value === 'reading') return `${Math.ceil((wordCount.value.word || 0) / 200)} min`
+  if (show.value === 'reading') {
+    return t('statusBar.readingTime', { count: Math.ceil((wordCount.value.word || 0) / 200) })
+  }
   const count = wordCount.value[show.value]
   return `${count} ${counterLabel(show.value)}`
 })
@@ -80,6 +110,15 @@ const handleWordClick = (): void => {
   const index = MODES.indexOf(show.value)
   show.value = MODES[(index + 1) % MODES.length]!
 }
+
+onMounted(() => {
+  bus.on('zoom-flash', flashZoom)
+})
+
+onBeforeUnmount(() => {
+  bus.off('zoom-flash', flashZoom)
+  if (zoomFlashTimer) clearTimeout(zoomFlashTimer)
+})
 
 const toggleSourceCode = (): void => {
   bus.emit('view:toggle-view-entry', 'sourceCode')
@@ -115,7 +154,9 @@ const toggleSourceCode = (): void => {
   border-radius: 4px;
   cursor: pointer;
   color: var(--text-tertiary);
-  transition: color 120ms ease-out, background-color 120ms ease-out;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
 }
 .status-btn:hover {
   background: var(--bg-hover);
@@ -128,12 +169,19 @@ const toggleSourceCode = (): void => {
   display: flex;
   align-items: center;
 }
+.zoom-flash {
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--themeColor);
+}
 .word-count {
   cursor: pointer;
   padding: 1px 6px;
   border-radius: 4px;
   color: var(--text-tertiary);
-  transition: color 120ms ease-out, background-color 120ms ease-out;
+  transition:
+    color 120ms ease-out,
+    background-color 120ms ease-out;
 }
 .word-count:hover {
   background: var(--bg-hover);

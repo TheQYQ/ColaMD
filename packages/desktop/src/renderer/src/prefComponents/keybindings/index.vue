@@ -6,9 +6,12 @@
         {{ t('preferences.keybindings.description') }}
         <a
           class="link"
+          role="button"
+          tabindex="0"
           :title="t('preferences.keybindings.online')"
           :aria-label="t('preferences.keybindings.online')"
           @click="openKeybindingDocs"
+          @keydown="activateOnEnterOrSpace"
         ><LinkIcon
           :size="14"
           class="link-icon"
@@ -119,6 +122,8 @@ import notice from '@/services/notification'
 import { Edit, RefreshRight, Delete } from '@element-plus/icons-vue'
 import LinkIcon from '@/components/icons/LinkIcon.vue'
 import { useI18n } from 'vue-i18n'
+import getCommandDescriptionById from '@/commands/descriptions'
+import { activateOnEnterOrSpace } from '@/util/keyboardActivate'
 
 const { t, locale } = useI18n()
 
@@ -151,7 +156,11 @@ onMounted(() => {
   window.electron.ipcRenderer
     .invoke('mt::keybinding-get-pref-keybindings')
     .then(({ defaultKeybindings, userKeybindings }) => {
-      const configurator = new KeybindingConfigurator(defaultKeybindings, userKeybindings)
+      const configurator = new KeybindingConfigurator(defaultKeybindings, userKeybindings, {
+        // #130: the per-edit auto-save cannot be awaited by `change()`, so a
+        // failed write is reported here instead of becoming unhandled (or silent).
+        onSaveError: notifySaveError
+      })
       keybindingConfigurator.value = configurator
       keybindingList.value = configurator.getKeybindings()
     })
@@ -171,18 +180,20 @@ const openKeybindingDocs = (): void => {
   window.electron.shell.openExternal('https://github.com/TheQYQ/ColaMD/docs/key-bindings')
 }
 
+const notifySaveError = (): void => {
+  notice.notify({
+    title: t('preferences.keybindings.failedToSave'),
+    type: 'error',
+    message: t('preferences.keybindings.saveError')
+  })
+}
+
 const saveKeybindings = (): void => {
   if (keybindingConfigurator.value && keybindingList.value.length > 0) {
     keybindingConfigurator.value
       .save()
       .then((success) => {
-        if (!success) {
-          notice.notify({
-            title: t('preferences.keybindings.failedToSave'),
-            type: 'error',
-            message: t('preferences.keybindings.saveError')
-          })
-        }
+        if (!success) notifySaveError()
       })
       .catch((error) => log.error(error))
   }
@@ -193,13 +204,7 @@ const restoreDefaults = (): void => {
   keybindingConfigurator.value
     .resetAll()
     .then((success) => {
-      if (!success) {
-        notice.notify({
-          title: t('preferences.keybindings.failedToSave'),
-          type: 'error',
-          message: t('preferences.keybindings.saveError')
-        })
-      }
+      if (!success) notifySaveError()
     })
     .catch((error) => log.error(error))
 }
@@ -234,11 +239,18 @@ const onKeybinding = (value: string | null): void => {
   selectedShortcutId.value = null
 }
 
-const handleDuplicateShortcut = (_id: string, accelerator: string): void => {
+const handleDuplicateShortcut = (id: string, accelerator: string): void => {
+  // UX-04 (#GUI-B10): name the command that holds the accelerator, not just
+  // the accelerator itself.
+  const conflict = keybindingConfigurator.value?.findConflict(accelerator, id)
+  const description = conflict ? getCommandDescriptionById(conflict.id) : ''
   notice.notify({
     title: t('preferences.keybindings.shortcutInUse'),
     type: 'warning',
-    message: t('preferences.keybindings.shortcutInUseMessage', { accelerator })
+    message: t('preferences.keybindings.shortcutInUseMessage', {
+      accelerator,
+      command: description
+    })
   })
 }
 
@@ -251,7 +263,7 @@ const dumpKeyboardInformation = (): void => {
 .pref-keybindings {
   & .keyboard-debug,
   & .keybindings {
-    font-size: 14px;
+    font-size: 13px;
     margin: 20px 0;
     color: var(--editorColor);
     & .link {

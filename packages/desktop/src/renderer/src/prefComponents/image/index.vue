@@ -50,7 +50,7 @@ const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
 <style>
 .pref-image {
   & .image-ctrl {
-    font-size: 14px;
+    font-size: 13px;
     margin: 20px 0;
     color: var(--editorColor);
     & label {
