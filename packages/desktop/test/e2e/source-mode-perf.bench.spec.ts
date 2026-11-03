@@ -19,10 +19,11 @@ import {
 // number that only changes when the typing pipeline does. Run it with
 // COLAMD_PERF_BENCH=1 and record the output in packages/muya/docs/perf-baseline.md.
 
-test.skip(
-  process.env.COLAMD_PERF_BENCH !== '1',
-  'source-mode performance benchmark — set COLAMD_PERF_BENCH=1 to run'
-)
+// The call stays on one line on purpose: `test/unit/specs/skip-ledger.spec.ts`
+// reads conditional gates line-anchored, and a wrapped call hides the
+// condition from it (so the registered exemption below cannot match).
+// prettier-ignore
+test.skip(process.env.COLAMD_PERF_BENCH !== '1', 'source-mode performance benchmark — set COLAMD_PERF_BENCH=1 to run')
 
 const MB = 1024 * 1024
 const SIZES = [
