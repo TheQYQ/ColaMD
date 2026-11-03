@@ -299,9 +299,7 @@
     },
     "noResult": "No matching results",
     "quickOpenEmpty": "Open a folder to search files by name",
-    "currentSuffix": "{name} - current",
-    "textDirectionLtr": "Left to Right",
-    "textDirectionRtl": "Right to Left"
+    "currentSuffix": "{name} - current"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Auto numbering headings",

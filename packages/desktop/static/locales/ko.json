@@ -299,9 +299,7 @@
     },
     "noResult": "일치하는 결과가 없습니다",
     "quickOpenEmpty": "폴더를 열면 파일 이름으로 검색할 수 있습니다",
-    "currentSuffix": "{name} - 현재",
-    "textDirectionLtr": "왼쪽에서 오른쪽으로",
-    "textDirectionRtl": "오른쪽에서 왼쪽으로"
+    "currentSuffix": "{name} - 현재"
   },
   "exportSettings": {
     "autoNumberingHeadings": "제목 자동 번호 매기기",

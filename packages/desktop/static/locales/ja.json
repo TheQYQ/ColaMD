@@ -299,9 +299,7 @@
     },
     "noResult": "一致する結果はありません",
     "quickOpenEmpty": "フォルダを開くとファイル名で検索できます",
-    "currentSuffix": "{name} - 現在",
-    "textDirectionLtr": "左から右へ",
-    "textDirectionRtl": "右から左へ"
+    "currentSuffix": "{name} - 現在"
   },
   "exportSettings": {
     "autoNumberingHeadings": "見出しの自動番号付け",

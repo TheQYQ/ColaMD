@@ -299,9 +299,7 @@
     },
     "noResult": "無符合結果",
     "quickOpenEmpty": "開啟資料夾後可依檔名搜尋檔案",
-    "currentSuffix": "{name} - 目前",
-    "textDirectionLtr": "從左到右",
-    "textDirectionRtl": "從右到左"
+    "currentSuffix": "{name} - 目前"
   },
   "exportSettings": {
     "autoNumberingHeadings": "自動編號標題",
