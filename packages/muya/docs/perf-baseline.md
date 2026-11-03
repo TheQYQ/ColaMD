@@ -319,3 +319,24 @@ Fixture 与击键基准同源（`makeDoc`：标题/段落/列表/代码块混排
 - **远跳落点靠一次修正回路归零**：目标行在渲染窗口外时，`heightAtLine` 只能按估算行高累加，首次落点实测偏 28–36px（≥1 行，且随文档增大）；动画结束、目标行已被渲染后重测一次即可（`scrollSourceEditorToLine` 的 `scrollend` 修正，容差 2px、最多 2 次）。三档修正后均为 0px。
 - scrollHeight 在首屏全量渲染后略降约 40px 然后稳定（估算收敛，不是抖动；滚到底再回顶不变）。
 - **视觉零回退**：`.source-code .CodeMirror` 由 `height:auto; margin:50px auto` 改为 `height:100%; margin:0 auto`，原 50px 内缩移到 `.CodeMirror-lines { padding: 54px 0 }`（50 + CM 自带 4px）。实测首行距滚动器顶 **54px**，与旧布局一致，且内缩随内容滚走；外层 `.source-code` 不再溢出（CM 自带滚动条接管）。没有自动门禁守这个像素——`theme-visual-baseline.spec.ts` 不进源码模式。
+
+## 源码模式键入实测（GUI_FIX_PLAN §8 总验收第 4 条）
+
+> 2026-11-03 · Windows 11 · Node v22.21.1 · 真实 Electron/Chromium（`pnpm --filter colamd build` 后跑 Playwright）。fixture 由 `packages/desktop/test/e2e/source-mode-perf.bench.spec.ts` 生成：中英混排，目标 100KB / 500KB / 1MB（`Buffer.byteLength`），实际 **70,805 / 355,337 / 728,762 字符**。
+
+**"前后"的定义**：把 B3 之前的 `cursorActivity` 处理临时恢复成"前"构建（每次按键跑完整 `saveContent`：两次全文 `getValue()` + 全文 `wordCount` + heading 扫描 + store 提交），跑完即 `git checkout` 还原、未提交；"后"是当前 develop 的 `change` 事件 O(1) 档 + 120ms 防抖提交。SB step 3 的视口虚拟化在两档都生效，因此这组数据隔离的是**键入管线**变量。
+
+每样本 40 键连发（Playwright 逐键等待，renderer 同步处理，按键成本计入墙钟），5 样本取中位与最快值。每键墙钟含约 5ms 的 CDP/Playwright 常量开销，所以跨档看趋势、绝对值看最快值。
+
+| 档位 | 字符数 | 前：中位 / 最快（ms/键） | 后：中位 / 最快（ms/键） | 中位变化 |
+| --- | ---: | --- | --- | --- |
+| 100KB | 70,805 | 6.20 / 6.03 | 5.33 / 5.15 | −14% |
+| 500KB | 355,337 | 9.60 / 8.80 | 5.75 / 5.50 | −40% |
+| 1MB | 728,762 | 14.88 / 12.65 | 7.20 / 6.97 | −52% |
+
+- **前：随文档线性劣化**（体积 10×，中位 6.20→14.88，+140%）。扣掉约 5ms 常量后应用侧约 1.0→9.9ms/键。
+- **后：基本平坦**（5.33→7.20，+35%；同构建另一轮 5.28→5.85，+11%）。扣掉常量后应用侧约 0.3→2.2ms/键，1MB 档的增量在 Playwright 噪声量级内。
+- `PerformanceObserver` 的 `longtask` 在键入窗口与 600ms 暂停窗口内均无条目（>50ms 任务为 0）；暂停窗口的 O(N) 防抖提交（`getValue` + `wordCount`）本身低于 50ms，未形成长任务。
+- **复跑**：bash `COLAMD_PERF_BENCH=1`（PowerShell `$env:COLAMD_PERF_BENCH='1'`）后 `pnpm -C packages/desktop exec playwright test --config=test/e2e/playwright.config.ts test/e2e/source-mode-perf.bench.spec.ts`。默认不进 CI（spec 内 `test.skip`），否则每个 PR 多 4 条 skip 与约 1.3 分钟基准。
+- **#151 折行补充**：同一 spec 的另一条用 5,100 行 × 400 字符（约 2MB）量 `lineWrapping` + `viewportMargin: 200`。scrollHeight 顶部/底部/回顶 **453,765 / 453,765 / 453,765**（另一轮 453,765 / 453,757 / 453,757，≤8px），末行可达（`lineAtHeight` 返回末行）。**但 TOC 远跳落点实测 `headingTop = −17,796 ~ −17,823px`**：目标行仍在渲染窗口外，`heightAtLine` 的估算偏差超过 200 行 margin，`scrollSourceEditorToLine` 的 ±2px 修正回路没有可测对象，因此不收敛。这条数据否定了 #151 当时"修正回路对任何偏差都收敛到 2px"的假设——它只在目标行落进渲染窗口后成立。修复方向（沿行号粗定位再精确修正，或对折行文档取更大 margin）留在 #151。
+
