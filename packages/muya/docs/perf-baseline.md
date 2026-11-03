@@ -294,3 +294,12 @@ Fixture 与击键基准同源（`makeDoc`：标题/段落/列表/代码块混排
 - 剩余成本 = 每块 `getState()` + `JSON.stringify` 的比较（O(文档) CPU，零 DOM 重建），1MB 档 ~28ms，已低于一帧预算的 2 倍、且只在全量重建型调用点发生。
 - DOM 节点数本批不变（仍 O(文档)）——视口占位虚拟化是独立后续批（step 2b），其验收即 `scale` 指标从 129,752 降到 O(视口)。
 - 复跑同前：`pnpm -C packages/muya test:perf`（1MB 档需 raised heap）。
+
+## SB step 2b 实测（视口虚拟化落地后）
+
+> 2026-11-03 · PR 待填。`ScrollPage` 增加 `virtualize` 选项（默认开）：可见带外（视口 ±2000px）的顶层块被卸载为**精确高度占位**——占位高度按 CSS 兄弟 margin 折叠规则逐块测量（`offsetHeight` + 自身份额的折叠 margin，朴素 offsetHeight 会把 5.6k 文档量出 -766px 漂移）；滚回/跳转时按需重挂载并整块重渲染 inline 内容（搜索高亮/引用标签等外部渲染输入随之新鲜）；程序化滚动动画期间抑制 sweep（实测上行 TOC 跳转被飞行中的 sweep 打断停在半程）。块树保持完整，queryBlock/selection/undo 语义不变；无真实布局环境（happy-dom）下测量全零，sweep 自动退化为 no-op。
+
+- **DOM 规模**：1MB 文档（14,392 块）滚动稳态下真实 DOM 从 **129,752 节点** 降到 **挂载窗口（<300 节点）+ ~14k 个单 div 占位**（≈9× 降幅）；初始挂载仍全量，首个 sweep 即收敛到窗口。
+- **10k 段落文档**（muya e2e perf smoke）：挂载 <300、占位 >9000、滚动到底部物化 `paragraph 9999` ✓。
+- **桌面 e2e**：300 passed / 0 failed（虚拟化 ON；含 toc-scroll 深跳/回跳/幂等三条此前被虚拟化破坏、经 margin 精确测量 + sweep 抑制修复的用例）。
+- 代价与取舍：占位符为派生状态（每 sweep 重建注册表）；margin 精确测量依赖正 margin 假设（muya 无负 margin）；DOM 节点在初始挂载瞬间仍为全量。

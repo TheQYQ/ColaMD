@@ -903,6 +903,7 @@ const {
   getCursorY,
   scrollToCursor,
   scrollToCords,
+  resolveRendered,
   scrollElementIntoView,
   scrollToHighlight,
   scrollToAnchorElement,
@@ -922,7 +923,12 @@ const {
 const scrollToHeader = (slug: unknown) => {
   const container = getScrollContainer()
   if (!container) return
-  scrollElementIntoView(resolveTocHeadingElement(container, editorStore.listToc, slug))
+  // SB (PERF-04): the heading may sit in a viewport-detached block. The
+  // retry materializes the document once; the settling scroll
+  // re-virtualizes around the destination.
+  scrollElementIntoView(
+    resolveRendered(() => resolveTocHeadingElement(container, editorStore.listToc, slug))
+  )
 }
 
 const handleFindAction = (action: unknown) => {
