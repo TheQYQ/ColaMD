@@ -132,7 +132,13 @@ test.describe('In-window menu bar keyboard access (GUI-SC1)', () => {
     await expect(view).toHaveAttribute('aria-expanded', 'false')
     // Without the hand-back the user is dropped at the top of the document and
     // has to tab through the whole window to reach the bar again.
-    expect(await view.evaluate((el) => el === document.activeElement)).toBe(true)
+    //
+    // #153: this read failed on linux CI in both the first attempt and the
+    // retry. The hand-back is scheduled after Vue's DOM update, so a one-shot
+    // read can land before the focus has moved back; poll instead of racing it.
+    await expect
+      .poll(() => view.evaluate((el) => el === document.activeElement), { timeout: 5000 })
+      .toBe(true)
   })
 
   test('Home and End jump to the ends of the open menu', async () => {

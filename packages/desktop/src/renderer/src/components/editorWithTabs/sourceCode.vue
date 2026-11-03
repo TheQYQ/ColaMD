@@ -596,7 +596,11 @@ onMounted(async () => {
   bus.on('undo', handleUndo)
   bus.on('redo', handleRedo)
   bus.on('image-action', handleImageAction)
-  bus.on('scroll-to-header', handleScrollToHeader)
+  // `scroll-to-header` is subscribed only after `editor.value` exists (below):
+  // the CodeMirror chunk load is async, and a TOC click landing in that window
+  // would hit the handler's `!editor.value` guard and be dropped without a
+  // trace. Subscribing late means such a click simply has no source-mode
+  // handler yet (the WYSIWYG one is guarded while source mode is active).
   bus.on('searchValue', handleSourceSearchValue)
   bus.on('replaceValue', handleSourceReplaceValue)
   bus.on('find-action', handleSourceFindAction)
@@ -640,6 +644,7 @@ onMounted(async () => {
 
   editor.value = codeMirrorInstance
   tabId.value = id
+  bus.on('scroll-to-header', handleScrollToHeader)
 
   listenChange()
 })

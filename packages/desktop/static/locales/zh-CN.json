@@ -299,9 +299,7 @@
     },
     "noResult": "无匹配结果",
     "quickOpenEmpty": "打开文件夹后可按文件名搜索文件",
-    "currentSuffix": "{name} - 当前",
-    "textDirectionLtr": "从左到右",
-    "textDirectionRtl": "从右到左"
+    "currentSuffix": "{name} - 当前"
   },
   "exportSettings": {
     "title": "导出选项",

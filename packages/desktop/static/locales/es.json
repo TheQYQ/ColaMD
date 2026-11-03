@@ -299,9 +299,7 @@
     },
     "noResult": "Sin resultados",
     "quickOpenEmpty": "Abre una carpeta para buscar archivos por nombre",
-    "currentSuffix": "{name} - actual",
-    "textDirectionLtr": "De izquierda a derecha",
-    "textDirectionRtl": "De derecha a izquierda"
+    "currentSuffix": "{name} - actual"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Numeración automática de encabezados",

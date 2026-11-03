@@ -32,6 +32,16 @@ const srcScrollTop = (page: Page): Promise<number> =>
     return el ? Math.round(el.scrollTop) : -1
   })
 
+// #149: the hidden WYSIWYG container still has its own scroll position in source
+// mode. Before the guard, a TOC click ran the engine's scroll-to-heading too
+// (materializing detached blocks on large documents); the only observable trace
+// is that this scrollTop moved while the source editor was the visible one.
+const wysiwygScrollTop = (page: Page): Promise<number> =>
+  page.evaluate(() => {
+    const el = document.querySelector('.editor-component') as HTMLElement | null
+    return el ? Math.round(el.scrollTop) : -1
+  })
+
 // A TOC click animates the scroll, so one reading is a mid-flight value. Wait
 // until two consecutive samples agree, then that is the resting position.
 const settleScrollTop = async (page: Page): Promise<number> => {
@@ -97,6 +107,15 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
       if (el) el.scrollTop = 0
     })
     await expect.poll(() => srcScrollTop(page)).toBe(0)
+    const muyaBefore = await wysiwygScrollTop(page)
+    // Guard against a vacuous pass: the hidden engine container has to be
+    // scrollable for "its scrollTop did not move" to mean anything.
+    expect(
+      await page.evaluate(() => {
+        const el = document.querySelector('.editor-component') as HTMLElement | null
+        return !!el && el.scrollHeight > el.clientHeight
+      })
+    ).toBe(true)
 
     await page.locator('.side-bar-toc').getByText('Heading Number 18', { exact: true }).click()
 
@@ -110,6 +129,7 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
     // heading sits near the TOP of the viewport (not the bottom)
     expect(deepTop).toBeLessThan(150)
     expect(deepTop).toBeGreaterThan(-5)
+    expect(await wysiwygScrollTop(page)).toBe(muyaBefore)
   })
 
   test('clicking an earlier heading scrolls back up to it at the top', async () => {

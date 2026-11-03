@@ -156,7 +156,11 @@ onMounted(() => {
   window.electron.ipcRenderer
     .invoke('mt::keybinding-get-pref-keybindings')
     .then(({ defaultKeybindings, userKeybindings }) => {
-      const configurator = new KeybindingConfigurator(defaultKeybindings, userKeybindings)
+      const configurator = new KeybindingConfigurator(defaultKeybindings, userKeybindings, {
+        // #130: the per-edit auto-save cannot be awaited by `change()`, so a
+        // failed write is reported here instead of becoming unhandled (or silent).
+        onSaveError: notifySaveError
+      })
       keybindingConfigurator.value = configurator
       keybindingList.value = configurator.getKeybindings()
     })
@@ -176,18 +180,20 @@ const openKeybindingDocs = (): void => {
   window.electron.shell.openExternal('https://github.com/TheQYQ/ColaMD/docs/key-bindings')
 }
 
+const notifySaveError = (): void => {
+  notice.notify({
+    title: t('preferences.keybindings.failedToSave'),
+    type: 'error',
+    message: t('preferences.keybindings.saveError')
+  })
+}
+
 const saveKeybindings = (): void => {
   if (keybindingConfigurator.value && keybindingList.value.length > 0) {
     keybindingConfigurator.value
       .save()
       .then((success) => {
-        if (!success) {
-          notice.notify({
-            title: t('preferences.keybindings.failedToSave'),
-            type: 'error',
-            message: t('preferences.keybindings.saveError')
-          })
-        }
+        if (!success) notifySaveError()
       })
       .catch((error) => log.error(error))
   }
@@ -198,13 +204,7 @@ const restoreDefaults = (): void => {
   keybindingConfigurator.value
     .resetAll()
     .then((success) => {
-      if (!success) {
-        notice.notify({
-          title: t('preferences.keybindings.failedToSave'),
-          type: 'error',
-          message: t('preferences.keybindings.saveError')
-        })
-      }
+      if (!success) notifySaveError()
     })
     .catch((error) => log.error(error))
 }

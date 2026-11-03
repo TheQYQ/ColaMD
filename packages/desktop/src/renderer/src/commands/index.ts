@@ -639,12 +639,12 @@ const commands: CommandDescriptor[] = [
     subcommands: [
       {
         id: 'view.text-direction-ltr',
-        description: t('commands.misc.textDirection.ltr'),
+        description: t('preferences.editor.misc.textDirection.ltr'),
         value: 'ltr'
       },
       {
         id: 'view.text-direction-rtl',
-        description: t('commands.misc.textDirection.rtl'),
+        description: t('preferences.editor.misc.textDirection.rtl'),
         value: 'rtl'
       }
     ],

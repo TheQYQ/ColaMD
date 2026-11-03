@@ -46,7 +46,10 @@ const COMMAND_KEY_MAP: Record<string, string> = {
   // File close
   'file.close': 'commands.file.closeTab',
   'file.close-tab': 'commands.file.closeTab',
-  'file.save-all': 'commands.file.saveAll',
+  // Reuse the menu label: `commands.file.saveAll` never existed, so the palette
+  // listed the raw key (found by the new key-resolution guard in
+  // locale-validation.spec.ts while cleaning up #124).
+  'file.save-all': 'menu.file.saveAll',
   'file.close-window': 'commands.file.closeWindow',
   'file.quit': 'commands.file.quit',
 
@@ -184,8 +187,13 @@ const COMMAND_KEY_MAP: Record<string, string> = {
   // `getCommandDescriptionById(id)`, which falls back to the RAW ID on a miss —
   // so without these the palette showed `view.text-direction-ltr` after the
   // first language refresh, clobbering the inline description (#GUI-B4 UX-13).
-  'view.text-direction-ltr': 'commands.misc.textDirection.ltr',
-  'view.text-direction-rtl': 'commands.misc.textDirection.rtl',
+  //
+  // The labels live under the preferences tree (`preferences.editor.misc.
+  // textDirection`), not `commands.misc.*`: the latter was assumed to exist
+  // when these entries were added (#124) but never did, so both the palette
+  // refresh and the inline `t()` in commands/index.ts resolved a raw key.
+  'view.text-direction-ltr': 'preferences.editor.misc.textDirection.ltr',
+  'view.text-direction-rtl': 'preferences.editor.misc.textDirection.rtl',
 
   // Developer tools
   'view.dev-reload': 'commands.view.devReload',

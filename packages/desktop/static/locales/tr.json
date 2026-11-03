@@ -299,9 +299,7 @@
     },
     "noResult": "Sonuç bulunamadı",
     "quickOpenEmpty": "Dosyaları ada göre aramak için bir klasör açın",
-    "currentSuffix": "{name} - geçerli",
-    "textDirectionLtr": "Soldan sağa",
-    "textDirectionRtl": "Sağdan sola"
+    "currentSuffix": "{name} - geçerli"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Başlıkları otomatik numaralandır",

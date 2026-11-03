@@ -299,9 +299,7 @@
     },
     "noResult": "Geen resultaten",
     "quickOpenEmpty": "Open een map om bestanden op naam te doorzoeken",
-    "currentSuffix": "{name} - huidig",
-    "textDirectionLtr": "Links naar rechts",
-    "textDirectionRtl": "Rechts naar links"
+    "currentSuffix": "{name} - huidig"
   },
   "exportSettings": {
     "autoNumberingHeadings": "Automatisch nummeren van koppen",
