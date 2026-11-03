@@ -29,7 +29,12 @@ const loadThemeFile = async (name: string): Promise<string> => {
 
 const loadPrismFile = async (name: string): Promise<string> => {
   const loader = prismLoaders[`${PRISM_DIR}${name}.theme.css`]
-  if (!loader) return ''
+  // #125: returning '' here used to make a missing highlight file silent — the
+  // theme still applied, just without syntax colors. `?inline` imports failed
+  // the build before PERF-05, so restore that signal at the one place the
+  // pairing can go missing. `theme-prism-pairing.spec.ts` also pins the table
+  // against the asset directory without needing the CSS chunks to load.
+  if (!loader) throw new Error(`Theme "${name}" has no matching Prism highlight file`)
   return loader()
 }
 

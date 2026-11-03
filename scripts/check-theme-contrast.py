@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Theme contrast gate (GUI-B9 / A11Y-02).
 
-Parses the `:root` custom properties of every built-in theme CSS file and
-checks the fixed text pairs against WCAG 2.1 contrast:
+Parses the `:root` custom properties of every built-in theme CSS file plus the
+default palette in `assets/styles/index.css`, and checks the fixed text pairs
+against WCAG 2.1 contrast:
 
   1. buttonPrimaryFontColor on buttonPrimaryBgColor  (primary buttons)
   2. sideBarTextColor      on sideBarBgColor         (sidebar text)
@@ -39,6 +40,15 @@ THEME_DIR = os.path.join(
     "packages", "desktop", "src", "renderer", "src", "assets", "themes",
 )
 
+# #129: the app's default palette lives in index.css, not in a theme file. It
+# was outside the gate, so a change there could drop a checked pair below the
+# threshold with nothing failing.
+DEFAULT_THEME_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "packages", "desktop", "src", "renderer", "src", "assets", "styles",
+    "index.css",
+)
+
 THRESHOLD = 4.5
 
 # The checked pairs: (foreground var, background var). Backgrounds resolve
@@ -50,6 +60,13 @@ PAIRS = [
 ]
 
 VAR_RE = re.compile(r"--([A-Za-z0-9]+)\s*:\s*([^;]+);")
+
+# #129: the docstring promises `:root`, but reading the whole file made this
+# last-wins — a same-named property re-declared outside `:root` (component
+# patches used to do that before SA) would be measured while the browser paints
+# whichever the cascade chooses. Parse the root blocks instead, and refuse a
+# file that declares a checked name anywhere else.
+ROOT_BLOCK_RE = re.compile(r":root\s*\{([^}]*)\}")
 
 
 def parse_color(value: str):
@@ -221,19 +238,39 @@ def walk_accent(fg_rgb, accent_rgb, threshold=THRESHOLD):
     return accent_rgb
 
 
-def check_file(path):
+def read_root_variables(text: str):
+    """Collect custom properties from every top-level `:root` block."""
     variables = {}
-    for m in VAR_RE.finditer(open(path, encoding="utf-8").read()):
-        variables[m.group(1)] = m.group(2).strip()
+    for block in ROOT_BLOCK_RE.finditer(text):
+        for m in VAR_RE.finditer(block.group(1)):
+            variables[m.group(1)] = m.group(2).strip()
+    return variables
+
+
+def outside_root_declarations(text: str):
+    """Names declared somewhere other than a `:root` block."""
+    stripped = ROOT_BLOCK_RE.sub("", text)
+    return {m.group(1) for m in VAR_RE.finditer(stripped)}
+
+
+def check_file(path):
+    text = open(path, encoding="utf-8").read()
+    variables = read_root_variables(text)
+    outside = outside_root_declarations(text)
 
     failures = []
     unresolved = []
     for fg_name, bg_name in PAIRS:
+        if fg_name in outside or bg_name in outside:
+            # Source order (not the root block) would decide the paint, so the
+            # gate has nothing reliable to measure: fail instead of guessing.
+            unresolved.append((fg_name, bg_name, "outside"))
+            continue
         fgs = resolve_candidates(fg_name, variables)
         bgs = [opaque(b) for b in resolve_candidates(bg_name, variables)]
         if not fgs or not bgs:
             # A pair this script cannot read is a blind spot, not a pass.
-            unresolved.append((fg_name, bg_name))
+            unresolved.append((fg_name, bg_name, "unreadable"))
             continue
         ratio = min(contrast(composite(fg, bg), bg) for fg in fgs for bg in bgs)
         if ratio < THRESHOLD:
@@ -288,8 +325,13 @@ def fix_file(path, variables, failures):
 def main():
     fix = "--fix" in sys.argv
     failing_files = 0
-    for path in sorted(glob.glob(os.path.join(THEME_DIR, "*.theme.css"))):
-        name = os.path.basename(path)
+    paths = sorted(glob.glob(os.path.join(THEME_DIR, "*.theme.css"))) + [DEFAULT_THEME_PATH]
+    for path in paths:
+        name = (
+            "index.css (default palette)"
+            if path == DEFAULT_THEME_PATH
+            else os.path.basename(path)
+        )
         variables, failures, unresolved = check_file(path)
         if not failures and not unresolved:
             continue
@@ -299,18 +341,25 @@ def main():
             for fg_name, _, ratio in failures:
                 bg_name = next(b for f, b in PAIRS if f == fg_name)
                 print(f"  {fg_name} on {bg_name}: {ratio:.2f} (threshold {THRESHOLD})")
-            for fg_name, bg_name in unresolved:
-                print(
-                    f"  {fg_name} on {bg_name}: UNREADABLE value — the gate cannot "
-                    "measure it, so it fails (use a hex or rgba() color, or a plain "
-                    "var() reference)"
-                )
+            for fg_name, bg_name, reason in unresolved:
+                if reason == "outside":
+                    print(
+                        f"  {fg_name} on {bg_name}: declared outside :root — the "
+                        "cascade, not the checked block, would decide the paint; "
+                        "keep the checked colors in :root"
+                    )
+                else:
+                    print(
+                        f"  {fg_name} on {bg_name}: UNREADABLE value — the gate cannot "
+                        "measure it, so it fails (use a hex or rgba() color, or a plain "
+                        "var() reference)"
+                    )
             continue
         print(f"FIX  {name}")
         for line in fix_file(path, variables, failures):
             print(line)
-        for fg_name, bg_name in unresolved:
-            print(f"  {fg_name} on {bg_name}: unreadable, left for a human hand")
+        for fg_name, bg_name, reason in unresolved:
+            print(f"  {fg_name} on {bg_name}: {reason}, left for a human hand")
 
     if fix:
         print("\n--fix pass complete: review the diff, then rerun in gate mode.")
