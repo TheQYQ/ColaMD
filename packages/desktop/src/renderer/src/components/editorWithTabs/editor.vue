@@ -921,6 +921,12 @@ const {
  * @param slug The TOC entry's slug from the `scroll-to-header` bus event.
  */
 const scrollToHeader = (slug: unknown) => {
+  // In source mode the WYSIWYG container is still mounted (hidden behind the
+  // CodeMirror view), so without this guard every TOC click would also
+  // materialize and scroll the invisible engine document — wasteful on
+  // virtualized large documents. Adjacent handlers (`handleFindAction`) use the
+  // same early return.
+  if (sourceCode.value) return
   const container = getScrollContainer()
   if (!container) return
   // SB (PERF-04): the heading may sit in a viewport-detached block. The

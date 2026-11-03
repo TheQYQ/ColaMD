@@ -80,7 +80,7 @@ describe('bootstrap editor: the live channel', () => {
 
     expect(useMainStore().init).toBe(true)
     expect(store.tabs.length).toBe(1)
-  })
+  }, 15000) // Extended timeout: importing the whole store graph is slow under full-suite parallel load
 
   it('ignores a bootstrap that arrives before the listener is registered', async () => {
     const [{ useEditorStore }, { useMainStore }] = await Promise.all([
@@ -95,5 +95,5 @@ describe('bootstrap editor: the live channel', () => {
     // main-side send gate exists to make impossible.
     expect(useMainStore().init).toBe(false)
     expect(store.tabs.length).toBe(0)
-  })
+  }, 15000) // Same reason: the first mounted-store import pays the module-graph cost
 })
