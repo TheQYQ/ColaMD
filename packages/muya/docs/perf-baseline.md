@@ -303,3 +303,19 @@ Fixture 与击键基准同源（`makeDoc`：标题/段落/列表/代码块混排
 - **10k 段落文档**（muya e2e perf smoke）：挂载 <300、占位 >9000、滚动到底部物化 `paragraph 9999` ✓。
 - **桌面 e2e**：300 passed / 0 failed（虚拟化 ON；含 toc-scroll 深跳/回跳/幂等三条此前被虚拟化破坏、经 margin 精确测量 + sweep 抑制修复的用例）。
 - 代价与取舍：占位符为派生状态（每 sweep 重建注册表）；margin 精确测量依赖正 margin 假设（muya 无负 margin）；DOM 节点在初始挂载瞬间仍为全量。
+
+## SB step 3 实测（桌面源码模式 CM 视口虚拟化落地后）
+
+> 2026-11-03 · 同环境 · 分支 `perf/sb-sourcecode-viewport`（基于 develop `92c3aff`）。与上面两节不同，这节量的是**桌面侧真实 Chromium**（e2e 起真窗口），不是 happy-dom。Fixture 5,050 行（50 个 `# Heading N` + 每段一行 filler），进入源码模式后统计。
+
+| 档位 | 渲染的 `.CodeMirror-line` | 远跳落点误差 | 末标题可达 | scrollHeight（顶部→滚到底→回顶） |
+| --- | ---: | ---: | :---: | --- |
+| `Infinity`（改动前） | 5,050（全量，实测 `setOption` 后计数） | 0（全量渲染，行高无需估算） | ✓ | — |
+| 1000 | 1,030（文档中部 2,032） | 0 | ✓ | 113,260 → 113,223 → 113,223 |
+| 500 | 530 | 0 | ✓ | 113,265 → 113,227 → 113,227 |
+| **200（采用）** | **230（−95.4%）** | **0** | ✓ | 113,268 → 113,228 → 113,228 |
+
+- `viewportMargin` 的单位是**行**不是像素（`src/display/update_display.js:115-116` 直接拿它加减可见行号；CM5 默认 10）。取 200 是"最小够用档"：三档的落点与可达性都合格，差别只在渲染行数，200 的 230 行相当于 5,050 行的 4.6%。
+- **远跳落点靠一次修正回路归零**：目标行在渲染窗口外时，`heightAtLine` 只能按估算行高累加，首次落点实测偏 28–36px（≥1 行，且随文档增大）；动画结束、目标行已被渲染后重测一次即可（`scrollSourceEditorToLine` 的 `scrollend` 修正，容差 2px、最多 2 次）。三档修正后均为 0px。
+- scrollHeight 在首屏全量渲染后略降约 40px 然后稳定（估算收敛，不是抖动；滚到底再回顶不变）。
+- **视觉零回退**：`.source-code .CodeMirror` 由 `height:auto; margin:50px auto` 改为 `height:100%; margin:0 auto`，原 50px 内缩移到 `.CodeMirror-lines { padding: 54px 0 }`（50 + CM 自带 4px）。实测首行距滚动器顶 **54px**，与旧布局一致，且内缩随内容滚走；外层 `.source-code` 不再溢出（CM 自带滚动条接管）。没有自动门禁守这个像素——`theme-visual-baseline.spec.ts` 不进源码模式。

@@ -157,16 +157,17 @@ test.describe('Entering Source Code mode scrolls to the caret', () => {
           | (Element & { CodeMirror?: SourceCodeMirror })
           | null
         const cm = host?.CodeMirror
-        const container = document.querySelector('.source-code') as HTMLElement | null
+        const container = document.querySelector('.CodeMirror-scroll') as HTMLElement | null
         if (!cm || !container) return { caretLineText: '', scrollTop: -1, scrolledToCaret: false }
         const line = cm.getCursor().line
         return {
           caretLineText: cm.getValue().split('\n')[line] ?? '',
           scrollTop: container.scrollTop,
-          // CodeMirror itself never scrolls (`viewportMargin: Infinity`), so the
-          // reading position is the outer container's, measured against the same
-          // line height the mount code used. Tolerance because a compositor can
-          // round the applied scroll offset.
+          // Since SB (PERF-04) step 3 the editor runs a finite `viewportMargin`,
+          // so CodeMirror's own scroller owns the reading position. This document
+          // is far shorter than the margin, so `heightAtLine` is measured, not
+          // estimated, and the mount code's target is exact. Tolerance because a
+          // compositor can round the applied scroll offset.
           scrolledToCaret: Math.abs(container.scrollTop - cm.heightAtLine(line, 'local')) <= 2
         }
       })
