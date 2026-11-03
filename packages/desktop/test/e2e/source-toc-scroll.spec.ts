@@ -102,11 +102,14 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
 
     // animated scroll down
     await expect.poll(() => srcScrollTop(page), { timeout: 8000 }).toBeGreaterThan(0)
+    // Assert the RESTING position. Reading straight after the poll caught the
+    // heading mid-flight on CI (-11px, still travelling past the top edge),
+    // which is the exact thing the `> -5` bound is meant to reject.
+    await settleScrollTop(page)
+    const deepTop = (await headingLineTopInViewport(page, 'Heading Number 18')) ?? -999
     // heading sits near the TOP of the viewport (not the bottom)
-    await expect
-      .poll(() => headingLineTopInViewport(page, 'Heading Number 18'), { timeout: 8000 })
-      .toBeLessThan(150)
-    expect(await headingLineTopInViewport(page, 'Heading Number 18')).toBeGreaterThan(-5)
+    expect(deepTop).toBeLessThan(150)
+    expect(deepTop).toBeGreaterThan(-5)
   })
 
   test('clicking an earlier heading scrolls back up to it at the top', async () => {
@@ -120,8 +123,7 @@ test.describe('Source Code mode: TOC click scrolls to the heading at the top', (
     const fromTop = await settleScrollTop(page)
     await page.locator('.side-bar-toc').getByText('Heading Number 3', { exact: true }).click()
     await expect.poll(() => srcScrollTop(page), { timeout: 8000 }).toBeLessThan(fromTop)
-    await expect
-      .poll(() => headingLineTopInViewport(page, 'Heading Number 3'), { timeout: 8000 })
-      .toBeLessThan(150)
+    await settleScrollTop(page)
+    expect((await headingLineTopInViewport(page, 'Heading Number 3')) ?? -999).toBeLessThan(150)
   })
 })
