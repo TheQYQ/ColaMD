@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { findMarkdownHeadingLine, scrollSourceEditorToLine } from '@/util/sourceModeToc'
 
 // colamd #3580: in Source Code mode, clicking a TOC entry must scroll the
@@ -111,6 +111,16 @@ const makeEditor = (
 }
 
 describe('scrollSourceEditorToLine', () => {
+  // Production defers the decision by two frames so CodeMirror can measure the
+  // landing (see onScrollEnd); these fakes are synchronous, so run the handler
+  // synchronously instead of waiting on the frame clock.
+  beforeEach(() => {
+    vi.stubGlobal('requestAnimationFrame', undefined)
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('smooth-scrolls the CodeMirror scroller so the line sits at the top', () => {
     const { editor, setCursor, heightAtLine, scroller } = makeEditor([480])
 
@@ -179,5 +189,102 @@ describe('scrollSourceEditorToLine', () => {
 
     expect(setCursor).toHaveBeenCalledWith({ line: 5, ch: 0 }, null, { scroll: false })
     expect(heightAtLine).not.toHaveBeenCalled()
+  })
+
+  // #151: on a wrapped document the estimate can miss by more than the rendered
+  // window, so `heightAtLine(target)` stays an estimate and the old pixel delta
+  // read ~0 (measured -17.8k px off on 5,100 × 400-char lines). The coarse pass
+  // must bring the target line into the window before the exact nudge.
+  it('coarse-aligns a wrapped far jump that lands outside the rendered window', () => {
+    const ACTUAL = 78 // px per (wrapped) line
+    const ESTIMATE = 73 // CM's unmeasured estimate, ~6% low
+    const RENDERED = 200 // viewportMargin, in lines
+    const target = 4949
+    let scrollTop = 0
+    const listeners: Array<() => void> = []
+    const scroller = {
+      get scrollTop() {
+        return scrollTop
+      },
+      scrollHeight: 5100 * ACTUAL,
+      clientHeight: 754,
+      scrollTo: vi.fn((opts: { top?: number }) => {
+        scrollTop = opts.top ?? scrollTop
+      }),
+      scrollBy: vi.fn((opts: { top?: number }) => {
+        scrollTop += opts.top ?? 0
+      }),
+      addEventListener: vi.fn((type: string, cb: () => void) => {
+        if (type === 'scrollend') listeners.push(cb)
+      }),
+      removeEventListener: vi.fn((type: string, cb: () => void) => {
+        const at = listeners.indexOf(cb)
+        if (at >= 0) listeners.splice(at, 1)
+      }),
+      fireScrollEnd: () => {
+        for (const cb of [...listeners]) cb()
+      }
+    }
+    const topLine = (): number => Math.floor(scrollTop / ACTUAL)
+    const heightAtLine = vi.fn((line: number) => {
+      const measured = Math.abs(line - topLine()) <= RENDERED
+      return line * (measured ? ACTUAL : ESTIMATE)
+    })
+    const editor = {
+      setCursor: vi.fn(),
+      heightAtLine,
+      lineAtHeight: (height: number) => Math.floor(height / ACTUAL),
+      lineCount: () => 5100,
+      getScrollerElement: () => scroller
+    } as unknown as SourceEditor
+
+    scrollSourceEditorToLine(editor, target)
+    // Estimate lands ~318 lines short; the coarse fraction jump must move it
+    // into the rendered window before the pixel pass.
+    scroller.fireScrollEnd()
+    scroller.fireScrollEnd()
+    scroller.fireScrollEnd()
+
+    expect(scroller.scrollTo).toHaveBeenCalledTimes(2) // initial + one coarse pass
+    expect(scroller.scrollBy).toHaveBeenCalledTimes(1) // the exact ±2px nudge
+    expect(scrollTop).toBeCloseTo(target * ACTUAL, 0)
+  })
+
+  it('caps the coarse passes when the line index never converges', () => {
+    const scrollTop = 0
+    const listeners: Array<() => void> = []
+    const scroller = {
+      get scrollTop() {
+        return scrollTop
+      },
+      scrollHeight: 5100 * 78,
+      clientHeight: 754,
+      scrollTo: vi.fn(() => undefined), // scroller never moves
+      scrollBy: vi.fn(() => undefined),
+      addEventListener: vi.fn((type: string, cb: () => void) => {
+        if (type === 'scrollend') listeners.push(cb)
+      }),
+      removeEventListener: vi.fn((type: string, cb: () => void) => {
+        const at = listeners.indexOf(cb)
+        if (at >= 0) listeners.splice(at, 1)
+      }),
+      fireScrollEnd: () => {
+        for (const cb of [...listeners]) cb()
+      }
+    }
+    const editor = {
+      setCursor: vi.fn(),
+      heightAtLine: (line: number) => line * 78,
+      lineAtHeight: () => 0, // stuck: always reports the document top
+      lineCount: () => 5100,
+      getScrollerElement: () => scroller
+    } as unknown as SourceEditor
+
+    scrollSourceEditorToLine(editor, 4949)
+    for (let i = 0; i < 5; i++) scroller.fireScrollEnd()
+
+    expect(scroller.scrollTo.mock.calls.length).toBeLessThanOrEqual(6) // initial + 5 capped
+    expect(scroller.scrollBy.mock.calls.length).toBeLessThanOrEqual(2) // capped fine passes
+    expect(scrollTop).toBe(0)
   })
 })
