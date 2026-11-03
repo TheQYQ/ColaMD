@@ -307,13 +307,13 @@ test('lineWrapping + finite viewportMargin: heights, far jump, last line', async
     expect(Math.abs(backState.height - bottomState.height)).toBeLessThan(120)
     // Last line must be reachable (lineAtHeight returns a 0-based index).
     expect(bottomState.lastLine).toBeGreaterThanOrEqual(lineCount - 3)
-    // Measured 2026-11-03: headingTop = -17,796 on this fixture, i.e. the jump
-    // overshoots and the correction pass never converges — its ±2px premise
-    // only holds once the target line is inside the rendered window, and here
-    // the estimate is ~17.8k px off (more than the 200-line margin covers).
-    // That is exactly the gap #151 asked to measure, so the bench records the
-    // value instead of asserting a bound the app does not yet meet.
+    // #151 fix: the coarse fraction passes bring the target line into the
+    // rendered window before the ±2px nudge, so the heading lands near the top.
+    // Before the fix this measured -17,796 ~ -17,823 (see perf-baseline); the
+    // bounds below are the same ones the short-line TOC spec uses.
     expect(landedTop).not.toBeNull()
+    expect(landedTop as number).toBeLessThan(150)
+    expect(landedTop as number).toBeGreaterThan(-5)
   } finally {
     if (app) await closeApp(app)
   }

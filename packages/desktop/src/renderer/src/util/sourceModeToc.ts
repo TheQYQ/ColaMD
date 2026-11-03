@@ -7,12 +7,32 @@ interface ISourceEditor {
   ) => void
   heightAtLine: (line: number, mode: 'local' | 'page' | 'div') => number
   getScrollerElement?: () => HTMLElement | null
+  /**
+   * Optional: the line at a local Y (CM5 `lineAtHeight`). When present, a jump
+   * that lands far from the target in LINE terms gets a coarse pass first — see
+   * `MAX_COARSE_CORRECTIONS`. Without it the function keeps its pixel-only
+   * behaviour (handy for the existing unit fakes).
+   */
+  lineAtHeight?: (height: number, mode: 'local' | 'page' | 'div') => number
+  /** Optional: used for the coarse fraction jump (CM5 `lineCount`). */
+  lineCount?: () => number
 }
 
 /** A landing within this many pixels of the line's top counts as exact. */
 const CORRECTION_TOLERANCE_PX = 2
-/** One nudge is enough in practice; the cap stops a non-converging document. */
-const MAX_CORRECTIONS = 2
+/** Two fine nudges are enough in practice; the cap stops a non-converging document. */
+const MAX_FINE_CORRECTIONS = 2
+/**
+ * #151: a wrapped document can land more than the rendered window away in LINE
+ * terms, and then `heightAtLine` is still an estimate, so the pixel delta reads
+ * ~0 while the heading is tens of thousands of pixels off. Coarse passes move
+ * by the measured average height of the lines currently in the window, which
+ * brings the target inside the rendered window; the fine pass then does the
+ * exact ±2px landing.
+ */
+const MAX_COARSE_CORRECTIONS = 5
+/** Within this many lines, the target is rendered and pixels can be trusted. */
+const COARSE_TOLERANCE_LINES = 2
 
 /**
  * Corrections still waiting for their `scrollend`, per scroller. A click whose
@@ -21,6 +41,12 @@ const MAX_CORRECTIONS = 2
  * back to the previous heading.
  */
 const pendingCorrections = new WeakMap<HTMLElement, () => void>()
+/**
+ * Invalidates a scheduled re-measure when a newer jump starts on the same
+ * scroller: `scrollend` only cancels listeners, not the frame callback that is
+ * still waiting for CodeMirror to lay out the landing.
+ */
+const scrollRuns = new WeakMap<HTMLElement, number>()
 
 /**
  * Scroll the Source Code editor so `line` sits at the TOP of the viewport,
@@ -40,33 +66,96 @@ const pendingCorrections = new WeakMap<HTMLElement, () => void>()
  * grows with the document). Once the animation settles the target HAS been
  * rendered, so re-measuring gives the real offset and one nudge puts the line
  * where the user asked for it.
+ *
+ * #151: for a wrapped document the estimate can be off by MORE than the
+ * rendered window (measured -17.8k px on 5,100 lines × 400 chars), and then the
+ * target never gets rendered — the pixel delta reads ~0 and the old loop gave
+ * up silently. When `lineAtHeight` is available, compare the top LINE against
+ * the target and move by the measured height of the lines in the window until
+ * the target is rendered; the fine pass then lands it exactly.
  */
 export function scrollSourceEditorToLine(editor: ISourceEditor, line: number): void {
   editor.setCursor({ line, ch: 0 }, null, { scroll: false })
 
-  const scroller = editor.getScrollerElement?.()
-  if (!scroller) return
+  const scrollerMaybe = editor.getScrollerElement?.()
+  if (!scrollerMaybe) return
+  // Re-bind as non-nullable: the frame callbacks below read it after the guard,
+  // and TypeScript does not carry the optional-call narrowing into closures.
+  const scroller: HTMLElement = scrollerMaybe
 
   pendingCorrections.get(scroller)?.()
+  const runId = (scrollRuns.get(scroller) ?? 0) + 1
+  scrollRuns.set(scroller, runId)
 
-  let corrections = 0
+  let coarseCorrections = 0
+  let fineCorrections = 0
   const cancel = (): void => {
     scroller.removeEventListener('scrollend', onScrollEnd)
     if (pendingCorrections.get(scroller) === cancel) pendingCorrections.delete(scroller)
   }
-  const onScrollEnd = (): void => {
-    cancel()
-    if (corrections >= MAX_CORRECTIONS) return
-    const delta = Math.round(scroller.scrollTop - editor.heightAtLine(line, 'local'))
-    if (Math.abs(delta) <= CORRECTION_TOLERANCE_PX) return
-    corrections += 1
+
+  // A proportional jump by LINE NUMBER against the scroller's total height.
+  // `heightAtLine` cannot be trusted here: for unmeasured lines CodeMirror's
+  // estimate collapses (measured 10px/line vs the real 88 on the wrapped
+  // fixture), so summing those heights under-shoots by tens of thousands of
+  // pixels. `scrollHeight / lineCount` is a global average and stays sane even
+  // when only part of the document is measured; repeated passes converge because
+  // each landing re-measures the region it lands in.
+  const coarseTarget = (): number | null => {
+    const count = editor.lineCount?.()
+    const maxScroll = scroller.scrollHeight - scroller.clientHeight
+    if (!count || count <= 1 || maxScroll <= 0) return null
+    const fraction = line / (count - 1)
+    return Math.max(0, Math.min(maxScroll, fraction * maxScroll))
+  }
+
+  const arm = (): void => {
     pendingCorrections.set(scroller, cancel)
     scroller.addEventListener('scrollend', onScrollEnd)
+  }
+
+  function onScrollEnd(): void {
+    cancel()
+    // `scrollend` fires before CodeMirror has measured the newly rendered
+    // window (it updates the display in its own animation frame). Measuring
+    // here reads the OLD line tree, where the lines ahead of the viewport are
+    // still estimates — measured 10px/line instead of the real 88 on the
+    // wrapped fixture, which under-shot the coarse target badly. Wait two
+    // frames (layout + CM's measure) before deciding.
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => requestAnimationFrame(measure))
+    } else {
+      measure()
+    }
+  }
+
+  function measure(): void {
+    if (scrollRuns.get(scroller) !== runId) return
+    const topLine = editor.lineAtHeight?.(scroller.scrollTop, 'local')
+    if (
+      typeof topLine === 'number' &&
+      topLine >= 0 &&
+      Math.abs(line - topLine) > COARSE_TOLERANCE_LINES &&
+      coarseCorrections < MAX_COARSE_CORRECTIONS
+    ) {
+      const target = coarseTarget()
+      if (target != null && Math.abs(target - scroller.scrollTop) > CORRECTION_TOLERANCE_PX) {
+        coarseCorrections += 1
+        arm()
+        scroller.scrollTo({ top: target, behavior: 'smooth' })
+        return
+      }
+    }
+
+    if (fineCorrections >= MAX_FINE_CORRECTIONS) return
+    const delta = Math.round(scroller.scrollTop - editor.heightAtLine(line, 'local'))
+    if (Math.abs(delta) <= CORRECTION_TOLERANCE_PX) return
+    fineCorrections += 1
+    arm()
     scroller.scrollBy({ top: -delta, behavior: 'smooth' })
   }
 
-  pendingCorrections.set(scroller, cancel)
-  scroller.addEventListener('scrollend', onScrollEnd)
+  arm()
   scroller.scrollTo({ top: editor.heightAtLine(line, 'local'), behavior: 'smooth' })
 }
 
