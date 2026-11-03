@@ -394,9 +394,7 @@ const handleScrollToHeader = (slug: unknown) => {
   if (index < 0) return
   const line = findMarkdownHeadingLine(editor.value.getValue(), index)
   if (line < 0) return
-  // `.source-code` is the scroll container (CodeMirror renders full-height with
-  // viewportMargin: Infinity, so its own scroller never scrolls).
-  scrollSourceEditorToLine(editor.value, line, sourceCodeContainer.value)
+  scrollSourceEditorToLine(editor.value, line)
 }
 
 // ---------------------------------------------------------------------------
@@ -568,7 +566,13 @@ onMounted(async () => {
     lineWrapping: true,
     styleActiveLine: true,
     direction: textDirection,
-    viewportMargin: Infinity,
+    // SB (PERF-04) step 3: a finite margin restores CodeMirror's viewport
+    // virtualization for huge documents — Infinity rendered every line and made
+    // the outer container the scroller. The unit is LINES, not pixels (CM5
+    // default is 10): 200 measured 230 rendered lines on a 5,050-line document
+    // (~4.6%) versus 2,032 at 1000. Landing accuracy is handled separately by
+    // the correction pass in `scrollSourceEditorToLine`.
+    viewportMargin: 200,
     lineNumberFormatter (line: number) {
       if (line % 10 === 0 || line === 1) {
         return line
@@ -625,14 +629,11 @@ onMounted(async () => {
   if (isValidMuyaIndexCursor(muyaIndexCursor)) {
     const { anchor, focus } = muyaIndexCursor
     codeMirrorInstance.setSelection(anchor, focus, { scroll: true })
-    // Typora 1.13 parity: entering Source Code keeps the reading position.
-    // viewportMargin: Infinity means CodeMirror's own scroller never moves —
-    // scroll the outer container so the caret's line sits at the top of the
-    // viewport (same convention as scrollSourceEditorToLine).
-    if (sourceCodeContainer.value) {
-      const headLine = Math.max(0, Number(focus?.line) || 0)
-      sourceCodeContainer.value.scrollTop = codeMirrorInstance.heightAtLine(headLine, 'local')
-    }
+    // Typora 1.13 parity: entering Source Code keeps the reading position —
+    // scroll CodeMirror's own scroller so the caret's line sits at the top of
+    // the viewport (same convention as scrollSourceEditorToLine).
+    const headLine = Math.max(0, Number(focus?.line) || 0)
+    codeMirrorInstance.scrollTo(0, codeMirrorInstance.heightAtLine(headLine, 'local'))
   } else {
     cm.setCursorAtFirstLine(codeMirrorInstance)
   }
@@ -686,10 +687,24 @@ onBeforeUnmount(() => {
   overflow: auto;
 }
 .source-code .CodeMirror {
-  height: auto;
-  margin: 50px auto;
+  /* SB (PERF-04) step 3: a definite height is REQUIRED for CodeMirror's own
+     scroller to work with the finite viewportMargin — `height: auto` renders
+     the wrapper at full document height, which silently disabled CM's
+     viewport virtualization no matter what the option said. */
+  height: 100%;
+  margin: 0 auto;
   max-width: var(--editorAreaWidth);
   background: transparent;
+}
+/* The old 50px margin lived OUTSIDE the scroller; with CM owning the scroll it
+   has to move inside, or source mode would start flush against the tab bar.
+   54px = the 50px inset + the 4px CM already puts on `.CodeMirror-lines`
+   (codemirror.css), so the first line sits exactly where it used to. Inside the
+   scroller also keeps it scrolling away like the margin did, and leaves
+   `scrollTop === heightAtLine(line, 'local')` intact — CM adds the wrapper's
+   padding to that coordinate (position_measurement.js `intoCoordSystem`). */
+.source-code .CodeMirror-lines {
+  padding: 54px 0;
 }
 .source-code .CodeMirror-gutters {
   border-right: none;

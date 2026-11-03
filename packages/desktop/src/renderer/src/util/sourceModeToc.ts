@@ -1,37 +1,73 @@
 /** Minimal CodeMirror surface `scrollSourceEditorToLine` needs. */
 interface ISourceEditor {
   setCursor: (
-    pos: { line: number, ch: number },
+    pos: { line: number; ch: number },
     ch?: number | null,
     options?: { scroll?: boolean }
   ) => void
   heightAtLine: (line: number, mode: 'local' | 'page' | 'div') => number
+  getScrollerElement?: () => HTMLElement | null
 }
+
+/** A landing within this many pixels of the line's top counts as exact. */
+const CORRECTION_TOLERANCE_PX = 2
+/** One nudge is enough in practice; the cap stops a non-converging document. */
+const MAX_CORRECTIONS = 2
+
+/**
+ * Corrections still waiting for their `scrollend`, per scroller. A click whose
+ * target is already in place scrolls nowhere, so no `scrollend` ever arrives —
+ * without this the stale listener would fire on the NEXT jump and drag the view
+ * back to the previous heading.
+ */
+const pendingCorrections = new WeakMap<HTMLElement, () => void>()
 
 /**
  * Scroll the Source Code editor so `line` sits at the TOP of the viewport,
  * animated.
  *
- * The editor runs CodeMirror with `viewportMargin: Infinity`, so CodeMirror
- * renders the whole document at full height and its own `.CodeMirror-scroll`
- * never scrolls — the OUTER `.source-code` container (`scrollContainer`) is the
- * scrollable element. So neither `cm.scrollTo` nor `cm.scrollIntoView` moves
- * anything; we scroll the container directly to the line's local Y, which puts
- * the line at the top (CodeMirror's `scrollIntoView` only scrolled minimally,
- * leaving the heading at the bottom edge with no animation). `setCursor` gets
+ * SB (PERF-04) step 3: CodeMirror runs with a finite `viewportMargin`, so its
+ * own `.CodeMirror-scroll` is the scrolling element again (the outer
+ * `.source-code` container no longer overflows). Scroll the scroller to the
+ * line's local Y — CodeMirror's `scrollIntoView` only scrolled minimally,
+ * leaving the heading at the bottom edge with no animation. `setCursor` gets
  * `scroll: false` so its native caret-into-view scroll doesn't fight the
  * animation.
+ *
+ * A line far outside the rendered window has never been measured, so
+ * `heightAtLine` sums CM's estimated line heights for everything above it and
+ * the first landing is a line or two off (28-36px at 5k lines, and the error
+ * grows with the document). Once the animation settles the target HAS been
+ * rendered, so re-measuring gives the real offset and one nudge puts the line
+ * where the user asked for it.
  */
-export function scrollSourceEditorToLine(
-  editor: ISourceEditor,
-  line: number,
-  scrollContainer: HTMLElement | null | undefined
-): void {
+export function scrollSourceEditorToLine(editor: ISourceEditor, line: number): void {
   editor.setCursor({ line, ch: 0 }, null, { scroll: false })
 
-  if (!scrollContainer) return
-  const top = editor.heightAtLine(line, 'local')
-  scrollContainer.scrollTo({ top, behavior: 'smooth' })
+  const scroller = editor.getScrollerElement?.()
+  if (!scroller) return
+
+  pendingCorrections.get(scroller)?.()
+
+  let corrections = 0
+  const cancel = (): void => {
+    scroller.removeEventListener('scrollend', onScrollEnd)
+    if (pendingCorrections.get(scroller) === cancel) pendingCorrections.delete(scroller)
+  }
+  const onScrollEnd = (): void => {
+    cancel()
+    if (corrections >= MAX_CORRECTIONS) return
+    const delta = Math.round(scroller.scrollTop - editor.heightAtLine(line, 'local'))
+    if (Math.abs(delta) <= CORRECTION_TOLERANCE_PX) return
+    corrections += 1
+    pendingCorrections.set(scroller, cancel)
+    scroller.addEventListener('scrollend', onScrollEnd)
+    scroller.scrollBy({ top: -delta, behavior: 'smooth' })
+  }
+
+  pendingCorrections.set(scroller, cancel)
+  scroller.addEventListener('scrollend', onScrollEnd)
+  scroller.scrollTo({ top: editor.heightAtLine(line, 'local'), behavior: 'smooth' })
 }
 
 /**
