@@ -1,6 +1,6 @@
 # 主题截图基线（GUI-SA 前置）
 
-33 个可选主题 × 2 张 = 66 份 PNG。由 `theme-visual-baseline.spec.ts` 生成，作为专项 SA（主题文件瘦身，`docs/GUI_FIX_PLAN.md` §3.12）的"零视觉差异"对照基线。补上 GUI-B9 验收清单里"33 主题视觉抽查（截图留档）"这个当时没做的缺口（issue #125 亦记）。
+33 个可选主题 × 2 张 = 66 份 PNG。由 `theme-visual-baseline.spec.ts` 生成，作为专项 SA（主题文件瘦身，「GUI 四维审查」的 SA 专项，结论见 `docs/PROJECT_GUIDE.md` §14.2）的"零视觉差异"对照基线。补上 GUI-B9 验收清单里"33 主题视觉抽查（截图留档）"这个当时没做的缺口（issue #125 亦记）。
 
 ## 场景（两张截图拍什么）
 

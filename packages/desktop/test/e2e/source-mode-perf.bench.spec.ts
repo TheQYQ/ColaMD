@@ -9,7 +9,8 @@ import {
   waitForEditor
 } from './helpers'
 
-// GUI_FIX_PLAN §8 "总验收" item 4: source-mode typing must not degrade
+// GUI review §8 "总验收" item 4 (conclusions in docs/PROJECT_GUIDE.md §14.2):
+// source-mode typing must not degrade
 // linearly with document size (B3 + SB). The muya perf baseline covers
 // WYSIWYG keystrokes and source-mode *rendering*; this is the missing
 // source-mode *typing* measurement, in the real Electron renderer.
