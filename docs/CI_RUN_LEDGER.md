@@ -224,6 +224,8 @@ run 页面属于**某一个仓库**：项目在 2026-09-27 同名重建过，旧
 > 2. **release run 由标签 push 触发，不是分支 push** ——所以 promote PR 的 merge commit 在 `main` 上零 run、却有对应的 release run，两件事并不矛盾。`release.yml` 只认 `tags: 'v*'`。
 > 3. **`gh pr merge` 的两种失败返回都要回读定性**：本轮合 #76 时它返回 `! Pull request #76 was already merged`（服务端在我上次调用因网络 `unexpected EOF` 后已成功合并）。**退出码与错误文本都不能当判据**，只有 `gh pr view --json state,mergedAt,mergeCommit` 可信。
 >
+> **v0.1.9 发版链路（2026-11-04，GUI 收尾批）**：PR #164（bump，`6eb692d`，只改 `packages/desktop/package.json` 一行）→ PR #165（promote，merge commit **`f438d150`**）→ 标签 `v0.1.9`（annotated，tag 对象 `c0e8346`）→ release run **`41788565528`**：`Validate tag` + 5 条平台腿（linux / windows-x64 / windows-arm64 / macos-x64 / macos-arm64）+ `Publish GitHub Release` 全部 success、零重试；release 页 `v0.1.9` published 2026-11-04T07:04:58Z，资产 24 项（`colamd-win-x64-0.1.9-setup.exe` 102.7 MB、`SHA256SUMS.txt` 等）。PR 侧 check：bump PR 12 项、promote PR 17 项，全绿。上面 v0.1.8 那三条结论在本轮全部复现（标签打在 promote 的 merge commit 上、release 只认标签 push、合并后 `main` 尖上零 run）。
+>
 > **446 → 481 的 35 条构成**（本表只逐行补录上列 16 条，其余按既有"收账于 `9033099` 之后的 push 腿按终态声明不逐条回填"口径处理）：PR #69 的 4 条 `pull_request`（18:51Z，`head_branch` 显示为 `develop`，因 #69 是 develop→main 的 promote）+ 2 条 push（19:10Z）；`chore/release-0.1.7` 的 4 条 `pull_request`（19:45Z，含台账已入档的 mac 打包抖动 run `36916602333` **`run_attempt` 2**）+ 2 条 push（20:05Z）；PR #70（promote）的 4 条 `pull_request`（20:14Z）；v0.1.7 的 `Release ColaMD` 1 条（20:30Z，run `36922140168`，七腿 a1 零重试）。
 
 > **后两行是 #20 的验收数据**（issue 已按此关闭）：`develop` 的 merge commit `5222c9e`（PR #48 promote 合入）上 `commits/<sha>/check-suites` 从历史那两个 `total_count: 0` 变成 **`total_count: 2`**，两个 run 都是 **event = `push`**，四个 job 各出现恰好一次（零重试）。**纯文档合并实测 8.38 作业分钟**，而正文里那组 18.05 / 18.73 是在 muya 腿真的起了的批次上量的——差的那约 9.7 分钟就是那五条 muya 腿，**该差值是减出来的，没有独立测过**。
