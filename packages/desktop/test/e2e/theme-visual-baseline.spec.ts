@@ -5,7 +5,8 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { clickMenuById, closeApp, launchElectron, waitForMenuReady } from './helpers'
 
-// GUI-SA prerequisite (GUI_FIX_PLAN §3.12): one full-window screenshot per
+// GUI-SA prerequisite (SA special of the 2026-11-01 GUI review, conclusions in
+// docs/PROJECT_GUIDE.md §14.2): one full-window screenshot per
 // selectable theme against a fixed scenario, archived under theme-baseline/
 // as the "zero visual difference" reference for the theme-file slimming
 // special. Regenerate with --update-snapshots, compare by running this spec

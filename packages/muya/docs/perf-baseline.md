@@ -320,7 +320,7 @@ Fixture 与击键基准同源（`makeDoc`：标题/段落/列表/代码块混排
 - scrollHeight 在首屏全量渲染后略降约 40px 然后稳定（估算收敛，不是抖动；滚到底再回顶不变）。
 - **视觉零回退**：`.source-code .CodeMirror` 由 `height:auto; margin:50px auto` 改为 `height:100%; margin:0 auto`，原 50px 内缩移到 `.CodeMirror-lines { padding: 54px 0 }`（50 + CM 自带 4px）。实测首行距滚动器顶 **54px**，与旧布局一致，且内缩随内容滚走；外层 `.source-code` 不再溢出（CM 自带滚动条接管）。没有自动门禁守这个像素——`theme-visual-baseline.spec.ts` 不进源码模式。
 
-## 源码模式键入实测（GUI_FIX_PLAN §8 总验收第 4 条）
+## 源码模式键入实测（GUI 四维审查 §8 总验收第 4 条；结论已迁入 `PROJECT_GUIDE.md` §14.2）
 
 > 2026-11-03 · Windows 11 · Node v22.21.1 · 真实 Electron/Chromium（`pnpm --filter colamd build` 后跑 Playwright）。fixture 由 `packages/desktop/test/e2e/source-mode-perf.bench.spec.ts` 生成：中英混排，目标 100KB / 500KB / 1MB（`Buffer.byteLength`），实际 **70,805 / 355,337 / 728,762 字符**。
 
