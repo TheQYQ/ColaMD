@@ -80,6 +80,8 @@ jobs:
           pandoc --version
 
       - uses: ./.github/actions/setup
+        with:
+          electron-cache: true
 
       # Mirrors build.yml: must be set before postinstall runs electron-rebuild.
       - name: Set C++20 for MacOS
