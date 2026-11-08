@@ -44,6 +44,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+        with:
+          electron-cache: true
 
       - name: Run Unit Tests
         run: pnpm test
@@ -70,6 +72,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+        with:
+          electron-cache: true
 
       # Each package reports separately, and the first one failing must not
       # hide the second one's number.

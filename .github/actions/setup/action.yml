@@ -6,6 +6,10 @@ inputs:
     description: Node.js version to install
     required: false
     default: '22.21.1'
+  electron-cache:
+    description: 'Cache the Electron dist + electron-builder asset downloads (set true on legs that need the Electron runtime or package builds)'
+    required: false
+    default: 'false'
 
 runs:
   using: composite
@@ -18,6 +22,27 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
         cache: 'pnpm'
+
+    # CI-Electron-504 (2026-11-08 nightly): a GitHub Releases CDN outage 504'd
+    # the electron-v42.10.1 dist zips on both the build and ubuntu-test legs
+    # (electron-builder and @electron/get re-download per runner otherwise).
+    # Cache the download dirs keyed on the lockfile: unchanged dependencies
+    # hit the cache and never touch the CDN. Paths for all three OSes are
+    # listed; actions/cache skips the ones an OS does not have. Populated by
+    # the postinstall/runtime downloads downstream and saved by this action's
+    # post step at job end.
+    - name: Cache Electron and electron-builder downloads
+      if: inputs.electron-cache == 'true'
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/electron
+          ~/.cache/electron-builder
+          ~/Library/Caches/electron
+          ~/Library/Caches/electron-builder
+          ~/AppData/Local/electron/Cache
+          ~/AppData/Local/electron-builder/cache
+        key: electron-dl-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
     - name: Install Dependencies
       shell: bash
