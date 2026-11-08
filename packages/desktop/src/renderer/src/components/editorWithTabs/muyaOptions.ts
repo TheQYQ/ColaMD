@@ -77,7 +77,7 @@ export const createMuyaOptions = (markdown: string | undefined): Record<string, 
     spellcheckerEnabled,
     spellcheckerNoUnderline
   } = storeToRefs(preferencesStore)
-  const { imageAction: muyaImageAction } = useEditorImages()
+  const { muyaImageAction } = useEditorImages()
 
   const options: Record<string, unknown> = {
     focusMode: focus.value,

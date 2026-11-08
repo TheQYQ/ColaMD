@@ -228,6 +228,24 @@ test.describe('Theme visual baseline (GUI-SA prerequisite)', () => {
     await page.getByRole('treeitem', { name: 'theme-fixture.md' }).click()
     await page.waitForFunction(() => document.body.textContent?.includes('Theme Visual Baseline'))
     await page.addStyleTag({ content: FREEZE_STYLE })
+    // Pin the caret to the LAST paragraph before any shot: the ATX heading
+    // shows its '#' marker only while it is the ACTIVE block, and the active
+    // block depends on where the file-open click left the selection — a
+    // per-run timing artifact that leaked into the 2026-11-02 baselines
+    // (ayu-light captured the marker, light did not). A fixed caret makes all
+    // 33 shots reproduce the same heading rendering.
+    await page.evaluate(() => {
+      const paragraphs = document.querySelectorAll('.mu-container .mu-paragraph-content')
+      const last = paragraphs[paragraphs.length - 1] as HTMLElement | undefined
+      if (!last) return
+      const range = document.createRange()
+      range.selectNodeContents(last)
+      range.collapse(false)
+      const sel = window.getSelection()
+      sel?.removeAllRanges()
+      sel?.addRange(range)
+      last.focus()
+    })
     await page.waitForTimeout(500)
   })
 
