@@ -190,12 +190,17 @@ export const useEditorScroll = (deps: ScrollDeps) => {
     const container = getScrollContainer()
     if (!container || !anchor) return
     const { y } = anchor.getBoundingClientRect()
+    // `y` is window-relative while the target offset (`STANDAR_Y`) is meant from
+    // the CONTAINER's top; without subtracting the container's own top the jump
+    // lands a chrome-height too high (measured ~64px on Windows: title bar +
+    // menu bar), which made every TOC entry read as "not quite at the top".
+    const containerTop = container.getBoundingClientRect().top
     // SB (PERF-04): the animation owns the scroll position - virtualization
     // sweeps mid-flight compete with it (an upward TOC jump stalled when a
     // sweep remounted blocks the animation had already passed). One sweep
     // after the animation settles re-windows the container.
     getEditor()?.editor?.scrollPage?.suppressVirtualizerSweeps(duration + 400)
-    animatedScrollTo(container, container.scrollTop + y - STANDAR_Y, duration)
+    animatedScrollTo(container, container.scrollTop + (y - containerTop) - STANDAR_Y, duration)
   }
 
   const scrollToHighlight = () => {

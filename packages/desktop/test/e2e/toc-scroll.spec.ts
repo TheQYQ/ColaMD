@@ -98,6 +98,23 @@ const isHeadingInViewport = (page: Page, text: string): Promise<boolean> =>
 const tocLabel = (page: Page, text: string) =>
   page.locator('.side-bar-toc').getByText(text, { exact: true })
 
+// Distance from the scroll container's TOP to the heading's top. The jump
+// targets `STANDAR_Y` (320px) below the container top; comparing window-relative
+// coordinates instead would silently absorb the title bar + menu bar height.
+const headingOffsetFromContainerTop = (page: Page, text: string): Promise<number> =>
+  page.evaluate((needle) => {
+    const container = document.querySelector('.editor-component') as HTMLElement | null
+    if (!container) return -1
+    const sel =
+      '.mu-container > h1, .mu-container > h2, .mu-container > h3, .mu-container > h4, .mu-container > h5, .mu-container > h6'
+    const normalize = (s: string) => s.replace(/^[#\s]+/, '').trim()
+    const target = Array.from(document.querySelectorAll(sel)).find(
+      (h) => normalize(h.textContent || '') === needle
+    ) as HTMLElement | undefined
+    if (!target) return -1
+    return Math.round(target.getBoundingClientRect().top - container.getBoundingClientRect().top)
+  }, text)
+
 // Is the heading with this text attached to the DOM at all? Under viewport
 // virtualization a block outside the rendered band is swapped for a
 // `.mu-virtual-placeholder`, so its heading element does not exist — that is
@@ -177,6 +194,20 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
     await expect.poll(() => getScrollTop(page), { timeout: 8000 }).toBeGreaterThan(0)
     // And the target heading must be in the viewport.
     await expect.poll(() => isHeadingInViewport(page, targetText), { timeout: 8000 }).toBe(true)
+    // Landing position: 320px below the CONTAINER top (STANDAR_Y). Waiting for
+    // the animation to SETTLE (not a single frame) matters here — a mid-flight
+    // reading is still hundreds of pixels away. Measuring from the container is
+    // what keeps this honest: the old window-relative math left the heading
+    // ~64px high (the title bar + menu bar height).
+    await expect
+      .poll(
+        async () => {
+          const offset = await headingOffsetFromContainerTop(page, targetText)
+          return Math.abs(offset - 320) <= 8
+        },
+        { timeout: 8000 }
+      )
+      .toBe(true)
   })
 
   test('clicking an earlier heading scrolls back up toward it', async () => {
