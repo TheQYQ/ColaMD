@@ -159,10 +159,86 @@ export function scrollSourceEditorToLine(editor: ISourceEditor, line: number): v
   scroller.scrollTo({ top: editor.heightAtLine(line, 'local'), behavior: 'smooth' })
 }
 
+/** Fenced-code toggle line (``` / ~~~). */
+const FENCE = /^ {0,3}(`{3,}|~{3,})/
+/** ATX heading: `#`..`######` followed by whitespace or end of line. */
+const ATX_HEADING = /^ {0,3}#{1,6}(?:\s|$)/
+/** Setext underline: a run of `=` or `-` alone on its line. */
+const SETEXT_UNDERLINE = /^ {0,3}(?:=+|-+)\s*$/
+/**
+ * Lines whose following `---` is a thematic break, NOT a setext underline.
+ * CommonMark only underlines a PARAGRAPH line; a `---` after a list item,
+ * blockquote, indented code or another thematic break starts a new block, so
+ * counting those would add phantom headings and shift every later TOC index.
+ */
+const NOT_SETEXT_TEXT = [
+  /^ {0,3}(?:[-*+]|\d{1,9}[.)])(?:\s+|$)/, // list item
+  /^ {0,3}>/, // blockquote
+  /^(?: {4}|\t)/, // indented code
+  /^ {0,3}(?:(?:\*[ \t]*){3,}|(?:-[ \t]*){3,}|(?:_[ \t]*){3,})$/ // thematic break
+]
+/** YAML front-matter delimiters (muya's default `frontmatterType: '-'`). */
+const FRONT_MATTER_OPEN = /^---[ \t\r]*$/
+const FRONT_MATTER_CLOSE = /^(?:---|\.\.\.)[ \t\r]*$/
+
+/**
+ * First line after a leading YAML front-matter block, or 0 when there is none.
+ * `getTOC()` never enumerates front-matter content, so the scan must skip the
+ * block — otherwise a `key: value` line sitting right above the closing `---`
+ * reads as a setext heading and every later index shifts by one.
+ */
+const frontMatterEnd = (lines: string[]): number => {
+  if (lines.length === 0 || !FRONT_MATTER_OPEN.test(lines[0])) return 0
+  for (let i = 1; i < lines.length; i++) {
+    if (FRONT_MATTER_CLOSE.test(lines[i])) return i + 1
+  }
+  // Unterminated: not front matter, so it stays ordinary content.
+  return 0
+}
+
+const isSetextHeading = (line: string, next: string | undefined): boolean => {
+  if (line.trim() === '' || next === undefined) return false
+  if (!SETEXT_UNDERLINE.test(next)) return false
+  return !NOT_SETEXT_TEXT.some((pattern) => pattern.test(line))
+}
+
+/**
+ * Walk every heading in document order, skipping fenced code and front matter.
+ * `onHeading` receives the 0-based line of the heading TEXT (the underline line
+ * for setext) and returns true to stop the scan.
+ *
+ * Shared by both public helpers so the jump target and the outline highlight can
+ * never disagree about what counts as a heading.
+ */
+const scanHeadings = (lines: string[], onHeading: (line: number) => boolean): void => {
+  let fence: string | null = null
+  for (let i = frontMatterEnd(lines); i < lines.length; i++) {
+    const line = lines[i]
+    const fenceMatch = FENCE.exec(line)
+    if (fenceMatch) {
+      const marker = fenceMatch[1][0]
+      if (fence === null) fence = marker
+      else if (marker === fence) fence = null
+      continue
+    }
+    if (fence !== null) continue
+
+    if (ATX_HEADING.test(line)) {
+      if (onHeading(i)) return
+      continue
+    }
+
+    if (isSetextHeading(line, lines[i + 1])) {
+      if (onHeading(i)) return
+      i++ // consume the underline line
+    }
+  }
+}
+
 /**
  * Find the 0-based line number of the `headingIndex`-th markdown heading
  * (ATX `# foo` or setext `foo\n===`) in document order, skipping fenced code
- * blocks. Returns -1 when not found.
+ * blocks and a leading YAML front-matter block. Returns -1 when not found.
  *
  * Used by Source Code mode to resolve a TOC entry (whose order matches the
  * document heading order muya builds the TOC from) to a CodeMirror line.
@@ -170,83 +246,32 @@ export function scrollSourceEditorToLine(editor: ISourceEditor, line: number): v
 export function findMarkdownHeadingLine(markdown: string, headingIndex: number): number {
   if (headingIndex < 0) return -1
 
-  const lines = markdown.split('\n')
-  let fence: string | null = null
+  let found = -1
   let count = 0
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-
-    // Toggle fenced-code-block state on ``` / ~~~ markers.
-    const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})/)
-    if (fenceMatch) {
-      const marker = fenceMatch[1][0]
-      if (fence === null) fence = marker
-      else if (marker === fence) fence = null
-      continue
+  scanHeadings(markdown.split('\n'), (line) => {
+    if (count === headingIndex) {
+      found = line
+      return true
     }
-    if (fence !== null) continue
-
-    // ATX heading.
-    if (/^ {0,3}#{1,6}(?:\s|$)/.test(line)) {
-      if (count === headingIndex) return i
-      count++
-      continue
-    }
-
-    // Setext heading: a non-blank line immediately followed by an `===`/`---`
-    // underline.
-    const next = lines[i + 1]
-    if (line.trim() !== '' && next !== undefined && /^ {0,3}(?:=+|-+)\s*$/.test(next)) {
-      if (count === headingIndex) return i
-      count++
-      i++ // consume the underline line
-    }
-  }
-
-  return -1
+    count++
+    return false
+  })
+  return found
 }
 
 /**
  * Inverse of `findMarkdownHeadingLine`: the document-order index of the last
  * heading at or above `cursorLine` (-1 when the caret sits above the first
- * heading). One pass, same heading rules as `findMarkdownHeadingLine`, so the
- * index maps 1:1 onto the muya TOC entry order. Used by Source Code mode to
- * keep the sidebar outline highlighted on the section the caret is in.
+ * heading). Same scanner as `findMarkdownHeadingLine`, so the index maps 1:1
+ * onto the muya TOC entry order. Used by Source Code mode to keep the sidebar
+ * outline highlighted on the section the caret is in.
  */
 export function findActiveHeadingIndex(markdown: string, cursorLine: number): number {
-  const lines = markdown.split('\n')
-  let fence: string | null = null
   let index = -1
-
-  const bound = Math.min(cursorLine, lines.length - 1)
-  for (let i = 0; i <= bound; i++) {
-    const line = lines[i]
-
-    // Toggle fenced-code-block state on ``` / ~~~ markers.
-    const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})/)
-    if (fenceMatch) {
-      const marker = fenceMatch[1][0]
-      if (fence === null) fence = marker
-      else if (marker === fence) fence = null
-      continue
-    }
-    if (fence !== null) continue
-
-    // ATX heading.
-    if (/^ {0,3}#{1,6}(?:\s|$)/.test(line)) {
-      index++
-      continue
-    }
-
-    // Setext heading: a non-blank line immediately followed by an `===`/`---`
-    // underline.
-    const next = lines[i + 1]
-    if (line.trim() !== '' && next !== undefined && /^ {0,3}(?:=+|-+)\s*$/.test(next)) {
-      index++
-      i++ // consume the underline line
-    }
-  }
-
+  scanHeadings(markdown.split('\n'), (line) => {
+    if (line > cursorLine) return true
+    index++
+    return false
+  })
   return index
 }
