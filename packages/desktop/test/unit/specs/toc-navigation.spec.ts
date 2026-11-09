@@ -27,7 +27,7 @@ vi.mock('@/services/notification', () => ({
 }))
 
 import { useEditorStore } from '@/store/editor'
-import { resolveTocHeadingElement } from '@/util/tocNavigation'
+import { countTopLevelHeadings, resolveTocHeadingElement } from '@/util/tocNavigation'
 
 describe('useEditorStore UPDATE_TOC', () => {
   beforeEach(() => {
@@ -125,5 +125,43 @@ describe('resolveTocHeadingElement', () => {
     container.innerHTML = '<div class="mu-container"><h1>Only one</h1></div>'
     // listToc claims two headings but the DOM has one — guard against overrun.
     expect(resolveTocHeadingElement(container, listToc, 'uid-2')).toBeNull()
+  })
+})
+
+describe('countTopLevelHeadings', () => {
+  it('counts only the top-level headings the TOC also enumerates', () => {
+    const container = document.createElement('div')
+    container.innerHTML = `
+      <div class="mu-container">
+        <h1>Top One</h1>
+        <blockquote><h3>Nested heading</h3></blockquote>
+        <h2>Top Two</h2>
+      </div>
+    `
+    expect(countTopLevelHeadings(container)).toBe(2)
+  })
+
+  it('reports fewer headings than the TOC when virtualization detached blocks', () => {
+    // SB (PERF-04): blocks outside the rendered band are replaced by
+    // `.mu-virtual-placeholder` slots, so the DOM only holds a subset of the
+    // document headings. The caller compares this count against the TOC length
+    // to know whether `resolveTocHeadingElement`'s index mapping is valid:
+    // before the fix the host indexed the sparse list and scrolled to whichever
+    // heading happened to be mounted.
+    const container = document.createElement('div')
+    container.innerHTML = `
+      <div class="mu-container">
+        <h1>Top One</h1>
+        <div class="mu-virtual-placeholder" style="height: 480px"></div>
+        <div class="mu-virtual-placeholder" style="height: 520px"></div>
+      </div>
+    `
+    const listToc = [{ slug: 'uid-1' }, { slug: 'uid-2' }, { slug: 'uid-3' }]
+    expect(countTopLevelHeadings(container)).toBe(1)
+    // The sparse list still "resolves" index 1 — to nothing distinguishable from
+    // the real second heading. That silent wrong answer is why the count gate
+    // exists: it is the only signal that materializing is required.
+    expect(resolveTocHeadingElement(container, listToc, 'uid-2')).toBeNull()
+    expect(countTopLevelHeadings(container)).not.toBe(listToc.length)
   })
 })

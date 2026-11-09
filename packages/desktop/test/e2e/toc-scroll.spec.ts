@@ -98,6 +98,20 @@ const isHeadingInViewport = (page: Page, text: string): Promise<boolean> =>
 const tocLabel = (page: Page, text: string) =>
   page.locator('.side-bar-toc').getByText(text, { exact: true })
 
+// Is the heading with this text attached to the DOM at all? Under viewport
+// virtualization a block outside the rendered band is swapped for a
+// `.mu-virtual-placeholder`, so its heading element does not exist — that is
+// the precondition for the sparse-index bug this file now guards.
+const isHeadingMounted = (page: Page, text: string): Promise<boolean> =>
+  page.evaluate((needle) => {
+    const sel =
+      '.mu-container > h1, .mu-container > h2, .mu-container > h3, .mu-container > h4, .mu-container > h5, .mu-container > h6'
+    const normalize = (s: string) => s.replace(/^[#\s]+/, '').trim()
+    return Array.from(document.querySelectorAll(sel)).some(
+      (h) => normalize(h.textContent || '') === needle
+    )
+  }, text)
+
 const showSidebar = async (app: ElectronApplication, page: Page): Promise<void> => {
   const visible = await page.evaluate(() => {
     const el = document.querySelector('.side-bar') as HTMLElement | null
@@ -202,5 +216,45 @@ test.describe('TOC sidebar click scrolls the live editor', () => {
     await expect.poll(() => isHeadingInViewport(page, targetText), { timeout: 8000 }).toBe(true)
     const secondScroll = await getScrollTop(page)
     expect(Math.abs(secondScroll - firstScroll)).toBeLessThanOrEqual(5)
+  })
+
+  // SB (PERF-04) regression: once the viewport is scrolled deep, blocks outside
+  // the rendered band (2,000px margin) become `.mu-virtual-placeholder` slots,
+  // so `.mu-container > hN` is a SPARSE subset of the outline. The old handler
+  // indexed that sparse list (`headings[tocIndex]`) and silently scrolled to
+  // whichever heading happened to be mounted — clicking an early entry from the
+  // bottom of a long document jumped to a nearby section, not the target.
+  test('clicking an early entry while scrolled deep lands on that heading', async () => {
+    const targetText = 'Heading Number 2'
+    // Park the view at the very bottom and let the virtualizer sweep. The sweep
+    // is throttled AND suppressed for ~700ms after the previous test's
+    // programmatic TOC scroll, so alternate between two bottom positions: each
+    // REAL position change fires the scroll event the sweep needs (writing the
+    // same clamped value does not). The test then waits for the precondition —
+    // the target is no longer attached — instead of a fixed sleep.
+    let nudge = 0
+    await expect
+      .poll(
+        async () => {
+          nudge = nudge === 0 ? 80 : 0
+          await page.evaluate((offset) => {
+            const el = document.querySelector('.editor-component') as HTMLElement | null
+            if (el) el.scrollTop = el.scrollHeight - el.clientHeight - offset
+          }, nudge)
+          return isHeadingMounted(page, targetText)
+        },
+        { timeout: 15_000, intervals: [250, 400, 600] }
+      )
+      .toBe(false)
+
+    const fromTop = await getScrollTop(page)
+    expect(fromTop).toBeGreaterThan(0)
+
+    await tocLabel(page, targetText).click()
+
+    // Must travel back up AND actually reveal the requested heading; landing on
+    // a mounted neighbour satisfies only the first half.
+    await expect.poll(() => getScrollTop(page), { timeout: 8000 }).toBeLessThan(fromTop)
+    await expect.poll(() => isHeadingInViewport(page, targetText), { timeout: 8000 }).toBe(true)
   })
 })

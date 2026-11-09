@@ -99,7 +99,7 @@ import { moveImageToFolder, uploadImage } from '@/util/fileSystem'
 import { guessClipboardFilePath } from '@/util/clipboard'
 import { dataURLToFile } from '@/util/dataURLToFile'
 import { getCssForOptions, getHtmlToc, type PdfCssOptions, type HtmlTocOptions } from '@/util/pdf'
-import { resolveTocHeadingElement } from '@/util/tocNavigation'
+import { resolveTocHeadingElement, countTopLevelHeadings } from '@/util/tocNavigation'
 import { addCommonStyle, setEditorWidth } from '@/util/theme'
 import { usePreferencesStore } from '@/store/preferences'
 import { useEditorStore } from '@/store/editor'
@@ -904,6 +904,7 @@ const {
   scrollToCursor,
   scrollToCords,
   resolveRendered,
+  materializeDocument,
   scrollElementIntoView,
   scrollToHighlight,
   scrollToAnchorElement,
@@ -929,6 +930,15 @@ const scrollToHeader = (slug: unknown) => {
   if (sourceCode.value) return
   const container = getScrollContainer()
   if (!container) return
+  // SB (PERF-04): blocks outside the rendered band are placeholders, so the
+  // DOM's `.mu-container > hN` list is a SPARSE SUBSET of the document headings
+  // and `headings[tocIndex]` lands on whatever happens to be mounted — clicking
+  // an early entry while scrolled deep jumped to a nearby mounted heading
+  // instead of the target. Index mapping is only valid when the rendered count
+  // matches the TOC length, so materialize the whole document first otherwise.
+  if (countTopLevelHeadings(container) !== editorStore.listToc.length) {
+    materializeDocument()
+  }
   // SB (PERF-04): the heading may sit in a viewport-detached block. The
   // retry materializes the document once; the settling scroll
   // re-virtualizes around the destination.

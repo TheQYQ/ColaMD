@@ -29,3 +29,17 @@ export const resolveTocHeadingElement = (
   const headings = container.querySelectorAll(TOP_LEVEL_HEADINGS_SELECTOR)
   return headings[index] ?? null
 }
+
+/**
+ * How many top-level headings the DOM currently holds.
+ *
+ * SB (PERF-04) viewport virtualization swaps blocks outside the rendered band
+ * for exact-height placeholders, so this can be SMALLER than the TOC length.
+ * `resolveTocHeadingElement` indexes into that list, which is only meaningful
+ * when the two agree — otherwise `headings[tocIndex]` is a heading that happens
+ * to be mounted, not the one the user clicked. Callers compare this against the
+ * TOC length and materialize the document first when they disagree (see
+ * `scrollToHeader` in `editor.vue`).
+ */
+export const countTopLevelHeadings = (container: Element): number =>
+  container.querySelectorAll(TOP_LEVEL_HEADINGS_SELECTOR).length
