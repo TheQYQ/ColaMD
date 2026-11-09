@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { findMarkdownHeadingLine, scrollSourceEditorToLine } from '@/util/sourceModeToc'
+import {
+  findActiveHeadingIndex,
+  findMarkdownHeadingLine,
+  scrollSourceEditorToLine
+} from '@/util/sourceModeToc'
 
 // colamd #3580: in Source Code mode, clicking a TOC entry must scroll the
 // CodeMirror editor to the heading's line. This resolves a TOC index to a line.
@@ -43,6 +47,41 @@ describe('findMarkdownHeadingLine', () => {
     ].join('\n')
     expect(findMarkdownHeadingLine(fenced, 0)).toBe(0)
     expect(findMarkdownHeadingLine(fenced, 1)).toBe(8)
+  })
+
+  // muya's getTOC never enumerates front-matter content, and muya renders a
+  // leading `---` block as front matter (default `frontmatterType: '-'`). A
+  // `key: value` line right above the closing `---` used to read as a setext
+  // heading here, shifting EVERY later TOC index by one in source mode.
+  it('skips a leading YAML front-matter block', () => {
+    const doc = [
+      '---', // 0 front matter open
+      'title: Notes', // 1  (followed by `---`: used to count as setext)
+      'tags:', // 2
+      '  - a', // 3
+      '---', // 4 front matter close
+      '# Real', // 5
+      '', // 6
+      '## Second' // 7
+    ].join('\n')
+    expect(findMarkdownHeadingLine(doc, 0)).toBe(5)
+    expect(findMarkdownHeadingLine(doc, 1)).toBe(7)
+    expect(findMarkdownHeadingLine(doc, 2)).toBe(-1)
+    expect(findActiveHeadingIndex(doc, 6)).toBe(0)
+  })
+
+  it('does not treat a thematic break after a list item as a setext underline', () => {
+    const doc = [
+      '# Real', // 0
+      '', // 1
+      '- item', // 2  (`---` below is a thematic break, not an underline)
+      '---', // 3
+      '', // 4
+      '## Second' // 5
+    ].join('\n')
+    expect(findMarkdownHeadingLine(doc, 1)).toBe(5)
+    expect(findMarkdownHeadingLine(doc, 2)).toBe(-1)
+    expect(findActiveHeadingIndex(doc, 4)).toBe(0)
   })
 })
 
