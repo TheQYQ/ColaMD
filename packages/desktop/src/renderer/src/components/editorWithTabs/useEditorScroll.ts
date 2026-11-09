@@ -174,6 +174,15 @@ export const useEditorScroll = (deps: ScrollDeps) => {
     return resolve()
   }
 
+  // Put every virtualized block's real DOM back before resolving against DOM.
+  // Needed by callers whose mapping is only valid on the COMPLETE document
+  // order (the TOC index lookup), where a partial mount silently yields the
+  // wrong element instead of null - `resolveRendered`'s null-triggered retry
+  // cannot see that.
+  const materializeDocument = (): void => {
+    getEditor()?.editor?.scrollPage?.materializeAll()
+  }
+
   // Smoothly scroll the editor so `anchor` sits at the standard top offset.
   // Shared by the TOC, search-highlight, and any other "reveal this element"
   // caller so the getBoundingClientRect + animatedScrollTo math lives once.
@@ -206,6 +215,7 @@ export const useEditorScroll = (deps: ScrollDeps) => {
 
   return {
     resolveRendered,
+    materializeDocument,
     getScrollContainer,
     updateActiveTocEntry,
     getCursorY,
